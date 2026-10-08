@@ -62,6 +62,39 @@ const features: Feature[] = [
   },
 ];
 
+const mailtoWithSubject = (subject: string) =>
+  `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(subject)}`;
+
+const footerColumns: { title: string; links: { label: string; href: string }[] }[] = [
+  {
+    title: "Platform",
+    links: [
+      { label: "AI Matchmaking", href: "#features" },
+      { label: "Workflow Automation", href: "#features" },
+      { label: "Virtual Leasing Assistant", href: "#features" },
+      { label: "Early Access", href: WAITLIST_HREF },
+    ],
+  },
+  {
+    title: "Solutions",
+    links: [
+      { label: "For Landlords", href: mailtoWithSubject("Sunvibe for Landlords") },
+      { label: "For Tenants", href: mailtoWithSubject("Sunvibe for Tenants") },
+      { label: "Apartments & Houses", href: mailtoWithSubject("Residential Leasing Inquiry") },
+      { label: "Office Spaces", href: mailtoWithSubject("Office Leasing Inquiry") },
+    ],
+  },
+  {
+    title: "Company",
+    links: [
+      { label: "Contact", href: `mailto:${CONTACT_EMAIL}` },
+      { label: "Partnerships", href: mailtoWithSubject("Partnership Inquiry") },
+      { label: "Press & Media", href: mailtoWithSubject("Press Inquiry") },
+      { label: "Investors", href: mailtoWithSubject("Investor Inquiry") },
+    ],
+  },
+];
+
 function SunvibeLogo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
@@ -366,18 +399,105 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-slate-500 sm:px-6 md:flex-row lg:px-8">
-          <div className="flex flex-col items-center gap-3 md:flex-row md:gap-4">
-            <SunvibeLogo className="scale-90" />
-            <p>© 2026 SunVibe</p>
+      <footer className="border-t border-slate-200 bg-slate-50">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-12 py-14 sm:py-16 lg:grid-cols-12 lg:gap-8">
+            <div className="lg:col-span-5">
+              <SunvibeLogo />
+              <p className="mt-5 max-w-sm text-sm leading-relaxed text-slate-600">
+                Sunvibe is an AI-native platform for leasing apartments,
+                houses, and offices, combining real estate expertise with
+                intelligent automation to make renting seamless for landlords
+                and tenants.
+              </p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {["AI Matchmaking", "Agentic Workflows", "24/7 Assistant"].map(
+                  (tag) => (
+                    <span
+                      key={tag}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600"
+                    >
+                      {tag}
+                    </span>
+                  ),
+                )}
+              </div>
+              <a
+                href={WAITLIST_HREF}
+                className="group mt-8 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700"
+              >
+                Request Early Access
+                <ArrowRight />
+              </a>
+            </div>
+
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-3 lg:col-span-7">
+              {footerColumns.map((column) => (
+                <div key={column.title}>
+                  <h3 className="text-sm font-semibold text-slate-900">
+                    {column.title}
+                  </h3>
+                  <ul className="mt-4 space-y-3">
+                    {column.links.map((link) => (
+                      <li key={link.label}>
+                        <a
+                          href={link.href}
+                          className="text-sm text-slate-600 transition-colors hover:text-orange-600"
+                        >
+                          {link.label}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
           </div>
-          <a
-            href={`mailto:${CONTACT_EMAIL}`}
-            className="font-medium text-slate-600 transition-colors hover:text-orange-600"
-          >
-            Contact us: {CONTACT_EMAIL}
-          </a>
+
+          <div className="flex flex-col items-center justify-between gap-4 border-t border-slate-200 py-6 text-sm text-slate-500 md:flex-row">
+            <p>© 2026 SunVibe</p>
+            <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
+              <a
+                href={`mailto:${CONTACT_EMAIL}`}
+                className="inline-flex items-center gap-2 font-medium text-slate-700 transition-colors hover:text-orange-600"
+              >
+                <svg
+                  width={16}
+                  height={16}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <rect x="2" y="4" width="20" height="16" rx="2" />
+                  <path d="m22 7-10 6L2 7" />
+                </svg>
+                Contact us: {CONTACT_EMAIL}
+              </a>
+              <a
+                href="#top"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-900"
+              >
+                Back to top
+                <svg
+                  width={14}
+                  height={14}
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M12 19V5M5 12l7-7 7 7" />
+                </svg>
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
