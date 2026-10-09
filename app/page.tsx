@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
 
 const CONTACT_EMAIL = "admin@sunvibe.vn";
 const WAITLIST_HREF = `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
@@ -98,22 +99,14 @@ const footerColumns: { title: string; links: { label: string; href: string }[] }
 function SunvibeLogo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
-      <span className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-md shadow-orange-500/30">
-        <svg
-          width={20}
-          height={20}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="white"
-          strokeWidth={2}
-          strokeLinecap="round"
-          aria-hidden
-        >
-          <circle cx="12" cy="12" r="4" />
-          <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
-        </svg>
-      </span>
-      <span className="text-xl font-semibold tracking-tight text-slate-900">
+      <Image
+        src="/assets/sunvibe-lg.png"
+        alt=""
+        width={36}
+        height={36}
+        className="h-9 w-9 rounded-xl shadow-md shadow-violet-600/25 ring-1 ring-navy-950/10"
+      />
+      <span className="text-xl font-semibold tracking-tight text-navy-950">
         Sunvibe
       </span>
     </span>
@@ -142,7 +135,7 @@ function ArrowRight() {
 function ProductPreview() {
   return (
     <div className="relative mx-auto w-full max-w-md lg:max-w-none">
-      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-tr from-amber-200/60 via-orange-100/40 to-indigo-200/60 blur-2xl" />
+      <div className="absolute -inset-4 rounded-[2rem] bg-gradient-to-tr from-orange-200/60 via-violet-200/50 to-cyan-200/60 blur-2xl" />
       <div className="relative rounded-3xl border border-slate-200/80 bg-white/90 p-5 shadow-xl shadow-slate-900/5 backdrop-blur sm:p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -179,7 +172,7 @@ function ProductPreview() {
               className="flex items-center justify-between gap-3 rounded-2xl border border-slate-100 p-3"
             >
               <div className="flex min-w-0 items-center gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-100 to-amber-100 text-sm font-semibold text-slate-700">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-100 to-cyan-100 text-sm font-semibold text-navy-900">
                   {tenant.name[0]}
                 </span>
                 <div className="min-w-0">
@@ -191,14 +184,14 @@ function ProductPreview() {
                   </p>
                 </div>
               </div>
-              <span className="shrink-0 rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-orange-600">
+              <span className="shrink-0 rounded-full bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-700">
                 {tenant.score}% match
               </span>
             </li>
           ))}
         </ul>
 
-        <div className="mt-4 flex items-start gap-3 rounded-2xl bg-slate-900 p-4 text-sm text-slate-100">
+        <div className="mt-4 flex items-start gap-3 rounded-2xl bg-navy-950 p-4 text-sm text-slate-100">
           <svg
             width={18}
             height={18}
@@ -209,7 +202,7 @@ function ProductPreview() {
             strokeLinecap="round"
             strokeLinejoin="round"
             aria-hidden
-            className="mt-0.5 shrink-0 text-amber-400"
+            className="mt-0.5 shrink-0 text-cyan-400"
           >
             <path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z" />
           </svg>
@@ -235,19 +228,19 @@ export default function Home() {
           <div className="flex items-center gap-6">
             <a
               href="#features"
-              className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:inline"
+              className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-violet-700 sm:inline"
             >
               Features
             </a>
             <a
               href={`mailto:${CONTACT_EMAIL}`}
-              className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-slate-900 sm:inline"
+              className="hidden text-sm font-medium text-slate-600 transition-colors hover:text-violet-700 sm:inline"
             >
               Contact
             </a>
             <a
               href={WAITLIST_HREF}
-              className="rounded-full bg-slate-900 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-slate-700"
+              className="rounded-full bg-navy-950 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-navy-800"
             >
               Get early access
             </a>
@@ -260,11 +253,15 @@ export default function Home() {
         <section className="relative overflow-hidden">
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(251,191,36,0.22),transparent_70%)]"
+            className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(139,92,246,0.18),transparent_70%)]"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute -right-32 top-24 -z-10 h-96 w-96 rounded-full bg-indigo-200/40 blur-3xl"
+            className="pointer-events-none absolute -right-32 top-24 -z-10 h-96 w-96 rounded-full bg-cyan-200/40 blur-3xl"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -left-40 top-40 -z-10 h-80 w-80 rounded-full bg-orange-200/40 blur-3xl"
           />
           <div
             aria-hidden
@@ -273,14 +270,14 @@ export default function Home() {
 
           <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-16 px-4 pb-20 pt-16 sm:px-6 sm:pt-24 lg:grid-cols-2 lg:gap-12 lg:px-8 lg:pb-28 lg:pt-28">
             <div className="text-center lg:text-left">
-              <span className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50/80 px-3.5 py-1.5 text-xs font-medium text-orange-700 sm:text-sm">
-                <span className="h-1.5 w-1.5 rounded-full bg-orange-500" />
+              <span className="inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50/80 px-3.5 py-1.5 text-xs font-medium text-violet-700 sm:text-sm">
+                <span className="h-1.5 w-1.5 rounded-full bg-brand-gradient" />
                 AI-native property rental platform
               </span>
 
-              <h1 className="mt-6 text-4xl font-semibold leading-[1.1] tracking-tight text-slate-900 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-6 text-4xl font-semibold leading-[1.1] tracking-tight text-navy-950 sm:text-5xl lg:text-6xl">
                 Effortless property rentals,{" "}
-                <span className="bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500 bg-clip-text text-transparent">
+                <span className="bg-brand-gradient bg-clip-text text-transparent">
                   powered by intelligent automation.
                 </span>
               </h1>
@@ -294,14 +291,14 @@ export default function Home() {
               <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
                 <a
                   href={WAITLIST_HREF}
-                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-500/25 transition-all hover:shadow-xl hover:shadow-orange-500/30 hover:brightness-105 sm:w-auto"
+                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-600/25 transition-all hover:shadow-xl hover:shadow-violet-600/30 hover:brightness-110 sm:w-auto"
                 >
                   Request Early Access
                   <ArrowRight />
                 </a>
                 <a
                   href="#features"
-                  className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-7 py-3.5 text-base font-semibold text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 sm:w-auto"
+                  className="inline-flex w-full items-center justify-center rounded-full border border-slate-200 bg-white px-7 py-3.5 text-base font-semibold text-slate-700 shadow-sm transition-colors hover:border-violet-200 hover:bg-violet-50/50 sm:w-auto"
                 >
                   Explore features
                 </a>
@@ -337,7 +334,7 @@ export default function Home() {
         >
           <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
             <div className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-widest text-orange-600">
+              <p className="text-sm font-semibold uppercase tracking-widest text-violet-600">
                 AI at the core
               </p>
               <h2 className="mt-3 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
@@ -354,9 +351,9 @@ export default function Home() {
               {features.map((feature) => (
                 <article
                   key={feature.title}
-                  className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-orange-200 hover:shadow-xl hover:shadow-orange-500/5 sm:p-8"
+                  className="group relative flex flex-col rounded-3xl border border-slate-200/80 bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-600/10 sm:p-8"
                 >
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-50 to-orange-100 text-orange-600 ring-1 ring-orange-200/60 transition-colors group-hover:from-amber-400 group-hover:to-orange-500 group-hover:text-white">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-50 to-cyan-50 text-violet-600 ring-1 ring-violet-200/60 transition-colors group-hover:bg-brand-gradient group-hover:text-white group-hover:ring-transparent">
                     {feature.icon}
                   </div>
                   <h3 className="mt-6 text-lg font-semibold text-slate-900">
@@ -373,10 +370,10 @@ export default function Home() {
 
         {/* Closing CTA */}
         <section className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-slate-900 px-6 py-14 text-center shadow-2xl sm:px-12 sm:py-20">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-3xl bg-navy-950 px-6 py-14 text-center shadow-2xl sm:px-12 sm:py-20">
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_80%_at_50%_120%,rgba(249,115,22,0.35),transparent_70%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_50%_80%_at_20%_120%,rgba(249,115,22,0.35),transparent_70%),radial-gradient(ellipse_50%_80%_at_80%_120%,rgba(34,211,238,0.3),transparent_70%),radial-gradient(ellipse_60%_70%_at_50%_-20%,rgba(139,92,246,0.35),transparent_70%)]"
             />
             <div className="relative">
               <h2 className="mx-auto max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl">
@@ -388,7 +385,7 @@ export default function Home() {
               </p>
               <a
                 href={WAITLIST_HREF}
-                className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-base font-semibold text-slate-900 shadow-lg transition-colors hover:bg-amber-50"
+                className="group mt-8 inline-flex items-center justify-center gap-2 rounded-full bg-white px-7 py-3.5 text-base font-semibold text-navy-950 shadow-lg transition-colors hover:bg-violet-50"
               >
                 Join the Waitlist
                 <ArrowRight />
@@ -424,7 +421,7 @@ export default function Home() {
               </div>
               <a
                 href={WAITLIST_HREF}
-                className="group mt-8 inline-flex items-center gap-2 rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-700"
+                className="group mt-8 inline-flex items-center gap-2 rounded-full bg-navy-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-navy-800"
               >
                 Request Early Access
                 <ArrowRight />
@@ -442,7 +439,7 @@ export default function Home() {
                       <li key={link.label}>
                         <a
                           href={link.href}
-                          className="text-sm text-slate-600 transition-colors hover:text-orange-600"
+                          className="text-sm text-slate-600 transition-colors hover:text-violet-700"
                         >
                           {link.label}
                         </a>
@@ -459,7 +456,7 @@ export default function Home() {
             <div className="flex flex-col items-center gap-4 sm:flex-row sm:gap-6">
               <a
                 href={`mailto:${CONTACT_EMAIL}`}
-                className="inline-flex items-center gap-2 font-medium text-slate-700 transition-colors hover:text-orange-600"
+                className="inline-flex items-center gap-2 font-medium text-slate-700 transition-colors hover:text-violet-700"
               >
                 <svg
                   width={16}
@@ -479,7 +476,7 @@ export default function Home() {
               </a>
               <a
                 href="#top"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-slate-900"
+                className="inline-flex items-center gap-1.5 transition-colors hover:text-violet-700"
               >
                 Back to top
                 <svg
