@@ -8,12 +8,16 @@ export type RequestOptions = Omit<RequestInit, "method" | "body"> & {
   accessToken?: string;
   /** Sent as a `Cookie` header, for server-to-server calls that need a backend cookie. */
   cookie?: Record<string, string>;
+  /** Abort after this many milliseconds (overrides the client default). Ignored when `signal` is set. */
+  timeoutMs?: number;
 };
 
 type HttpClientConfig = {
   /** Resolved per request so a missing env var only fails the calls that need it. */
   baseUrl: () => string;
   defaultHeaders?: HeadersInit;
+  /** Default time limit per request, so a stalled backend fails fast instead of hanging the page. */
+  timeoutMs?: number;
 };
 
 export type HttpClient = ReturnType<typeof createHttpClient>;
@@ -22,11 +26,11 @@ export type HttpClient = ReturnType<typeof createHttpClient>;
  * Thin, typed wrapper over `fetch` for sunvibe-server. Caching is left to the
  * caller: pass `next`/`cache` options or wrap the call in `"use cache"`.
  */
-export function createHttpClient({ baseUrl, defaultHeaders }: HttpClientConfig) {
+export function createHttpClient({ baseUrl, defaultHeaders, timeoutMs: defaultTimeoutMs }: HttpClientConfig) {
   async function send<T>(
     method: string,
     path: string,
-    { body, query, accessToken, cookie, headers, ...init }: RequestOptions = {},
+    { body, query, accessToken, cookie, headers, timeoutMs = defaultTimeoutMs, ...init }: RequestOptions = {},
   ): Promise<{ data: T; headers: Headers }> {
     const url = new URL(path.replace(/^\//, ""), withTrailingSlash(baseUrl()));
     for (const [key, value] of Object.entries(query ?? {})) {
@@ -51,6 +55,7 @@ export function createHttpClient({ baseUrl, defaultHeaders }: HttpClientConfig) 
 
     const response = await fetch(url, {
       ...init,
+      signal: init.signal ?? (timeoutMs ? AbortSignal.timeout(timeoutMs) : undefined),
       method,
       headers: requestHeaders,
       body: body === undefined ? undefined : JSON.stringify(body),

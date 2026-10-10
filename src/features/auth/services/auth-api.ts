@@ -6,7 +6,13 @@ import type { AuthSession, AuthTokenResponse } from "../types/auth.types";
 
 // Shared by auth.service.ts (Server Actions, pages) and session/refresh.ts
 // (proxy). No "server-only" import here because proxy code can't use it.
-export const authApi = createHttpClient({ baseUrl: () => serverEnv.apiBaseUrl });
+export const authApi = createHttpClient({ baseUrl: () => serverEnv.apiBaseUrl, timeoutMs: 10_000 });
+
+/**
+ * The proxy refreshes before every request of a user whose access token
+ * expired, landing page included; a stalled backend must not hold those up.
+ */
+const REFRESH_TIMEOUT_MS = 3_000;
 
 type TokenCall = () => Promise<{ data: ApiResponse<AuthTokenResponse>; headers: Headers }>;
 
@@ -33,6 +39,7 @@ export function refreshSession(refreshToken: string, headers: Record<string, str
       cache: "no-store",
       headers,
       cookie: { [BACKEND_REFRESH_COOKIE]: refreshToken },
+      timeoutMs: REFRESH_TIMEOUT_MS,
     }),
   );
 }

@@ -44,6 +44,15 @@ describe("authService.login", () => {
     expect(url.toString()).toBe("http://api.test/api/auth/login");
     expect(new Headers(init.headers).get("x-forwarded-for")).toBe("203.0.113.7");
     expect(init.cache).toBe("no-store");
+    expect(init.signal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("gives the proxy refresh its own time limit", async () => {
+    const { refreshSession } = await import("./auth-api");
+    const fetchMock = respond(tokenBody, ["cookie-jwt-rf=refresh-2; Path=/api/auth"]);
+    await refreshSession("refresh-1", {});
+    const [, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(init.signal).toBeInstanceOf(AbortSignal);
   });
 
   it("fails loudly when the refresh cookie is missing", async () => {
