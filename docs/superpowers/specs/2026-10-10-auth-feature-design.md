@@ -191,6 +191,7 @@ Route-level `error.tsx` boundaries under `(auth)` and `(platform)` catch unexpec
 ## 8. Backend changes this design depends on (not done in this repo)
 
 1. **Real client IP behind the BFF (required before production).** The rate limiter, login lockout and audit log use `getRemoteAddr()`. Behind Next.js, every user shares the server's IP, so for example only 5 sign-ups per hour would be possible site-wide. Fix: enable `server.forward-headers-strategy` and trust `X-Forwarded-For` only from the Next.js server's address. This frontend already forwards the header.
+   - **Deployment requirement:** Next.js keeps an incoming `X-Forwarded-For` as the client sent it, and only fills it in when it is missing. So a trusted edge in front of Next.js (load balancer, Nginx, CDN) must overwrite the header with the real client address. Without that, a client could pick its own IP and slip past the per-IP limits on login, SMS sends and OTP checks. Next 16's proxy exposes no peer address, so the frontend can't derive the IP itself.
 2. **Reset link domain.** `EmailTemplate.java` hardcodes `https://yourapp.com/reset-password?token=…`. It should use a configurable frontend URL. The route `/reset-password?token=` matches on this side.
 
 ## 9. Out of scope
