@@ -5,7 +5,7 @@ import { createHttpClient } from "@/lib/api";
 import type { AuthTokens, LoginRequest, User } from "../types/auth.types";
 
 // Endpoint paths follow an assumed REST contract; align them with auth-service.
-const authApi = createHttpClient({ baseUrl: () => serverEnv.authServiceUrl });
+const authApi = createHttpClient({ baseUrl: () => serverEnv.apiBaseUrl });
 
 export const authService = {
   login(credentials: LoginRequest) {

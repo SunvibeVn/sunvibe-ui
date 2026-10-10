@@ -6,6 +6,8 @@ export type RequestOptions = Omit<RequestInit, "method" | "body"> & {
   body?: unknown;
   query?: Record<string, QueryValue>;
   accessToken?: string;
+  /** Sent as a `Cookie` header, for server-to-server calls that need a backend cookie. */
+  cookie?: Record<string, string>;
 };
 
 type HttpClientConfig = {
@@ -17,16 +19,15 @@ type HttpClientConfig = {
 export type HttpClient = ReturnType<typeof createHttpClient>;
 
 /**
- * Thin, typed wrapper over `fetch`, one instance per backend service
- * (auth-service, property-service, ...). Caching is left to the caller:
- * pass `next`/`cache` options or wrap the call in `"use cache"`.
+ * Thin, typed wrapper over `fetch` for sunvibe-server. Caching is left to the
+ * caller: pass `next`/`cache` options or wrap the call in `"use cache"`.
  */
 export function createHttpClient({ baseUrl, defaultHeaders }: HttpClientConfig) {
-  async function request<T>(
+  async function send<T>(
     method: string,
     path: string,
-    { body, query, accessToken, headers, ...init }: RequestOptions = {},
-  ): Promise<T> {
+    { body, query, accessToken, cookie, headers, ...init }: RequestOptions = {},
+  ): Promise<{ data: T; headers: Headers }> {
     const url = new URL(path.replace(/^\//, ""), withTrailingSlash(baseUrl()));
     for (const [key, value] of Object.entries(query ?? {})) {
       if (value !== undefined && value !== null) {
@@ -38,6 +39,14 @@ export function createHttpClient({ baseUrl, defaultHeaders }: HttpClientConfig) 
     requestHeaders.set("Accept", "application/json");
     if (body !== undefined) requestHeaders.set("Content-Type", "application/json");
     if (accessToken) requestHeaders.set("Authorization", `Bearer ${accessToken}`);
+    if (cookie) {
+      requestHeaders.set(
+        "Cookie",
+        Object.entries(cookie)
+          .map(([name, value]) => `${name}=${value}`)
+          .join("; "),
+      );
+    }
     new Headers(headers).forEach((value, key) => requestHeaders.set(key, value));
 
     const response = await fetch(url, {
@@ -49,10 +58,18 @@ export function createHttpClient({ baseUrl, defaultHeaders }: HttpClientConfig) 
 
     const payload = await parseBody(response);
     if (!response.ok) {
-      throw new ApiError(response.status, errorMessage(payload, response), payload);
+      throw new ApiError(
+        response.status,
+        errorMessage(payload, response),
+        payload,
+        retryAfterSeconds(response),
+      );
     }
-    return payload as T;
+    return { data: payload as T, headers: response.headers };
   }
+
+  const request = async <T>(method: string, path: string, options?: RequestOptions) =>
+    (await send<T>(method, path, options)).data;
 
   return {
     get: <T>(path: string, options?: RequestOptions) => request<T>("GET", path, options),
@@ -62,8 +79,10 @@ export function createHttpClient({ baseUrl, defaultHeaders }: HttpClientConfig) 
       request<T>("PUT", path, { ...options, body }),
     patch: <T>(path: string, body?: unknown, options?: RequestOptions) =>
       request<T>("PATCH", path, { ...options, body }),
-    delete: <T>(path: string, options?: RequestOptions) =>
-      request<T>("DELETE", path, options),
+    delete: <T>(path: string, options?: RequestOptions) => request<T>("DELETE", path, options),
+    /** Like `post`, but also returns the response headers (e.g. `Set-Cookie`). */
+    postRaw: <T>(path: string, body?: unknown, options?: RequestOptions) =>
+      send<T>("POST", path, { ...options, body }),
   };
 }
 
@@ -84,4 +103,9 @@ function errorMessage(payload: unknown, response: Response) {
     return String(payload.message);
   }
   return `${response.status} ${response.statusText}`;
+}
+
+function retryAfterSeconds(response: Response) {
+  const seconds = Number(response.headers.get("retry-after"));
+  return Number.isFinite(seconds) && seconds > 0 ? seconds : undefined;
 }
