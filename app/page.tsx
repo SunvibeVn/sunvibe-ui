@@ -476,10 +476,11 @@ export default function Home() {
               </a>
               <a
                 href="#top"
-                className="inline-flex items-center gap-1.5 transition-colors hover:text-violet-700"
+                className="group inline-flex items-center gap-1.5 rounded-full bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-md shadow-violet-600/25 transition-all hover:shadow-lg hover:shadow-violet-600/30 hover:brightness-110"
               >
                 Back to top
                 <svg
+                  className="transition-transform group-hover:-translate-y-0.5"
                   width={14}
                   height={14}
                   viewBox="0 0 24 24"
