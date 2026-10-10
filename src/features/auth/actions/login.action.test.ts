@@ -53,6 +53,13 @@ describe("loginAction", () => {
     ).rejects.toThrow("NEXT_REDIRECT:/verify-phone");
   });
 
+  it("falls back to the account page when a verified user's `next` is unsafe", async () => {
+    login.mockResolvedValue({ accessToken: "a", refreshToken: "r", expiresIn: 900, phoneVerified: true });
+    await expect(
+      loginAction(initialFormState, form({ username: "0901234567", password: "pw", next: "/.//evil.com" })),
+    ).rejects.toThrow("NEXT_REDIRECT:/account");
+  });
+
   it("shows a clear message for wrong credentials and keeps the phone number", async () => {
     login.mockRejectedValue(new ApiError(401, "Bad credentials"));
     const state = await loginAction(initialFormState, form({ username: "0901234567", password: "wrong" }));

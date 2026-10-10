@@ -12,7 +12,9 @@ export function safeRedirectPath(next: unknown, fallback: string): string {
     // The URL parser strips tabs/newlines, so "/\t/evil.com" becomes "//evil.com".
     const url = new URL(next, PLACEHOLDER_ORIGIN);
     if (url.origin !== PLACEHOLDER_ORIGIN) return fallback;
-    return `${url.pathname}${url.search}${url.hash}`;
+    // Dot segments collapse during parsing ("/.//evil.com" → "//evil.com"), so check the result too.
+    const path = `${url.pathname}${url.search}${url.hash}`;
+    return path.startsWith("//") || path.startsWith("/\\") ? fallback : path;
   } catch {
     return fallback;
   }
