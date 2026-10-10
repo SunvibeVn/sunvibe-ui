@@ -1,0 +1,19 @@
+// Public API for pages and layouts (Server Components). Client Components use
+// "@/features/auth/client"; src/proxy.ts uses "@/features/auth/proxy".
+export { AccountOverview } from "./components/account-overview";
+export { AuthHeader } from "./components/auth-header";
+export { AuthNotice } from "./components/auth-notice";
+export { AuthShell } from "./components/auth-shell";
+export { FormSkeleton } from "./components/form-skeleton";
+export { ForgotPasswordForm } from "./components/forgot-password-form";
+export { LoginForm } from "./components/login-form";
+export { LogoutButton } from "./components/logout-button";
+export { ResetPasswordSection } from "./components/reset-password-section";
+export { SignUpForm } from "./components/sign-up-form";
+export { UserMenu } from "./components/user-menu";
+export { VerifyPhoneSection } from "./components/verify-phone-section";
+export { AUTH_ROUTES } from "./constants";
+export { safeRedirectPath } from "./lib/safe-redirect";
+export { getSessionUser, hasSession, requireUser } from "./session/dal";
+export type { SessionUser } from "./session/dal";
+export type { AuthSession, UserProfile } from "./types/auth.types";
