@@ -1,6 +1,5 @@
 import {
   ACCESS_TOKEN_EXPIRY_SKEW_SECONDS,
-  AUTH_ROUTES,
   REFRESH_TOKEN_MAX_AGE_SECONDS,
   RESET_TOKEN_MAX_AGE_SECONDS,
 } from "../constants";
@@ -36,8 +35,12 @@ export function refreshCookieOptions(production = isProduction()) {
   return options(production, "/", REFRESH_TOKEN_MAX_AGE_SECONDS);
 }
 
+/**
+ * Path=/ because both /forgot-password (to avoid overwriting the real token
+ * with a cooldown decoy) and /reset-password read it.
+ */
 export function resetCookieOptions(production = isProduction()) {
-  return options(production, AUTH_ROUTES.resetPassword, RESET_TOKEN_MAX_AGE_SECONDS);
+  return options(production, "/", RESET_TOKEN_MAX_AGE_SECONDS);
 }
 
 /** Deleting a cookie needs the same path and Secure flag it was set with. */

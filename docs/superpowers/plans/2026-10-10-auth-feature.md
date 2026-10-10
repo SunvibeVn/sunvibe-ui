@@ -23,7 +23,7 @@
   - `sv_at` / `sv_rt`, prefixed `__Host-` in production.
   - HttpOnly, `SameSite=Lax`, `Path=/`, `Secure` in production.
   - Access `Max-Age = expiresIn − 30`; refresh `Max-Age` 604800.
-- SMS reset token cookie: `sv_reset`, HttpOnly, `SameSite=Lax`, `Path=/reset-password`, `Max-Age` 900.
+- SMS reset token cookie: `sv_reset`, HttpOnly, `SameSite=Lax`, `Path=/` (widened in the final fix pass), `Max-Age` 900.
 - The backend's refresh cookie is named `cookie-jwt-rf`.
 - Every component that reads cookies or `searchParams` renders inside `<Suspense>`.
 - Never log tokens, passwords or OTP codes.

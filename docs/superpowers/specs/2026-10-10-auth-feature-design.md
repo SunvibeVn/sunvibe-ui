@@ -65,9 +65,9 @@ Browser ──form POST──▶ Next.js Server Action ──fetch──▶ sunv
 | --- | --- | --- |
 | `sv_at` | Access JWT | HttpOnly, `SameSite=Lax`, `Path=/`, `Secure` in production, `Max-Age = expiresIn − 30 s` so it expires before the backend rejects the token |
 | `sv_rt` | Refresh token | HttpOnly, `SameSite=Lax`, `Path=/`, `Secure` in production, `Max-Age` 7 days (the backend's idle lifetime) |
-| `sv_reset` | SMS reset token | HttpOnly, `SameSite=Lax`, `Path=/reset-password`, `Max-Age` 15 min; deleted after a successful reset |
+| `sv_reset` | SMS reset token, the phone it was requested for and when (JSON) | HttpOnly, `SameSite=Lax`, `Path=/`, `Max-Age` 15 min; deleted after a successful reset. `/forgot-password` reads it so a repeat request inside the backend's 60 s cooldown (which returns a decoy token) doesn't overwrite the real one |
 
-- In production the names get the `__Host-` prefix. This forces `Secure` and `Path=/`, with no `Domain`, so a subdomain can't plant or overwrite them. (`sv_reset` keeps its plain name because its path isn't `/`.)
+- In production the names get the `__Host-` prefix. This forces `Secure` and `Path=/`, with no `Domain`, so a subdomain can't plant or overwrite them. (`sv_reset` keeps its plain name; it is short-lived and useless without the OTP.)
 - `SameSite=Lax` rather than `Strict`, so a user arriving from an external link (e-mail, Zalo) is still signed in on the first page. Server Actions already reject cross-origin POSTs.
 - When the proxy refreshes, the backend's 30 s refresh-reuse grace absorbs concurrent requests (several tabs, prefetches).
 - If the refresh fails with 401, both cookies are deleted. A network error or 5xx keeps them, so a backend outage doesn't sign everyone out.

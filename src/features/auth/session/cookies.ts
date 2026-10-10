@@ -37,12 +37,30 @@ export async function readSessionTokens(): Promise<{ accessToken?: string; refre
   };
 }
 
-export async function saveResetToken(token: string) {
-  (await cookies()).set(RESET_TOKEN_COOKIE, token, resetCookieOptions());
+/** The SMS reset token, the phone it was requested for and when (epoch ms). */
+export type ResetEntry = { token: string; phone?: string; issuedAt: number };
+
+export async function saveResetToken(token: string, phone?: string) {
+  const entry: ResetEntry = { token, phone, issuedAt: Date.now() };
+  (await cookies()).set(RESET_TOKEN_COOKIE, JSON.stringify(entry), resetCookieOptions());
+}
+
+export async function readResetEntry(): Promise<ResetEntry | undefined> {
+  const raw = (await cookies()).get(RESET_TOKEN_COOKIE)?.value;
+  if (!raw) return undefined;
+  try {
+    const entry: unknown = JSON.parse(raw);
+    if (entry && typeof entry === "object" && "token" in entry && typeof entry.token === "string" && entry.token) {
+      return entry as ResetEntry;
+    }
+  } catch {
+    // Malformed or tampered cookie: treat as absent.
+  }
+  return undefined;
 }
 
 export async function readResetToken(): Promise<string | undefined> {
-  return (await cookies()).get(RESET_TOKEN_COOKIE)?.value || undefined;
+  return (await readResetEntry())?.token;
 }
 
 export async function clearResetToken() {

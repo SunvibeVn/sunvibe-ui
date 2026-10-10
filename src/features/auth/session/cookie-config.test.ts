@@ -23,14 +23,14 @@ describe("cookie-config", () => {
     });
   });
 
-  it("keeps the refresh cookie 7 days and scopes the reset cookie to its page", () => {
+  it("keeps the refresh cookie 7 days and the reset cookie 15 minutes", () => {
     expect(refreshCookieOptions(false)).toMatchObject({ secure: false, path: "/", maxAge: 604800 });
-    expect(resetCookieOptions(false)).toMatchObject({ path: "/reset-password", maxAge: 900 });
+    expect(resetCookieOptions(false)).toMatchObject({ path: "/", maxAge: 900 });
   });
 
   it("builds deletion options with the same path and security flags", () => {
     expect(expiredCookieOptions(resetCookieOptions(true))).toMatchObject({
-      path: "/reset-password",
+      path: "/",
       secure: true,
       maxAge: 0,
     });
