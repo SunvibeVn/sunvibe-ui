@@ -1,2 +1,2 @@
-export { authService } from "./services/auth.service";
-export type { AuthTokens, LoginRequest, User, UserRole } from "./types/auth.types";
+export { AUTH_ROUTES } from "./constants";
+export type { AuthSession, UserProfile } from "./types/auth.types";
