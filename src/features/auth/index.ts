@@ -3,6 +3,7 @@ export { AuthNotice } from "./components/auth-notice";
 export { AuthShell } from "./components/auth-shell";
 export { FormSkeleton } from "./components/form-skeleton";
 export { LoginForm } from "./components/login-form";
+export { SignUpForm } from "./components/sign-up-form";
 export { AUTH_ROUTES } from "./constants";
 export { safeRedirectPath } from "./lib/safe-redirect";
 export type { AuthSession, UserProfile } from "./types/auth.types";
