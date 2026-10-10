@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { siteConfig } from "@/config/site";
 
-export function Logo({ className = "" }: { className?: string }) {
+export function Logo({ className = "", tone = "dark" }: { className?: string; tone?: "dark" | "light" }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <Image
@@ -11,7 +11,7 @@ export function Logo({ className = "" }: { className?: string }) {
         height={36}
         className="h-9 w-9 rounded-xl shadow-md shadow-violet-600/25 ring-1 ring-navy-950/10"
       />
-      <span className="text-xl font-semibold tracking-tight text-navy-950">
+      <span className={`text-xl font-semibold tracking-tight ${tone === "light" ? "text-white" : "text-navy-950"}`}>
         {siteConfig.name}
       </span>
     </span>

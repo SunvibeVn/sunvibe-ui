@@ -17,7 +17,7 @@ const geistMono = Geist_Mono({
 // folder, which Next.js adds to the <head> automatically.
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
-  title: siteConfig.title,
+  title: { default: siteConfig.title, template: `%s | ${siteConfig.name}` },
   description: siteConfig.description,
   openGraph: {
     type: "website",

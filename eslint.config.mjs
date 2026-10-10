@@ -14,9 +14,9 @@ const eslintConfig = defineConfig([
         {
           patterns: [
             {
-              group: ["@/features/*/*", "!@/features/*/proxy"],
+              group: ["@/features/*/*", "!@/features/*/proxy", "!@/features/*/client"],
               message:
-                "Import from the feature's public API (e.g. '@/features/property'), not its internals. src/proxy.ts may use '@/features/<name>/proxy'.",
+                "Import from the feature's public API (e.g. '@/features/property'), not its internals. src/proxy.ts may use '@/features/<name>/proxy'; Client Components may use '@/features/<name>/client'.",
             },
           ],
         },
