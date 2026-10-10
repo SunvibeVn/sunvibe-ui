@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { siteConfig } from "@/config/site";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -12,29 +13,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://sunvibe.vn";
-const SITE_TITLE = "Sunvibe | AI-Powered Property Rentals";
-const SITE_DESCRIPTION =
-  "Effortless property rentals, powered by intelligent automation. Sunvibe uses AI matchmaking, workflow automation, and a 24/7 virtual leasing assistant to make renting seamless.";
-
-// Share images come from app/opengraph-image.jpg and app/twitter-image.jpg,
-// which Next.js adds to the <head> automatically.
+// Share images come from opengraph-image.jpg and twitter-image.jpg in this
+// folder, which Next.js adds to the <head> automatically.
 export const metadata: Metadata = {
-  metadataBase: new URL(SITE_URL),
-  title: SITE_TITLE,
-  description: SITE_DESCRIPTION,
+  metadataBase: new URL(siteConfig.url),
+  title: siteConfig.title,
+  description: siteConfig.description,
   openGraph: {
     type: "website",
     url: "/",
-    siteName: "Sunvibe",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
-    locale: "en_US",
+    siteName: siteConfig.name,
+    title: siteConfig.title,
+    description: siteConfig.description,
+    locale: siteConfig.locale,
   },
   twitter: {
     card: "summary_large_image",
-    title: SITE_TITLE,
-    description: SITE_DESCRIPTION,
+    title: siteConfig.title,
+    description: siteConfig.description,
   },
 };
 

@@ -1,37 +1,85 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Sunvibe UI
 
-## Getting Started
+Web frontend for Sunvibe, an AI-powered property rental platform. Built with Next.js 16 (App Router), React 19, TypeScript and Tailwind CSS 4.
 
-First, run the development server:
+## Getting started
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local   # then fill in real values
+npm install
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Command         | What it does               |
+| --------------- | -------------------------- |
+| `npm run dev`   | Start the dev server       |
+| `npm run build` | Production build           |
+| `npm run start` | Serve the production build |
+| `npm run lint`  | Run ESLint                 |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable               | Where it's used | Purpose                                                    |
+| ---------------------- | --------------- | ---------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL` | Server + client | Public site URL; makes share-preview image links absolute  |
+| `AUTH_SERVICE_URL`     | Server only     | Base URL of `auth-service`                                 |
+| `PROPERTY_SERVICE_URL` | Server only     | Base URL of `property-service`                             |
 
-## Learn More
+Backend URLs must never get the `NEXT_PUBLIC_` prefix. Only Server Components, Server Actions and Route Handlers call the backend.
 
-To learn more about Next.js, take a look at the following resources:
+## Project structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```
+src/
+├── app/                    # Routing only: layouts, pages, metadata files
+│   ├── layout.tsx          # Root layout: <html>, fonts, site-wide metadata
+│   ├── globals.css         # Tailwind entry + brand tokens (navy, bg-brand-gradient)
+│   ├── icon.png, opengraph-image.jpg, twitter-image.jpg
+│   └── (marketing)/        # Route group: public site with header + footer
+│       ├── layout.tsx
+│       └── page.tsx        # "/" composes sections from @/features/marketing
+│
+├── features/               # One folder per business domain; backend-facing ones mirror a service
+│   ├── marketing/          # Landing page sections and content (frontend only)
+│   ├── auth/               # ↔ auth-service
+│   │   ├── services/       #   API calls (server-only)
+│   │   ├── types/          #   DTOs matching the service contract
+│   │   └── index.ts        #   Public API of the feature
+│   └── property/           # ↔ property-service
+│
+├── components/             # Shared, feature-agnostic UI
+│   ├── brand/              # Logo
+│   ├── icons/              # Inline SVG icon set
+│   └── layout/             # SiteHeader, SiteFooter
+│
+├── config/                 # site.ts (brand, links), navigation.ts, env.ts (server env)
+└── lib/                    # Framework-agnostic helpers
+    ├── api/                # createHttpClient, ApiError, pagination types
+    └── utils/
+public/images/brand/        # Logo and share-banner source files
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Conventions
 
-## Deploy on Vercel
+**`app/` stays thin.** Route files only compose components from `features/` and `components/`. Group routes by layout with route groups: `(marketing)` today, and later e.g. `(auth)` for `/login` and `(dashboard)` for signed-in pages.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**One feature per business domain.** A feature that talks to a backend service owns everything for that domain: `services/`, `types/`, and later `components/`, `actions/` (Server Actions) and `hooks/`. Inside a feature, use relative imports.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# sunvibe-ui
+**Import features only through their `index.ts`.** ESLint blocks deep imports such as `@/features/property/services/...`; use `@/features/property` instead. This keeps each feature's internals free to change.
+
+**Services are server-only.** Each service file starts with `import "server-only"` and creates its own client:
+
+```ts
+const propertyApi = createHttpClient({ baseUrl: () => serverEnv.propertyServiceUrl });
+```
+
+The client handles JSON, query strings, Bearer tokens and errors (non-2xx responses throw `ApiError` with `status` and `body`). Caching is opt-in per call, following `cacheComponents` in `next.config.ts`.
+
+### Adding a feature for a new backend service
+
+1. Add `XXX_SERVICE_URL` to `.env.example` and a getter to `src/config/env.ts`.
+2. Create `src/features/<name>/` with `types/<name>.types.ts` and `services/<name>.service.ts`.
+3. Export the public API from `src/features/<name>/index.ts`.
+4. Use it from a Server Component or Server Action, e.g. `await propertyService.list({ city: "HCMC" })`.
+
+The endpoint paths and DTOs in `auth` and `property` are a starting contract. Align them with the real services before use.

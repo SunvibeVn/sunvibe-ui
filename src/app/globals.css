@@ -12,7 +12,7 @@
   --font-mono: var(--font-geist-mono);
 }
 
-/* Sunvibe brand palette, sampled from public/assets/sunvibe-lg.png */
+/* Sunvibe brand palette, sampled from public/images/brand/sunvibe-logo.png */
 @theme {
   --color-navy-950: #04052b;
   --color-navy-900: #0c0e45;
