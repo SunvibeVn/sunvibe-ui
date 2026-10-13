@@ -7,5 +7,14 @@
       "Bash(git push --force*)",
       "Bash(git push -f*)"
     ]
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "f=\"$CLAUDE_PROJECT_DIR/../scripts/claude-hooks/docs-reminder.sh\"; if [ -f \"$f\" ]; then bash \"$f\"; fi" }
+        ]
+      }
+    ]
   }
 }

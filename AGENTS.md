@@ -54,6 +54,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 ## Before saying "done"
 1. npm run lint, npm run typecheck and npm test pass
 2. The feature works in the browser against the local API (http://localhost:8082)
+3. Docs: Claude session -> run /update-docs <feature> (edits ../docs; a Stop hook reminds once per session on
+   feature/* and fix/* branches). Cursor -> tell the owner to run /update-docs <feature> in a hub Claude session.
 
 ## Shared context (hub docs)
 - In Cursor workspace: hub-docs/features/INDEX.md, then the feature doc.
