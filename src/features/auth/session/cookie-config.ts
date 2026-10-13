@@ -2,6 +2,7 @@ import {
   ACCESS_TOKEN_EXPIRY_SKEW_SECONDS,
   REFRESH_TOKEN_MAX_AGE_SECONDS,
   RESET_TOKEN_MAX_AGE_SECONDS,
+  SIGNUP_MAX_AGE_SECONDS,
 } from "../constants";
 
 export type CookieOptions = {
@@ -27,6 +28,13 @@ export function sessionCookieNames(production = isProduction()) {
 /** Holds the SMS reset token between /forgot-password and /reset-password. */
 export const RESET_TOKEN_COOKIE = "sv_reset";
 
+/**
+ * Holds the sign-up progress (phone, resend time and, once the SMS code is
+ * confirmed, the registration token) between /sign-up, /sign-up/verify and
+ * /sign-up/details.
+ */
+export const SIGNUP_COOKIE = "sv_signup";
+
 export function accessCookieOptions(expiresInSeconds: number, production = isProduction()) {
   return options(production, "/", Math.max(0, expiresInSeconds - ACCESS_TOKEN_EXPIRY_SKEW_SECONDS));
 }
@@ -41,6 +49,11 @@ export function refreshCookieOptions(production = isProduction()) {
  */
 export function resetCookieOptions(production = isProduction()) {
   return options(production, "/", RESET_TOKEN_MAX_AGE_SECONDS);
+}
+
+/** Path=/ like the reset cookie: the three sign-up pages share it. */
+export function signUpCookieOptions(production = isProduction()) {
+  return options(production, "/", SIGNUP_MAX_AGE_SECONDS);
 }
 
 /** Deleting a cookie needs the same path and Secure flag it was set with. */

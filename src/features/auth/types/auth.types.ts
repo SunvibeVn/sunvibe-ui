@@ -42,6 +42,13 @@ export type VerificationSendResult = {
   resendAvailableAt: string;
 };
 
+/** The registering phone number was proven (`RegistrationTokenResponse`). */
+export type RegistrationTokenResult = {
+  /** Single-use proof for `POST /api/users/command/register`. */
+  registrationToken: string;
+  expiresAt: string;
+};
+
 /** `PasswordForgotResponse`; `resetToken` is only present in the SMS flow. */
 export type PasswordForgotResult = {
   message: string;

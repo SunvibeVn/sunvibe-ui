@@ -1,15 +1,19 @@
 // Public API for pages and layouts (Server Components). Client Components use
 // "@/features/auth/client"; src/proxy.ts uses "@/features/auth/proxy".
 export { AccountOverview } from "./components/account-overview";
+export { AuthCard } from "./components/auth-card";
 export { AuthHeader } from "./components/auth-header";
 export { AuthNotice } from "./components/auth-notice";
 export { AuthShell } from "./components/auth-shell";
+export { GuestOnly } from "./components/guest-only";
 export { FormSkeleton } from "./components/form-skeleton";
 export { ForgotPasswordForm } from "./components/forgot-password-form";
 export { LoginForm } from "./components/login-form";
 export { LogoutButton } from "./components/logout-button";
 export { ResetPasswordSection } from "./components/reset-password-section";
-export { SignUpForm } from "./components/sign-up-form";
+export { SignUpDetailsSection } from "./components/sign-up-details-section";
+export { SignUpPhoneForm } from "./components/sign-up-phone-form";
+export { SignUpVerifySection } from "./components/sign-up-verify-section";
 export { UserMenu } from "./components/user-menu";
 export { VerifyPhoneSection } from "./components/verify-phone-section";
 export { AUTH_ROUTES } from "./constants";

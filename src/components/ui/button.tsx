@@ -7,7 +7,7 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const variants = {
-  primary: "bg-brand-gradient text-white shadow-lg shadow-violet-600/25 hover:shadow-xl hover:brightness-110",
+  primary: "bg-brand-gradient text-white shadow-lg shadow-orange-700/25 hover:shadow-xl hover:brightness-110",
   secondary: "border border-slate-200 bg-white text-slate-700 shadow-sm hover:border-violet-200 hover:bg-violet-50/50",
   ghost: "text-violet-700 hover:bg-violet-50",
 };

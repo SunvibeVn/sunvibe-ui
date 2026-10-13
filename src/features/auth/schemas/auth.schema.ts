@@ -48,6 +48,12 @@ const optionalEmail = z
 
 const passwordsMatch = { path: ["confirmPassword"], message: "Passwords do not match." };
 
+const fullName = z
+  .string()
+  .trim()
+  .min(6, "Full name must be 6 to 100 characters.")
+  .max(100, "Full name must be 6 to 100 characters.");
+
 export const loginSchema = z.object({
   username: phone,
   password: z.string().min(1, "Enter your password."),
@@ -55,11 +61,7 @@ export const loginSchema = z.object({
 
 export const registerSchema = z
   .object({
-    fullName: z
-      .string()
-      .trim()
-      .min(6, "Full name must be 6 to 100 characters.")
-      .max(100, "Full name must be 6 to 100 characters."),
+    fullName,
     username: phone,
     email: optionalEmail,
     idCardNumber: z
@@ -68,7 +70,17 @@ export const registerSchema = z
       .regex(/^(|\d{9}|\d{12})$/, "Enter a 9-digit CMND or 12-digit CCCD number."),
     password: strongPassword,
     confirmPassword: z.string(),
+    /** Proof from the SMS step ("verify first, register later"); auth-service refuses a register without it. */
+    registrationToken: z.string().optional(),
   })
+  .refine((data) => data.password === data.confirmPassword, passwordsMatch);
+
+/** Step 1 of sign-up: only the phone number, which receives the SMS code. */
+export const signUpPhoneSchema = z.object({ username: phone });
+
+/** Step 3 of sign-up: what the person fills in once the phone is verified. */
+export const signUpDetailsSchema = z
+  .object({ fullName, password: strongPassword, confirmPassword: z.string() })
   .refine((data) => data.password === data.confirmPassword, passwordsMatch);
 
 export const otpSchema = z.object({ code: otpCode });
@@ -91,5 +103,6 @@ export const resetPasswordSchema = resetPasswordFieldsSchema.refine(
 );
 
 export type LoginInput = z.infer<typeof loginSchema>;
+export type SignUpDetailsInput = z.infer<typeof signUpDetailsSchema>;
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type ResetPasswordInput = z.infer<typeof resetPasswordSchema>;

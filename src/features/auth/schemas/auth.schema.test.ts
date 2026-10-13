@@ -6,6 +6,8 @@ import {
   otpSchema,
   registerSchema,
   resetPasswordSchema,
+  signUpDetailsSchema,
+  signUpPhoneSchema,
 } from "./auth.schema";
 
 const validRegistration = {
@@ -94,5 +96,31 @@ describe("otp, forgot and reset schemas", () => {
     expect(resetPasswordSchema.safeParse(base).success).toBe(true);
     expect(resetPasswordSchema.safeParse({ ...base, resetToken: "" }).success).toBe(false);
     expect(resetPasswordSchema.safeParse({ ...base, confirmPassword: "x" }).success).toBe(false);
+  });
+});
+
+describe("signUpPhoneSchema", () => {
+  it("accepts a formatted phone and returns digits only", () => {
+    const result = signUpPhoneSchema.safeParse({ username: "+84 90 123 4567" });
+    expect(result.success && result.data.username).toBe("0901234567");
+  });
+
+  it("rejects a too-short phone", () => {
+    expect(signUpPhoneSchema.safeParse({ username: "12345" }).success).toBe(false);
+  });
+});
+
+describe("signUpDetailsSchema", () => {
+  const valid = { fullName: "Nguyen Van An", password: "Sunvibe@2026", confirmPassword: "Sunvibe@2026" };
+
+  it("accepts a name and a matching strong password", () => {
+    expect(signUpDetailsSchema.safeParse(valid).success).toBe(true);
+  });
+
+  it("rejects a short name, a weak password and a mismatch", () => {
+    expect(signUpDetailsSchema.safeParse({ ...valid, fullName: "An" }).success).toBe(false);
+    expect(signUpDetailsSchema.safeParse({ ...valid, password: "weak", confirmPassword: "weak" }).success).toBe(false);
+    const mismatch = signUpDetailsSchema.safeParse({ ...valid, confirmPassword: "Other@2026" });
+    expect(mismatch.success).toBe(false);
   });
 });

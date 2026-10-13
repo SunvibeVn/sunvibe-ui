@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { ArrowRightIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
@@ -26,6 +27,7 @@ export function LoginForm({ next }: { next?: string }) {
 
       <FormField id="username" label="Phone number" error={phoneError}>
         <Input
+          compact
           id="username"
           name="username"
           type="tel"
@@ -50,6 +52,7 @@ export function LoginForm({ next }: { next?: string }) {
         }
       >
         <PasswordInput
+          compact
           id="password"
           name="password"
           autoComplete="current-password"
@@ -59,7 +62,9 @@ export function LoginForm({ next }: { next?: string }) {
         />
       </FormField>
 
-      <SubmitButton>Log in</SubmitButton>
+      <SubmitButton>
+        Log in <ArrowRightIcon size={16} />
+      </SubmitButton>
     </form>
   );
 }
