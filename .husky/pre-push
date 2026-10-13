@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+# Block direct pushes to main (husky owns core.hooksPath here, so .git/hooks/pre-push is not used).
+# Same rule as sunvibe-hub/scripts/git-hooks/pre-push. Emergency bypass: git push --no-verify
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ]; then
+    echo "Direct push to main is blocked. Push a branch and open a PR." >&2
+    exit 1
+  fi
+done
+exit 0

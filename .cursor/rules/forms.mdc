@@ -1,0 +1,12 @@
+---
+description: Form conventions
+globs: src/**/*-form.tsx, src/**/*Form*.tsx, src/**/schemas/**, src/**/forms/**
+alwaysApply: false
+---
+- No form library. Use a native <form action={...}> with useActionState and the FormState helpers in
+  src/features/<feature>/lib/form-state.ts; field errors via use-field-errors.
+- Validate with zod 4 schemas in src/features/<feature>/schemas (shared by client and action).
+- Validation rules mirror the API DTO constraints (OpenAPI contract, or the BE request records).
+- Map API error codes to field errors or a form-level message; never show raw server errors.
+- Use SubmitButton (useFormStatus) so submit is disabled while pending; prevent double submit.
+- Every schema and action gets a Vitest test next to it (*.test.ts).

@@ -1,0 +1,19 @@
+---
+description: How the UI talks to the API
+globs: src/**/*.ts, src/**/*.tsx
+alwaysApply: false
+---
+- Target (ADR-001): no BFF. Authenticated calls go straight from the browser to Spring Boot
+  (NEXT_PUBLIC_API_URL, not defined yet) with credentials: 'include'.
+- Current state: auth uses Server Actions (src/features/auth/actions) + src/lib/api/http-client.ts with the
+  server-only API_BASE_URL, and Next-owned HttpOnly cookies sv_at / sv_rt (src/features/auth/session).
+  Keep it working; do not add new Server Actions or Route Handlers that proxy the API for new features
+  unless the plan says so.
+- New calls: openapi-fetch createClient<paths>() with types from src/api/generated/schema.d.ts (npm run gen:api).
+  Never hand-write endpoint URLs that are not in sunvibe-server/api/openapi.json.
+- If an endpoint is missing, STOP and write it into the hub docs/plans/<feature>-api-gaps.md.
+- Public SEO pages (listing search/detail) may fetch PUBLIC endpoints in Server Components.
+  Never send user tokens from the server for new code.
+- Access token in memory only (auth store), sent as Authorization: Bearer. Refresh token is an
+  httpOnly cookie set by the API. Never use localStorage or sessionStorage for tokens.
+- API errors: use ApiError from src/lib/api; map error codes to UI messages, never show raw server text.

@@ -30,6 +30,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Generated from sunvibe-server/api/openapi.json by `npm run gen:api`.
+    "src/api/generated/**",
   ]),
 ]);
 
