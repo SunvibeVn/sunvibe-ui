@@ -11,7 +11,7 @@ alwaysApply: false
   unless the plan says so.
 - New calls: openapi-fetch createClient<paths>() with types from src/api/generated/schema.d.ts (npm run gen:api).
   Never hand-write endpoint URLs that are not in sunvibe-server/api/openapi.json.
-- If an endpoint is missing, STOP and write it into the hub docs/plans/<feature>-api-gaps.md.
+- If an endpoint is missing, STOP and write it into the hub docs/features/<feature>/impl/<feature>-api-gaps.md.
 - Public SEO pages (listing search/detail) may fetch PUBLIC endpoints in Server Components.
   Never send user tokens from the server for new code.
 - Access token in memory only (auth store), sent as Authorization: Bearer. Refresh token is an
