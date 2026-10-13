@@ -8,11 +8,11 @@ export const metadata: Metadata = { title: "Log in" };
 export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <>
-      <AuthHeader title="Welcome back" description="Log in with your phone number to manage your rentals." />
+      <AuthHeader title="Log in" centered />
       <Suspense fallback={<FormSkeleton fields={2} />}>
         <LoginSection searchParams={searchParams} />
       </Suspense>
-      <p className="mt-8 text-center text-sm text-slate-600">
+      <p className="mt-6 text-center text-sm text-slate-600">
         New to Sunvibe?{" "}
         <Link href={AUTH_ROUTES.signUp} className="font-semibold text-violet-700 hover:text-violet-800">
           Create an account

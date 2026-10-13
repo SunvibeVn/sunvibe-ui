@@ -6,6 +6,7 @@ import type { LoginInput, RegisterInput, ResetPasswordInput } from "../schemas/a
 import type {
   AuthTokenResponse,
   PasswordForgotResult,
+  RegistrationTokenResult,
   UserProfile,
   VerificationSendResult,
 } from "../types/auth.types";
@@ -28,6 +29,28 @@ export const authService = {
   register(input: RegisterInput, context: CallContext = {}) {
     return toAuthSession(() =>
       authApi.postRaw<ApiResponse<AuthTokenResponse>>("/api/users/command/register", input, options(context)),
+    );
+  },
+
+  /** Sign-up step 1: texts a code to a phone number that has no account yet. Public endpoint. */
+  async sendRegistrationCode(phoneNumber: string, context: CallContext = {}) {
+    return unwrap(
+      await authApi.post<ApiResponse<VerificationSendResult>>(
+        "/api/auth/registration/phone/send",
+        { phoneNumber },
+        options(context),
+      ),
+    );
+  },
+
+  /** Sign-up step 2: exchanges the right code for the single-use registration token. */
+  async verifyRegistrationCode(phoneNumber: string, code: string, context: CallContext = {}) {
+    return unwrap(
+      await authApi.post<ApiResponse<RegistrationTokenResult>>(
+        "/api/auth/registration/phone/verify",
+        { phoneNumber, code },
+        options(context),
+      ),
     );
   },
 

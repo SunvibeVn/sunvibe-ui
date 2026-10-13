@@ -56,8 +56,8 @@ export function ProductPreview() {
           ))}
         </ul>
 
-        <div className="mt-4 flex items-start gap-3 rounded-2xl bg-navy-950 p-4 text-sm text-slate-100">
-          <SparkleIcon size={18} className="mt-0.5 shrink-0 text-cyan-400" />
+        <div className="mt-4 flex items-start gap-3 rounded-2xl bg-brand-gradient p-4 text-sm text-white">
+          <SparkleIcon size={18} className="mt-0.5 shrink-0 text-amber-100" />
           <p>
             Viewing scheduled with Linh for Sat, 10:00 AM. Lease draft and
             background check started automatically.

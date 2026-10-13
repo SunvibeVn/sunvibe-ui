@@ -78,3 +78,47 @@ describe("authService authenticated calls", () => {
     expect(new Headers(init.headers).get("cookie")).toBe("cookie-jwt-rf=refresh-1");
   });
 });
+
+describe("authService sign-up verification", () => {
+  it("asks auth-service to text a code to the phone number, without a token", async () => {
+    const sent = { channel: "PHONE", sentTo: "090****567", expiresAt: "2026-10-12T10:10:00Z", resendAvailableAt: "2026-10-12T10:01:00Z" };
+    const fetchMock = respond({ code: 200, result: sent });
+
+    expect(await authService.sendRegistrationCode("0901234567", { headers: { "X-Forwarded-For": "203.0.113.7" } })).toEqual(sent);
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.toString()).toBe("http://api.test/api/auth/registration/phone/send");
+    expect(JSON.parse(String(init.body))).toEqual({ phoneNumber: "0901234567" });
+    expect(new Headers(init.headers).get("authorization")).toBeNull();
+    expect(new Headers(init.headers).get("x-forwarded-for")).toBe("203.0.113.7");
+  });
+
+  it("exchanges the code for the registration token", async () => {
+    const issued = { registrationToken: "token-1", expiresAt: "2026-10-12T10:15:00Z" };
+    const fetchMock = respond({ code: 200, result: issued });
+
+    expect(await authService.verifyRegistrationCode("0901234567", "123456")).toEqual(issued);
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.toString()).toBe("http://api.test/api/auth/registration/phone/verify");
+    expect(JSON.parse(String(init.body))).toEqual({ phoneNumber: "0901234567", code: "123456" });
+  });
+
+  it("presents the registration token when registering", async () => {
+    const fetchMock = respond(tokenBody, ["cookie-jwt=access-1; Path=/", "cookie-jwt-rf=refresh-1; Path=/api/auth"]);
+
+    await authService.register({
+      fullName: "Nguyen Van An",
+      username: "0901234567",
+      email: "",
+      idCardNumber: "",
+      password: "Sunvibe@2026",
+      confirmPassword: "Sunvibe@2026",
+      registrationToken: "token-1",
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+    expect(url.toString()).toBe("http://api.test/api/users/command/register");
+    expect(JSON.parse(String(init.body))).toMatchObject({ username: "0901234567", registrationToken: "token-1" });
+  });
+});

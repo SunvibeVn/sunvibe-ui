@@ -2,6 +2,7 @@ import { Logo } from "@/components/brand/logo";
 import { ArrowRightIcon, ArrowUpIcon, MailIcon } from "@/components/icons";
 import { footerNav } from "@/config/navigation";
 import { siteConfig } from "@/config/site";
+import { BackToTop } from "./back-to-top";
 
 const footerTags = ["AI Matchmaking", "Agentic Workflows", "24/7 Assistant"];
 
@@ -29,7 +30,7 @@ export function SiteFooter() {
             </div>
             <a
               href={siteConfig.links.waitlist}
-              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-navy-950 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-navy-800"
+              className="group mt-8 inline-flex items-center gap-2 rounded-full bg-brand-gradient px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:brightness-110"
             >
               Request Early Access
               <ArrowRightIcon
@@ -72,16 +73,15 @@ export function SiteFooter() {
               <MailIcon size={16} />
               Contact us: {siteConfig.contactEmail}
             </a>
-            <a
-              href="#top"
-              className="group inline-flex items-center gap-1.5 rounded-full bg-brand-gradient px-4 py-2 text-sm font-semibold text-white shadow-md shadow-violet-600/25 transition-all hover:shadow-lg hover:shadow-violet-600/30 hover:brightness-110"
+            <BackToTop
+              className="group inline-flex items-center gap-1.5 rounded-full bg-navy-950 px-4 py-2 text-sm font-semibold text-white shadow-md transition-colors hover:bg-navy-800"
             >
               Back to top
               <ArrowUpIcon
                 size={14}
                 className="transition-transform group-hover:-translate-y-0.5"
               />
-            </a>
+            </BackToTop>
           </div>
         </div>
       </div>

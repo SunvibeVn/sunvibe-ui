@@ -46,7 +46,7 @@ export function HeroSection() {
           <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row lg:justify-start">
             <a
               href={siteConfig.links.waitlist}
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-violet-600/25 transition-all hover:shadow-xl hover:shadow-violet-600/30 hover:brightness-110 sm:w-auto"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-brand-gradient px-7 py-3.5 text-base font-semibold text-white shadow-lg shadow-orange-700/25 transition-all hover:shadow-xl hover:shadow-orange-700/30 hover:brightness-110 sm:w-auto"
             >
               Request Early Access
               <ArrowRightIcon

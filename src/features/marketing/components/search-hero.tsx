@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { MapPinIcon, SearchIcon } from "@/components/icons";
 import {
   propertySearchTypes,
@@ -10,22 +11,16 @@ import {
 const selectClassName =
   "search-select h-11 w-full rounded-md border border-slate-300 bg-white px-3 pr-9 text-sm text-slate-800 outline-none transition-colors focus:border-navy-800 focus:ring-2 focus:ring-navy-800/15";
 
-export function SearchHero() {
+/** `prompt` goes under the search card; the page decides whether to show it (e.g. guests only). */
+export function SearchHero({ prompt }: { prompt?: ReactNode }) {
   return (
-    <section
-      aria-label="Property search"
-      className="text-white"
-      style={{
-        background:
-          "linear-gradient(135deg, #f3a738 0%, #d47000 45%, #9e4600 80%, #803800 100%)",
-      }}
-    >
-      <div className="mx-auto flex max-w-6xl flex-col px-4 py-10 sm:px-6 sm:py-14 lg:px-8 lg:py-16">
+    <section aria-label="Property search" className="rounded-b-2xl bg-brand-gradient text-white">
+      <div className="mx-auto flex max-w-6xl flex-col px-4 pt-8 pb-8 sm:px-6 sm:pt-11 sm:pb-11 lg:px-8 lg:pt-13 lg:pb-13">
         <h1 className="text-center text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
           This is where we start
         </h1>
 
-        <div className="mt-8 rounded-xl bg-white p-4 text-slate-900 shadow-lg sm:p-5 lg:mt-10 lg:px-5 lg:py-4">
+        <div className="mt-4 rounded-xl bg-white p-4 text-slate-900 shadow-lg sm:p-5 lg:mt-10 lg:px-5 lg:py-4">
           <form role="search" method="get" action="/" className="flex flex-col gap-4 lg:flex-row lg:items-stretch lg:gap-4">
             <fieldset className="min-w-0 lg:flex lg:w-[8.75rem] lg:shrink-0">
               <legend className="sr-only">Property type</legend>
@@ -116,17 +111,24 @@ export function SearchHero() {
           </form>
         </div>
 
-        <p className="mt-5 text-center text-sm font-medium text-white sm:text-base">
-          Find the right home faster:{" "}
-          <Link href="/sign-up" className="underline underline-offset-2 hover:text-white/90">
-            sign up
-          </Link>{" "}
-          or{" "}
-          <Link href="/login" className="underline underline-offset-2 hover:text-white/90">
-            log in
-          </Link>
-        </p>
+        {prompt}
       </div>
     </section>
+  );
+}
+
+/** "Find the right home faster: sign up or log in", meant for visitors who are not signed in. */
+export function SignUpPrompt() {
+  return (
+    <p className="mt-5 text-center text-sm font-medium text-white sm:text-base">
+      Find the right home faster:{" "}
+      <Link href="/sign-up" className="underline underline-offset-2 hover:text-white/90">
+        sign up
+      </Link>{" "}
+      or{" "}
+      <Link href="/login" className="underline underline-offset-2 hover:text-white/90">
+        log in
+      </Link>
+    </p>
   );
 }
