@@ -15,9 +15,10 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Dev: npm run dev
 - Build: npm run build
 - Lint: npm run lint
-- Typecheck: npx tsc --noEmit (no npm script yet)
+- Typecheck: npm run typecheck
 - Test: npm test (Vitest, src/**/*.test.ts)
-- Generate API client: TODO(owner): added in setup Phase 7 (reads ../sunvibe-server/api/openapi.json)
+- Generate API types: npm run gen:api (reads ../sunvibe-server/api/openapi.json -> src/api/generated/schema.d.ts; commit it)
+- Git hooks (husky): pre-commit runs eslint --fix on staged files; pre-push blocks pushes to main
 
 ## Architecture
 - src/app: routes in groups (auth), (marketing), (onboarding), (platform). Pages stay thin.
@@ -37,8 +38,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Current state: auth runs through Server Actions that call the API with the server-only API_BASE_URL,
   and Next keeps its own HttpOnly session cookies (sv_at / sv_rt). Keep that code working until a
   planned auth-migration task replaces it; do not add new BFF-style endpoints or Route Handlers.
-- Use the generated client in src/api/generated once it exists (Phase 7). Never invent endpoint URLs;
-  check sunvibe-server/api/openapi.json (or the BE controllers until it exists).
+- New API calls use openapi-fetch typed with src/api/generated/schema.d.ts (paths). Never invent endpoint URLs;
+  regenerate with npm run gen:api when the contract changes.
 - Missing endpoint: STOP and write it to the hub docs/plans/<feature>-api-gaps.md. Do not invent it.
 - Access token in memory only; refresh token is an httpOnly cookie set by the API. Never use localStorage
   or sessionStorage for tokens.
@@ -51,7 +52,7 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - User-facing text is Vietnamese; keep strings out of logic so i18n can be added later.
 
 ## Before saying "done"
-1. npm run lint, npx tsc --noEmit and npm test pass
+1. npm run lint, npm run typecheck and npm test pass
 2. The feature works in the browser against the local API (http://localhost:8082)
 
 ## Shared context (hub docs)
