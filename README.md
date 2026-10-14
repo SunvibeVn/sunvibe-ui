@@ -101,7 +101,7 @@ The browser never talks to sunvibe-server directly:
 3. `src/proxy.ts` refreshes an expired access token before the page renders. It also redirects signed-out visitors away from `/account` and `/verify-phone`, and signed-in users away from `/login` and `/sign-up`.
 4. Pages authorize with `requireUser()` from `@/features/auth`. The proxy's redirects are only a UX shortcut.
 
-**Backend requirements before production:** see "Backend changes" in `docs/superpowers/specs/2026-10-10-auth-feature-design.md`. Two items are needed: forwarding the real client IP, and a configurable domain for the reset link. Deployments also need an edge proxy (load balancer, Nginx, CDN) that **overwrites** `X-Forwarded-For` with the real client address. Next.js passes on whatever the client sent, and the backend rate-limits on that header.
+**Backend requirements before production:** see "Backend changes" in `sunvibe-hub/docs/features/auth/auth-login/impl/specs/2026-10-10-auth-feature-design.md`. Two items are needed: forwarding the real client IP, and a configurable domain for the reset link. Deployments also need an edge proxy (load balancer, Nginx, CDN) that **overwrites** `X-Forwarded-For` with the real client address. Next.js passes on whatever the client sent, and the backend rate-limits on that header.
 
 ### Adding a feature for a new backend module
 
