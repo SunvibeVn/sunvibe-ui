@@ -49,6 +49,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Every page handles loading, empty and error states (route-group error.tsx exists; add loading/empty UI).
 - Server-only modules start with import "server-only"; never import them from Client Components.
 - Never read or print .env files. Only NEXT_PUBLIC_* vars reach the browser.
+- Never commit a secret: CI gitleaks-scans new commits (.github/workflows/secret-scan.yml). A false positive goes
+  into .gitleaksignore as a fingerprint (never the value), only after owner review, in its own PR to main first.
 - User-facing text is Vietnamese; keep strings out of logic so i18n can be added later.
 
 ## Before saying "done"
