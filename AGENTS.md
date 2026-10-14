@@ -40,7 +40,7 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
   planned auth-migration task replaces it; do not add new BFF-style endpoints or Route Handlers.
 - New API calls use openapi-fetch typed with src/api/generated/schema.d.ts (paths). Never invent endpoint URLs;
   regenerate with npm run gen:api when the contract changes.
-- Missing endpoint: STOP and write it to the hub docs/features/<feature>/impl/<feature>-api-gaps.md. Do not invent it.
+- Missing endpoint: STOP and write it to the hub docs/features/<module>/<feature>/impl/<feature>-api-gaps.md. Do not invent it.
 - Access token in memory only; refresh token is an httpOnly cookie set by the API. Never use localStorage
   or sessionStorage for tokens.
 
@@ -58,8 +58,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
    feature/* and fix/* branches). Cursor -> tell the owner to run /update-docs <feature> in a hub Claude session.
 
 ## Shared context (hub docs)
-- In Cursor workspace: hub-docs/features/INDEX.md, then hub-docs/features/<feature>/ (brief/ = business truth,
-  read only; as-built/; impl/ = spec, plan, FE handoff).
-- From a Claude session in this repo: ../docs/features/INDEX.md and ../docs/features/<feature>/
+- In Cursor workspace: hub-docs/features/INDEX.md, then hub-docs/features/<module>/<feature>/ (brief/ = business
+  truth, read only; as-built/; impl/ = spec, plan, FE handoff; latest only). Module rules: <module>/brief/ if present.
+- From a Claude session in this repo: ../docs/features/INDEX.md and ../docs/features/<module>/<feature>/
 - Business terms: hub-docs/product/glossary.md
 - Decision on API access: hub-docs/decisions/ADR-001-direct-browser-api.md
