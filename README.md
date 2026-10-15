@@ -10,7 +10,7 @@ npm install
 npm run dev                  # http://localhost:3000
 ```
 
-Sign-up, login and the account page need [sunvibe-server](../sunvibe-server) running (default `http://localhost:8082`).
+Sign-up, login and the account page need [sunvibe-server](../sunvibe-server) running (default `http://localhost:8081`).
 
 | Command              | What it does                 |
 | -------------------- | ---------------------------- |
@@ -26,7 +26,7 @@ Sign-up, login and the account page need [sunvibe-server](../sunvibe-server) run
 | Variable               | Where it's used | Purpose                                                                       |
 | ---------------------- | --------------- | ----------------------------------------------------------------------------- |
 | `NEXT_PUBLIC_SITE_URL` | Server + client | Public site URL; makes share-preview image links absolute                     |
-| `API_BASE_URL`         | Server only     | Base URL of sunvibe-server (default `http://localhost:8082` in development)   |
+| `API_BASE_URL`         | Server only     | Base URL of sunvibe-server (default `http://localhost:8081` in development)   |
 
 `API_BASE_URL` must never get the `NEXT_PUBLIC_` prefix. The browser never calls the backend: only Server Components, Server Actions and `src/proxy.ts` do.
 
