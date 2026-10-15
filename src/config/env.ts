@@ -9,7 +9,7 @@ export const serverEnv = {
     const value = process.env.API_BASE_URL;
     if (value) return value;
     if (isProduction) throw new Error("Missing environment variable: API_BASE_URL");
-    return "http://localhost:8082";
+    return "http://localhost:8081";
   },
   isProduction,
 };
