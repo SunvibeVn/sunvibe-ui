@@ -269,8 +269,245 @@ export interface paths {
         };
         get?: never;
         put?: never;
+        /** Create a property for an owner (SALE, SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN) */
         post: operations["createProperty"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/owner-intake-requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send the owner intake form (anonymous, rate-limited): creates an owner lead
+         * @description 202 with the request code, also when the same request is sent again (same Idempotency-Key and body within 24 hours, or the same phone, intent, ward and address within 5 minutes); such a replay adds the header Idempotent-Replayed: true. Body at most 16 KB.
+         */
+        post: operations["submit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/provinces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the provinces of the catalog (anonymous), sorted by name */
+        get: operations["listProvinces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/provinces/{provinceCode}/wards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the wards of a province (anonymous), sorted by name */
+        get: operations["listWards"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List owner leads (SALE, SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description scope=mine (default): leads assigned to the caller; unassigned: status NEW; all: every lead. A SALE may only use mine. The items hold no phone, email, address or coordinates.
+         */
+        get: operations["list_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Contact data, consent, possible duplicates and history. Every call is recorded in the access log. A lead the caller may not see answers 404 like a lead that does not exist.
+         */
+        get: operations["get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/activities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Add a note to an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description A note with nextActionAt also updates the lead (new version); without it the lead row is unchanged.
+         */
+        post: operations["addNote"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign an owner lead (SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The current assignee again changes nothing (200, same version).
+         */
+        post: operations["assign_1"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/status-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the status of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Closing (DUPLICATE, REJECTED, WITHDRAWN) needs a reason; DUPLICATE also needs duplicateOfLeadId, a lead the caller can see.
+         */
+        post: operations["changeStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/sale-territories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the wards of a province and who looks after each (ADMIN, SUPER_ADMIN) */
+        get: operations["list"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/sale-territories/{wardCode}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Give a ward to a SALE or SALE_LEADER (ADMIN, SUPER_ADMIN)
+         * @description Replaces whoever had the ward; the same person again changes nothing. Existing leads keep their assignee.
+         */
+        put: operations["assign"];
+        post?: never;
+        /**
+         * Leave a ward without a person (ADMIN, SUPER_ADMIN)
+         * @description 204 also when nobody looked after the ward. Existing leads keep their assignee.
+         */
+        delete: operations["unassign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/users/{userId}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read an account's roles (ADMIN, SUPER_ADMIN) */
+        get: operations["getRoles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/users/{userId}/roles/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Grant a role (idempotent)
+         * @description Grantable: OWNER, CUSTOMER, SALE, SALE_LEADER, SALES_MANAGER, LISTING_REVIEWER; ADMIN only for SUPER_ADMIN. Only an account that may sign in gets a role. Granting a role already held changes nothing.
+         */
+        put: operations["grantRole"];
+        post?: never;
+        /**
+         * Revoke a role (idempotent)
+         * @description Revocable: OWNER, CUSTOMER, SALE, SALE_LEADER, SALES_MANAGER, LISTING_REVIEWER; ADMIN only for SUPER_ADMIN. Revoking a held role ends every session of the account; revoking a role that is not held changes nothing. An account may end with no roles.
+         */
+        delete: operations["revokeRole"];
         options?: never;
         head?: never;
         patch?: never;
@@ -280,6 +517,15 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** @description Add a note to an owner lead */
+        AddLeadNoteRequest: {
+            /**
+             * Format: date-time
+             * @description Optional; when the next action on the lead is due (left out keeps the current one), from 1970-01-01T00:00:00Z to the end of year 9999
+             */
+            nextActionAt?: string;
+            note: string;
+        };
         ApiResponseLoginResponse: {
             /** Format: int32 */
             code?: number;
@@ -322,6 +568,142 @@ export interface components {
             message?: string;
             result?: unknown;
         };
+        AskingPriceRequest: {
+            /**
+             * Format: int64
+             * @example 15000000
+             */
+            amount?: string;
+            /**
+             * @example VND
+             * @enum {string}
+             */
+            currency?: "VND";
+            /** @enum {string} */
+            unit?: "NIGHT" | "MONTH" | "TOTAL";
+        };
+        AskingPriceResponse: {
+            /** Format: int64 */
+            amount?: number;
+            /** @example VND */
+            currency?: string;
+            /** @enum {string} */
+            unit?: "NIGHT" | "MONTH" | "TOTAL";
+        };
+        /** @description Give an owner lead to a SALE or SALE_LEADER */
+        AssignLeadRequest: {
+            /** @description User id (ULID) of the new assignee */
+            assigneeUserId: string;
+            /**
+             * Format: int64
+             * @description The lead version the caller last saw
+             */
+            expectedVersion: number;
+            /** @description Optional; kept in the history entry of the assignment */
+            note?: string;
+        };
+        /** @description Give a ward to a SALE or SALE_LEADER */
+        AssignTerritoryRequest: {
+            /** @description User id (ULID) of the person who looks after the ward */
+            userId: string;
+        };
+        BaseErrorModel: {
+            /** Format: int32 */
+            code?: number;
+            /** Format: date-time */
+            errorTime?: string;
+            message?: string;
+        };
+        /** @description Move an owner lead to another status */
+        ChangeLeadStatusRequest: {
+            /** @description Required for DUPLICATE: id of the lead this one repeats */
+            duplicateOfLeadId?: string;
+            /**
+             * Format: int64
+             * @description The lead version the caller last saw
+             */
+            expectedVersion: number;
+            /**
+             * Format: date-time
+             * @description Optional; when the next action on the lead is due, from 1970-01-01T00:00:00Z to the end of year 9999
+             */
+            nextActionAt?: string;
+            note?: string;
+            /** @description Required to close the lead (DUPLICATE, REJECTED, WITHDRAWN) */
+            reason?: string;
+            /** @enum {string} */
+            toStatus: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+        };
+        ConsentRequest: {
+            /** @example true */
+            accepted: boolean;
+            /**
+             * @description Version of the consent notice the owner was shown
+             * @example owner-intake-2026-10
+             */
+            noticeVersion: string;
+        };
+        ConsentResponse: {
+            /** Format: date-time */
+            acceptedAt?: string;
+            noticeVersion?: string;
+        };
+        DuplicateCandidateResponse: {
+            /** Format: date-time */
+            createdAt?: string;
+            id?: string;
+            requestCode?: string;
+            /** @enum {string} */
+            status?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+        };
+        ErrorResponse: {
+            code?: string;
+            correlationId?: string;
+            errors?: unknown[];
+            message?: string;
+        };
+        /** @description History entry of an owner lead */
+        LeadActivityResponse: {
+            /** @description User id of the staff member; null for the system or the owner */
+            actorUserId?: string;
+            fromAssigneeId?: string;
+            /** @enum {string} */
+            fromStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /** Format: date-time */
+            nextActionAt?: string;
+            note?: string;
+            /** Format: date-time */
+            occurredAt?: string;
+            toAssigneeId?: string;
+            /** @enum {string} */
+            toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /** @enum {string} */
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED";
+        };
+        /** @description The new history entry and the lead after the note */
+        LeadNoteResponse: {
+            activity?: components["schemas"]["LeadActivityResponse"];
+            lead?: components["schemas"]["OwnerLeadSummaryResponse"];
+        };
+        /** @description One page of owner leads, newest first */
+        LeadPageResponse: {
+            items?: components["schemas"]["OwnerLeadSummaryResponse"][];
+            /**
+             * Format: int32
+             * @description Zero-based page number
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description Page size asked for
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Leads over all pages that the caller can see
+             */
+            totalElements?: number;
+        };
         LoginRequest: {
             password: string;
             username: string;
@@ -337,6 +719,144 @@ export interface components {
             tokenType?: string;
             userEmail?: string;
             username?: string;
+        };
+        /** @description Owner intake form: a property owner asks Sunvibe to call back */
+        OwnerIntakeRequest: {
+            /** @example 12 Bạch Đằng, căn A-1203 */
+            addressDetail: string;
+            askingPrice?: components["schemas"]["AskingPriceRequest"];
+            /**
+             * Format: date
+             * @example 2026-11-01
+             */
+            availableFrom?: string;
+            consent: components["schemas"]["ConsentRequest"];
+            /** @example Nguyễn Thị Lan */
+            contactName: string;
+            /**
+             * Format: email
+             * @example lan@example.com
+             */
+            email?: string;
+            /** @enum {string} */
+            intent: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /**
+             * @description Give both latitude and longitude, or neither
+             * @example 16.0678
+             */
+            latitude?: number;
+            /** @example 108.2208 */
+            longitude?: number;
+            notes?: string;
+            /**
+             * @description Vietnamese phone number: 0 or +84, then 9 digits; spaces, dots, dashes and parentheses are ignored
+             * @example 0909 123 456
+             */
+            phone: string;
+            /** @example Buổi tối */
+            preferredCallbackTime?: string;
+            /** @enum {string} */
+            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE" | "TOWNHOUSE" | "LAND" | "OTHER";
+            /** @example 48 */
+            provinceCode: string;
+            /** @example 20242 */
+            wardCode: string;
+        };
+        OwnerIntakeResponse: {
+            /**
+             * @description Public code of the request: SV-XXXX-XXXX
+             * @example SV-7K3M-Q9TX
+             */
+            requestCode?: string;
+        };
+        /** @description Owner lead with contact data, consent, possible duplicates and history */
+        OwnerLeadDetailResponse: {
+            /** @description History, oldest first */
+            activities?: components["schemas"]["LeadActivityResponse"][];
+            addressDetail?: string;
+            /** @description Null when the owner gave no price */
+            askingPrice?: components["schemas"]["AskingPriceResponse"];
+            /** @description User id of the assignee; null when nobody holds the lead */
+            assignedUserId?: string;
+            /** Format: date */
+            availableFrom?: string;
+            closeReason?: string;
+            consent?: components["schemas"]["ConsentResponse"];
+            contactName?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @description Possible duplicates the caller can see, in either direction */
+            duplicateCandidates?: components["schemas"]["DuplicateCandidateResponse"][];
+            /** @description Lead this one repeats; null unless the caller can see that lead */
+            duplicateOfLeadId?: string;
+            email?: string;
+            id?: string;
+            /** @enum {string} */
+            intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /** @description Null when the owner gave no position */
+            latitude?: number;
+            /** @description Null when the owner gave no position */
+            longitude?: number;
+            /** Format: date-time */
+            nextActionAt?: string;
+            notes?: string;
+            /**
+             * @description Normalized phone number
+             * @example 0909123456
+             */
+            phone?: string;
+            /** @description True when the lead has at least one possible duplicate the caller can see */
+            possibleDuplicate?: boolean;
+            preferredCallbackTime?: string;
+            /** @enum {string} */
+            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE" | "TOWNHOUSE" | "LAND" | "OTHER";
+            /** @example 48 */
+            provinceCode?: string;
+            /** @example SV-7K3M-Q9TX */
+            requestCode?: string;
+            /** @enum {string} */
+            source?: "WEB" | "REFERRAL" | "OUTBOUND" | "PARTNER" | "STAFF_ENTRY";
+            /** @enum {string} */
+            status?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /**
+             * Format: int64
+             * @description Send it back as expectedVersion with the next change
+             */
+            version?: number;
+            /** @example 20242 */
+            wardCode?: string;
+            wardName?: string;
+        };
+        /** @description Owner lead in the staff queue (no phone, email, address or coordinates) */
+        OwnerLeadSummaryResponse: {
+            /** @description User id of the assignee; null when nobody holds the lead */
+            assignedUserId?: string;
+            contactName?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            id?: string;
+            /** @enum {string} */
+            intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /** Format: date-time */
+            nextActionAt?: string;
+            /** @description True when the lead has at least one possible duplicate the caller can see */
+            possibleDuplicate?: boolean;
+            /** @enum {string} */
+            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE" | "TOWNHOUSE" | "LAND" | "OTHER";
+            /** @example 48 */
+            provinceCode?: string;
+            /** @example SV-7K3M-Q9TX */
+            requestCode?: string;
+            /** @enum {string} */
+            status?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /**
+             * Format: int64
+             * @description Send it back as expectedVersion with the next change
+             */
+            version?: number;
+            /** @example 20242 */
+            wardCode?: string;
+            wardName?: string;
         };
         PasswordChangeRequest: {
             confirmPassword: string;
@@ -387,6 +907,7 @@ export interface components {
             /** Format: int32 */
             minRentMonths: number;
             monthlyPrice: number;
+            /** @description The owner's user id (required). The owner must be able to sign in and must not hold a staff or admin role; the owner gets the OWNER role if missing. The caller is never the owner by default. */
             ownerId: string;
             postalCode?: string;
             propertyCode: string;
@@ -440,6 +961,19 @@ export interface components {
             imageUrl: string;
             isPrimary?: boolean;
         };
+        /** @description A province or centrally run city of the official catalog */
+        ProvinceResponse: {
+            /**
+             * @description Official code
+             * @example 48
+             */
+            code?: string;
+            /**
+             * @description Name
+             * @example Đà Nẵng
+             */
+            name?: string;
+        };
         RegistrationPhoneSendRequest: {
             phoneNumber: string;
         };
@@ -451,6 +985,33 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
             registrationToken?: string;
+        };
+        /** @description Ward and the staff member who looks after it */
+        SaleTerritoryResponse: {
+            /**
+             * Format: date-time
+             * @description Null when nobody looks after the ward
+             */
+            assignedAt?: string;
+            /** @description User id of the person; null when nobody looks after the ward */
+            userId?: string;
+            /** @example 20242 */
+            wardCode?: string;
+            wardName?: string;
+            /**
+             * @description As in the catalog
+             * @enum {string}
+             */
+            wardType?: "WARD" | "COMMUNE" | "SPECIAL_ZONE";
+        };
+        /** @description 401/403 body written by Spring Security */
+        SecurityError: {
+            /** @example Forbidden */
+            error?: string;
+            /** @example You do not have permission to access this resource. */
+            message?: string;
+            /** @example /api/v1/staff/owner-leads */
+            path?: string;
         };
         UserProfileInfo: {
             accountStatus?: string;
@@ -471,6 +1032,12 @@ export interface components {
             registrationToken?: string;
             username: string;
         };
+        UserRolesResponse: {
+            /** @description Role names, sorted, e.g. CUSTOMER, OWNER, TENANT */
+            roles?: string[];
+            /** @description The account's user id */
+            userId?: string;
+        };
         VerificationConfirmRequest: {
             code: string;
         };
@@ -481,6 +1048,25 @@ export interface components {
             /** Format: date-time */
             resendAvailableAt?: string;
             sentTo?: string;
+        };
+        /** @description A ward, commune or special zone of a province */
+        WardResponse: {
+            /**
+             * @description Official code
+             * @example 20242
+             */
+            code?: string;
+            /**
+             * @description Name
+             * @example Hải Châu
+             */
+            name?: string;
+            /**
+             * @description WARD (Phường), COMMUNE (Xã) or SPECIAL_ZONE (Đặc khu)
+             * @example WARD
+             * @enum {string}
+             */
+            type?: "WARD" | "COMMUNE" | "SPECIAL_ZONE";
         };
     };
     responses: never;
@@ -864,13 +1450,877 @@ export interface operations {
             };
         };
         responses: {
-            /** @description OK */
-            200: {
+            /** @description Property created */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["PropertyCreateResponse"];
+                };
+            };
+            /** @description Invalid request (e.g. ownerId missing or blank: field ownerId) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"] | components["schemas"]["BaseErrorModel"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description Caller is not SALE, SALE_LEADER, SALES_MANAGER, ADMIN or SUPER_ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description Property code already exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Referenced master data is invalid, or the owner is unknown, inactive or staff */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submit: {
+        parameters: {
+            query?: never;
+            header?: {
+                /** @description Optional; 8 to 64 letters, digits, '-' or '_' (the client sends a UUID) */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerIntakeRequest"];
+            };
+        };
+        responses: {
+            /** @description Request accepted */
+            202: {
+                headers: {
+                    /** @description true when an earlier request's code is returned */
+                    "Idempotent-Replayed"?: "true";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerIntakeResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED (field errors, also for a bad Idempotency-Key) or MALFORMED_REQUEST (body is not readable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description IDEMPOTENCY_KEY_REUSED: the key was used within 24 hours for a different body */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: body over 16 KB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this client; see Retry-After */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: nothing was stored */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listProvinces: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Provinces */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ProvinceResponse"][];
+                };
+            };
+        };
+    };
+    listWards: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                provinceCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Wards of the province */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["WardResponse"][];
+                };
+            };
+            /** @description Unknown province code (code NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list_1: {
+        parameters: {
+            query?: {
+                scope?: "mine" | "unassigned" | "all";
+                /** @description Keep only these statuses (repeat the parameter); all when left out */
+                status?: ("NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN")[];
+                /**
+                 * @description Keep only leads of this ward
+                 * @example 20242
+                 */
+                wardCode?: string;
+                /** @description Zero-based page number */
+                page?: number;
+                /** @description Leads per page, 1 to 100 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of leads */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LeadPageResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on scope, status, wardCode, page or size */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or a SALE asked for scope unassigned or all */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+        };
+    };
+    get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The lead */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerLeadDetailResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    addNote: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddLeadNoteRequest"];
+            };
+        };
+        responses: {
+            /** @description The new history entry and the lead after it */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LeadNoteResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on note or nextActionAt; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INVALID_STATE_TRANSITION (field status): the lead is closed; or CONCURRENT_MODIFICATION (no field): a note with nextActionAt lost to a change saved at the same time */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    assign_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignLeadRequest"];
+            };
+        };
+        responses: {
+            /** @description The lead after the assignment */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerLeadSummaryResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on assigneeUserId, expectedVersion or note; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not SALE_LEADER, SALES_MANAGER or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedVersion) or INVALID_STATE_TRANSITION (field status: the lead is closed) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INELIGIBLE_ASSIGNEE (field assigneeUserId): unknown user, cannot sign in, or neither SALE nor SALE_LEADER */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    changeStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeLeadStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description The lead after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerLeadSummaryResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on toStatus, expectedVersion, reason, duplicateOfLeadId or note; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INVALID_STATE_TRANSITION (field toStatus, allowedValues lists the statuses allowed now) or CONCURRENT_MODIFICATION (field expectedVersion) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    list: {
+        parameters: {
+            query: {
+                /**
+                 * @description Province code
+                 * @example 48
+                 */
+                provinceCode: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Every ward of the province */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaleTerritoryResponse"][];
+                };
+            };
+            /** @description VALIDATION_FAILED on provinceCode */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: the province is not in the catalog */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    assign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wardCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignTerritoryRequest"];
+            };
+        };
+        responses: {
+            /** @description The ward after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SaleTerritoryResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on wardCode or userId; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: the ward is not in the catalog */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INELIGIBLE_ASSIGNEE (field userId): unknown user, cannot sign in, or neither SALE nor SALE_LEADER */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    unassign: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                wardCode: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Nobody looks after the ward now */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED on wardCode */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: the ward is not in the catalog */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The account's roles */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserRolesResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Caller is not ADMIN or SUPER_ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description No such account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaseErrorModel"];
+                };
+            };
+        };
+    };
+    grantRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                /** @description OWNER, CUSTOMER, SALE, SALE_LEADER, SALES_MANAGER, LISTING_REVIEWER; ADMIN only for SUPER_ADMIN */
+                role: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The account holds the role */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Role not grantable (SUPER_ADMIN, an old role or an unknown name); field role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Caller may not change this role (ADMIN changing ADMIN), changes their own roles, or is ADMIN and the account holds ADMIN or SUPER_ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description No such account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaseErrorModel"];
+                };
+            };
+            /** @description The account is locked or terminated; field userId */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    revokeRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+                /** @description OWNER, CUSTOMER, SALE, SALE_LEADER, SALES_MANAGER, LISTING_REVIEWER; ADMIN only for SUPER_ADMIN */
+                role: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The account does not hold the role */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Role not revocable (SUPER_ADMIN, an old role or an unknown name); field role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description Caller may not change this role (ADMIN changing ADMIN), changes their own roles, or is ADMIN and the account holds ADMIN or SUPER_ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            /** @description No such account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BaseErrorModel"];
                 };
             };
         };
