@@ -86,8 +86,7 @@
       "loading": "Đang tải bản đồ...",
       "failed": "Không tải được bản đồ. Bạn vẫn có thể gửi form mà không cần vị trí.",
       "specialZone": "Không cần chọn vị trí trên bản đồ cho Đặc khu {name}.",
-      "clear": "Bỏ vị trí",
-      "attribution": "© OpenStreetMap contributors"
+      "clear": "Bỏ vị trí"
     },
     "consent": {
       "label": "Đồng ý liên hệ",

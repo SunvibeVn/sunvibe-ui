@@ -41,8 +41,8 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
     expect(JSON.stringify(m)).not.toContain("Hoàng Sa");
   });
 
-  it("has the OpenStreetMap attribution", () => {
-    expect(m.map.attribution).toBe("© OpenStreetMap contributors");
+  it("keeps the map attribution out of the messages (Leaflet renders it as HTML; see lib/map-tiles.ts)", () => {
+    expect(m.map).not.toHaveProperty("attribution");
   });
 
   it("has the support code with the correlationId placeholder", () => {

@@ -8,12 +8,11 @@ import { useEffect } from "react";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
 import type { Pin } from "../lib/geo";
+import { TILE_ATTRIBUTION, TILE_REFERRER_POLICY, TILE_URL } from "../lib/map-tiles";
 
 /** Center of Đà Nẵng and a zoom that shows the city. */
 const CENTER: LatLngExpression = [16.0544, 108.2022];
 const ZOOM = 12;
-const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
-const COPYRIGHT_URL = "https://www.openstreetmap.org/copyright";
 
 // The default marker icon resolves its images from the CSS path, which bundlers break; serve copies from public/.
 const MARKER_ICON = icon({
@@ -58,7 +57,7 @@ export function LeafletMap({ pin, onPick, interactive }: LeafletMapProps) {
   const t = useTranslations("OwnerIntake");
   return (
     <MapContainer center={CENTER} zoom={ZOOM} scrollWheelZoom={false} className="h-full w-full" aria-label={t("map.label")}>
-      <TileLayer url={TILE_URL} attribution={`<a href="${COPYRIGHT_URL}">${t("map.attribution")}</a>`} />
+      <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} referrerPolicy={TILE_REFERRER_POLICY} />
       <ClickToPick onPick={onPick} interactive={interactive} />
       <KeepPinInView pin={pin} />
       {pin && (
