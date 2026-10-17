@@ -115,6 +115,48 @@ describe("validateOwnerIntake", () => {
       expect(errorsOf({ email: "a@b.vn" })).toEqual({});
       expect(errorsOf({ email: "not-an-email" })).toEqual({ email: "invalid" });
     });
+
+    // Server: Hibernate 9.1 @Email (AbstractEmailValidator, DomainNameUtil) plus @Pattern |[^@]+@[^@.]+(\.[^@.]+)+
+    it.each([
+      "a!b@x.vn",
+      "Ñ@x.vn",
+      "#$%&'*+/=?^_`{|}~-@x.vn",
+      "first.last@x.vn",
+      '"quoted local"@x.vn',
+      "a@b.c",
+      "a@b.1",
+      "a@mail-server.example.vn",
+      "a@bücher.vn",
+      "a@x!y.vn",
+      "a@[1.2.3.4]",
+      `${"a".repeat(64)}@x.vn`,
+      `a@${"b".repeat(63)}.vn`,
+    ])("accepts %j like the server", (email) => {
+      expect(errorsOf({ email })).toEqual({});
+    });
+
+    it.each([
+      `${"a".repeat(65)}@x.vn`,
+      `a@${"b".repeat(64)}.vn`,
+      `a@${"ü".repeat(60)}.vn`,
+      "a@b",
+      "a@b.vn.",
+      "a@.b.vn",
+      "a@b..vn",
+      ".a@x.vn",
+      "a.@x.vn",
+      "a..b@x.vn",
+      "a b@x.vn",
+      "a@b@x.vn",
+      '"a@b"@x.vn',
+      "a@-b.vn",
+      "a@b-.vn",
+      "a@b_c d.vn",
+      "😀@x.vn",
+      "@x.vn",
+    ])("refuses %j like the server", (email) => {
+      expect(errorsOf({ email })).toEqual({ email: "invalid" });
+    });
   });
 
   describe("asking price", () => {

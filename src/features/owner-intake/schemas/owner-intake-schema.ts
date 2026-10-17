@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import type { FieldErrorKind, FieldErrorKinds, FieldName, FormValues, Intent, PropertyType } from "../types/form";
 
+import { isValidEmail } from "./email";
+
 // Mirrors the server rules of handoff table 2.5 (POST /api/v1/public/owner-intake-requests).
 // Issue messages are FieldErrorKind values; lib/field-errors.ts turns them into i18n keys.
 
@@ -42,13 +44,6 @@ const PHONE_PATTERN = /^(0|\+84)[1-9][0-9]{8}$/;
 
 export function isValidPhone(value: string): boolean {
   return PHONE_PATTERN.test(value.replace(PHONE_SEPARATORS, ""));
-}
-
-const emailFormat = z.email();
-
-function isValidEmail(value: string): boolean {
-  const domain = value.slice(value.lastIndexOf("@") + 1);
-  return domain.includes(".") && emailFormat.safeParse(value).success;
 }
 
 const isoDate = z.iso.date();
