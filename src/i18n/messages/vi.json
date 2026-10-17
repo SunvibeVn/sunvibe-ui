@@ -98,7 +98,8 @@
       "requestCodeLabel": "Mã yêu cầu",
       "copy": "Sao chép mã",
       "copied": "Đã sao chép",
-      "copyFailed": "Không sao chép được, vui lòng ghi lại mã."
+      "copyFailed": "Không sao chép được, vui lòng ghi lại mã.",
+      "sendAnother": "Gửi yêu cầu ký gửi khác"
     },
     "errors": {
       "generic": "Không gửi được, vui lòng thử lại.",

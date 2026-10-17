@@ -121,10 +121,19 @@ export type OwnerIntakeFieldsProps = {
   disabled?: boolean;
   /** Forwarded from CatalogSelects: keep the submit disabled while no ward can be chosen. */
   onCatalogReadyChange?: (ready: boolean) => void;
+  /** Rendered right after the address (the map pin), so the visual order matches FIELD_ORDER. */
+  location?: ReactNode;
 };
 
 /** Every input of the owner intake form except the map pin and the consent block. */
-export function OwnerIntakeFields({ values, onChange, errors = {}, disabled, onCatalogReadyChange }: OwnerIntakeFieldsProps) {
+export function OwnerIntakeFields({
+  values,
+  onChange,
+  errors = {},
+  disabled,
+  onCatalogReadyChange,
+  location,
+}: OwnerIntakeFieldsProps) {
   const t = useTranslations("OwnerIntake");
   // Message keys come from fieldErrorMessage, which checked them with t.has (or fell back to errors.generic).
   const errorText = (field: FieldName) => {
@@ -196,6 +205,7 @@ export function OwnerIntakeFields({ values, onChange, errors = {}, disabled, onC
         value={values.addressDetail}
         onChange={set("addressDetail")}
       />
+      {location}
       <SelectField
         {...common("propertyType")}
         label={t("fields.propertyType.label")}

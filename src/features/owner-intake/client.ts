@@ -6,6 +6,7 @@ export type { ConsentFieldProps } from "./components/consent-field";
 export { LocationPicker } from "./components/location-picker";
 export type { LocationPickerProps } from "./components/location-picker";
 export { OwnerIntakeFields } from "./components/owner-intake-fields";
+export { OwnerIntakeForm } from "./components/owner-intake-form";
 export type { OwnerIntakeFieldsProps } from "./components/owner-intake-fields";
 export type { Pin } from "./lib/geo";
 export type { FormValues } from "./types/form";
