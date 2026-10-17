@@ -76,6 +76,11 @@ describe("loadProvinces", () => {
   it("a throwing client is failed", async () => {
     await expect(loadProvinces(THROWING_CLIENT)).resolves.toEqual({ status: "failed" });
   });
+
+  it("skips null entries in a 200 list", async () => {
+    const { client } = stub(() => json(200, [null, { code: "48", name: "Đà Nẵng" }]));
+    expect(await loadProvinces(client)).toEqual({ status: "ready", items: [{ code: "48", name: "Đà Nẵng" }] });
+  });
 });
 
 describe("loadWards", () => {
@@ -129,6 +134,11 @@ describe("loadWards", () => {
 
   it("a throwing client is failed", async () => {
     await expect(loadWards("48", THROWING_CLIENT)).resolves.toEqual({ status: "failed" });
+  });
+
+  it("skips null and non-object entries in a 200 list", async () => {
+    const { client } = stub(() => json(200, [null, "x", { code: "1", name: "B", type: "WARD" }]));
+    expect(await loadWards("48", client)).toEqual({ status: "ready", items: [{ code: "1", name: "B", type: "WARD" }] });
   });
 
   it("keeps the correlation id only on a 5xx", async () => {

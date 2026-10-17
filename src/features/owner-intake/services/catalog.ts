@@ -25,11 +25,13 @@ function toCatalogResult<Raw, T>(
   return items.length > 0 ? { status: "ready", items } : { status: "empty" };
 }
 
-function parseProvince(raw: { code?: string; name?: string }): Province | null {
+function parseProvince(raw: { code?: string; name?: string } | null): Province | null {
+  if (!raw || typeof raw !== "object") return null;
   return raw.code && raw.name ? { code: raw.code, name: raw.name } : null;
 }
 
-function parseWard(raw: { code?: string; name?: string; type?: string }): Ward | null {
+function parseWard(raw: { code?: string; name?: string; type?: string } | null): Ward | null {
+  if (!raw || typeof raw !== "object") return null;
   const type = WARD_TYPES.find((known) => known === raw.type);
   return raw.code && raw.name && type ? { code: raw.code, name: raw.name, type } : null;
 }
@@ -43,13 +45,12 @@ async function loadCatalog<Raw, T>(
   parse: (raw: Raw) => T | null,
   client: PublicClient | undefined,
 ): Promise<CatalogResult<T>> {
-  let result: PublicApiResult<Raw[]>;
   try {
-    result = await request(client ?? createPublicClient());
+    // Parsing stays inside: a malformed 200 body is a failed load, never a throw.
+    return toCatalogResult(await request(client ?? createPublicClient()), parse);
   } catch {
     return { status: "failed" };
   }
-  return toCatalogResult(result, parse);
 }
 
 export function loadProvinces(client?: PublicClient): Promise<CatalogResult<Province>> {

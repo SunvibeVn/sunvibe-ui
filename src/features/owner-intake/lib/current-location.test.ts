@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { readCurrentLocation, type GeolocationReader } from "./current-location";
+import { LOCATION_DEADLINE_MS, readCurrentLocation, type GeolocationReader } from "./current-location";
 
 const PERMISSION_DENIED = 1;
 const POSITION_UNAVAILABLE = 2;
@@ -50,5 +50,32 @@ describe("readCurrentLocation", () => {
       },
     };
     await expect(readCurrentLocation(throwing)).resolves.toEqual({ status: "failed" });
+  });
+
+  describe("wall-clock deadline (a permission prompt that is never answered)", () => {
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    const silent: GeolocationReader = { getCurrentPosition: () => undefined };
+
+    it("reports failed once the deadline passes without any callback", async () => {
+      vi.useFakeTimers();
+      let settled: unknown;
+      void readCurrentLocation(silent).then((result) => {
+        settled = result;
+      });
+      await vi.advanceTimersByTimeAsync(LOCATION_DEADLINE_MS - 1);
+      expect(settled).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(settled).toEqual({ status: "failed" });
+    });
+
+    it("waits longer than the browser timeout and clears its timer when the browser answers", async () => {
+      vi.useFakeTimers();
+      expect(LOCATION_DEADLINE_MS).toBeGreaterThan(15_000);
+      await expect(readCurrentLocation(succeeding(16.0544, 108.2022))).resolves.toMatchObject({ status: "pinned" });
+      expect(vi.getTimerCount()).toBe(0);
+    });
   });
 });

@@ -90,7 +90,11 @@ export function LocationPicker({
     };
   }, []);
   const notifyLocating = useEffectEvent((value: boolean) => onLocatingChange?.(value));
-  useEffect(() => notifyLocating(locating), [locating]);
+  // Reports every change, and "not locating" when the picker leaves mid-read, so the form never stays blocked.
+  useEffect(() => {
+    notifyLocating(locating);
+    return () => notifyLocating(false);
+  }, [locating]);
 
   const error = latitudeError ?? longitudeError;
   const errorId = "location-error";
