@@ -41,6 +41,7 @@
       },
       "askingPrice": {
         "label": "Giá mong muốn (VND)",
+        "labelWithUnit": "Giá mong muốn (VND, {unit})",
         "hint": "Số nguyên, lớn hơn 0. Không bắt buộc.",
         "unit": {
           "NIGHT": "mỗi đêm",
@@ -49,7 +50,7 @@
         }
       },
       "availableFrom": { "label": "Ngày trống" },
-      "notes": { "label": "Ghi chú", "hint": "Tối đa 1000 ký tự." },
+      "notes": { "label": "Ghi chú", "hint": "Tối đa {max} ký tự." },
       "preferredCallbackTime": { "label": "Thời gian muốn được gọi lại", "placeholder": "Ví dụ: buổi tối" }
     },
     "catalog": {
@@ -106,74 +107,76 @@
       "keyReused": "Thông tin đã thay đổi, vui lòng bấm gửi lại.",
       "supportCode": "Mã hỗ trợ: {correlationId}",
       "rateLimited": "Bạn đã gửi quá nhiều lần, vui lòng thử lại sau.",
-      "contactName": {
-        "invalid": "Họ tên không hợp lệ.",
-        "required": "Vui lòng nhập họ tên.",
-        "tooLong": "Họ tên tối đa 100 ký tự."
-      },
-      "phone": {
-        "invalid": "Số điện thoại không hợp lệ. Vui lòng nhập số Việt Nam 10 chữ số.",
-        "required": "Vui lòng nhập số điện thoại."
-      },
-      "email": {
-        "invalid": "Email không hợp lệ.",
-        "tooLong": "Email tối đa 254 ký tự."
-      },
-      "intent": {
-        "invalid": "Nhu cầu không hợp lệ.",
-        "required": "Vui lòng chọn nhu cầu."
-      },
-      "provinceCode": {
-        "invalid": "Tỉnh/thành không hợp lệ.",
-        "required": "Vui lòng chọn tỉnh/thành."
-      },
-      "wardCode": {
-        "invalid": "Xã/phường không hợp lệ hoặc không thuộc tỉnh/thành đã chọn.",
-        "required": "Vui lòng chọn xã/phường."
-      },
-      "addressDetail": {
-        "invalid": "Địa chỉ chi tiết không hợp lệ.",
-        "required": "Vui lòng nhập địa chỉ chi tiết.",
-        "tooLong": "Địa chỉ chi tiết tối đa 255 ký tự."
-      },
-      "latitude": {
-        "invalid": "Vị trí trên bản đồ không hợp lệ.",
-        "outOfArea": "Vị trí nằm ngoài khu vực Sunvibe đang phục vụ.",
-        "specialZone": "Không nhận vị trí cho Đặc khu Hoàng Sa."
-      },
-      "longitude": {
-        "invalid": "Vị trí trên bản đồ không hợp lệ."
-      },
-      "propertyType": {
-        "invalid": "Loại hình không hợp lệ."
-      },
-      "askingPrice": {
-        "invalid": "Giá mong muốn không hợp lệ.",
-        "amount": {
-          "invalid": "Giá mong muốn phải là số nguyên lớn hơn 0, tối đa 15 chữ số."
+      "fields": {
+        "contactName": {
+          "invalid": "Họ tên không hợp lệ.",
+          "required": "Vui lòng nhập họ tên.",
+          "tooLong": "Họ tên tối đa {max} ký tự."
         },
-        "currency": {
-          "invalid": "Đơn vị tiền tệ không hợp lệ."
+        "phone": {
+          "invalid": "Số điện thoại không hợp lệ. Vui lòng nhập số Việt Nam 10 chữ số.",
+          "required": "Vui lòng nhập số điện thoại."
         },
-        "unit": {
-          "invalid": "Đơn vị giá không khớp với nhu cầu."
-        }
-      },
-      "availableFrom": {
-        "invalid": "Ngày trống không hợp lệ."
-      },
-      "notes": {
-        "invalid": "Ghi chú không hợp lệ.",
-        "tooLong": "Ghi chú tối đa 1000 ký tự."
-      },
-      "preferredCallbackTime": {
-        "invalid": "Thời gian muốn được gọi lại không hợp lệ.",
-        "tooLong": "Thời gian muốn được gọi lại tối đa 100 ký tự."
-      },
-      "consent": {
-        "invalid": "Vui lòng đánh dấu đồng ý để Sunvibe liên hệ.",
-        "accepted": {
-          "invalid": "Vui lòng đánh dấu đồng ý để Sunvibe liên hệ."
+        "email": {
+          "invalid": "Email không hợp lệ.",
+          "tooLong": "Email tối đa {max} ký tự."
+        },
+        "intent": {
+          "invalid": "Nhu cầu không hợp lệ.",
+          "required": "Vui lòng chọn nhu cầu."
+        },
+        "provinceCode": {
+          "invalid": "Tỉnh/thành không hợp lệ.",
+          "required": "Vui lòng chọn tỉnh/thành."
+        },
+        "wardCode": {
+          "invalid": "Xã/phường không hợp lệ hoặc không thuộc tỉnh/thành đã chọn.",
+          "required": "Vui lòng chọn xã/phường."
+        },
+        "addressDetail": {
+          "invalid": "Địa chỉ chi tiết không hợp lệ.",
+          "required": "Vui lòng nhập địa chỉ chi tiết.",
+          "tooLong": "Địa chỉ chi tiết tối đa {max} ký tự."
+        },
+        "latitude": {
+          "invalid": "Vị trí trên bản đồ không hợp lệ.",
+          "outOfArea": "Vị trí nằm ngoài khu vực Sunvibe đang phục vụ.",
+          "specialZone": "Không nhận vị trí cho Đặc khu Hoàng Sa."
+        },
+        "longitude": {
+          "invalid": "Vị trí trên bản đồ không hợp lệ."
+        },
+        "propertyType": {
+          "invalid": "Loại hình không hợp lệ."
+        },
+        "askingPrice": {
+          "invalid": "Giá mong muốn không hợp lệ.",
+          "amount": {
+            "invalid": "Giá mong muốn phải là số nguyên lớn hơn 0, tối đa 15 chữ số."
+          },
+          "currency": {
+            "invalid": "Đơn vị tiền tệ không hợp lệ."
+          },
+          "unit": {
+            "invalid": "Đơn vị giá không khớp với nhu cầu."
+          }
+        },
+        "availableFrom": {
+          "invalid": "Ngày trống không hợp lệ."
+        },
+        "notes": {
+          "invalid": "Ghi chú không hợp lệ.",
+          "tooLong": "Ghi chú tối đa {max} ký tự."
+        },
+        "preferredCallbackTime": {
+          "invalid": "Thời gian muốn được gọi lại không hợp lệ.",
+          "tooLong": "Thời gian muốn được gọi lại tối đa {max} ký tự."
+        },
+        "consent": {
+          "invalid": "Vui lòng đánh dấu đồng ý để Sunvibe liên hệ.",
+          "accepted": {
+            "invalid": "Vui lòng đánh dấu đồng ý để Sunvibe liên hệ."
+          }
         }
       }
     }

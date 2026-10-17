@@ -1,11 +1,12 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useEffectEvent, useState, type SelectHTMLAttributes } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { describedBy, FormField } from "@/components/ui/form-field";
+import { Select } from "@/components/ui/select";
 
 import { changeProvince, changeWard, defaultProvinceCode, reconcileWard } from "../lib/catalog-selection";
 import { loadProvinces, loadWards } from "../services/catalog";
@@ -25,20 +26,6 @@ export type CatalogSelectsProps = {
 };
 
 type Loaded<T> = { key: string; result: CatalogResult<T> };
-
-function Select({ invalid, className = "", ...props }: SelectHTMLAttributes<HTMLSelectElement> & { invalid?: boolean }) {
-  return (
-    <select
-      aria-invalid={invalid || undefined}
-      className={`block w-full rounded-xl border bg-white px-4 py-3 text-base text-slate-900 shadow-sm transition-colors focus:outline-none focus:ring-4 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500 sm:text-sm ${
-        invalid
-          ? "border-rose-300 focus:border-rose-400 focus:ring-rose-100"
-          : "border-slate-200 focus:border-violet-400 focus:ring-violet-100"
-      } ${className}`}
-      {...props}
-    />
-  );
-}
 
 /** Loads `load()` in the browser whenever `key` changes; `null` key loads nothing. */
 function useCatalog<T>(key: string | null, load: () => Promise<CatalogResult<T>>) {
@@ -126,7 +113,7 @@ export function CatalogSelects({
 
   return (
     <div className="space-y-4" aria-busy={provinceLoading || wardLoading || undefined}>
-      <FormField id="provinceCode" label={t("fields.provinceCode.label")} error={provinceError} hint={provinceHint}>
+      <FormField id="provinceCode" required label={t("fields.provinceCode.label")} error={provinceError} hint={provinceHint}>
         <Select
           id="provinceCode"
           name="provinceCode"
@@ -152,7 +139,7 @@ export function CatalogSelects({
         <CatalogFailed correlationId={provinces.correlationId} onRetry={() => setProvinceAttempt((n) => n + 1)} />
       )}
 
-      <FormField id="wardCode" label={t("fields.wardCode.label")} error={wardError} hint={wardHint}>
+      <FormField id="wardCode" required label={t("fields.wardCode.label")} error={wardError} hint={wardHint}>
         <Select
           id="wardCode"
           name="wardCode"
