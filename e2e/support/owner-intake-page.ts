@@ -64,6 +64,8 @@ export async function submitAndReadCode(page: Page): Promise<{ response: Respons
   );
   await submitButton(page).click();
   const response = await responsePromise;
+  // Fail on the answer itself, not on a missing success heading.
+  expect(response.status(), `POST ${SUBMIT_PATH} answered ${response.status()}: ${await response.text()}`).toBe(202);
   await expect(page.getByRole("heading", { name: "Đã gửi yêu cầu" })).toBeVisible();
   const code = (await page.locator("output").textContent())?.trim() ?? "";
   return { response, code };
