@@ -199,5 +199,22 @@ describe("submitOwnerIntake", () => {
     });
     expect(outcome).toMatchObject({ kind: "error", message: "errors.network", retryable: true });
     expect(log).toHaveBeenCalledOnce();
+    expect(log).toHaveBeenCalledWith(
+      "owner-intake: could not send the request",
+      "Missing environment variable: NEXT_PUBLIC_API_URL",
+    );
+  });
+
+  it("logs only the type of a thrown non-Error, never the raw value (it may hold form data)", async () => {
+    const log = vitest.fn();
+    await submitOwnerIntake(VALID, {
+      keys: counterKeys(),
+      has,
+      send: () => {
+        throw { phone: "0905123456" };
+      },
+      log,
+    });
+    expect(log).toHaveBeenCalledWith("owner-intake: could not send the request", "object");
   });
 });

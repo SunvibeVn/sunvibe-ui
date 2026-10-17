@@ -54,7 +54,8 @@ export async function submitOwnerIntake(
     result = await send(body, key);
   } catch (cause) {
     // toPublicResult never throws; this is a broken setup such as a missing NEXT_PUBLIC_API_URL.
-    log("owner-intake: could not send the request", cause);
+    // Only the message or the type: a raw thrown value could carry the owner's data.
+    log("owner-intake: could not send the request", cause instanceof Error ? cause.message : typeof cause);
     result = { ok: false, kind: "network" };
   }
 
