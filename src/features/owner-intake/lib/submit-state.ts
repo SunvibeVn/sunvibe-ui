@@ -18,3 +18,19 @@ export function submitStateAfter(outcome: SubmitOutcome, now: number): SubmitSta
   const seconds = outcome.retryAfterSeconds ?? 0;
   return seconds > 0 ? { status: "editing", outcome, wait: { startedAt: now, seconds } } : { status: "editing", outcome };
 }
+
+/** What can hold a submit back; the form checks it on submit and disables the button with it. */
+export type SubmitGuard = {
+  /** A request is in flight (set synchronously, before React renders `pending`). */
+  inFlight: boolean;
+  /** A ward can be chosen (catalog loaded). */
+  catalogReady: boolean;
+  /** Seconds left of the 429 wait. */
+  waitLeft: number;
+  /** "Dùng vị trí hiện tại" is waiting for the browser: its pin must land before the body is built. */
+  locating: boolean;
+};
+
+export function canSubmit({ inFlight, catalogReady, waitLeft, locating }: SubmitGuard): boolean {
+  return !inFlight && catalogReady && waitLeft <= 0 && !locating;
+}

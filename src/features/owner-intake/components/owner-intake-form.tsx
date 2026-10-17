@@ -10,7 +10,7 @@ import { secondsLeft, type Countdown } from "../lib/countdown";
 import { fieldElementId, firstInvalidField, type FieldErrorMessage } from "../lib/field-errors";
 import { EMPTY_FORM_VALUES } from "../lib/form-values";
 import { createIdempotencyKeys } from "../lib/idempotency";
-import { INITIAL_SUBMIT_STATE, submitStateAfter, type SubmitState } from "../lib/submit-state";
+import { canSubmit, INITIAL_SUBMIT_STATE, submitStateAfter, type SubmitState } from "../lib/submit-state";
 import { submitOwnerIntake } from "../services/submit-owner-intake";
 import type { FieldName, FormValues } from "../types/form";
 
@@ -45,6 +45,7 @@ export function OwnerIntakeForm() {
   const t = useTranslations("OwnerIntake");
   const [values, setValues] = useState<FormValues>(EMPTY_FORM_VALUES);
   const [catalogReady, setCatalogReady] = useState(false);
+  const [locating, setLocating] = useState(false);
   // Lives as long as the form, so a retry of the same body reuses its key.
   const [keys] = useState(() => createIdempotencyKeys());
   // Set synchronously on submit, before React renders `pending`: a second click in between is ignored.
@@ -85,7 +86,7 @@ export function OwnerIntakeForm() {
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (inFlight.current || !catalogReady || waitLeft > 0) return;
+    if (!canSubmit({ inFlight: inFlight.current, catalogReady, waitLeft, locating })) return;
     inFlight.current = true;
     startTransition(() => dispatch({ type: "submit", values }));
   };
@@ -99,6 +100,7 @@ export function OwnerIntakeForm() {
     );
   }
 
+  const submitBlocked = !canSubmit({ inFlight: pending, catalogReady, waitLeft, locating });
   const fieldErrors = outcome?.fieldErrors ?? {};
   // Keys come from fieldErrorMessage, which checked them with t.has (or fell back to errors.generic).
   const text = (message: FieldErrorMessage | undefined) =>
@@ -127,6 +129,7 @@ export function OwnerIntakeForm() {
             disabled={values.wardType === "SPECIAL_ZONE"}
             wardName={values.wardName}
             readOnly={pending}
+            onLocatingChange={setLocating}
             latitudeError={errorText("latitude")}
             longitudeError={errorText("longitude")}
           />
@@ -146,14 +149,14 @@ export function OwnerIntakeForm() {
             <p className="mt-0.5 text-xs">{t("errors.supportCode", { correlationId: outcome.supportCode })}</p>
           )}
           {outcome.retryable && (
-            <Button type="submit" variant="secondary" className="mt-2 px-4 py-1.5" disabled={pending || !catalogReady}>
+            <Button type="submit" variant="secondary" className="mt-2 px-4 py-1.5" disabled={submitBlocked}>
               {t("errors.retry")}
             </Button>
           )}
         </Alert>
       )}
 
-      <Button type="submit" fullWidth pending={pending} disabled={!catalogReady || waitLeft > 0}>
+      <Button type="submit" fullWidth pending={pending} disabled={submitBlocked}>
         {pending
           ? t("submit.submitting")
           : waitLeft > 0

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { INITIAL_SUBMIT_STATE, submitStateAfter } from "./submit-state";
+import { canSubmit, INITIAL_SUBMIT_STATE, submitStateAfter, type SubmitGuard } from "./submit-state";
 import type { SubmitOutcome } from "./submit-outcome";
 
 const NOW = 1_760_000_000_000;
@@ -55,5 +55,29 @@ describe("submitStateAfter", () => {
       retryAfterSeconds: 0,
     };
     expect(submitStateAfter(outcome, NOW)).toEqual({ status: "editing", outcome });
+  });
+});
+
+describe("canSubmit", () => {
+  const READY: SubmitGuard = { inFlight: false, catalogReady: true, waitLeft: 0, locating: false };
+
+  it("allows a submit when nothing blocks it", () => {
+    expect(canSubmit(READY)).toBe(true);
+  });
+
+  it("blocks a second submit while one is in flight", () => {
+    expect(canSubmit({ ...READY, inFlight: true })).toBe(false);
+  });
+
+  it("blocks until a ward can be chosen", () => {
+    expect(canSubmit({ ...READY, catalogReady: false })).toBe(false);
+  });
+
+  it("blocks during the 429 wait", () => {
+    expect(canSubmit({ ...READY, waitLeft: 3 })).toBe(false);
+  });
+
+  it("blocks while the current location is being read, so a late pin never races the body", () => {
+    expect(canSubmit({ ...READY, locating: true })).toBe(false);
   });
 });

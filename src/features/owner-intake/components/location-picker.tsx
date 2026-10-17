@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useEffectEvent, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 
@@ -51,6 +51,8 @@ export type LocationPickerProps = {
   wardName?: string;
   /** Read-only while submitting. */
   readOnly?: boolean;
+  /** True while "Dùng vị trí hiện tại" waits for the browser; the form blocks its submit meanwhile. */
+  onLocatingChange?: (locating: boolean) => void;
   /** Error on `latitude` (every pair, box and special-zone error of the server lands here). */
   latitudeError?: string;
   /** Error on `longitude` (range or decimals only). */
@@ -67,6 +69,7 @@ export function LocationPicker({
   disabled = false,
   wardName = "",
   readOnly = false,
+  onLocatingChange,
   latitudeError,
   longitudeError,
 }: LocationPickerProps) {
@@ -78,6 +81,16 @@ export function LocationPicker({
   useEffect(() => {
     disabledRef.current = disabled;
   }, [disabled]);
+  // A location that arrives after this picker left the screen (e.g. the success screen) must not reach the form.
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const notifyLocating = useEffectEvent((value: boolean) => onLocatingChange?.(value));
+  useEffect(() => notifyLocating(locating), [locating]);
 
   const error = latitudeError ?? longitudeError;
   const errorId = "location-error";
@@ -96,6 +109,7 @@ export function LocationPicker({
     setNotice(null);
     setLocating(true);
     const result = await readCurrentLocation("geolocation" in navigator ? navigator.geolocation : undefined);
+    if (!mountedRef.current) return;
     setLocating(false);
     if (disabledRef.current) return;
     if (result.status === "pinned") onChange(result.pin);
