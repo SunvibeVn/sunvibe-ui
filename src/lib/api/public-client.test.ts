@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createPublicClient, toPublicResult } from "./public-client";
 
@@ -114,5 +114,40 @@ describe("public client", () => {
       20,
     );
     expect(await submit(client)).toEqual({ ok: false, kind: "network" });
+  });
+
+  describe("without AbortSignal.any and AbortSignal.timeout (older browsers)", () => {
+    const removeStatics = () => {
+      const unsupported = () => {
+        throw new TypeError("not supported");
+      };
+      vi.spyOn(AbortSignal, "any").mockImplementation(unsupported);
+      vi.spyOn(AbortSignal, "timeout").mockImplementation(unsupported);
+    };
+    afterEach(() => vi.restoreAllMocks());
+
+    const hang = (request: Request) =>
+      new Promise<Response>((_, reject) => {
+        request.signal.addEventListener("abort", () => reject(request.signal.reason));
+      });
+
+    it("still times out", async () => {
+      removeStatics();
+      const { client } = setup(hang, 20);
+      expect(await submit(client)).toEqual({ ok: false, kind: "network" });
+    });
+
+    it("still succeeds and honours a caller signal", async () => {
+      removeStatics();
+      const ok = setup(() => json(202, {}));
+      expect(await submit(ok.client)).toMatchObject({ ok: true });
+      const { client } = setup(hang, 5000);
+      const controller = new AbortController();
+      const pending = toPublicResult(
+        client.POST("/api/v1/public/owner-intake-requests", { body: {} as never, signal: controller.signal }),
+      );
+      controller.abort();
+      expect(await pending).toEqual({ ok: false, kind: "network" });
+    });
   });
 });

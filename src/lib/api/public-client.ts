@@ -46,12 +46,20 @@ export function createPublicClient(options: PublicClientOptions = {}) {
   return createClient<paths>({
     baseUrl: options.baseUrl ?? publicEnv.apiUrl,
     credentials: "omit",
-    fetch: (request) =>
-      baseFetch(
-        new Request(request, {
-          signal: AbortSignal.any([request.signal, AbortSignal.timeout(timeoutMs)]),
-        }),
-      ),
+    fetch: async (request) => {
+      // Manual AbortController: AbortSignal.any/timeout are missing in older browsers.
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      if (request.signal.aborted) abort();
+      else request.signal.addEventListener("abort", abort, { once: true });
+      const timer = setTimeout(abort, timeoutMs);
+      try {
+        return await baseFetch(new Request(request, { signal: controller.signal }));
+      } finally {
+        clearTimeout(timer);
+        request.signal.removeEventListener("abort", abort);
+      }
+    },
   });
 }
 
