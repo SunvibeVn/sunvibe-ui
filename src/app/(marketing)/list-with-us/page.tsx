@@ -10,6 +10,8 @@ import { isOwnerIntakeEnabled, OwnerIntakeForm } from "@/features/owner-intake";
 const enabled = isOwnerIntakeEnabled(process.env.NEXT_PUBLIC_OWNER_INTAKE_ENABLED);
 
 export async function generateMetadata(): Promise<Metadata> {
+  // A disabled page reveals nothing, not even its title.
+  if (!enabled) notFound();
   const t = await getTranslations("OwnerIntake.page");
   // No navigation link points here and the page is not indexed (BR-14).
   return { title: t("title"), description: t("description"), robots: { index: false, follow: false } };
