@@ -1,50 +1,26 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { forwardedHeaders } from "./lib/forwarded-headers";
-import { refreshSession } from "./services/auth-api";
-import {
-  accessCookieOptions,
-  expiredCookieOptions,
-  refreshCookieOptions,
-  sessionCookieNames,
-} from "./session/cookie-config";
-import { refreshIfNeeded } from "./session/refresh";
+import { hintCookieName, LEGACY_FE_COOKIES } from "./session/browser-cookies";
 import { guardRedirect } from "./session/route-guard";
 
 // Public entry point for src/proxy.ts. Keep it free of React and next/headers.
 
-export async function authProxy(
-  request: NextRequest,
-  refresh: typeof refreshSession = refreshSession,
-): Promise<NextResponse> {
-  const names = sessionCookieNames();
-  const tokens = {
-    access: request.cookies.get(names.access)?.value || undefined,
-    refresh: request.cookies.get(names.refresh)?.value || undefined,
-  };
-  const outcome = await refreshIfNeeded(tokens, forwardedHeaders(request.headers), refresh);
-
-  let signedIn = Boolean(tokens.access || tokens.refresh);
-  if (outcome.kind === "refreshed") {
-    // Also update the forwarded request so this very render sees the new token.
-    request.cookies.set(names.access, outcome.session.accessToken);
-    request.cookies.set(names.refresh, outcome.session.refreshToken);
-  } else if (outcome.kind === "expired") {
-    request.cookies.delete(names.access);
-    request.cookies.delete(names.refresh);
-    signedIn = false;
-  }
+/**
+ * Optimistic redirects from the sign-in hint cookie only (auth-browser-session §4.8): no refresh, no token cookie,
+ * no API call; Next holds no session (auth-browser-session BR-1). The hint never authorizes anything
+ * (auth-browser-session BR-8: it only steers redirects; the API decides every access).
+ * Also expires the cookies of the old server-side session when a request still carries them
+ * (auth-browser-session BR-5: Next sets no session cookie).
+ */
+export function authProxy(request: NextRequest): NextResponse {
+  const signedIn = Boolean(request.cookies.get(hintCookieName())?.value);
 
   const redirectTo = guardRedirect(request.nextUrl, signedIn);
-  const response = redirectTo
-    ? NextResponse.redirect(redirectTo)
-    : NextResponse.next({ request: { headers: request.headers } });
+  const response = redirectTo ? NextResponse.redirect(redirectTo) : NextResponse.next();
 
-  if (outcome.kind === "refreshed") {
-    response.cookies.set(names.access, outcome.session.accessToken, accessCookieOptions(outcome.session.expiresIn));
-    response.cookies.set(names.refresh, outcome.session.refreshToken, refreshCookieOptions());
-  } else if (outcome.kind === "expired") {
-    response.cookies.set(names.access, "", expiredCookieOptions(accessCookieOptions(0)));
-    response.cookies.set(names.refresh, "", expiredCookieOptions(refreshCookieOptions()));
+  for (const name of LEGACY_FE_COOKIES) {
+    if (!request.cookies.has(name)) continue;
+    // The `__Host-` prefix requires `Secure` and `Path=/`, or the browser ignores the expiry.
+    response.cookies.set(name, "", { path: "/", maxAge: 0, ...(name.startsWith("__Host-") && { secure: true }) });
   }
   return response;
 }

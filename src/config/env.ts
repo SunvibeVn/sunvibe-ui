@@ -1,6 +1,7 @@
+import "server-only";
+
 // Server-side settings. None has the NEXT_PUBLIC_ prefix, so Next.js never
-// inlines them into browser bundles. No "server-only" import: src/proxy.ts
-// reads this module, and proxy code doesn't run as a React Server Component.
+// inlines them into browser bundles.
 const isProduction = process.env.NODE_ENV === "production";
 
 export const serverEnv = {

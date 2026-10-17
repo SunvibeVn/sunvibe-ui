@@ -23,20 +23,21 @@ Sign-up, login and the account page need [sunvibe-server](../sunvibe-server) run
 
 ## Environment variables
 
-| Variable               | Where it's used | Purpose                                                                       |
-| ---------------------- | --------------- | ----------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL` | Server + client | Public site URL; makes share-preview image links absolute                     |
-| `API_BASE_URL`         | Server only     | Base URL of sunvibe-server (default `http://localhost:8081` in development)   |
+| Variable               | Where it's used | Purpose                                                                                  |
+| ---------------------- | --------------- | ---------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SITE_URL` | Server + client | Public site URL; makes share-preview image links absolute                                |
+| `NEXT_PUBLIC_API_URL`  | Server + client | Origin of sunvibe-server that the browser calls (required and `https://` in production)  |
+| `API_BASE_URL`         | Server only     | Base URL of sunvibe-server for the server-only property service (default `http://localhost:8081`) |
 
-`API_BASE_URL` must never get the `NEXT_PUBLIC_` prefix. The browser never calls the backend: only Server Components, Server Actions and `src/proxy.ts` do.
+`API_BASE_URL` must never get the `NEXT_PUBLIC_` prefix. The browser calls the backend directly (ADR-001); no Server Action, Route Handler or `src/proxy.ts` code forwards a user token.
 
 ## Project structure
 
 ```
 src/
-├── proxy.ts                # Silent token refresh + optimistic route guards (Next 16 "middleware")
+├── proxy.ts                # Optimistic redirects from the sign-in hint cookie only (Next 16 "middleware")
 ├── app/                    # Routing only: layouts, pages, metadata files
-│   ├── layout.tsx          # Root layout: <html>, fonts, site-wide metadata
+│   ├── layout.tsx          # Root layout: <html>, fonts, site-wide metadata, SessionProvider
 │   ├── globals.css         # Tailwind entry + brand tokens (navy, bg-brand-gradient)
 │   ├── icon.png, opengraph-image.jpg, twitter-image.jpg
 │   ├── (marketing)/        # "/" landing page, with site header + footer
@@ -46,18 +47,16 @@ src/
 │
 ├── features/               # One folder per business domain; backend-facing ones mirror a service
 │   ├── marketing/          # Landing page sections and content (frontend only)
-│   ├── auth/               # ↔ auth-service
-│   │   ├── actions/        #   Server Actions ("use server")
-│   │   ├── components/     #   Forms, auth shell, account overview, user menu
-│   │   ├── lib/            #   Form state, safe redirects, forwarded headers, client hooks
-│   │   ├── schemas/        #   zod schemas shared by client and server
-│   │   ├── services/       #   auth-service calls
-│   │   ├── session/        #   Cookies, refresh, route guard, data access layer
-│   │   ├── types/          #   DTOs matching the service contract
+│   ├── owner-intake/       # "List with us" form
+│   ├── auth/               # ↔ auth-service, called from the browser
+│   │   ├── components/     #   Forms, auth shell, account overview, user menu, RequireSession/RequireRole
+│   │   ├── lib/            #   Form state, *-flow.ts (pure flow logic), safe redirects, client hooks
+│   │   ├── schemas/        #   zod schemas
+│   │   ├── session/        #   Session store, session-api, api-client, cookie lock, cross-tab sync, logout
 │   │   ├── index.ts        #   Public API for pages and layouts
-│   │   ├── client.ts       #   Public API for Client Components (error boundaries)
+│   │   ├── client.ts       #   Public API for Client Components (useSession, callApi, RequireSession)
 │   │   └── proxy.ts        #   Public API for src/proxy.ts only
-│   └── property/           # ↔ property-service
+│   └── property/           # ↔ property-service (server-only, public data)
 │
 ├── components/             # Shared, feature-agnostic UI
 │   ├── brand/              # Logo
@@ -65,9 +64,11 @@ src/
 │   ├── layout/             # SiteShell, SiteHeader, SiteFooter
 │   └── ui/                 # Button, Input, FormField, Alert, PasswordInput, OtpInput
 │
-├── config/                 # site.ts (brand, links), navigation.ts, env.ts (server env)
+├── api/generated/          # schema.d.ts from sunvibe-server/api/openapi.json (npm run gen:api)
+├── config/                 # site.ts, navigation.ts, public-env.ts (NEXT_PUBLIC_*), env.ts (server env)
+├── i18n/                   # next-intl setup; Vietnamese messages in messages/vi.json
 └── lib/                    # Framework-agnostic helpers
-    ├── api/                # createHttpClient, ApiError, ApiResponse envelope
+    ├── api/                # createPublicClient/toPublicResult (openapi-fetch); server.ts: server-only createHttpClient, used only by server-only services such as property.service.ts
     └── utils/
 public/images/brand/        # Logo and share-banner source files
 ```
@@ -76,37 +77,33 @@ public/images/brand/        # Logo and share-banner source files
 
 **`app/` stays thin.** Route files only compose components from `features/` and `components/`. Route groups give each area its own layout without changing URLs.
 
-**One feature per business domain.** A feature that talks to a backend service owns everything for that domain: `services/`, `types/`, `schemas/`, `actions/`, `components/`. Inside a feature, use relative imports.
+**One feature per business domain.** A feature owns everything for its domain: `components/`, `lib/`, `schemas/`, `session/` or `services/` as needed. Inside a feature, use relative imports.
 
 **Import features only through their entry points.** ESLint blocks deep imports such as `@/features/property/services/...`. Use `@/features/<name>` from pages and layouts, `@/features/<name>/client` from Client Components, and `@/features/<name>/proxy` from `src/proxy.ts`. Each feature's internals stay free to change.
 
-**Backend calls are server-only.** Service files start with `import "server-only"` and use a client from `createHttpClient`:
+**API calls use openapi-fetch typed from `src/api/generated/schema.d.ts`.** Never hand-write an endpoint that is not in `sunvibe-server/api/openapi.json`. Anonymous calls use `createPublicClient` + `toPublicResult` from `@/lib/api` with `credentials: "omit"`; map errors by their `code`, never show raw server text. Signed-in calls use `callApi` / `apiClient` from `@/features/auth/client`.
 
-```ts
-const propertyApi = createHttpClient({ baseUrl: () => serverEnv.apiBaseUrl });
-```
-
-The client handles JSON, query strings, Bearer tokens and cookies. Non-2xx responses throw `ApiError` with `status`, `body`, `fieldErrors` and `retryAfterSeconds`; `unwrap()` reads the backend's `{ code, message, result }` envelope. Caching is opt-in per call, following `cacheComponents` in `next.config.ts`.
+**Public SEO pages may fetch public endpoints in Server Components** (for example `propertyService`, built on the server-only `createHttpClient`). Server code never sends a user token. Caching is opt-in per call, following `cacheComponents` in `next.config.ts`.
 
 **Anything that reads cookies, headers or `searchParams` renders inside `<Suspense>`.** With `cacheComponents` on, reading them outside a boundary is a build error.
 
-**File names** are kebab-case with a role suffix where useful: `*.action.ts`, `*.service.ts`, `*.schema.ts`, `*.types.ts`, and colocated `*.test.ts`.
+**File names** are kebab-case with a role suffix where useful: `*-flow.ts`, `*.service.ts`, `*.schema.ts`, `*.types.ts`, and colocated `*.test.ts`.
 
 ## Authentication
 
-The browser never talks to sunvibe-server directly:
+The browser talks to sunvibe-server directly (ADR-001); Next.js holds no session:
 
-1. Forms post to Server Actions, which validate with zod and call auth-service.
-2. Server Actions keep the tokens in HttpOnly cookies on this site: `sv_at` for the access token and `sv_rt` for the refresh token. Both are prefixed `__Host-` in production. An SMS reset token lives briefly in `sv_reset`.
-3. `src/proxy.ts` refreshes an expired access token before the page renders. It also redirects signed-out visitors away from `/account` and `/verify-phone`, and signed-in users away from `/login` and `/sign-up`.
-4. Pages authorize with `requireUser()` from `@/features/auth`. The proxy's redirects are only a UX shortcut.
-
-**Backend requirements before production:** see "Backend changes" in `sunvibe-hub/docs/features/auth/auth-login/impl/specs/2026-10-10-auth-feature-design.md`. Two items are needed: forwarding the real client IP, and a configurable domain for the reset link. Deployments also need an edge proxy (load balancer, Nginx, CDN) that **overwrites** `X-Forwarded-For` with the real client address. Next.js passes on whatever the client sent, and the backend rate-limits on that header.
+1. Forms run client-function actions (`useActionState`) that validate with zod and call the flows in `src/features/auth/lib/*-flow.ts`.
+2. The access token lives only in the memory of one tab (`session/session-store.ts`). The refresh token is an HttpOnly cookie that the API sets. Only the seven cookie calls in `session/session-api.ts` (login, refresh, logout, register, password reset, password change, logout-all) send `credentials: "include"`, under a browser-wide lock; every other call omits credentials.
+3. `callApi` / `apiClient` send `Authorization: Bearer` and refresh once on a 401. Tabs stay in step through a `BroadcastChannel`; only a refresh 401 ends the session.
+4. A sign-in hint cookie (`sv_signed_in`, no token) lets `src/proxy.ts` redirect signed-out visitors away from `/account` and `/verify-phone`, and signed-in users away from `/login` and `/sign-up`. The hint never authorizes anything.
+5. Signed-in sections wrap their content in `RequireSession` (and `RequireRole` for staff screens) and read the user with `useSession` (from `@/features/auth/client`). The API decides every access.
+6. Access and refresh tokens never go into any storage. The single-use registration and reset tokens (SMS or e-mail link) may be kept in `sessionStorage` until the flow ends.
 
 ### Adding a feature for a new backend module
 
-1. Create `src/features/<name>/` with `types/<name>.types.ts` and `services/<name>.service.ts`. The service uses `serverEnv.apiBaseUrl`; every module answers on the same base URL.
-2. Export the public API from `src/features/<name>/index.ts`.
-3. Use it from a Server Component or Server Action, e.g. `await propertyService.list({ city: "HCMC" })`.
+1. Run `npm run gen:api` after the endpoint is in `sunvibe-server/api/openapi.json`.
+2. Create `src/features/<name>/` with its components and pure `lib/` modules; call the API with `createPublicClient` (anonymous) or `callApi` (signed in).
+3. Export the public API from `src/features/<name>/index.ts` and `client.ts`.
 
-The endpoint paths and DTOs in `property` are a starting contract; align them with property-service before use. `auth` follows the real auth-service contract.
+The endpoint paths and DTOs in `property` are a starting contract; align them with property-service before use. `auth` follows the real contract in `src/api/generated/schema.d.ts`.

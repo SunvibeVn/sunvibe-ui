@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { ArrowRightIcon, CheckIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
@@ -7,17 +8,25 @@ import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { registerAction } from "../actions/register.action";
-import { initialFormState } from "../lib/form-state";
+import { type FormState, initialFormState, readForm } from "../lib/form-state";
+import { signUpBrowserDeps } from "../lib/sign-up-browser";
+import { completeSignUp } from "../lib/sign-up-flow";
 import { useFieldErrors } from "../lib/use-field-errors";
 import { signUpDetailsSchema } from "../schemas/auth.schema";
 
 /**
  * Sign-up step 3: name and password for the phone number that was just verified.
- * The number itself is not a field: the server takes it from the sign-up cookie.
+ * The number itself is not a field: the flow takes it from this tab's sign-up progress.
  */
 export function SignUpDetailsForm({ maskedPhone }: { maskedPhone: string }) {
-  const [state, formAction] = useActionState(registerAction, initialFormState);
+  const router = useRouter();
+  const [state, formAction] = useActionState(async (previous: FormState, formData: FormData) => {
+    const values = readForm(formData, ["fullName", "password", "confirmPassword"]);
+    const outcome = await completeSignUp(values, signUpBrowserDeps());
+    if (!("redirect" in outcome)) return outcome;
+    router.replace(outcome.redirect);
+    return { status: "success", values: previous.values } satisfies FormState;
+  }, initialFormState);
   const { onBlur, errorFor } = useFieldErrors(signUpDetailsSchema, state.fieldErrors);
   const [agreed, setAgreed] = useState(false);
   const [showTermsError, setShowTermsError] = useState(false);

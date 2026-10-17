@@ -6,7 +6,7 @@ import type { FieldErrors } from "./form-state";
 
 /**
  * Client-side, per-field validation on blur with the same zod schema the
- * Server Action uses. Server errors show until the user edits that field.
+ * form action uses. Server errors show until the user edits that field.
  * A new server response (new `serverErrors` object) resets the client state.
  */
 export function useFieldErrors(schema: z.ZodType, serverErrors?: FieldErrors) {

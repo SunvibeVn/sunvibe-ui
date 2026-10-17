@@ -20,29 +20,19 @@ const client = createHttpClient({ baseUrl: () => "http://api.test" });
 afterEach(() => vi.unstubAllGlobals());
 
 describe("createHttpClient", () => {
-  it("sends JSON, bearer token, cookies and query string", async () => {
+  it("sends JSON and the query string, with no Authorization or Cookie header (W10-20)", async () => {
     const fetchMock = mockFetch({ code: 200, result: { ok: true } });
 
-    await client.post("/api/things", { a: 1 }, {
-      accessToken: "tok",
-      cookie: { "cookie-jwt-rf": "r1" },
-      query: { page: 2, empty: undefined },
-    });
+    await client.post("/api/things", { a: 1 }, { query: { page: 2, empty: undefined } });
 
     const [url, init] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
     expect(url.toString()).toBe("http://api.test/api/things?page=2");
     const headers = new Headers(init.headers);
     expect(init.method).toBe("POST");
     expect(init.body).toBe(JSON.stringify({ a: 1 }));
-    expect(headers.get("authorization")).toBe("Bearer tok");
-    expect(headers.get("cookie")).toBe("cookie-jwt-rf=r1");
+    expect(headers.get("authorization")).toBeNull();
+    expect(headers.get("cookie")).toBeNull();
     expect(headers.get("content-type")).toBe("application/json");
-  });
-
-  it("exposes response headers through postRaw", async () => {
-    mockFetch({ code: 200, result: {} }, { headers: { "x-trace": "abc" } });
-    const { headers } = await client.postRaw("/api/login", {});
-    expect(headers.get("x-trace")).toBe("abc");
   });
 
   it("turns a validation error into ApiError.fieldErrors", async () => {
