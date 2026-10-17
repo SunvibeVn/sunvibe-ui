@@ -11,7 +11,8 @@
     "test:watch": "vitest",
     "typecheck": "next typegen && tsc --noEmit",
     "gen:api": "openapi-typescript ../sunvibe-server/api/openapi.json -o src/api/generated/schema.d.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "e2e": "playwright test"
   },
   "dependencies": {
     "leaflet": "1.9.4",
@@ -24,6 +25,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/turbopack": "^4",
     "@types/leaflet": "1.9.22",
     "@types/node": "^24.19.2",
