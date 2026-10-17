@@ -20,7 +20,6 @@ export function ConsentField({ checked, onChange, error, disabled }: ConsentFiel
       <label htmlFor={consentCheckboxId} className="flex items-start gap-3 text-sm font-medium text-slate-700">
         <input
           id={consentCheckboxId}
-          name="consent.accepted"
           type="checkbox"
           required
           checked={checked}

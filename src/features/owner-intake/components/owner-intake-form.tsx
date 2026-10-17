@@ -115,7 +115,9 @@ export function OwnerIntakeForm() {
     // noValidate: native `required` / `type="email"` checks would pre-empt the Vietnamese messages and the focus.
     // onSubmit, not <form action>: React resets the form after an action, which desyncs controlled selects and
     // textareas from the state when an error keeps the form on screen.
-    <form noValidate onSubmit={submit} className="space-y-6" aria-busy={pending || undefined}>
+    // method="post" and no `name` on the controls: a submit before hydration sends nothing in the URL (the body is
+    // built from the state, never from FormData).
+    <form method="post" noValidate onSubmit={submit} className="space-y-6" aria-busy={pending || undefined}>
       <OwnerIntakeFields
         values={values}
         onChange={update}

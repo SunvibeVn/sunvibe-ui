@@ -116,7 +116,6 @@ export function CatalogSelects({
       <FormField id="provinceCode" required label={t("fields.provinceCode.label")} error={provinceError} hint={provinceHint}>
         <Select
           id="provinceCode"
-          name="provinceCode"
           required
           value={provinceCode}
           disabled={disabled || provinces?.status !== "ready"}
@@ -142,7 +141,6 @@ export function CatalogSelects({
       <FormField id="wardCode" required label={t("fields.wardCode.label")} error={wardError} hint={wardHint}>
         <Select
           id="wardCode"
-          name="wardCode"
           required
           value={wardCode}
           disabled={disabled || wards?.status !== "ready"}

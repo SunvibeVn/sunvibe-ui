@@ -43,7 +43,6 @@ function TextField({
     <FormField id={id} label={label} error={error} hint={hint} required={required}>
       <Input
         id={id}
-        name={field}
         value={value}
         required={required}
         disabled={disabled}
@@ -62,7 +61,6 @@ function TextareaField({ field, label, value, onChange, error, hint, required, d
     <FormField id={id} label={label} error={error} hint={hint} required={required}>
       <Textarea
         id={id}
-        name={field}
         rows={4}
         value={value}
         required={required}
@@ -92,7 +90,6 @@ function SelectField({
     <FormField id={id} label={label} error={error} hint={hint} required={required}>
       <Select
         id={id}
-        name={field}
         value={value}
         required={required}
         disabled={disabled}
