@@ -5,7 +5,12 @@
       "description": "Gửi thông tin căn hộ, nhà hoặc đất cần cho thuê hay bán; Sale của Sunvibe sẽ gọi lại để tư vấn.",
       "intro": "Bạn có căn hộ, nhà hoặc đất muốn cho thuê hay bán? Điền form ngắn dưới đây, không cần tạo tài khoản.",
       "expectation": "Sale sẽ gọi lại để tư vấn cho bạn.",
-      "requiredHint": "Trường có dấu * là bắt buộc."
+      "requiredHint": "Trường có dấu * là bắt buộc.",
+      "error": {
+        "title": "Đã có lỗi xảy ra",
+        "message": "Không tải được trang ký gửi. Vui lòng thử lại sau ít phút.",
+        "retry": "Thử lại"
+      }
     },
     "serviceArea": "Hiện Sunvibe nhận ký gửi tại TP. Đà Nẵng",
     "fields": {
