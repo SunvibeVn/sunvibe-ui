@@ -34,16 +34,33 @@ function parseWard(raw: { code?: string; name?: string; type?: string }): Ward |
   return raw.code && raw.name && type ? { code: raw.code, name: raw.name, type } : null;
 }
 
-export async function loadProvinces(client: PublicClient = createPublicClient()): Promise<CatalogResult<Province>> {
-  return toCatalogResult(await toPublicResult(client.GET("/api/v1/public/provinces")), parseProvince);
+/**
+ * Runs one catalog request and never throws: a client that cannot be built or that throws (e.g. a missing
+ * NEXT_PUBLIC_API_URL in production) is `failed`, like a network error, so the selects show the retry.
+ */
+async function loadCatalog<Raw, T>(
+  request: (client: PublicClient) => Promise<PublicApiResult<Raw[]>>,
+  parse: (raw: Raw) => T | null,
+  client: PublicClient | undefined,
+): Promise<CatalogResult<T>> {
+  let result: PublicApiResult<Raw[]>;
+  try {
+    result = await request(client ?? createPublicClient());
+  } catch {
+    return { status: "failed" };
+  }
+  return toCatalogResult(result, parse);
 }
 
-export async function loadWards(
-  provinceCode: string,
-  client: PublicClient = createPublicClient(),
-): Promise<CatalogResult<Ward>> {
-  const result = await toPublicResult(
-    client.GET("/api/v1/public/provinces/{provinceCode}/wards", { params: { path: { provinceCode } } }),
+export function loadProvinces(client?: PublicClient): Promise<CatalogResult<Province>> {
+  return loadCatalog((api) => toPublicResult(api.GET("/api/v1/public/provinces")), parseProvince, client);
+}
+
+export function loadWards(provinceCode: string, client?: PublicClient): Promise<CatalogResult<Ward>> {
+  return loadCatalog(
+    (api) =>
+      toPublicResult(api.GET("/api/v1/public/provinces/{provinceCode}/wards", { params: { path: { provinceCode } } })),
+    parseWard,
+    client,
   );
-  return toCatalogResult(result, parseWard);
 }

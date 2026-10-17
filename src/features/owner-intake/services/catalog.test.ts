@@ -11,6 +11,13 @@ function json(status: number, body: unknown, headers: Record<string, string> = {
   });
 }
 
+/** A client that throws before any request, like createPublicClient() without NEXT_PUBLIC_API_URL in production. */
+const THROWING_CLIENT = {
+  GET: () => {
+    throw new Error("Missing environment variable: NEXT_PUBLIC_API_URL");
+  },
+} as unknown as ReturnType<typeof createPublicClient>;
+
 function stub(respond: (request: Request) => Promise<Response> | Response) {
   const requests: Request[] = [];
   const client = createPublicClient({
@@ -65,6 +72,10 @@ describe("loadProvinces", () => {
     const { client } = stub(() => Promise.reject(new TypeError("Failed to fetch")));
     expect(await loadProvinces(client)).toEqual({ status: "failed" });
   });
+
+  it("a throwing client is failed", async () => {
+    await expect(loadProvinces(THROWING_CLIENT)).resolves.toEqual({ status: "failed" });
+  });
 });
 
 describe("loadWards", () => {
@@ -114,6 +125,10 @@ describe("loadWards", () => {
   it("maps a network failure to failed", async () => {
     const { client } = stub(() => Promise.reject(new TypeError("Failed to fetch")));
     expect(await loadWards("48", client)).toEqual({ status: "failed" });
+  });
+
+  it("a throwing client is failed", async () => {
+    await expect(loadWards("48", THROWING_CLIENT)).resolves.toEqual({ status: "failed" });
   });
 
   it("keeps the correlation id only on a 5xx", async () => {
