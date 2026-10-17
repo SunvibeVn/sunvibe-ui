@@ -17,13 +17,14 @@ export const EMPTY_FORM_VALUES: FormValues = {
   consent: { accepted: false },
 };
 
-/** Applies a CatalogSelects change: new codes and ward type, and drops the pin when it no longer fits. */
+/** Applies a CatalogSelects change: new codes, ward type and name, and drops the pin when it no longer fits. */
 export function applyCatalogChange(values: FormValues, change: CatalogSelectionChange): FormValues {
   const next: FormValues = {
     ...values,
     provinceCode: change.provinceCode,
     wardCode: change.wardCode,
     wardType: change.wardType,
+    wardName: change.wardName,
   };
   if (change.clearPin) {
     next.latitude = undefined;

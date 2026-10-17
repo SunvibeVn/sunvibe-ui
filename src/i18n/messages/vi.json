@@ -76,12 +76,12 @@
     },
     "map": {
       "label": "Vị trí trên bản đồ",
-      "hint": "Kéo ghim tới vị trí bất động sản. Không bắt buộc.",
+      "hint": "Bấm vào bản đồ để đặt ghim, kéo ghim để chỉnh vị trí bất động sản. Không bắt buộc.",
       "loading": "Đang tải bản đồ...",
       "failed": "Không tải được bản đồ. Bạn vẫn có thể gửi form mà không cần vị trí.",
-      "specialZone": "Không cần chọn vị trí trên bản đồ cho Đặc khu Hoàng Sa.",
+      "specialZone": "Không cần chọn vị trí trên bản đồ cho Đặc khu {name}.",
       "clear": "Bỏ vị trí",
-      "outOfArea": "Vị trí nằm ngoài khu vực Sunvibe đang phục vụ."
+      "attribution": "© OpenStreetMap contributors"
     },
     "consent": {
       "label": "Tôi đồng ý để Sunvibe liên hệ",
@@ -140,8 +140,7 @@
         },
         "latitude": {
           "invalid": "Vị trí trên bản đồ không hợp lệ.",
-          "outOfArea": "Vị trí nằm ngoài khu vực Sunvibe đang phục vụ.",
-          "specialZone": "Không nhận vị trí cho Đặc khu Hoàng Sa."
+          "outOfArea": "Vị trí nằm ngoài khu vực Sunvibe đang phục vụ."
         },
         "longitude": {
           "invalid": "Vị trí trên bản đồ không hợp lệ."

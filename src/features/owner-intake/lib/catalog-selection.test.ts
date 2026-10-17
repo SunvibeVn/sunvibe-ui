@@ -50,17 +50,22 @@ describe("changeProvince", () => {
 });
 
 describe("changeWard", () => {
-  it("reports the ward type", () => {
+  it("reports the ward type and name", () => {
     expect(changeWard("48", wards, "20308")).toEqual({
       provinceCode: "48",
       wardCode: "20308",
       wardType: "COMMUNE",
+      wardName: "Bà Nà",
       clearPin: false,
     });
   });
 
   it("asks to clear the pin for a special zone", () => {
-    expect(changeWard("48", wards, "20333")).toMatchObject({ wardType: "SPECIAL_ZONE", clearPin: true });
+    expect(changeWard("48", wards, "20333")).toMatchObject({
+      wardType: "SPECIAL_ZONE",
+      wardName: "Hoàng Sa",
+      clearPin: true,
+    });
   });
 
   it("treats an unknown code as no ward", () => {

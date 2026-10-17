@@ -30,6 +30,8 @@ export type FormValues = {
   wardCode: string;
   /** Type of the chosen ward, from the catalog; a SPECIAL_ZONE ward sends no coordinates. */
   wardType?: WardType;
+  /** Name of the chosen ward, from the catalog; never sent. */
+  wardName?: string;
   addressDetail: string;
   latitude?: number;
   longitude?: number;

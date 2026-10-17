@@ -1,6 +1,7 @@
 import type { FormValues, OwnerIntakeRequestBody, PriceUnit } from "../types/form";
 
 import { CONSENT_NOTICE_VERSION } from "./consent";
+import { roundCoordinate } from "./geo";
 
 /** Price unit derived from the intent; the owner never picks it (BR-4). */
 export const PRICE_UNIT_BY_INTENT = {
@@ -30,11 +31,10 @@ export function toRequestBody(values: FormValues): OwnerIntakeRequestBody {
 
   const amount = optional(values.askingPrice.amount);
   const { latitude, longitude } = values;
-  // Both or neither, and none for a SPECIAL_ZONE ward. Pins and browser locations carry 12-15 decimals; the
-  // server refuses more than 10, so round to 6 (handoff 2.5).
+  // Both or neither, and none for a SPECIAL_ZONE ward; rounded to 6 decimals (handoff 2.5).
   const pin =
     latitude !== undefined && longitude !== undefined && values.wardType !== "SPECIAL_ZONE"
-      ? { latitude: Number(latitude.toFixed(6)), longitude: Number(longitude.toFixed(6)) }
+      ? { latitude: roundCoordinate(latitude), longitude: roundCoordinate(longitude) }
       : undefined;
 
   return compact({

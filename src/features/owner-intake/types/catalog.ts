@@ -16,6 +16,8 @@ export type CatalogSelectionChange = {
   provinceCode: string;
   wardCode: string;
   wardType?: WardType;
+  /** Name of the chosen ward, for copy such as the special-zone notice. */
+  wardName?: string;
   /** True when the map pin no longer fits the selection and must be removed. */
   clearPin: boolean;
 };

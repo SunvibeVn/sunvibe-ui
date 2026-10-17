@@ -13,11 +13,17 @@ export function changeProvince(selection: CatalogSelection, provinceCode: string
   return { provinceCode, wardCode: "", wardType: undefined, clearPin: selection.wardCode !== "" };
 }
 
-/** Reports the ward type; a special zone takes no coordinates, so its pin is cleared (handoff section 4). */
+/** Reports the ward type and name; a special zone takes no coordinates, so its pin is cleared (handoff section 4). */
 export function changeWard(provinceCode: string, wards: Ward[], wardCode: string): CatalogSelectionChange {
   const ward = wards.find((candidate) => candidate.code === wardCode);
   if (!ward) return { provinceCode, wardCode: "", wardType: undefined, clearPin: false };
-  return { provinceCode, wardCode: ward.code, wardType: ward.type, clearPin: ward.type === "SPECIAL_ZONE" };
+  return {
+    provinceCode,
+    wardCode: ward.code,
+    wardType: ward.type,
+    wardName: ward.name,
+    clearPin: ward.type === "SPECIAL_ZONE",
+  };
 }
 
 /** After a ward list loads: drops a ward (and its pin) that the new list makes invalid. */

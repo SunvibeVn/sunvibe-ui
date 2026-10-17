@@ -14,6 +14,7 @@ const minimal: FormValues = {
   provinceCode: "48",
   wardCode: "20242",
   wardType: "WARD",
+  wardName: "An Hải",
   addressDetail: "12 Đường Mẫu, căn A-1203",
   consent: { accepted: true },
 };

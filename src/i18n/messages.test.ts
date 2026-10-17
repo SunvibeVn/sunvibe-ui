@@ -31,6 +31,15 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
     );
   });
 
+  it("fills the special-zone notice with the ward name instead of a hardcoded one", () => {
+    expect(m.map.specialZone).toContain("{name}");
+    expect(JSON.stringify(m)).not.toContain("Hoàng Sa");
+  });
+
+  it("has the OpenStreetMap attribution", () => {
+    expect(m.map.attribution).toBe("© OpenStreetMap contributors");
+  });
+
   it("has the support code with the correlationId placeholder", () => {
     expect(m.errors.supportCode).toBe("Mã hỗ trợ: {correlationId}");
   });
