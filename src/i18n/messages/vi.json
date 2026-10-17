@@ -1,0 +1,189 @@
+{
+  "OwnerIntake": {
+    "page": {
+      "title": "Ký gửi bất động sản",
+      "description": "Gửi thông tin căn hộ, nhà hoặc đất cần cho thuê hay bán; Sale của Sunvibe sẽ gọi lại để tư vấn.",
+      "intro": "Bạn có căn hộ, nhà hoặc đất muốn cho thuê hay bán? Điền form ngắn dưới đây, không cần tạo tài khoản.",
+      "expectation": "Sale sẽ gọi lại để tư vấn cho bạn.",
+      "requiredHint": "Trường có dấu * là bắt buộc.",
+      "error": {
+        "title": "Đã có lỗi xảy ra",
+        "message": "Không tải được trang ký gửi. Vui lòng thử lại sau ít phút.",
+        "retry": "Thử lại"
+      }
+    },
+    "serviceArea": "Hiện Sunvibe nhận ký gửi tại TP. Đà Nẵng",
+    "fields": {
+      "contactName": { "label": "Họ tên", "placeholder": "Nguyễn Văn A" },
+      "phone": { "label": "Số điện thoại", "hint": "Số Việt Nam 10 chữ số, ví dụ 0909 123 456 hoặc +84 909 123 456." },
+      "email": { "label": "Email", "hint": "Không bắt buộc." },
+      "intent": {
+        "label": "Nhu cầu",
+        "placeholder": "Chọn nhu cầu",
+        "options": {
+          "SHORT_TERM_RENT": "Cho thuê ngắn hạn",
+          "LONG_TERM_RENT": "Cho thuê dài hạn",
+          "SALE": "Bán"
+        }
+      },
+      "provinceCode": { "label": "Tỉnh/thành", "placeholder": "Chọn tỉnh/thành" },
+      "wardCode": { "label": "Xã/phường", "placeholder": "Chọn xã/phường", "hintChooseProvince": "Chọn tỉnh/thành trước." },
+      "addressDetail": { "label": "Địa chỉ chi tiết", "hint": "Số nhà, đường, tòa, căn. Có thể ghi theo địa chỉ cũ, ví dụ \"Quận 7\"." },
+      "propertyType": {
+        "label": "Loại hình",
+        "placeholder": "Chọn loại hình",
+        "options": {
+          "STUDIO": "Studio",
+          "ONE_BEDROOM": "1 phòng ngủ",
+          "TWO_BEDROOM": "2 phòng ngủ",
+          "THREE_BEDROOM": "3 phòng ngủ",
+          "FOUR_BEDROOM": "4 phòng ngủ",
+          "DUPLEX": "Duplex",
+          "PENTHOUSE": "Penthouse",
+          "TOWNHOUSE": "Nhà phố",
+          "LAND": "Đất",
+          "OTHER": "Khác"
+        }
+      },
+      "askingPrice": {
+        "label": "Giá mong muốn (VND)",
+        "labelWithUnit": "Giá mong muốn (VND, {unit})",
+        "hint": "Số nguyên, lớn hơn 0. Không bắt buộc.",
+        "unit": {
+          "NIGHT": "mỗi đêm",
+          "MONTH": "mỗi tháng",
+          "TOTAL": "tổng giá"
+        }
+      },
+      "availableFrom": { "label": "Ngày trống" },
+      "notes": { "label": "Ghi chú", "hint": "Tối đa {max} ký tự." },
+      "preferredCallbackTime": { "label": "Thời gian muốn được gọi lại", "placeholder": "Ví dụ: buổi tối" }
+    },
+    "catalog": {
+      "loading": "Đang tải danh sách địa điểm...",
+      "failed": "Không tải được danh sách địa điểm.",
+      "retry": "Thử lại",
+      "noWards": "Chưa có xã/phường cho tỉnh/thành này.",
+      "noProvinces": "Chưa có tỉnh/thành nào để chọn.",
+      "wardType": {
+        "WARD": "Phường",
+        "COMMUNE": "Xã",
+        "SPECIAL_ZONE": "Đặc khu"
+      },
+      "wardOption": "{type} {name}"
+    },
+    "location": {
+      "button": "Dùng vị trí hiện tại",
+      "locating": "Đang lấy vị trí...",
+      "denied": "Bạn chưa cho phép lấy vị trí. Bạn vẫn có thể gửi form mà không cần vị trí.",
+      "failed": "Không lấy được vị trí hiện tại. Bạn vẫn có thể gửi form mà không cần vị trí.",
+      "unsupported": "Trình duyệt không hỗ trợ lấy vị trí.",
+      "outOfArea": "Vị trí hiện tại nằm ngoài khu vực Sunvibe đang phục vụ."
+    },
+    "map": {
+      "label": "Vị trí trên bản đồ",
+      "hint": "Bấm vào bản đồ để đặt ghim, kéo ghim để chỉnh vị trí bất động sản. Không bắt buộc.",
+      "loading": "Đang tải bản đồ...",
+      "failed": "Không tải được bản đồ. Bạn vẫn có thể gửi form mà không cần vị trí.",
+      "specialZone": "Không cần chọn vị trí trên bản đồ cho Đặc khu {name}.",
+      "clear": "Bỏ vị trí"
+    },
+    "consent": {
+      "label": "Đồng ý liên hệ",
+      "notice": "Tôi đồng ý để Sunvibe lưu và sử dụng thông tin tôi cung cấp (họ tên, số điện thoại, email, địa chỉ, vị trí bất động sản) nhằm liên hệ tư vấn dịch vụ môi giới cho thuê/bán. Thông tin không được đăng công khai khi chưa có sự đồng ý của tôi. Tôi có thể yêu cầu sửa hoặc xóa thông tin bất cứ lúc nào qua email services@sunvibe.vn hoặc hotline 0917579123."
+    },
+    "submit": {
+      "idle": "Gửi yêu cầu ký gửi",
+      "submitting": "Đang gửi...",
+      "waitCountdown": "Thử lại sau {seconds} giây"
+    },
+    "success": {
+      "title": "Đã gửi yêu cầu",
+      "confirmation": "Sunvibe đã nhận thông tin và sẽ liên hệ lại. Thông tin của bạn chưa được đăng công khai.",
+      "requestCodeLabel": "Mã yêu cầu",
+      "copy": "Sao chép mã",
+      "copied": "Đã sao chép",
+      "copyFailed": "Không sao chép được, vui lòng ghi lại mã.",
+      "sendAnother": "Gửi yêu cầu ký gửi khác"
+    },
+    "errors": {
+      "generic": "Không gửi được, vui lòng thử lại.",
+      "retry": "Gửi lại",
+      "network": "Không kết nối được tới Sunvibe, vui lòng kiểm tra mạng và thử lại.",
+      "keyReused": "Thông tin đã thay đổi, vui lòng bấm gửi lại.",
+      "supportCode": "Mã hỗ trợ: {correlationId}",
+      "rateLimited": "Bạn đã gửi quá nhiều lần, vui lòng thử lại sau.",
+      "fields": {
+        "contactName": {
+          "invalid": "Họ tên không hợp lệ.",
+          "required": "Vui lòng nhập họ tên.",
+          "tooLong": "Họ tên tối đa {max} ký tự."
+        },
+        "phone": {
+          "invalid": "Số điện thoại không hợp lệ. Vui lòng nhập số Việt Nam 10 chữ số.",
+          "required": "Vui lòng nhập số điện thoại."
+        },
+        "email": {
+          "invalid": "Email không hợp lệ.",
+          "tooLong": "Email tối đa {max} ký tự."
+        },
+        "intent": {
+          "invalid": "Nhu cầu không hợp lệ.",
+          "required": "Vui lòng chọn nhu cầu."
+        },
+        "provinceCode": {
+          "invalid": "Tỉnh/thành không hợp lệ.",
+          "required": "Vui lòng chọn tỉnh/thành."
+        },
+        "wardCode": {
+          "invalid": "Xã/phường không hợp lệ hoặc không thuộc tỉnh/thành đã chọn.",
+          "required": "Vui lòng chọn xã/phường."
+        },
+        "addressDetail": {
+          "invalid": "Địa chỉ chi tiết không hợp lệ.",
+          "required": "Vui lòng nhập địa chỉ chi tiết.",
+          "tooLong": "Địa chỉ chi tiết tối đa {max} ký tự."
+        },
+        "latitude": {
+          "invalid": "Vị trí trên bản đồ không hợp lệ.",
+          "outOfArea": "Vị trí nằm ngoài khu vực Sunvibe đang phục vụ."
+        },
+        "longitude": {
+          "invalid": "Vị trí trên bản đồ không hợp lệ."
+        },
+        "propertyType": {
+          "invalid": "Loại hình không hợp lệ."
+        },
+        "askingPrice": {
+          "invalid": "Giá mong muốn không hợp lệ.",
+          "amount": {
+            "invalid": "Giá mong muốn phải là số nguyên lớn hơn 0, tối đa 15 chữ số."
+          },
+          "currency": {
+            "invalid": "Đơn vị tiền tệ không hợp lệ."
+          },
+          "unit": {
+            "invalid": "Đơn vị giá không khớp với nhu cầu."
+          }
+        },
+        "availableFrom": {
+          "invalid": "Ngày trống không hợp lệ."
+        },
+        "notes": {
+          "invalid": "Ghi chú không hợp lệ.",
+          "tooLong": "Ghi chú tối đa {max} ký tự."
+        },
+        "preferredCallbackTime": {
+          "invalid": "Thời gian muốn được gọi lại không hợp lệ.",
+          "tooLong": "Thời gian muốn được gọi lại tối đa {max} ký tự."
+        },
+        "consent": {
+          "invalid": "Vui lòng đánh dấu đồng ý để Sunvibe liên hệ.",
+          "accepted": {
+            "invalid": "Vui lòng đánh dấu đồng ý để Sunvibe liên hệ."
+          }
+        }
+      }
+    }
+  }
+}

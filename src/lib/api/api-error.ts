@@ -1,4 +1,4 @@
-export type FieldError = { field: string; message: string };
+export type FieldError = { field: string; message: string; allowedValues?: string[] };
 
 export class ApiError extends Error {
   constructor(
