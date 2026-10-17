@@ -57,6 +57,7 @@
       "failed": "Không tải được danh sách địa điểm.",
       "retry": "Thử lại",
       "noWards": "Chưa có xã/phường cho tỉnh/thành này.",
+      "noProvinces": "Chưa có tỉnh/thành nào để chọn.",
       "wardType": {
         "WARD": "Phường",
         "COMMUNE": "Xã",
