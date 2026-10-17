@@ -31,6 +31,11 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
     );
   });
 
+  it("labels the consent checkbox with the BR-1 field name, not a second copy of the notice", () => {
+    expect(m.consent.label).toBe("Đồng ý liên hệ");
+    expect(m.consent.notice.startsWith(m.consent.label)).toBe(false);
+  });
+
   it("fills the special-zone notice with the ward name instead of a hardcoded one", () => {
     expect(m.map.specialZone).toContain("{name}");
     expect(JSON.stringify(m)).not.toContain("Hoàng Sa");
