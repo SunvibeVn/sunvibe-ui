@@ -1,7 +1,8 @@
 import "server-only";
 
 import { serverEnv } from "@/config/env";
-import { createHttpClient, type Paginated } from "@/lib/api";
+import type { Paginated } from "@/lib/api";
+import { createHttpClient } from "@/lib/api/server";
 import type { Property, PropertyListParams } from "../types/property.types";
 
 // Endpoint paths follow an assumed REST contract; align them with property-service.

@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/ui/form-field";
 import { OtpInput } from "@/components/ui/otp-input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { resendSignUpCodeAction, verifySignUpCodeAction, type ResendState } from "../actions/sign-up.action";
 import { AUTH_ROUTES } from "../constants";
-import { initialFormState } from "../lib/form-state";
+import { type FormState, initialFormState, readForm } from "../lib/form-state";
+import { signUpBrowserDeps } from "../lib/sign-up-browser";
+import { type ResendState, resendSignUpCode, verifySignUpCode } from "../lib/sign-up-flow";
 import { useCountdown } from "../lib/use-countdown";
 
 function formatSeconds(seconds: number) {
@@ -24,9 +26,20 @@ export function SignUpVerifyForm({
   maskedPhone: string;
   resendAvailableAt?: string;
 }) {
-  const [confirmState, confirmAction] = useActionState(verifySignUpCodeAction, initialFormState);
+  const router = useRouter();
+  const [confirmState, confirmAction] = useActionState(async (_previous: FormState, formData: FormData) => {
+    const outcome = await verifySignUpCode(readForm(formData, ["code"]), signUpBrowserDeps());
+    if (!("redirect" in outcome)) return outcome;
+    router.push(outcome.redirect);
+    return { status: "success" } satisfies FormState;
+  }, initialFormState);
   const initialResend: ResendState = { status: "idle", resendAvailableAt };
-  const [resendState, resendAction, resending] = useActionState(resendSignUpCodeAction, initialResend);
+  const [resendState, resendAction, resending] = useActionState(async (previous: ResendState) => {
+    const outcome = await resendSignUpCode(signUpBrowserDeps());
+    if (!("redirect" in outcome)) return outcome;
+    router.push(outcome.redirect);
+    return previous;
+  }, initialResend);
   const secondsLeft = useCountdown(resendState.resendAvailableAt);
   const waiting = secondsLeft === null || secondsLeft > 0;
   const codeError = confirmState.fieldErrors?.code?.[0];

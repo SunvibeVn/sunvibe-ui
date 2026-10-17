@@ -9,14 +9,17 @@ export function SubmitButton({
   children,
   variant = "primary",
   fullWidth = true,
+  disabled = false,
 }: {
   children: ReactNode;
   variant?: "primary" | "secondary" | "ghost";
   fullWidth?: boolean;
+  /** Disables the button; it is also disabled while its form's action runs. */
+  disabled?: boolean;
 }) {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" variant={variant} fullWidth={fullWidth} pending={pending}>
+    <Button type="submit" variant={variant} fullWidth={fullWidth} pending={pending} disabled={disabled}>
       {children}
     </Button>
   );

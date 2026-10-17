@@ -1,16 +1,23 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { forgotPasswordByEmailAction, forgotPasswordBySmsAction } from "../actions/forgot-password.action";
 import { AUTH_ROUTES } from "../constants";
-import { initialFormState } from "../lib/form-state";
+import { type FormState, initialFormState, readForm } from "../lib/form-state";
+import { passwordResetBrowserDeps } from "../lib/password-reset-browser";
+import { requestResetByEmail, requestResetBySms } from "../lib/password-reset-flow";
+import { useCookiesWork } from "../lib/use-cookies-work";
 import { useFieldErrors } from "../lib/use-field-errors";
 import { forgotByEmailSchema, forgotBySmsSchema } from "../schemas/auth.schema";
+import { CookiesRequiredNotice } from "./cookies-required-notice";
+
+// Both forms use a client function as the form action: React renders it as a non-submitting `javascript:` action and
+// replays a submit made before hydration. The browser dependencies are resolved at submit time.
 
 type Channel = "email" | "sms";
 
@@ -49,7 +56,12 @@ export function ForgotPasswordForm() {
 }
 
 function EmailForm() {
-  const [state, formAction] = useActionState(forgotPasswordByEmailAction, initialFormState);
+  const cookiesWork = useCookiesWork();
+  const [state, formAction] = useActionState(
+    (_previous: FormState, formData: FormData) =>
+      requestResetByEmail(readForm(formData, ["email"]), passwordResetBrowserDeps()),
+    initialFormState,
+  );
   const { onBlur, errorFor } = useFieldErrors(forgotByEmailSchema, state.fieldErrors);
   const error = errorFor("email");
 
@@ -68,6 +80,7 @@ function EmailForm() {
 
   return (
     <form action={formAction} onBlur={onBlur} noValidate className="space-y-5">
+      <CookiesRequiredNotice />
       {state.message && <Alert tone="error">{state.message}</Alert>}
       <FormField id="email" label="Email address" error={error}>
         <Input
@@ -81,18 +94,28 @@ function EmailForm() {
           aria-describedby={describedBy("email", error)}
         />
       </FormField>
-      <SubmitButton>Email me a reset link</SubmitButton>
+      <SubmitButton disabled={!cookiesWork}>Email me a reset link</SubmitButton>
     </form>
   );
 }
 
 function SmsForm() {
-  const [state, formAction] = useActionState(forgotPasswordBySmsAction, initialFormState);
+  const router = useRouter();
+  const cookiesWork = useCookiesWork();
+  const [state, formAction] = useActionState(async (_previous: FormState, formData: FormData): Promise<FormState> => {
+    const values = readForm(formData, ["phoneNumber"]);
+    const outcome = await requestResetBySms(values, passwordResetBrowserDeps());
+    if (!("redirect" in outcome)) return outcome;
+    router.push(outcome.redirect);
+    // Keeps the typed number in the field while the next page loads.
+    return { status: "success", values } satisfies FormState;
+  }, initialFormState);
   const { onBlur, errorFor } = useFieldErrors(forgotBySmsSchema, state.fieldErrors);
   const error = errorFor("phoneNumber");
 
   return (
     <form action={formAction} onBlur={onBlur} noValidate className="space-y-5">
+      <CookiesRequiredNotice />
       {state.message && <Alert tone={state.status === "success" ? "success" : "error"}>{state.message}</Alert>}
       <FormField id="phoneNumber" label="Phone number" error={error}>
         <Input
@@ -108,7 +131,7 @@ function SmsForm() {
           aria-describedby={describedBy("phoneNumber", error)}
         />
       </FormField>
-      <SubmitButton>Text me a code</SubmitButton>
+      <SubmitButton disabled={!cookiesWork}>Text me a code</SubmitButton>
     </form>
   );
 }

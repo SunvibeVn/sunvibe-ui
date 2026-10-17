@@ -1,18 +1,21 @@
+"use client";
+
 import Link from "next/link";
 import { Alert } from "@/components/ui/alert";
 import { AUTH_ROUTES } from "../constants";
-import { readResetToken } from "../session/cookies";
+import { useResetSectionView } from "../lib/password-reset-browser";
+import { FormSkeleton } from "./form-skeleton";
 import { ResetPasswordForm } from "./reset-password-form";
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+/**
+ * The reset form, or the invalid-link notice when this tab holds no reset token. `fromLink` (the address carries a
+ * token or `via=sms`) renders the form on the server already, so a submit before hydration works; the token itself is
+ * read from this tab's storage after mount, never from the page props.
+ */
+export function ResetPasswordSection({ via, fromLink }: { via: "email" | "sms"; fromLink: boolean }) {
+  const view = useResetSectionView(fromLink);
 
-/** Reads search params and cookies, so render it inside <Suspense>. */
-export async function ResetPasswordSection({ searchParams }: { searchParams: SearchParams }) {
-  const params = await searchParams;
-  const token = typeof params.token === "string" && params.token ? params.token : undefined;
-  const via = params.via === "sms" ? "sms" : "email";
-
-  if (!token && !(await readResetToken())) {
+  if (view === "invalid") {
     return (
       <div className="space-y-5">
         <Alert tone="error" title="This link is invalid or has expired">
@@ -24,6 +27,6 @@ export async function ResetPasswordSection({ searchParams }: { searchParams: Sea
       </div>
     );
   }
-
-  return <ResetPasswordForm token={token} via={via} />;
+  if (view === "pending") return <FormSkeleton fields={3} />;
+  return <ResetPasswordForm via={via} />;
 }

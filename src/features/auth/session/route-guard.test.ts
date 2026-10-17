@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { guardRedirect } from "./route-guard";
+import { guardRedirect, isProtectedPath } from "./route-guard";
 
 const at = (path: string) => new URL(path, "http://localhost:3000");
 
@@ -24,5 +24,16 @@ describe("guardRedirect", () => {
     expect(guardRedirect(at("/"), false)).toBeNull();
     expect(guardRedirect(at("/reset-password?token=x"), true)).toBeNull();
     expect(guardRedirect(at("/accounting"), false)).toBeNull();
+  });
+});
+
+describe("isProtectedPath", () => {
+  it("matches the protected pages and their sub-paths only", () => {
+    expect(isProtectedPath("/account")).toBe(true);
+    expect(isProtectedPath("/account/profile")).toBe(true);
+    expect(isProtectedPath("/verify-phone")).toBe(true);
+    expect(isProtectedPath("/accounting")).toBe(false);
+    expect(isProtectedPath("/")).toBe(false);
+    expect(isProtectedPath("/login")).toBe(false);
   });
 });

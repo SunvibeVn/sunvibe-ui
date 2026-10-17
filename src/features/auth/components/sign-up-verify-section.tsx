@@ -1,13 +1,26 @@
-import { redirect } from "next/navigation";
-import { AUTH_ROUTES } from "../constants";
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import { maskPhone } from "../lib/mask-phone";
-import { readSignUpEntry } from "../session/cookies";
+import { useSignUpStep } from "../lib/sign-up-browser";
+import { sessionStorageOf } from "../lib/session-storage";
+import { leaveSignUpStep } from "../lib/signup-progress";
+import { FormSkeleton } from "./form-skeleton";
 import { SignUpVerifyForm } from "./sign-up-verify-form";
 
-/** Reads the sign-up cookie, so render it inside <Suspense>. Sends visitors who skipped a step back to it. */
-export async function SignUpVerifySection() {
-  const entry = await readSignUpEntry();
-  if (!entry) redirect(AUTH_ROUTES.signUp);
-  if (entry.registrationToken) redirect(AUTH_ROUTES.signUpDetails);
-  return <SignUpVerifyForm maskedPhone={maskPhone(entry.phone)} resendAvailableAt={entry.resendAvailableAt} />;
+/** Reads this tab's sign-up progress once mounted. Sends visitors who skipped a step, or whose token ran out, back. */
+export function SignUpVerifySection() {
+  const router = useRouter();
+  const step = useSignUpStep();
+
+  useEffect(() => {
+    if (!step) return;
+    leaveSignUpStep(step, "code", { storage: sessionStorageOf(window), replace: (path) => router.replace(path) });
+  }, [router, step]);
+
+  if (step?.kind !== "code") return <FormSkeleton fields={1} />;
+  return (
+    <SignUpVerifyForm maskedPhone={maskPhone(step.progress.phone)} resendAvailableAt={step.progress.resendAvailableAt} />
+  );
 }

@@ -1,28 +1,66 @@
+"use client";
+
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { Suspense } from "react";
 import { CheckIcon, ShieldCheckIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { AUTH_ROUTES } from "../constants";
-import { requireUser } from "../session/dal";
+import { type MeResponse, accountStatusLabel, readMe } from "../lib/account-flow";
+import { englishSessionTexts } from "../lib/english-session-texts";
+import { accountDeps } from "../lib/signed-in-browser";
+import { useSignedInLoad } from "../lib/use-signed-in-load";
+import { useSession } from "../session/use-session";
+import { FormSkeleton } from "./form-skeleton";
+import { LoadError } from "./load-error";
 import { LogoutButton } from "./logout-button";
+import { RequireSession } from "./require-session";
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+// The profile is fetched and rendered only in the browser, with the tab's token (auth-browser-session §4.7): the
+// server HTML holds no private data.
 
-const statusLabels: Record<string, string> = {
-  PENDING: "Pending phone verification",
-  ACTIVE: "Active",
-};
+/** The signed-in user's account page. */
+export function AccountOverview() {
+  return (
+    <RequireSession texts={englishSessionTexts}>
+      <AccountForUser />
+    </RequireSession>
+  );
+}
 
-/** Reads the session and search params, so render it inside <Suspense>. */
-export async function AccountOverview({ searchParams }: { searchParams: SearchParams }) {
-  const [user, params] = await Promise.all([requireUser(AUTH_ROUTES.account), searchParams]);
-  const status = statusLabels[user.accountStatus] ?? user.accountStatus.toLowerCase();
+/** Loads the profile again for another signed-in user. */
+function AccountForUser() {
+  const { user } = useSession();
+  return <AccountContent key={user?.userId ?? ""} />;
+}
+
+const loadProfile = () => readMe(accountDeps());
+
+function AccountContent() {
+  const { view, retry } = useSignedInLoad(loadProfile);
+  if (view.kind === "loading") return <FormSkeleton fields={2} />;
+  if (view.kind === "error") return <LoadError onRetry={retry} />;
+  // RequireSession shows the session's state (signed out, unavailable) from the store.
+  if (view.kind === "none") return null;
+  return <Profile me={view.me} />;
+}
+
+function PhoneVerifiedNotice() {
+  const params = useSearchParams();
+  if (params.get("phone") !== "verified") return null;
+  return <Alert tone="success">Your phone number is verified. Welcome to Sunvibe!</Alert>;
+}
+
+function Profile({ me }: { me: MeResponse }) {
+  const fullName = me.fullName ?? "";
+  const phoneVerified = me.phoneVerified ?? false;
 
   return (
     <div className="space-y-6">
-      {params.phone === "verified" && (
-        <Alert tone="success">Your phone number is verified. Welcome to Sunvibe!</Alert>
-      )}
-      {!user.phoneVerified && (
+      <Suspense fallback={null}>
+        <PhoneVerifiedNotice />
+      </Suspense>
+      {!phoneVerified && (
         <Alert tone="info" title="Verify your phone number">
           Your account stays pending until you confirm your phone.{" "}
           <Link href={AUTH_ROUTES.verifyPhone} className="font-semibold underline underline-offset-2">
@@ -35,22 +73,22 @@ export async function AccountOverview({ searchParams }: { searchParams: SearchPa
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex min-w-0 items-center gap-4">
             <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-xl font-semibold text-white">
-              {user.fullName.trim().charAt(0).toUpperCase()}
+              {fullName.trim().charAt(0).toUpperCase()}
             </span>
             <div className="min-w-0">
-              <h1 className="truncate text-xl font-semibold text-navy-950">{user.fullName}</h1>
-              <p className="text-sm text-slate-500">{status}</p>
+              <h1 className="truncate text-xl font-semibold text-navy-950">{fullName}</h1>
+              <p className="text-sm text-slate-500">{accountStatusLabel(me.accountStatus)}</p>
             </div>
           </div>
           <LogoutButton />
         </div>
 
         <dl className="mt-8 grid grid-cols-1 gap-6 border-t border-slate-100 pt-6 sm:grid-cols-2">
-          <Detail label="Phone number" value={user.phoneNumber} verified={user.phoneVerified} />
+          <Detail label="Phone number" value={me.username ?? ""} verified={phoneVerified} />
           <Detail
             label="Email"
-            value={user.email ?? "Not provided"}
-            verified={user.email ? user.emailVerified : undefined}
+            value={me.email ?? "Not provided"}
+            verified={me.email ? (me.emailVerified ?? false) : undefined}
           />
         </dl>
       </section>

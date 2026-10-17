@@ -260,6 +260,326 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign in with phone number and password (public)
+         * @description Starts a new session for this device: the access token in the body, the refresh token in the HttpOnly refresh cookie (Path=/api/v1/auth/session).
+         */
+        post: operations["authLogin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password-reset/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Complete a password reset (public)
+         * @description Checks the code of the reset token and sets the new password. Ends every session of the account and clears the refresh cookie; no new session is started.
+         */
+        post: operations["authPasswordResetComplete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password-reset/email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a password reset by e-mail (public)
+         * @description E-mails a reset code with its token to a verified account address. The answer is the same whether or not an account exists and never contains the reset token.
+         */
+        post: operations["authPasswordResetByEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password-reset/sms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a password reset by SMS (public)
+         * @description Texts a reset code to the account's phone number. The answer carries a reset token, a decoy one when no account exists or a code was sent moments ago, so it looks the same.
+         */
+        post: operations["authPasswordResetBySms"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/registration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Register a new account (public)
+         * @description Creates the account with the registration token of the verified phone number and signs it in: the access token in the body, the refresh token in the HttpOnly refresh cookie (Path=/api/v1/auth/session).
+         */
+        post: operations["authRegister"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/registration/phone/send-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a registration code by SMS (public)
+         * @description Texts a code that proves the registrant controls this phone number. A number already in use gets no code.
+         */
+        post: operations["authRegistrationSendCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/registration/phone/verify-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Check the registration code (public)
+         * @description Answers a registration token to send with the registration.
+         */
+        post: operations["authRegistrationVerifyCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/session/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out this device (public, allowed Origin only)
+         * @description Revokes the session of the refresh cookie and clears the cookie. 204 also without a cookie. A cookie sent twice ends both sessions.
+         */
+        post: operations["authSessionLogout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/session/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh the session from the refresh cookie (public, allowed Origin only)
+         * @description Rotates the refresh token. Called when the access token has expired, so it takes none. Requires an allowed Origin header; a cookie sent twice is refused and nothing is rotated.
+         */
+        post: operations["authSessionRefresh"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * The signed-in user's own profile
+         * @description Never cached: Cache-Control: no-store.
+         */
+        get: operations["getMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/password/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the password
+         * @description Ends every session of the account and starts a new one for this device: the access token in the body, the refresh token in the HttpOnly refresh cookie (Path=/api/v1/auth/session). A wrong current password is a field error on currentPassword, never a 401.
+         */
+        post: operations["meChangePassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/sessions/logout-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Sign out every device
+         * @description Revokes every session of the account and clears this device's refresh cookie.
+         */
+        post: operations["meLogoutAll"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/verification/email/confirm-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm the e-mail verification code
+         * @description Marks the e-mail address verified.
+         */
+        post: operations["meConfirmEmailCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/verification/email/send-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send an e-mail verification code
+         * @description E-mails a code to the account's e-mail address.
+         */
+        post: operations["meSendEmailCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/verification/phone/confirm-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm the phone verification code
+         * @description Marks the phone number verified; a PENDING account becomes ACTIVE.
+         */
+        post: operations["meConfirmPhoneCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/verification/phone/send-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Send a phone verification code by SMS
+         * @description Texts a code to the account's phone number. A PENDING account becomes ACTIVE once the code is confirmed.
+         */
+        post: operations["meSendPhoneCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/properties": {
         parameters: {
             query?: never;
@@ -634,6 +954,29 @@ export interface components {
             /** @enum {string} */
             toStatus: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
         };
+        /** @description A verification code was sent */
+        CodeSentResponse: {
+            /**
+             * @description PHONE or EMAIL
+             * @example PHONE
+             */
+            channel?: string;
+            /**
+             * Format: date-time
+             * @description When the code stops working
+             */
+            expiresAt?: string;
+            /**
+             * Format: date-time
+             * @description Earliest time a new code can be asked for
+             */
+            resendAvailableAt?: string;
+            /**
+             * @description Partly hidden phone or e-mail the code went to
+             * @example 091****678
+             */
+            sentTo?: string;
+        };
         ConsentRequest: {
             /** @example true */
             accepted: boolean;
@@ -718,6 +1061,28 @@ export interface components {
             roles?: string[];
             tokenType?: string;
             userEmail?: string;
+            username?: string;
+        };
+        /** @description The signed-in user's own profile */
+        MeResponse: {
+            /** @description Account status (name of UserStatus) */
+            accountStatus?: string;
+            /** @description E-mail of the account; null when it has none */
+            email?: string | null;
+            /** @description False when there is no e-mail or it is not confirmed yet */
+            emailVerified?: boolean;
+            /** @description Display name of the account */
+            fullName?: string;
+            /** @description Identity check status (name of KycStatus) */
+            kycStatus?: string;
+            /** @description Whether the phone number is confirmed */
+            phoneVerified?: boolean;
+            /** @description URL of the profile image; null when there is none */
+            profileImageUrl?: string | null;
+            /**
+             * @description The account's phone number
+             * @example 0901234567
+             */
             username?: string;
         };
         /** @description Owner intake form: a property owner asks Sunvibe to call back */
@@ -889,6 +1254,22 @@ export interface components {
             /** Format: date-time */
             passwordChangedAt?: string;
         };
+        /** @description A password reset was started; same shape whether or not an account exists */
+        PasswordResetStartResponse: {
+            /**
+             * Format: date-time
+             * @description When the code stops working
+             */
+            expiresAt?: string;
+            /**
+             * Format: int64
+             * @description How many minutes a reset code is valid
+             * @example 5
+             */
+            otpExpirationMinutes?: number;
+            /** @description SMS flow only: send it back with the SMS code to reset the password; omitted for the e-mail flow */
+            resetToken?: string;
+        };
         PropertyCreateRequest: {
             amenityTypes?: number[];
             /** Format: int32 */
@@ -1012,6 +1393,47 @@ export interface components {
             message?: string;
             /** @example /api/v1/staff/owner-leads */
             path?: string;
+        };
+        /** @description A started or refreshed session: the access token and the account */
+        SessionResponse: {
+            /** @description The JWT to send as Authorization: Bearer ... */
+            accessToken?: string;
+            /**
+             * Format: int64
+             * @description Seconds until accessToken expires; refresh shortly before
+             * @example 900
+             */
+            expiresIn?: number;
+            /**
+             * @description Always Bearer
+             * @example Bearer
+             */
+            tokenType?: string;
+            /** @description The signed-in account */
+            user?: components["schemas"]["SessionUserResponse"];
+        };
+        /** @description The signed-in account as it is at this moment */
+        SessionUserResponse: {
+            /** @description E-mail of the account; null when it has none */
+            email?: string | null;
+            /** @description False when there is no e-mail or it is not confirmed yet */
+            emailVerified?: boolean;
+            /** @description Display name of the account */
+            fullName?: string;
+            /** @description False right after registration: show the enter-the-SMS-code screen */
+            phoneVerified?: boolean;
+            /** @description Role names, sorted, e.g. CUSTOMER, TENANT */
+            roles?: string[];
+            /**
+             * @description Opaque ULID of the account
+             * @example 01JAXXXXXXXXXXXXXXXXXXXXXX
+             */
+            userId?: string;
+            /**
+             * @description The account's phone number
+             * @example 0901234567
+             */
+            username?: string;
         };
         UserProfileInfo: {
             accountStatus?: string;
@@ -1437,6 +1859,1048 @@ export interface operations {
             };
         };
     };
+    authLogin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Signed in; sets the refresh cookie */
+            200: {
+                headers: {
+                    /** @description The refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on username or password; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INVALID_CREDENTIALS: unknown phone, wrong password, or an account that may not sign in (one answer for all) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description ACCOUNT_LOCKED: too many wrong passwords; Retry-After gives the seconds to wait */
+            423: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authPasswordResetComplete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordResetRequest"];
+            };
+        };
+        responses: {
+            /** @description Password reset; clears the refresh cookie */
+            204: {
+                headers: {
+                    /** @description Clears the refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED; CODE_INCORRECT; CODE_ATTEMPTS_EXCEEDED; RESET_TOKEN_INVALID; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description ACCOUNT_DISABLED: the account is locked or terminated */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authPasswordResetByEmail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordForgotRequest"];
+            };
+        };
+        responses: {
+            /** @description Reset started (or nothing to do; same answer) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PasswordResetStartResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on email; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, for example the e-mail hand-off failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authPasswordResetBySms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordForgotSmsRequest"];
+            };
+        };
+        responses: {
+            /** @description Reset started (or nothing to do; same answer) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["PasswordResetStartResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on phoneNumber; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, for example the SMS hand-off failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authRegister: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserRegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Registered and signed in; sets the refresh cookie */
+            201: {
+                headers: {
+                    /** @description The refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED (bean validation, or phone, e-mail or ID card in use); REGISTRATION_TOKEN_INVALID; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authRegistrationSendCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationPhoneSendRequest"];
+            };
+        };
+        responses: {
+            /** @description Code sent */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CodeSentResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on phoneNumber, or on username when the number is already in use; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CODE_RESEND_TOO_SOON or CODE_DAILY_LIMIT (the code limits), or RATE_LIMITED (too many requests from this IP address); Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, for example the SMS hand-off failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authRegistrationVerifyCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegistrationPhoneVerifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Phone number verified */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["RegistrationTokenResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on phoneNumber or code; CODE_INCORRECT, CODE_EXPIRED, CODE_ATTEMPTS_EXCEEDED; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authSessionLogout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Signed out; clears the refresh cookie */
+            204: {
+                headers: {
+                    /** @description Clears the refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description ORIGIN_NOT_ALLOWED: no Origin header, or the API's own origin. A present, not allowed Origin gets the CORS filter's plain-text 403 instead */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    authSessionRefresh: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A new access token; sets the rotated refresh cookie */
+            200: {
+                headers: {
+                    /** @description The rotated refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description SESSION_EXPIRED: no, unknown, expired, revoked or reused token, an account that may not sign in, or the cookie sent twice; clears the cookie */
+            401: {
+                headers: {
+                    /** @description Clears the refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description ORIGIN_NOT_ALLOWED: no Origin header, or the API's own origin. A present, not allowed Origin gets the CORS filter's plain-text 403 instead */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getMe: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The profile */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["MeResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: the account no longer exists */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    meChangePassword: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PasswordChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Password changed; sets the new refresh cookie */
+            200: {
+                headers: {
+                    /** @description The refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SessionResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED (bean validation, a wrong current password on currentPassword, or a new password equal to the current one); MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    meLogoutAll: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Signed out everywhere; clears the refresh cookie */
+            204: {
+                headers: {
+                    /** @description Clears the refresh cookie */
+                    "Set-Cookie"?: unknown;
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    meConfirmEmailCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description E-mail verified */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED on code; CODE_INCORRECT, CODE_EXPIRED, CODE_ATTEMPTS_EXCEEDED, ALREADY_VERIFIED; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    meSendEmailCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Code sent */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CodeSentResponse"];
+                };
+            };
+            /** @description NO_EMAIL or ALREADY_VERIFIED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description CODE_RESEND_TOO_SOON or CODE_DAILY_LIMIT (the code limits), or RATE_LIMITED (too many requests from this IP address); Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, for example the e-mail hand-off failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    meConfirmPhoneCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Phone number verified */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED on code; CODE_INCORRECT, CODE_EXPIRED, CODE_ATTEMPTS_EXCEEDED, ALREADY_VERIFIED; MALFORMED_REQUEST (unreadable JSON) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: the body is not JSON */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many requests from this IP address; Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    meSendPhoneCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Code sent */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["CodeSentResponse"];
+                };
+            };
+            /** @description ALREADY_VERIFIED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description CODE_RESEND_TOO_SOON or CODE_DAILY_LIMIT (the code limits), or RATE_LIMITED (too many requests from this IP address); Retry-After gives the seconds to wait */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: unknown;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, for example the SMS hand-off failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     createProperty: {
         parameters: {
             query?: never;
@@ -1535,6 +2999,15 @@ export interface operations {
             };
             /** @description VALIDATION_FAILED (field errors, also for a bad Idempotency-Key) or MALFORMED_REQUEST (body is not readable JSON) */
             400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the form is switched off on this server (app.acquisition.owner-intake.enabled); nothing was read or stored */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -40,30 +40,41 @@ export type PublicClientOptions = {
   timeoutMs?: number;
 };
 
+/**
+ * Wraps a fetch function so each request is aborted after `timeoutMs` (and still follows the caller's own signal).
+ * An aborted request rejects, which `toPublicResult` maps to `kind: "network"`.
+ */
+export function withTimeout(
+  baseFetch: (request: Request) => Promise<Response>,
+  timeoutMs: number,
+): (request: Request) => Promise<Response> {
+  return async (request) => {
+    // Manual AbortController: AbortSignal.any/timeout are missing in older browsers.
+    const controller = new AbortController();
+    const abort = () => controller.abort();
+    if (request.signal.aborted) abort();
+    else request.signal.addEventListener("abort", abort, { once: true });
+    const timer = setTimeout(abort, timeoutMs);
+    try {
+      return await baseFetch(new Request(request, { signal: controller.signal }));
+    } finally {
+      clearTimeout(timer);
+      request.signal.removeEventListener("abort", abort);
+    }
+  };
+}
+
 export function createPublicClient(options: PublicClientOptions = {}) {
   const baseFetch = options.fetch ?? ((request: Request) => globalThis.fetch(request));
-  const timeoutMs = options.timeoutMs ?? PUBLIC_API_TIMEOUT_MS;
   return createClient<paths>({
     baseUrl: options.baseUrl ?? publicEnv.apiUrl,
     credentials: "omit",
-    fetch: async (request) => {
-      // Manual AbortController: AbortSignal.any/timeout are missing in older browsers.
-      const controller = new AbortController();
-      const abort = () => controller.abort();
-      if (request.signal.aborted) abort();
-      else request.signal.addEventListener("abort", abort, { once: true });
-      const timer = setTimeout(abort, timeoutMs);
-      try {
-        return await baseFetch(new Request(request, { signal: controller.signal }));
-      } finally {
-        clearTimeout(timer);
-        request.signal.removeEventListener("abort", abort);
-      }
-    },
+    fetch: withTimeout(baseFetch, options.timeoutMs ?? PUBLIC_API_TIMEOUT_MS),
   });
 }
 
-type ClientResponse<T> = { data?: T; error?: unknown; response: Response };
+/** What an openapi-fetch call resolves to, as `toPublicResult` and `callApi` read it. */
+export type ClientResponse<T> = { data?: T; error?: unknown; response: Response };
 
 function parseFieldErrors(body: unknown): FieldError[] {
   if (!body || typeof body !== "object" || !("errors" in body) || !Array.isArray(body.errors)) return [];

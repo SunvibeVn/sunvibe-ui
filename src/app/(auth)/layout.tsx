@@ -1,5 +1,10 @@
-import { AuthCard } from "@/features/auth";
+import { AuthCard, NoscriptNotice } from "@/features/auth";
 
 export default function AuthLayout({ children }: LayoutProps<"/">) {
-  return <AuthCard>{children}</AuthCard>;
+  return (
+    <AuthCard>
+      <NoscriptNotice />
+      {children}
+    </AuthCard>
+  );
 }

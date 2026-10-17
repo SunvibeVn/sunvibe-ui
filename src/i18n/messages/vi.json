@@ -185,5 +185,27 @@
         }
       }
     }
+  },
+  "Session": {
+    "loading": "Đang tải…",
+    "leaving": "Đang chuyển tới trang đăng nhập…",
+    "expired": {
+      "title": "Phiên đăng nhập đã hết hạn",
+      "body": "Vui lòng đăng nhập lại để tiếp tục.",
+      "link": "Đăng nhập lại"
+    },
+    "forbidden": {
+      "title": "Bạn không có quyền truy cập trang này",
+      "body": "Tài khoản của bạn chưa được cấp quyền cho trang này. Hãy liên hệ quản trị viên nếu bạn cần quyền.",
+      "link": "Về trang chủ"
+    },
+    "forbiddenNotice": "Bạn không có quyền thực hiện thao tác này.",
+    "unavailable": {
+      "title": "Không kết nối được máy chủ",
+      "body": "Chưa tải được phiên đăng nhập. Bạn vẫn đang đăng nhập.",
+      "retry": "Thử lại",
+      "signOutHere": "Đăng xuất trên thiết bị này",
+      "rateLimited": "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau {n} giây."
+    }
   }
 }

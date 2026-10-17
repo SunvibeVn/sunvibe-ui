@@ -49,3 +49,65 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
     expect(m.errors.supportCode).toBe("Mã hỗ trợ: {correlationId}");
   });
 });
+
+describe("vi.json Session verbatim spec §7 texts (W10-46)", () => {
+  const m = vi.Session;
+
+  it("has the 401 screen title", () => {
+    expect(m.expired.title).toBe("Phiên đăng nhập đã hết hạn");
+  });
+
+  it("has the 401 screen body", () => {
+    expect(m.expired.body).toBe("Vui lòng đăng nhập lại để tiếp tục.");
+  });
+
+  it("has the 401 screen link", () => {
+    expect(m.expired.link).toBe("Đăng nhập lại");
+  });
+
+  it("has the 403 screen title", () => {
+    expect(m.forbidden.title).toBe("Bạn không có quyền truy cập trang này");
+  });
+
+  it("has the 403 screen body", () => {
+    expect(m.forbidden.body).toBe(
+      "Tài khoản của bạn chưa được cấp quyền cho trang này. Hãy liên hệ quản trị viên nếu bạn cần quyền.",
+    );
+  });
+
+  it("has the 403 screen link", () => {
+    expect(m.forbidden.link).toBe("Về trang chủ");
+  });
+
+  it("has the inline 403 notice", () => {
+    expect(m.forbiddenNotice).toBe("Bạn không có quyền thực hiện thao tác này.");
+  });
+
+  it("has the unavailable block title", () => {
+    expect(m.unavailable.title).toBe("Không kết nối được máy chủ");
+  });
+
+  it("has the unavailable block body", () => {
+    expect(m.unavailable.body).toBe("Chưa tải được phiên đăng nhập. Bạn vẫn đang đăng nhập.");
+  });
+
+  it("has the unavailable retry button", () => {
+    expect(m.unavailable.retry).toBe("Thử lại");
+  });
+
+  it("has the unavailable sign-out button", () => {
+    expect(m.unavailable.signOutHere).toBe("Đăng xuất trên thiết bị này");
+  });
+
+  it("has the 429 text with the {n} seconds placeholder", () => {
+    expect(m.unavailable.rateLimited).toBe("Bạn đã thử quá nhiều lần. Vui lòng thử lại sau {n} giây.");
+  });
+
+  it("has the loading text", () => {
+    expect(m.loading).toBe("Đang tải…");
+  });
+
+  it("has the leaving text", () => {
+    expect(m.leaving).toBe("Đang chuyển tới trang đăng nhập…");
+  });
+});

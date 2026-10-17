@@ -2,11 +2,11 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { UserIcon } from "@/components/icons";
 import { AUTH_ROUTES } from "../constants";
-import { hasSession } from "../session/dal";
+import { hasSignInHint } from "../session/hint.server";
 
 const linkClass = "inline-flex items-center gap-1.5 text-sm font-medium text-white transition-colors hover:text-white/70";
 
-/** "Log in" or "Account" in the site header. Reads cookies only, so it never calls the backend. */
+/** "Log in" or "Account" in the site header. Reads the sign-in hint cookie only, so it never calls the backend. */
 export function UserMenu() {
   return (
     <Suspense fallback={<span aria-hidden className="inline-block h-5 w-5 animate-pulse rounded bg-white/10" />}>
@@ -16,7 +16,7 @@ export function UserMenu() {
 }
 
 async function UserMenuLink() {
-  return (await hasSession()) ? (
+  return (await hasSignInHint()) ? (
     <Link href={AUTH_ROUTES.account} className={linkClass}>
       <UserIcon size={22} />
       <span className="sr-only">Account</span>
