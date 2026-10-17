@@ -2,6 +2,7 @@
   "OwnerIntake": {
     "page": {
       "title": "Ký gửi bất động sản",
+      "description": "Gửi thông tin căn hộ, nhà hoặc đất cần cho thuê hay bán; Sale của Sunvibe sẽ gọi lại để tư vấn.",
       "intro": "Bạn có căn hộ, nhà hoặc đất muốn cho thuê hay bán? Điền form ngắn dưới đây, không cần tạo tài khoản.",
       "expectation": "Sale sẽ gọi lại để tư vấn cho bạn.",
       "requiredHint": "Trường có dấu * là bắt buộc."
