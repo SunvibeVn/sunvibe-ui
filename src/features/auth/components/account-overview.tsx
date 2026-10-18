@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { type ReactNode, Suspense } from "react";
 import { CheckIcon, ShieldCheckIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { AUTH_ROUTES } from "../constants";
@@ -19,30 +19,33 @@ import { RequireSession } from "./require-session";
 // The profile is fetched and rendered only in the browser, with the tab's token (auth-browser-session §4.7): the
 // server HTML holds no private data.
 
-/** The signed-in user's account page. */
-export function AccountOverview() {
+/**
+ * The signed-in user's account page. `children` are extra cards the page composes below the profile (the app layer
+ * adds the workspace card, so auth does not import other features).
+ */
+export function AccountOverview({ children }: { children?: ReactNode }) {
   return (
     <RequireSession texts={englishSessionTexts}>
-      <AccountForUser />
+      <AccountForUser>{children}</AccountForUser>
     </RequireSession>
   );
 }
 
 /** Loads the profile again for another signed-in user. */
-function AccountForUser() {
+function AccountForUser({ children }: { children?: ReactNode }) {
   const { user } = useSession();
-  return <AccountContent key={user?.userId ?? ""} />;
+  return <AccountContent key={user?.userId ?? ""}>{children}</AccountContent>;
 }
 
 const loadProfile = () => readMe(accountDeps());
 
-function AccountContent() {
+function AccountContent({ children }: { children?: ReactNode }) {
   const { view, retry } = useSignedInLoad(loadProfile);
   if (view.kind === "loading") return <FormSkeleton fields={2} />;
   if (view.kind === "error") return <LoadError onRetry={retry} />;
   // RequireSession shows the session's state (signed out, unavailable) from the store.
   if (view.kind === "none") return null;
-  return <Profile me={view.me} />;
+  return <Profile me={view.me}>{children}</Profile>;
 }
 
 function PhoneVerifiedNotice() {
@@ -51,7 +54,7 @@ function PhoneVerifiedNotice() {
   return <Alert tone="success">Your phone number is verified. Welcome to Sunvibe!</Alert>;
 }
 
-function Profile({ me }: { me: MeResponse }) {
+function Profile({ me, children }: { me: MeResponse; children?: ReactNode }) {
   const fullName = me.fullName ?? "";
   const phoneVerified = me.phoneVerified ?? false;
 
@@ -92,6 +95,8 @@ function Profile({ me }: { me: MeResponse }) {
           />
         </dl>
       </section>
+
+      {children}
 
       <p className="flex items-center gap-2 text-xs text-slate-500">
         <ShieldCheckIcon size={14} />

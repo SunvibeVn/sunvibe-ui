@@ -32,6 +32,9 @@ describe("isProtectedPath", () => {
     expect(isProtectedPath("/account")).toBe(true);
     expect(isProtectedPath("/account/profile")).toBe(true);
     expect(isProtectedPath("/verify-phone")).toBe(true);
+    expect(isProtectedPath("/workspace")).toBe(true);
+    expect(isProtectedPath("/workspace/owner-leads")).toBe(true);
+    expect(isProtectedPath("/workspaces")).toBe(false);
     expect(isProtectedPath("/accounting")).toBe(false);
     expect(isProtectedPath("/")).toBe(false);
     expect(isProtectedPath("/login")).toBe(false);

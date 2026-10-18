@@ -23,5 +23,7 @@ export function useSessionTexts(texts?: SessionTexts): SessionTexts {
     rateLimited: t.raw("unavailable.rateLimited") as string,
     retry: t("unavailable.retry"),
     signOutHere: t("unavailable.signOutHere"),
+    logoutFailed: t("logoutFailed"),
+    tryAgain: t("tryAgain"),
   };
 }

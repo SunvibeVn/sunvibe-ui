@@ -111,3 +111,92 @@ describe("vi.json Session verbatim spec §7 texts (W10-46)", () => {
     expect(m.leaving).toBe("Đang chuyển tới trang đăng nhập…");
   });
 });
+
+describe("vi.json OwnerLeads verbatim spec §5 texts", () => {
+  const m = vi.OwnerLeads;
+
+  it("has the status labels of spec 5.6", () => {
+    expect(m.status).toEqual({
+      NEW: "Chưa giao",
+      ASSIGNED: "Đã giao",
+      CONTACTED: "Đã liên hệ được",
+      ON_HOLD: "Tạm hoãn",
+      DUPLICATE: "Trùng",
+      REJECTED: "Không nhận",
+      WITHDRAWN: "Chủ nhà rút",
+    });
+  });
+
+  it("has the page titles (generic, no name or code, BR-2)", () => {
+    expect(m.title).toBe("Lead nguồn hàng");
+    expect(m.detail.title).toBe("Chi tiết lead");
+  });
+
+  it("has the list texts", () => {
+    expect(m.tabs.mine).toBe("Của tôi");
+    expect(m.tabs.unassigned).toBe("Chưa giao");
+    expect(m.tabs.all).toBe("Tất cả");
+    expect(m.filters.showClosed).toBe("Hiện cả lead đã đóng");
+    expect(m.list.possibleDuplicate).toBe("Có thể trùng");
+    expect(m.list.unassigned).toBe("Chưa giao");
+  });
+
+  it("has the former-holder labels (C-34)", () => {
+    expect(m.filters.assigneeFormer).toBe("{name} (không còn nhận lead)");
+    expect(m.filters.assigneeOther).toBe("Nhân viên khác");
+  });
+
+  it("has the history actors (BR-8)", () => {
+    expect(m.history.actorOwner).toBe("Chủ nhà");
+    expect(m.history.actorSystem).toBe("Hệ thống");
+    expect(m.history.actorUnknown).toBe("Không rõ");
+  });
+
+  it("has the error texts of the 5.2 table", () => {
+    // One sentence with the reload and kept-draft notes (CR-12); it starts with the spec text.
+    expect(m.errors.concurrent.startsWith("Lead vừa được người khác cập nhật.")).toBe(true);
+    expect(m.errors.leadNotFound).toBe("Không tìm thấy lead hoặc bạn không còn quyền xem");
+    expect(m.errors.supportCode).toBe("Mã hỗ trợ: {correlationId}");
+  });
+
+  it("has the close confirmation and the duplicate lookup texts", () => {
+    expect(m.statusDialog.closeConfirm).toBe("Lead đã đóng không mở lại được");
+    expect(m.statusDialog.duplicate.notFound).toBe("Không tìm thấy lead này hoặc bạn không xem được");
+  });
+
+  it("has the map button and the assign dialog text of 5.4", () => {
+    expect(m.detail.map).toBe("Mở bản đồ / Chỉ đường");
+    expect(m.assignDialog.currentAssignee).toBe("Đang giao cho {name}");
+  });
+
+  it("has the price unit suffixes of 5.6", () => {
+    expect(m.priceUnit).toEqual({ NIGHT: "/đêm", MONTH: "/tháng", TOTAL: " (giá bán)" });
+  });
+});
+
+describe("vi.json Workspace verbatim spec §5 texts", () => {
+  const m = vi.Workspace;
+
+  it("has the entry and menu names", () => {
+    expect(m.link).toBe("Khu làm việc");
+    expect(m.accountCard.title).toBe("Khu làm việc");
+    expect(m.menu.ownerLeads).toBe("Lead nguồn hàng");
+    expect(m.menu.territories).toBe("Khu vực phụ trách");
+  });
+});
+
+describe("vi.json SaleTerritories verbatim spec §5 texts", () => {
+  const m = vi.SaleTerritories;
+
+  it("has the page title", () => {
+    expect(m.title).toBe("Khu vực phụ trách");
+  });
+
+  it("has the C-40 flag for a holder who no longer receives leads", () => {
+    expect(m.holder.ineligible).toBe("Không còn nhận được lead: lead mới vào hàng đợi chưa giao");
+  });
+
+  it("states that a change applies to new leads only (US-8 AC-3)", () => {
+    expect(m.newLeadsOnly).toContain("lead mới");
+  });
+});

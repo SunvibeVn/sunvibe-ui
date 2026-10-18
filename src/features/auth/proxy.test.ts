@@ -37,6 +37,19 @@ describe("authProxy", () => {
     expect(target?.searchParams.get("next")).toBe("/account?tab=profile");
   });
 
+  it("proxy_workspacePathWithoutHint_redirectsToLoginWithNext (W11b B6, US-1 AC-3)", () => {
+    const response = authProxy(request("/workspace/owner-leads?scope=all"));
+
+    expect(location(response)?.toString()).toBe(
+      "http://localhost:3000/login?next=%2Fworkspace%2Fowner-leads%3Fscope%3Dall",
+    );
+  });
+
+  it("proxy_workspacePathWithHint_passes", () => {
+    const response = authProxy(request("/workspace/owner-leads", `${HINT}=abc123`));
+    expect(location(response)).toBeNull();
+  });
+
   it("proxy_protectedPathWithEmptyHint_redirectsToLogin", () => {
     const response = authProxy(request("/verify-phone", `${HINT}=`));
     expect(location(response)?.pathname).toBe("/login");
