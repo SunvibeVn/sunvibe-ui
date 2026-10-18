@@ -7,6 +7,8 @@ const BASE_URL = "http://localhost:3000";
 /** E2E specs for the browser flows (C-FE-3). They need the local API on API_URL (dev profile). */
 export default defineConfig({
   testDir: "./e2e",
+  // The staff workspace specs run only through playwright.workspace.config.ts (npm run e2e:workspace).
+  testIgnore: ["workspace/**"],
   fullyParallel: false,
   // The specs send real POSTs; stay well under the API rate limit (10 per window).
   workers: 1,

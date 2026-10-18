@@ -4,6 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { siteConfig } from "@/config/site";
 import { SessionProvider } from "@/features/auth";
+import { DraftSessionSync } from "@/features/owner-leads/client";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -24,7 +25,8 @@ export const metadata: Metadata = {
   description: siteConfig.description,
   openGraph: {
     type: "website",
-    url: "/",
+    // No `url` here: with it, Next treats the metadata of every dynamic-route page (workspace lead detail) as runtime
+    // data and the build fails (Cache Components, "runtime data in generateMetadata()").
     siteName: siteConfig.name,
     title: siteConfig.title,
     description: siteConfig.description,
@@ -49,7 +51,11 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider>
-          <SessionProvider>{children}</SessionProvider>
+          <SessionProvider>
+            {/* Drops the workspace drafts on any sign-out or user change, wherever it happens (SEC-M2). */}
+            <DraftSessionSync />
+            {children}
+          </SessionProvider>
         </NextIntlClientProvider>
       </body>
     </html>

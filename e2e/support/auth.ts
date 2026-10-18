@@ -1,4 +1,4 @@
-import { expect, type Page, type Request } from "@playwright/test";
+import { expect, type Locator, type Page, type Request } from "@playwright/test";
 
 import { API_URL, isApiAvailable } from "./api";
 
@@ -19,9 +19,19 @@ export const AUTH_E2E_SKIP_REASON =
   "docs/features/auth/auth-browser-session/impl/2026-10-17-auth-browser-session-fe-handoff.md §3 E2E prerequisites); " +
   "at least one of them is missing.";
 
-/** True when the API answers and both passwords are set; never reveals the values. */
-export async function authE2eReady(): Promise<boolean> {
-  return Boolean(CUSTOMER.password) && Boolean(SALE.password) && (await isApiAvailable());
+/** `SALE_LEADER`, `ACTIVE`, phone verified (same seed; used by the workspace specs only). */
+export const LEADER: E2eAccount = { phone: "0900000103", password: process.env.E2E_LEADER_PASSWORD };
+/** `ADMIN`, `ACTIVE`, phone verified (same seed; used by the workspace specs only). */
+export const ADMIN: E2eAccount = { phone: "0900000104", password: process.env.E2E_ADMIN_PASSWORD };
+
+/**
+ * True when the API answers and the passwords are set; never reveals the values. The auth specs need the customer and
+ * sale passwords; `{ workspace: true }` (the staff workspace specs) also needs the leader and admin passwords.
+ */
+export async function authE2eReady(options: { workspace?: boolean } = {}): Promise<boolean> {
+  const passwords = [CUSTOMER.password, SALE.password];
+  if (options.workspace) passwords.push(LEADER.password, ADMIN.password);
+  return passwords.every(Boolean) && (await isApiAvailable());
 }
 
 export const LOGIN_PATH = "/api/v1/auth/login";
@@ -83,28 +93,39 @@ export async function expectSignedInAccount(page: Page): Promise<void> {
 /** The header's "Account" link: shown while the sign-in hint is set (the header reads only the hint). */
 export const headerAccountLink = (page: Page) => page.getByRole("banner").getByRole("link", { name: "Account" });
 
+/** Optional ways of `submitLoginForm` and `signIn`; without them both behave as the auth specs expect. */
+export type LoginFormOptions = {
+  /** Puts the password into its field; default `locator.fill`. */
+  setPassword?: (field: Locator, password: string) => Promise<void>;
+  /** Waits for the signed-in `/account` after the 200 (default true); false stops at the 200 (the caller checks). */
+  expectAccount?: boolean;
+};
+
 /**
  * Fills and submits the `/login` form already on screen, then waits for `/account` with the header updated (the
  * seeded accounts are phone verified).
  */
-export async function submitLoginForm(page: Page, account: E2eAccount): Promise<void> {
+export async function submitLoginForm(page: Page, account: E2eAccount, options: LoginFormOptions = {}): Promise<void> {
   if (!account.password) throw new Error(AUTH_E2E_SKIP_REASON);
   await page.getByLabel("Phone number").fill(account.phone);
-  await page.getByLabel("Password", { exact: true }).fill(account.password);
+  const password = page.getByLabel("Password", { exact: true });
+  if (options.setPassword) await options.setPassword(password, account.password);
+  else await password.fill(account.password);
   const login = page.waitForResponse((response) => isApiRequest(response.request(), "POST", LOGIN_PATH));
   await page.getByRole("button", { name: "Log in" }).click();
   // Fail on the answer itself (the body may hold a token: only the status is shown).
   expect((await login).status(), `POST ${LOGIN_PATH} status`).toBe(200);
+  if (options.expectAccount === false) return;
   await expectSignedInAccount(page);
   // A sign-in in this tab updates its own header too.
   await expect(headerAccountLink(page)).toBeVisible();
 }
 
 /** Signs in through the real `/login` form and waits for `/account`. */
-export async function signIn(page: Page, account: E2eAccount): Promise<void> {
+export async function signIn(page: Page, account: E2eAccount, options: LoginFormOptions = {}): Promise<void> {
   if (!account.password) throw new Error(AUTH_E2E_SKIP_REASON);
   await page.goto("/login");
-  await submitLoginForm(page, account);
+  await submitLoginForm(page, account, options);
 }
 
 /**

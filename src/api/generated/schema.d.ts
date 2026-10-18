@@ -395,6 +395,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/owner-lead-assignees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the staff an owner lead may be assigned to (SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Accounts that exist, may sign in and hold SALE or SALE_LEADER, sorted by name (Vietnamese order), then id; at most 500. Each item holds the user id, the full name and the assignee roles, nothing else. Not paged.
+         */
+        get: operations["list_2"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-leads": {
         parameters: {
             query?: never;
@@ -709,9 +729,13 @@ export interface components {
         };
         /** @description History entry of an owner lead */
         LeadActivityResponse: {
+            /** @description Full name of the staff member; null for the system or the owner, or when the id has no user row */
+            actorName?: string | null;
             /** @description User id of the staff member; null for the system or the owner */
             actorUserId?: string;
             fromAssigneeId?: string;
+            /** @description Full name of the previous assignee; null when there was none or the id has no user row */
+            fromAssigneeName?: string | null;
             /** @enum {string} */
             fromStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** Format: date-time */
@@ -720,10 +744,27 @@ export interface components {
             /** Format: date-time */
             occurredAt?: string;
             toAssigneeId?: string;
+            /** @description Full name of the new assignee; null when there is none or the id has no user row */
+            toAssigneeName?: string | null;
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
             type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED";
+        };
+        /** @description A staff member an owner lead may be assigned to */
+        LeadAssigneeResponse: {
+            /**
+             * @description Full name
+             * @example Nguyễn Văn An
+             */
+            fullName?: string;
+            /** @description Assignee roles the person holds, SALE before SALE_LEADER; never empty */
+            roles?: ("SALE" | "SALE_LEADER")[];
+            /**
+             * @description User id; the value to send as assigneeUserId
+             * @example 01J9Z3K8M2Q4R5T6V7W8X9Y0ZA
+             */
+            userId?: string;
         };
         /** @description The new history entry and the lead after the note */
         LeadNoteResponse: {
@@ -833,6 +874,8 @@ export interface components {
             askingPrice?: components["schemas"]["AskingPriceResponse"];
             /** @description User id of the assignee; null when nobody holds the lead */
             assignedUserId?: string;
+            /** @description Full name of the assignee; null when nobody holds the lead or the id has no user row */
+            assignedUserName?: string | null;
             /** Format: date */
             availableFrom?: string;
             closeReason?: string;
@@ -886,6 +929,8 @@ export interface components {
         OwnerLeadSummaryResponse: {
             /** @description User id of the assignee; null when nobody holds the lead */
             assignedUserId?: string;
+            /** @description Full name of the assignee; null when nobody holds the lead or the id has no user row */
+            assignedUserName?: string | null;
             contactName?: string;
             /** Format: date-time */
             createdAt?: string;
@@ -1053,6 +1098,8 @@ export interface components {
             assignedAt?: string;
             /** @description User id of the person; null when nobody looks after the ward */
             userId?: string;
+            /** @description Full name of the person; null when nobody looks after the ward or the id has no user row */
+            userName?: string | null;
             /** @example 20242 */
             wardCode?: string;
             wardName?: string;
@@ -2403,6 +2450,44 @@ export interface operations {
             };
         };
     };
+    list_2: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The people who may hold a lead */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["LeadAssigneeResponse"][];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not SALE_LEADER, SALES_MANAGER or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+        };
+    };
     list_1: {
         parameters: {
             query?: {
@@ -2414,6 +2499,13 @@ export interface operations {
                  * @example 20242
                  */
                 wardCode?: string;
+                /**
+                 * @description Find one lead by its request code, SV-XXXX-XXXX. Case and outer spaces are ignored. Works with every scope and returns the lead only when the caller may see it in that scope; a code that is unknown and a code the caller may not see give the same empty page. A value that is not SV-XXXX-XXXX in the request-code alphabet gives 400 VALIDATION_FAILED on field requestCode. An empty value also gives 400, so clients omit the parameter
+                 * @example SV-AB2C-DE3F
+                 */
+                requestCode?: string;
+                /** @description Keep only the leads assigned to this user. Only with scope=all (SALE_LEADER, SALES_MANAGER, ADMIN); another scope gives 400. An id nobody holds gives an empty page. An empty value gives 400, so clients omit the parameter */
+                assigneeUserId?: string;
                 /** @description Zero-based page number */
                 page?: number;
                 /** @description Leads per page, 1 to 100 */
