@@ -10,5 +10,7 @@ alwaysApply: false
   index.ts (Server Components) or client.ts (Client Components). No deep imports across features.
 - Server Components by default; add "use client" only when state, effects or browser APIs are needed.
 - Every data-driven component renders loading, empty and error states.
+- Page or shared-component work: check it against hub-docs/setup/checklists/ui-ux-review.md (mobile widths, long
+  Vietnamese text, keyboard, states) and keep the existing palette, Geist and src/components/ui.
 - Vietnamese UI text through next-intl (src/i18n/messages/vi.json); keep strings out of logic. Exception: the
   existing auth screens stay English until the translation wave; no screen mixes languages.

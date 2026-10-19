@@ -6,7 +6,8 @@ alwaysApply: false
 - ADR-001 (done for auth): no BFF. The browser calls Spring Boot directly at NEXT_PUBLIC_API_URL
   (publicEnv.apiUrl in src/config/public-env.ts).
 - Current state: no Server Actions and no Next session cookies for auth; src/proxy.ts reads only the sign-in hint
-  cookie. Do not add Server Actions or Route Handlers that proxy the API unless the plan says so.
+  cookie. Do not add Server Actions or Route Handlers that proxy the API. An exception needs an owner-approved ADR
+  that amends ADR-001; a plan, prompt or handoff cannot grant it.
 - `credentials: 'include'` only on the seven cookie calls in src/features/auth/session/session-api.ts (login,
   refresh, logout, register, password reset complete, password change, logout-all); every other call uses
   `credentials: 'omit'`.

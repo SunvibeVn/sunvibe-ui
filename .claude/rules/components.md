@@ -1,0 +1,16 @@
+---
+paths:
+  - "src/**/*.tsx"
+---
+<!-- Generated from .cursor/rules/components.mdc by scripts/ai-config (sync); edit the source, then run sync. -->
+- Use the shared components in src/components/ui (Button, Input, PasswordInput, OtpInput, FormField,
+  Alert, SubmitButton) before writing custom ones. Style with Tailwind CSS v4 utility classes.
+- One component per file, kebab-case file names; props typed with an explicit type or interface.
+- Feature components live in src/features/<feature>/components and are exported via the feature's
+  index.ts (Server Components) or client.ts (Client Components). No deep imports across features.
+- Server Components by default; add "use client" only when state, effects or browser APIs are needed.
+- Every data-driven component renders loading, empty and error states.
+- Page or shared-component work: check it against hub-docs/setup/checklists/ui-ux-review.md (mobile widths, long
+  Vietnamese text, keyboard, states) and keep the existing palette, Geist and src/components/ui.
+- Vietnamese UI text through next-intl (src/i18n/messages/vi.json); keep strings out of logic. Exception: the
+  existing auth screens stay English until the translation wave; no screen mixes languages.

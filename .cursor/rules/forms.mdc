@@ -1,6 +1,6 @@
 ---
 description: Form conventions
-globs: src/**/*-form.tsx, src/**/*Form*.tsx, src/**/schemas/**, src/**/forms/**
+globs: src/**/*-form.tsx, src/**/*Form*.tsx, src/**/schemas/**, src/**/forms/**, src/**/*-flow.ts
 alwaysApply: false
 ---
 - No form library. Use a native <form action={...}> with useActionState and the FormState helpers in

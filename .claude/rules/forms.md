@@ -1,0 +1,20 @@
+---
+paths:
+  - "src/**/*-form.tsx"
+  - "src/**/*Form*.tsx"
+  - "src/**/schemas/**"
+  - "src/**/forms/**"
+  - "src/**/*-flow.ts"
+---
+<!-- Generated from .cursor/rules/forms.mdc by scripts/ai-config (sync); edit the source, then run sync. -->
+- No form library. Use a native <form action={...}> with useActionState and the FormState helpers in
+  src/features/<feature>/lib/form-state.ts; field errors via use-field-errors.
+- Actions are client functions passed to useActionState (no Server Actions for auth). Every check runs inside the
+  action, since React replays a form submitted before hydration.
+- Flow logic lives in pure src/features/<feature>/lib/*-flow.ts modules with injected dependencies; components
+  stay thin.
+- Validate with zod 4 schemas in src/features/<feature>/schemas (shared by client and action).
+- Validation rules mirror the API DTO constraints (OpenAPI contract, or the BE request records).
+- Map API error codes to field errors or a form-level message; never show raw server errors.
+- Use SubmitButton (useFormStatus) so submit is disabled while pending; prevent double submit.
+- Every schema and flow module gets a Vitest test next to it (*.test.ts, node environment).

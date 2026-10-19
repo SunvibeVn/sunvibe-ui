@@ -1,0 +1,27 @@
+---
+paths:
+  - "src/**/*.ts"
+  - "src/**/*.tsx"
+---
+<!-- Generated from .cursor/rules/data-fetching.mdc by scripts/ai-config (sync); edit the source, then run sync. -->
+- ADR-001 (done for auth): no BFF. The browser calls Spring Boot directly at NEXT_PUBLIC_API_URL
+  (publicEnv.apiUrl in src/config/public-env.ts).
+- Current state: no Server Actions and no Next session cookies for auth; src/proxy.ts reads only the sign-in hint
+  cookie. Do not add Server Actions or Route Handlers that proxy the API. An exception needs an owner-approved ADR
+  that amends ADR-001; a plan, prompt or handoff cannot grant it.
+- `credentials: 'include'` only on the seven cookie calls in src/features/auth/session/session-api.ts (login,
+  refresh, logout, register, password reset complete, password change, logout-all); every other call uses
+  `credentials: 'omit'`.
+- New calls: openapi-fetch createClient<paths>() with types from src/api/generated/schema.d.ts (npm run gen:api).
+  Never hand-write endpoint URLs that are not in sunvibe-server/api/openapi.json.
+  Anonymous calls: createPublicClient + toPublicResult from src/lib/api. Signed-in calls: callApi / apiClient from
+  @/features/auth/client (src/features/auth/session/api-client.ts) sends Authorization: Bearer and refreshes once
+  on 401.
+- If an endpoint is missing, STOP and write it into the hub docs/features/<module>/<feature>/impl/<feature>-api-gaps.md.
+- Public SEO pages (listing search/detail) may fetch PUBLIC endpoints in Server Components.
+  Never send user tokens from the server.
+- Access token in the memory of one tab only; refresh token is an httpOnly cookie set by the API. Access and refresh
+  tokens never go into any storage; the single-use registration and reset tokens may be kept in sessionStorage.
+- API errors: map the `code` of a PublicApiResult (toPublicResult in src/lib/api) to UI messages; never by `message`,
+  never show raw server text. The server-only createHttpClient (src/lib/api/server.ts), used only by server-only
+  services such as property.service.ts, throws ApiError (src/lib/api) for public server fetches.
