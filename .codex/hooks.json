@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=\"$CLAUDE_PROJECT_DIR/../scripts/claude-hooks/docs-reminder.sh\"; if [ -f \"$f\" ]; then bash \"$f\"; fi"
+            "command": "r=$(git rev-parse --show-toplevel 2>/dev/null) || exit 0; bash \"$r/.claude/hooks/hub-hook.sh\" docs-reminder.sh"
           }
         ]
       }

@@ -10,10 +10,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "next typegen && tsc --noEmit",
-    "gen:api": "openapi-typescript ../sunvibe-server/api/openapi.json -o src/api/generated/schema.d.ts",
+    "gen:api": "node scripts/gen-api.mjs",
+    "check:api-client": "node scripts/check-api-client.mjs",
     "prepare": "husky",
     "e2e": "playwright test",
-    "e2e:workspace": "playwright test -c playwright.workspace.config.ts"
+    "e2e:workspace": "playwright test -c playwright.workspace.config.ts",
+    "test:tooling": "node --test \"scripts/tests/*.test.mjs\""
   },
   "dependencies": {
     "leaflet": "1.9.4",

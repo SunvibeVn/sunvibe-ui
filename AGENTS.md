@@ -17,11 +17,17 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Lint: npm run lint
 - Typecheck: npm run typecheck
 - Test: npm test (Vitest, src/**/*.test.ts)
-- Generate API types: npm run gen:api (reads ../sunvibe-server/api/openapi.json -> src/api/generated/schema.d.ts; commit it)
+- Generate API types: npm run gen:api (reads ../sunvibe-server/api/openapi.json -> src/api/generated/schema.d.ts and
+  records the contract's sha256 and server commit in src/api/generated/contract-source.json; commit both). Generate
+  from a committed contract; CI cannot verify a client made from uncommitted changes.
+- Check the client: npm run check:api-client (the committed client equals the one generated from the recorded
+  contract; CI checks out sunvibe-server at the recorded commit).
+- E2E: npm run e2e (main suite) and npm run e2e:workspace (staff workspace); prerequisites in .cursor/rules/e2e.mdc.
+- Tooling tests (gen:api, check:api-client): npm run test:tooling
 - Git hooks (husky): pre-commit runs eslint --fix on staged files; pre-push blocks pushes to main
 
 ## Architecture
-- src/app: routes in groups (auth), (marketing), (onboarding), (platform). Pages stay thin.
+- src/app: routes in groups (auth), (marketing), (onboarding), (platform), (workspace). Pages stay thin.
 - src/features/<feature>/{components,lib,schemas,services,session,types}.
   Public API: index.ts (Server Components), client.ts (Client Components), proxy.ts (src/proxy.ts only).
   ESLint blocks deep imports like @/features/auth/components/... ; import from the feature root.
@@ -39,7 +45,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - ADR-001: the browser calls Spring Boot directly at NEXT_PUBLIC_API_URL (publicEnv.apiUrl). No BFF.
 - Current state: every auth flow runs in the browser (src/features/auth/session, lib/*-flow.ts). No Server Action,
   Route Handler or proxy code holds or forwards a user token, and Next sets no session cookie; the proxy reads only
-  the sign-in hint cookie. Do not add BFF-style Server Actions or Route Handlers.
+  the sign-in hint cookie. Do not add BFF-style Server Actions or Route Handlers. An exception needs an
+  owner-approved ADR that amends ADR-001; a plan, prompt or handoff cannot grant it.
 - `credentials: 'include'` only on the seven cookie calls (session-api.ts); every other call uses `'omit'`.
   Signed-in calls go through callApi / apiClient from @/features/auth/client (Bearer from memory).
 - New API calls use openapi-fetch typed with src/api/generated/schema.d.ts (paths). Never invent endpoint URLs;
@@ -58,13 +65,51 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - User-facing text is Vietnamese (next-intl); keep strings out of logic. Exception: the existing auth screens stay
   English until the translation wave; no screen mixes languages.
 
+## Workflow (Cursor or Claude Code, same inputs and bar)
+- The owner picks one FE tool per feature run: Cursor (default) or Claude Code started here. Both start from the
+  same inputs: the FE handoff (hub-docs/features/<module>/<feature>/impl/YYYY-MM-DD-<feature>-fe-handoff.md, which
+  names the BE commit and the contract sha256), the latest spec and plan, and the generated client, whose
+  contract-source.json must match the handoff's contract. A feature that needs a new or changed endpoint but has no
+  handoff: stop and ask the owner. An FE-only change on the existing API has no handoff: it works from the plan and
+  the client generated from the committed contract.
+- Only one tool writes to this checkout at a time. Switching tools needs a checkpoint first: the diff and untracked
+  files, the plan tasks done and open, the last check results (the hub flow runner's switch-fe command writes it).
+  The next tool continues from the checkpoint; it never discards or rewrites the work it finds.
+- Rules: .cursor/rules/*.mdc is the source; .claude/rules/*.md is generated from it for Claude (hub
+  scripts/ai-config). Edit only the .mdc files.
+- Independent review before the PR, against hub-docs/setup/checklists/fe-review.md (and ui-ux-review.md for pages
+  or shared components; security-review.md for auth, users, ownership, roles, money, uploads or personal data, the
+  triggers of hub-docs/setup/AI_FLOW.md section 8). Claude: the code-reviewer subagent, plus security-reviewer by
+  those triggers. Cursor: a new Agent chat that only reviews (prompt: hub-docs/setup/prompts/review.md, one chat per
+  checklist), or the flow runner's fe-review stage, which runs the Claude reviewers. A review is never skipped
+  because a tool lacks subagents.
+
+## Hub rules that apply here (Cursor does not load the hub AGENTS.md)
+- Briefs (hub-docs/features/**/brief/) are the owner's business truth. FE work has no task that edits a brief and
+  never decides a business rule: a missing decision goes to the owner as a question, a brief change to a hub session.
+- Gates are the owner's: an agent saying "done", an exit code 0, a commit or green CI never passes gate 1, 2 or 3.
+  Agents run no command of the hub flow runner except `status` and `--dry-run`; they give the owner the command.
+- Branch and commits: the run's branch (feature/<feature>, fix/<desc>; rebuild/sunvibe-rebuild during the rebuild),
+  Conventional Commits, never push to main, merge only through a PR. In a flow run the agent commits each task
+  locally and the owner pushes. By hand during the rebuild, deliver per G2 D-27: task commits are combined into one
+  wave commit after green checks and reviews, then pushed; work that touches secrets, populated-data migrations or
+  deletes substantial code stops before the push for the owner.
+
 ## Before saying "done"
-1. npm run lint, npm run typecheck and npm test pass
-2. The feature works in the browser against the local API (http://localhost:8081)
-3. Docs: Claude session -> run /update-docs <feature> (edits ../docs; a Stop hook reminds once per session on
-   feature/* and fix/* branches). Cursor -> tell the owner to run /update-docs <feature> in a hub Claude session.
+Each step is its own evidence; report skipped or unrun steps as such.
+1. npm run lint, npm run typecheck, npm test and npm run build pass.
+2. API used or changed: npm run gen:api from the committed contract, then npm run check:api-client passes.
+3. The E2E suite the plan names passes against the local API (http://localhost:8081, dev profile) with no skipped
+   spec: npm run e2e or npm run e2e:workspace (.cursor/rules/e2e.mdc).
+4. The feature works in the browser against the local API.
+5. Independent review without open Blocker or Major findings (Workflow above).
+6. Docs: Claude session -> run /update-docs <module>/<feature> (edits ../docs; a Stop hook reminds once per session on
+   feature/*, fix/* and rebuild/* branches). Cursor -> tell the owner to run /update-docs <module>/<feature> in a hub
+   Claude session, or the flow runner's docs stage does it.
 
 ## Shared context (hub docs)
+- `hub-docs/...` in this file, the rules and the hub checklists means the hub's docs/ folder: the hub-docs folder
+  of the Cursor workspace, ../docs/... from a Claude session in this repo.
 - In Cursor workspace: hub-docs/features/INDEX.md, then hub-docs/features/<module>/<feature>/ (brief/ = business
   truth, read only; as-built/; impl/ = spec, plan, FE handoff; latest only). Module rules: <module>/brief/ if present.
 - From a Claude session in this repo: ../docs/features/INDEX.md and ../docs/features/<module>/<feature>/

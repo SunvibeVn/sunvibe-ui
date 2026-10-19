@@ -24,3 +24,47 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      # gen:api / check:api-client scripts (temporary repos only)
+      - run: npm run test:tooling
+
+  # The committed client (src/api/generated/schema.d.ts) must be what openapi-typescript generates from the contract
+  # recorded in src/api/generated/contract-source.json. sunvibe-server is public, so it is checked out at that exact
+  # commit without a token, next to this repo as ../sunvibe-server (the layout gen:api expects).
+  api-client:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: sunvibe-ui
+      - name: Read the contract commit the client was generated from
+        id: contract
+        working-directory: sunvibe-ui
+        run: |
+          commit=$(node -p "try { require('./src/api/generated/contract-source.json').serverCommit || '' } catch { '' }")
+          if [ -z "$commit" ]; then
+            echo "::error file=src/api/generated/contract-source.json::No serverCommit recorded; run npm run gen:api from a committed contract."
+            exit 1
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v7
+        id: server
+        with:
+          repository: SunvibeVn/sunvibe-server
+          ref: ${{ steps.contract.outputs.commit }}
+          path: sunvibe-server
+          sparse-checkout: api
+      - name: Explain a failed checkout of the recorded server commit
+        if: failure() && steps.server.outcome == 'failure'
+        run: |
+          echo "::error file=sunvibe-ui/src/api/generated/contract-source.json::sunvibe-server commit ${{ steps.contract.outputs.commit }} could not be checked out: push sunvibe-server, or run npm run gen:api from a pushed commit."
+          exit 1
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: sunvibe-ui/package-lock.json
+      - run: npm ci
+        working-directory: sunvibe-ui
+      - run: npm run check:api-client
+        working-directory: sunvibe-ui
