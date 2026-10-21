@@ -4,7 +4,7 @@ import { fieldElementId } from "./field-errors";
  * Version of the consent notice shown to the owner (BR-9). Bump it whenever OwnerIntake.consent.notice in
  * src/i18n/messages/vi.json changes; the server only accepts the version it knows.
  */
-export const CONSENT_NOTICE_VERSION = "owner-intake-2026-10";
+export const CONSENT_NOTICE_VERSION = "owner-intake-2026-10-21";
 
 /** DOM id of the consent checkbox; matches fieldElementId so focus-first-invalid reaches it. */
 export const consentCheckboxId = fieldElementId("consent.accepted");

@@ -25,10 +25,19 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
     expect(m.errors.rateLimited).toBe("Bạn đã gửi quá nhiều lần, vui lòng thử lại sau.");
   });
 
-  it("has the BR-9 consent notice (version owner-intake-2026-10)", () => {
+  it("has the BR-9 consent notice (version owner-intake-2026-10-21, rental only)", () => {
     expect(m.consent.notice).toBe(
-      "Tôi đồng ý để Sunvibe lưu và sử dụng thông tin tôi cung cấp (họ tên, số điện thoại, email, địa chỉ, vị trí bất động sản) nhằm liên hệ tư vấn dịch vụ môi giới cho thuê/bán. Thông tin không được đăng công khai khi chưa có sự đồng ý của tôi. Tôi có thể yêu cầu sửa hoặc xóa thông tin bất cứ lúc nào qua email services@sunvibe.vn hoặc hotline 0917579123.",
+      "Tôi đồng ý để Sunvibe lưu và sử dụng thông tin tôi cung cấp (họ tên, số điện thoại, email, địa chỉ, vị trí bất động sản) nhằm liên hệ tư vấn dịch vụ môi giới cho thuê. Thông tin không được đăng công khai khi chưa có sự đồng ý của tôi. Tôi có thể yêu cầu sửa hoặc xóa thông tin bất cứ lúc nào qua email services@sunvibe.vn hoặc hotline 0917579123.",
     );
+  });
+
+  it("does not invite owners to sell on the page (Q-14, D-45)", () => {
+    expect(m.page.description).not.toMatch(/bán/i);
+    expect(m.page.intro).not.toMatch(/bán/i);
+  });
+
+  it("offers no sale option in the need select (Q-14, D-45)", () => {
+    expect(Object.keys(m.fields.intent.options)).toEqual(["SHORT_TERM_RENT", "LONG_TERM_RENT"]);
   });
 
   it("labels the consent checkbox with the BR-1 field name, not a second copy of the notice", () => {

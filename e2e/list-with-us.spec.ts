@@ -19,6 +19,13 @@ test("a submit before hydration cannot put the owner's data in the URL", async (
   await expect(form.locator("[name]")).toHaveCount(0);
 });
 
+// Needs no API: the options are static. Rental only (brief Q-14, G2 D-45).
+test("the need select offers the two rentals and no sale", async ({ page }) => {
+  await page.goto(PATH);
+  const options = page.getByLabel("Nhu cầu").locator("option");
+  await expect(options).toHaveText(["Chọn nhu cầu", "Cho thuê ngắn hạn", "Cho thuê dài hạn"]);
+});
+
 test.describe("with the API", () => {
   // Every spec needs the API: the client-only field error too, because the submit stays disabled until the
   // province and ward catalogs have loaded. At most 3 POSTs per run (rate limit 10).

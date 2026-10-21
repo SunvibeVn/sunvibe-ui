@@ -704,7 +704,7 @@ export interface components {
             accepted: boolean;
             /**
              * @description Version of the consent notice the owner was shown
-             * @example owner-intake-2026-10
+             * @example owner-intake-2026-10-21
              */
             noticeVersion: string;
         };

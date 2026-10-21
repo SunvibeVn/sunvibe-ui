@@ -2,8 +2,8 @@
   "OwnerIntake": {
     "page": {
       "title": "Ký gửi bất động sản",
-      "description": "Gửi thông tin căn hộ, nhà hoặc đất cần cho thuê hay bán; Sale của Sunvibe sẽ gọi lại để tư vấn.",
-      "intro": "Bạn có căn hộ, nhà hoặc đất muốn cho thuê hay bán? Điền form ngắn dưới đây, không cần tạo tài khoản.",
+      "description": "Gửi thông tin căn hộ, nhà hoặc đất cần cho thuê; Sale của Sunvibe sẽ gọi lại để tư vấn.",
+      "intro": "Bạn có căn hộ, nhà hoặc đất muốn cho thuê? Điền form ngắn dưới đây, không cần tạo tài khoản.",
       "expectation": "Sale sẽ gọi lại để tư vấn cho bạn.",
       "requiredHint": "Trường có dấu * là bắt buộc.",
       "error": {
@@ -22,8 +22,7 @@
         "placeholder": "Chọn nhu cầu",
         "options": {
           "SHORT_TERM_RENT": "Cho thuê ngắn hạn",
-          "LONG_TERM_RENT": "Cho thuê dài hạn",
-          "SALE": "Bán"
+          "LONG_TERM_RENT": "Cho thuê dài hạn"
         }
       },
       "provinceCode": { "label": "Tỉnh/thành", "placeholder": "Chọn tỉnh/thành" },
@@ -90,7 +89,7 @@
     },
     "consent": {
       "label": "Đồng ý liên hệ",
-      "notice": "Tôi đồng ý để Sunvibe lưu và sử dụng thông tin tôi cung cấp (họ tên, số điện thoại, email, địa chỉ, vị trí bất động sản) nhằm liên hệ tư vấn dịch vụ môi giới cho thuê/bán. Thông tin không được đăng công khai khi chưa có sự đồng ý của tôi. Tôi có thể yêu cầu sửa hoặc xóa thông tin bất cứ lúc nào qua email services@sunvibe.vn hoặc hotline 0917579123."
+      "notice": "Tôi đồng ý để Sunvibe lưu và sử dụng thông tin tôi cung cấp (họ tên, số điện thoại, email, địa chỉ, vị trí bất động sản) nhằm liên hệ tư vấn dịch vụ môi giới cho thuê. Thông tin không được đăng công khai khi chưa có sự đồng ý của tôi. Tôi có thể yêu cầu sửa hoặc xóa thông tin bất cứ lúc nào qua email services@sunvibe.vn hoặc hotline 0917579123."
     },
     "submit": {
       "idle": "Gửi yêu cầu ký gửi",

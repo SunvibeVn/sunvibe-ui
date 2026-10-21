@@ -91,7 +91,7 @@ describe("sendOwnerIntake", () => {
     expect(request.headers.get("Idempotency-Key")).toBe("0b6c1c9e-5a8f-4c43-9d36-8f1f7c1e2a10");
     const body = await request.json();
     expect(body.askingPrice).toEqual({ amount: 15000000, currency: "VND", unit: "MONTH" });
-    expect(body.consent).toEqual({ accepted: true, noticeVersion: "owner-intake-2026-10" });
+    expect(body.consent).toEqual({ accepted: true, noticeVersion: "owner-intake-2026-10-21" });
   });
 });
 
