@@ -28,12 +28,12 @@ describe("toRequestBody", () => {
       provinceCode: "48",
       wardCode: "20242",
       addressDetail: "12 Đường Mẫu, căn A-1203",
-      consent: { accepted: true, noticeVersion: "owner-intake-2026-10" },
+      consent: { accepted: true, noticeVersion: "owner-intake-2026-10-21" },
     });
   });
 
   it("uses the consent notice version constant", () => {
-    expect(CONSENT_NOTICE_VERSION).toBe("owner-intake-2026-10");
+    expect(CONSENT_NOTICE_VERSION).toBe("owner-intake-2026-10-21");
   });
 
   it("omits optional text fields that hold only spaces", () => {
@@ -72,7 +72,7 @@ describe("toRequestBody", () => {
       availableFrom: "2026-11-01",
       notes: "Có nội thất",
       preferredCallbackTime: "Buổi tối",
-      consent: { accepted: true, noticeVersion: "owner-intake-2026-10" },
+      consent: { accepted: true, noticeVersion: "owner-intake-2026-10-21" },
     });
   });
 

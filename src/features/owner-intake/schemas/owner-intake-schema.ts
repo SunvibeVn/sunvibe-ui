@@ -23,7 +23,8 @@ export const FIELD_MAX_LENGTH: Partial<Record<FieldName, number>> = {
   preferredCallbackTime: PREFERRED_CALLBACK_TIME_MAX,
 };
 
-export const INTENTS = ["SHORT_TERM_RENT", "LONG_TERM_RENT", "SALE"] as const satisfies readonly Intent[];
+// Rental only (brief Q-14, G2 D-45). The API enum still has SALE (reserved), so the form never offers or sends it.
+export const INTENTS = ["SHORT_TERM_RENT", "LONG_TERM_RENT"] as const satisfies readonly Intent[];
 
 export const PROPERTY_TYPES = [
   "STUDIO",

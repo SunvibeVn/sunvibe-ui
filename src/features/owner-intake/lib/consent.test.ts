@@ -5,7 +5,7 @@ import { fieldElementId } from "./field-errors";
 
 describe("consent block", () => {
   it("keeps the BR-9 notice version", () => {
-    expect(CONSENT_NOTICE_VERSION).toBe("owner-intake-2026-10");
+    expect(CONSENT_NOTICE_VERSION).toBe("owner-intake-2026-10-21");
   });
 
   it("ties the notice to the checkbox id used by focus-first-invalid", () => {

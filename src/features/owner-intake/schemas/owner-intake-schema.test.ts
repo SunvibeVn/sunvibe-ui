@@ -7,6 +7,7 @@ import {
   ADDRESS_DETAIL_MAX,
   CONTACT_NAME_MAX,
   EMAIL_MAX,
+  INTENTS,
   isValidPhone,
   NOTES_MAX,
   PREFERRED_CALLBACK_TIME_MAX,
@@ -171,6 +172,14 @@ describe("validateOwnerIntake", () => {
     it("is optional", () => {
       expect(errorsOf({ askingPrice: { amount: "" } })).toEqual({});
     });
+  });
+
+  it("offers the two rental needs only (Q-14, D-45)", () => {
+    expect(INTENTS).toEqual(["SHORT_TERM_RENT", "LONG_TERM_RENT"]);
+  });
+
+  it("refuses SALE, which the API still knows but the form no longer offers", () => {
+    expect(errorsOf({ intent: "SALE" })).toEqual({ intent: "invalid" });
   });
 
   it("refuses an unknown intent and property type", () => {
