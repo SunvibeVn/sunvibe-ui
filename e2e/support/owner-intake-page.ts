@@ -12,6 +12,8 @@ export type OwnerIntakeInput = {
   /** Part of the ward option label, e.g. "Hải Châu" (options read "Phường Hải Châu"). */
   ward: string;
   addressDetail: string;
+  /** Option label of "Loại hình" (optional field); left empty when absent. */
+  propertyType?: string;
 };
 
 /** Fake data with an address unique to this run and test, so runs never replay each other. */
@@ -52,6 +54,7 @@ export async function fillForm(page: Page, input: OwnerIntakeInput) {
   await selectOptionContaining(page, "Xã/phường", input.ward);
 
   await page.getByLabel("Địa chỉ chi tiết").fill(input.addressDetail);
+  if (input.propertyType !== undefined) await page.getByLabel("Loại hình").selectOption({ label: input.propertyType });
   await page.getByLabel("Đồng ý liên hệ").check();
 }
 

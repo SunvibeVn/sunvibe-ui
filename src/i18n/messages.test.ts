@@ -2,6 +2,16 @@ import { describe, expect, it } from "vitest";
 import vi from "./messages/vi.json";
 import { defaultLocale } from "./config";
 
+/** The six property types of intake brief BR-3, in form order, with their labels (G2 D-46, D-47). */
+const PROPERTY_TYPE_LABELS = [
+  ["HOUSE", "Nhà nguyên căn"],
+  ["WHOLE_BUILDING", "Tòa nhà / tòa căn hộ"],
+  ["VILLA", "Villa"],
+  ["HOMESTAY", "Homestay"],
+  ["CONDOTEL", "Condotel (căn hộ khách sạn)"],
+  ["APARTMENT", "Căn hộ chung cư"],
+];
+
 describe("i18n config", () => {
   it("uses the single Vietnamese locale (D-15, C-FE-1)", () => {
     expect(defaultLocale).toBe("vi");
@@ -38,6 +48,18 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
 
   it("offers no sale option in the need select (Q-14, D-45)", () => {
     expect(Object.keys(m.fields.intent.options)).toEqual(["SHORT_TERM_RENT", "LONG_TERM_RENT"]);
+  });
+
+  it("has the owner's page description and intro, without land (D-47)", () => {
+    const text = "Đăng ký thông tin bất động sản cần cho thuê; Sunvibe sẽ liên hệ tư vấn và hỗ trợ Quý khách.";
+    expect(m.page.description).toBe(text);
+    expect(m.page.intro).toBe(text);
+    expect(m.page.description).not.toMatch(/đất/i);
+    expect(m.page.intro).not.toMatch(/đất/i);
+  });
+
+  it("offers the six property types of BR-3 in order, with no other or land option (Q-16, D-47)", () => {
+    expect(Object.entries(m.fields.propertyType.options)).toEqual(PROPERTY_TYPE_LABELS);
   });
 
   it("labels the consent checkbox with the BR-1 field name, not a second copy of the notice", () => {
@@ -180,6 +202,10 @@ describe("vi.json OwnerLeads verbatim spec §5 texts", () => {
 
   it("has the price unit suffixes of 5.6", () => {
     expect(m.priceUnit).toEqual({ NIGHT: "/đêm", MONTH: "/tháng", TOTAL: " (giá bán)" });
+  });
+
+  it("labels the property types like the intake form (D-47)", () => {
+    expect(Object.entries(m.propertyType)).toEqual(PROPERTY_TYPE_LABELS);
   });
 });
 

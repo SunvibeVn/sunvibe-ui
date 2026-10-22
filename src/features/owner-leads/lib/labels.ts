@@ -52,16 +52,12 @@ export const INTENT_LABEL: Record<LeadIntent, OwnerLeadsKey> = {
 };
 
 export const PROPERTY_TYPE_LABEL: Record<LeadPropertyType, OwnerLeadsKey> = {
-  STUDIO: "propertyType.STUDIO",
-  ONE_BEDROOM: "propertyType.ONE_BEDROOM",
-  TWO_BEDROOM: "propertyType.TWO_BEDROOM",
-  THREE_BEDROOM: "propertyType.THREE_BEDROOM",
-  FOUR_BEDROOM: "propertyType.FOUR_BEDROOM",
-  DUPLEX: "propertyType.DUPLEX",
-  PENTHOUSE: "propertyType.PENTHOUSE",
-  TOWNHOUSE: "propertyType.TOWNHOUSE",
-  LAND: "propertyType.LAND",
-  OTHER: "propertyType.OTHER",
+  HOUSE: "propertyType.HOUSE",
+  WHOLE_BUILDING: "propertyType.WHOLE_BUILDING",
+  VILLA: "propertyType.VILLA",
+  HOMESTAY: "propertyType.HOMESTAY",
+  CONDOTEL: "propertyType.CONDOTEL",
+  APARTMENT: "propertyType.APARTMENT",
 };
 
 export const WARD_TYPE_LABEL: Record<WardType, OwnerLeadsKey> = {

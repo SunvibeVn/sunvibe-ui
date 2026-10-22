@@ -851,8 +851,11 @@ export interface components {
             phone: string;
             /** @example Buổi tối */
             preferredCallbackTime?: string;
-            /** @enum {string} */
-            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE" | "TOWNHOUSE" | "LAND" | "OTHER";
+            /**
+             * @description Kind of property the owner describes (not the unit layout of the property create API)
+             * @enum {string}
+             */
+            propertyType?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT";
             /** @example 48 */
             provinceCode: string;
             /** @example 20242 */
@@ -906,8 +909,11 @@ export interface components {
             /** @description True when the lead has at least one possible duplicate the caller can see */
             possibleDuplicate?: boolean;
             preferredCallbackTime?: string;
-            /** @enum {string} */
-            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE" | "TOWNHOUSE" | "LAND" | "OTHER";
+            /**
+             * @description Kind of property the owner describes (not the unit layout of the property create API)
+             * @enum {string|null}
+             */
+            propertyType?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
             /** @example 48 */
             provinceCode?: string;
             /** @example SV-7K3M-Q9TX */
@@ -941,8 +947,11 @@ export interface components {
             nextActionAt?: string;
             /** @description True when the lead has at least one possible duplicate the caller can see */
             possibleDuplicate?: boolean;
-            /** @enum {string} */
-            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE" | "TOWNHOUSE" | "LAND" | "OTHER";
+            /**
+             * @description Kind of property the owner describes (not the unit layout of the property create API)
+             * @enum {string|null}
+             */
+            propertyType?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
             /** @example 48 */
             provinceCode?: string;
             /** @example SV-7K3M-Q9TX */

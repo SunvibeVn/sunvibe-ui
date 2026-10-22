@@ -2,8 +2,8 @@
   "OwnerIntake": {
     "page": {
       "title": "Ký gửi bất động sản",
-      "description": "Gửi thông tin căn hộ, nhà hoặc đất cần cho thuê; Sale của Sunvibe sẽ gọi lại để tư vấn.",
-      "intro": "Bạn có căn hộ, nhà hoặc đất muốn cho thuê? Điền form ngắn dưới đây, không cần tạo tài khoản.",
+      "description": "Đăng ký thông tin bất động sản cần cho thuê; Sunvibe sẽ liên hệ tư vấn và hỗ trợ Quý khách.",
+      "intro": "Đăng ký thông tin bất động sản cần cho thuê; Sunvibe sẽ liên hệ tư vấn và hỗ trợ Quý khách.",
       "expectation": "Sale sẽ gọi lại để tư vấn cho bạn.",
       "requiredHint": "Trường có dấu * là bắt buộc.",
       "error": {
@@ -32,16 +32,12 @@
         "label": "Loại hình",
         "placeholder": "Chọn loại hình",
         "options": {
-          "STUDIO": "Studio",
-          "ONE_BEDROOM": "1 phòng ngủ",
-          "TWO_BEDROOM": "2 phòng ngủ",
-          "THREE_BEDROOM": "3 phòng ngủ",
-          "FOUR_BEDROOM": "4 phòng ngủ",
-          "DUPLEX": "Duplex",
-          "PENTHOUSE": "Penthouse",
-          "TOWNHOUSE": "Nhà phố",
-          "LAND": "Đất",
-          "OTHER": "Khác"
+          "HOUSE": "Nhà nguyên căn",
+          "WHOLE_BUILDING": "Tòa nhà / tòa căn hộ",
+          "VILLA": "Villa",
+          "HOMESTAY": "Homestay",
+          "CONDOTEL": "Condotel (căn hộ khách sạn)",
+          "APARTMENT": "Căn hộ chung cư"
         }
       },
       "askingPrice": {
@@ -254,16 +250,12 @@
       "SALE": "Bán"
     },
     "propertyType": {
-      "STUDIO": "Studio",
-      "ONE_BEDROOM": "1 phòng ngủ",
-      "TWO_BEDROOM": "2 phòng ngủ",
-      "THREE_BEDROOM": "3 phòng ngủ",
-      "FOUR_BEDROOM": "4 phòng ngủ",
-      "DUPLEX": "Duplex",
-      "PENTHOUSE": "Penthouse",
-      "TOWNHOUSE": "Nhà phố",
-      "LAND": "Đất",
-      "OTHER": "Khác"
+      "HOUSE": "Nhà nguyên căn",
+      "WHOLE_BUILDING": "Tòa nhà / tòa căn hộ",
+      "VILLA": "Villa",
+      "HOMESTAY": "Homestay",
+      "CONDOTEL": "Condotel (căn hộ khách sạn)",
+      "APARTMENT": "Căn hộ chung cư"
     },
     "wardType": {
       "WARD": "Phường",
