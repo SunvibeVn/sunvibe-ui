@@ -26,17 +26,14 @@ export const FIELD_MAX_LENGTH: Partial<Record<FieldName, number>> = {
 // Rental only (brief Q-14, G2 D-45). The API enum still has SALE (reserved), so the form never offers or sends it.
 export const INTENTS = ["SHORT_TERM_RENT", "LONG_TERM_RENT"] as const satisfies readonly Intent[];
 
+// The six property types Sunvibe takes, in form order (brief BR-3, G2 D-46, D-47). No "other"; the field stays optional.
 export const PROPERTY_TYPES = [
-  "STUDIO",
-  "ONE_BEDROOM",
-  "TWO_BEDROOM",
-  "THREE_BEDROOM",
-  "FOUR_BEDROOM",
-  "DUPLEX",
-  "PENTHOUSE",
-  "TOWNHOUSE",
-  "LAND",
-  "OTHER",
+  "HOUSE",
+  "WHOLE_BUILDING",
+  "VILLA",
+  "HOMESTAY",
+  "CONDOTEL",
+  "APARTMENT",
 ] as const satisfies readonly PropertyType[];
 
 // Same separators as the server: space, tab, CR, LF, VT, FF (not NBSP, so no \s), dot, dash, parentheses.

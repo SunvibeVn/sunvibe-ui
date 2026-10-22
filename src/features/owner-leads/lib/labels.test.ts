@@ -65,7 +65,7 @@ describe("label maps (W11-40)", () => {
       "WITHDRAWN",
     ]);
     expect(Object.keys(INTENT_LABEL).sort()).toEqual(["LONG_TERM_RENT", "SALE", "SHORT_TERM_RENT"]);
-    expect(Object.keys(PROPERTY_TYPE_LABEL)).toHaveLength(10);
+    expect(Object.keys(PROPERTY_TYPE_LABEL)).toEqual(["HOUSE", "WHOLE_BUILDING", "VILLA", "HOMESTAY", "CONDOTEL", "APARTMENT"]);
     expect(Object.keys(WARD_TYPE_LABEL).sort()).toEqual(["COMMUNE", "SPECIAL_ZONE", "WARD"]);
     expect(Object.keys(ACTIVITY_LABEL).sort()).toEqual([
       "ASSIGNED",
@@ -149,13 +149,19 @@ describe("source and activity fallbacks", () => {
 describe("intent and property type keys", () => {
   it("returns the label key of a known value", () => {
     expect(intentLabelKey("SHORT_TERM_RENT")).toBe("intent.SHORT_TERM_RENT");
-    expect(propertyTypeLabelKey("STUDIO")).toBe("propertyType.STUDIO");
+    expect(propertyTypeLabelKey("HOMESTAY")).toBe("propertyType.HOMESTAY");
   });
 
   it("returns null for none (the API sends null), an empty or an unknown value, never a raw code", () => {
     for (const value of [null, undefined, "", "toString", "CASTLE"]) {
       expect(intentLabelKey(value)).toBeNull();
       expect(propertyTypeLabelKey(value)).toBeNull();
+    }
+  });
+
+  it("treats the property types the API sent before W13a as unknown", () => {
+    for (const value of ["STUDIO", "TWO_BEDROOM", "PENTHOUSE", "TOWNHOUSE", "LAND", "OTHER"]) {
+      expect(propertyTypeLabelKey(value), value).toBeNull();
     }
   });
 });

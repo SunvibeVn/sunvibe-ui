@@ -26,6 +26,22 @@ test("the need select offers the two rentals and no sale", async ({ page }) => {
   await expect(options).toHaveText(["Chọn nhu cầu", "Cho thuê ngắn hạn", "Cho thuê dài hạn"]);
 });
 
+// Needs no API: the options are static. The six Sunvibe types in order; the exact list leaves no room for "Khác" or
+// "Đất" (brief BR-3, Q-16, G2 D-47).
+test("the type select offers the six Sunvibe property types and no other or land", async ({ page }) => {
+  await page.goto(PATH);
+  const options = page.getByLabel("Loại hình").locator("option");
+  await expect(options).toHaveText([
+    "Chọn loại hình",
+    "Nhà nguyên căn",
+    "Tòa nhà / tòa căn hộ",
+    "Villa",
+    "Homestay",
+    "Condotel (căn hộ khách sạn)",
+    "Căn hộ chung cư",
+  ]);
+});
+
 test.describe("with the API", () => {
   // Every spec needs the API: the client-only field error too, because the submit stays disabled until the
   // province and ward catalogs have loaded. At most 3 POSTs per run (rate limit 10).
@@ -35,11 +51,12 @@ test.describe("with the API", () => {
   });
 
   test("happy path shows the request code", async ({ page }) => {
-    await fillForm(page, fakeInput("happy"));
+    await fillForm(page, { ...fakeInput("happy"), propertyType: "Tòa nhà / tòa căn hộ" });
 
     const { response, code } = await submitAndReadCode(page);
 
     expect(response.status()).toBe(202);
+    expect(response.request().postDataJSON()).toMatchObject({ propertyType: "WHOLE_BUILDING" });
     expect(code).toMatch(REQUEST_CODE);
     await expect(
       page.getByText("Sunvibe đã nhận thông tin và sẽ liên hệ lại. Thông tin của bạn chưa được đăng công khai."),

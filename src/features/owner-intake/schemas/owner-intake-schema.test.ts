@@ -11,6 +11,7 @@ import {
   isValidPhone,
   NOTES_MAX,
   PREFERRED_CALLBACK_TIME_MAX,
+  PROPERTY_TYPES,
   validateOwnerIntake,
 } from "./owner-intake-schema";
 
@@ -180,6 +181,37 @@ describe("validateOwnerIntake", () => {
 
   it("refuses SALE, which the API still knows but the form no longer offers", () => {
     expect(errorsOf({ intent: "SALE" })).toEqual({ intent: "invalid" });
+  });
+
+  it("offers the six Sunvibe property types in the order of BR-3, with no OTHER (D-46, D-47)", () => {
+    expect(PROPERTY_TYPES).toEqual(["HOUSE", "WHOLE_BUILDING", "VILLA", "HOMESTAY", "CONDOTEL", "APARTMENT"]);
+  });
+
+  it.each(["HOUSE", "WHOLE_BUILDING", "VILLA", "HOMESTAY", "CONDOTEL", "APARTMENT"] as const)(
+    "accepts the property type %s",
+    (propertyType) => {
+      expect(errorsOf({ propertyType })).toEqual({});
+    },
+  );
+
+  it("keeps the property type optional", () => {
+    expect(errorsOf({ propertyType: "" })).toEqual({});
+  });
+
+  // The layouts and catch-alls the form took before 2026-10-22 (BR-3); the API refuses them since W13a.
+  it.each([
+    "STUDIO",
+    "ONE_BEDROOM",
+    "TWO_BEDROOM",
+    "THREE_BEDROOM",
+    "FOUR_BEDROOM",
+    "DUPLEX",
+    "PENTHOUSE",
+    "TOWNHOUSE",
+    "LAND",
+    "OTHER",
+  ])("refuses the old property type %s", (propertyType) => {
+    expect(errorsOf({ propertyType: propertyType as FormValues["propertyType"] })).toEqual({ propertyType: "invalid" });
   });
 
   it("refuses an unknown intent and property type", () => {

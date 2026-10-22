@@ -131,7 +131,7 @@ test.describe("SALE in the workspace", () => {
     for (const lead of [1, 5, 6, 10].map(fixture.lead)) await expect(leadLink(page, lead)).toHaveCount(0);
 
     const row = leadRow(page, L2);
-    for (const text of [L2.contactName, "An Hải", "Cho thuê ngắn hạn", "1 phòng ngủ", T.status.ASSIGNED]) {
+    for (const text of [L2.contactName, "An Hải", "Cho thuê ngắn hạn", "Homestay", T.status.ASSIGNED]) {
       await expect(row).toContainText(text);
     }
     await expect(row).toContainText(/\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/);
