@@ -7,6 +7,7 @@ const nextConfig: NextConfig = {
   /* config options here */
   experimental: {
     agentFeedback: true,
+    agentUpgrade: "security",
   },
   allowedDevOrigins: devOriginsFromApiUrl(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV),
   cacheComponents: true,
