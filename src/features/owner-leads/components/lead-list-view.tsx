@@ -166,7 +166,7 @@ function LeadListContent() {
   }));
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4">
+    <div className="space-y-4">
       <h1 className="text-2xl font-bold tracking-wider text-slate-900">{t("title")}</h1>
       {notice !== null && (
         <div className="flex flex-wrap items-center gap-3">

@@ -216,6 +216,19 @@ test.describe("SALE in the workspace", () => {
     expect(widths.overflowX).toBe("auto");
     expect(widths.boxScroll, "the table box scrolls sideways at 1280 px").toBeGreaterThan(widths.boxClient);
     expect(widths.page, "the page does not scroll sideways").toBeLessThanOrEqual(widths.viewport);
+
+    // On a wide desktop the list takes the whole content width: the table fits without scrolling.
+    await page.setViewportSize({ width: 1600, height: 900 });
+    try {
+      const wide = await table.evaluate((element) => {
+        const box = element.parentElement as HTMLElement;
+        return { boxScroll: box.scrollWidth, boxClient: box.clientWidth };
+      });
+      expect(wide.boxClient, "the table box grows with the viewport").toBeGreaterThan(widths.boxClient);
+      expect(wide.boxScroll, "the table box does not scroll sideways at 1600 px").toBeLessThanOrEqual(wide.boxClient);
+    } finally {
+      await page.setViewportSize(DESKTOP);
+    }
   });
 
   test("W11-42: hovering the rows sends no detail request; opening a lead sends one", async () => {

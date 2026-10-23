@@ -18,8 +18,9 @@ const HEAD = "whitespace-nowrap px-3 py-3 text-[11px] font-bold tracking-wider t
 const CELL = "px-3 py-3 align-top text-slate-800";
 
 /**
- * The lead list from `md` up (C-46): at least 1200px wide, scrolls sideways, no sort control. CODE is plain text; the
- * ACTION "View" link opens the detail without prefetch. No phone, email, address, next action or assignee (BR-7, C-47).
+ * The lead list from `md` up (C-46): at least 1200px wide, scrolls sideways when its box is narrower, no sort
+ * control. CODE is plain text; the ACTION "View" link opens the detail without prefetch. No phone, email, address,
+ * next action or assignee (BR-7, C-47).
  */
 export function LeadTable({ leads }: LeadTableProps) {
   const t = useTranslations("OwnerLeads");
