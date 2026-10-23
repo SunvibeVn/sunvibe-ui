@@ -40,15 +40,13 @@ type LeadFiltersProps = {
 type Loaded<T> = { userId: string; status: "ok"; items: T[] } | { userId: string; status: "failed" };
 
 /**
- * The owner's filter bar background (C-45). Text sits on dark backings that keep WCAG AA on every part of it (A-11):
- * white on a chip of black/40 over the lightest stop #ea580c is about 8:1; the legend and the select labels stay in
- * the dark left and middle part; the white focus ring is at least 3.5:1 against every stop.
+ * The filter bar has the navy-950 background of the site header, with white text (owner 2026-10-23, replacing the
+ * C-45 gradient). White on navy-950 is about 19:1; a ticked chip turns white with navy text.
  */
-const BAR =
-  "space-y-3 rounded-xl bg-[linear-gradient(135deg,#120500_0%,#4a1502_45%,#852c06_75%,#ea580c_100%)] p-4 text-white shadow-sm";
+const BAR = "space-y-3 rounded-xl bg-navy-950 p-4 text-white shadow-sm";
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
-const CHIP = `inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-full border border-white/30 bg-black/40 px-3 py-1.5 text-sm text-white has-[:checked]:border-white has-[:checked]:bg-white has-[:checked]:text-orange-900 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-white`;
-const BOX = "h-4 w-4 accent-orange-700 focus-visible:outline-none";
+const CHIP = `inline-flex min-h-8 cursor-pointer items-center gap-2 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-sm text-white has-[:checked]:border-white has-[:checked]:bg-white has-[:checked]:text-navy-950 has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-white`;
+const BOX = "h-4 w-4 accent-violet-600 focus-visible:outline-none";
 const LABEL = "mb-1 block text-sm font-semibold text-white";
 const LOAD_FAILED = "mt-1 inline-block rounded bg-white px-2 py-0.5 text-xs text-rose-800";
 
@@ -201,43 +199,46 @@ export function LeadFilters(props: LeadFiltersProps) {
 
   return (
     <section aria-label={t("filters.label")} className={BAR}>
-      <fieldset>
-        <legend className="mb-2 text-sm font-semibold text-orange-100">{t("filters.status")}</legend>
-        <div className="flex flex-wrap items-center gap-2">
-          {statusBoxes(state.scope, state.assignee).map((status) => (
-            <label key={status} className={CHIP}>
+      {/* From `md` up "Clear filters" sits at the right end of the status row (owner 2026-10-23). */}
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <fieldset className="min-w-0 md:flex-1">
+          <legend className="mb-2 text-sm font-semibold text-white">{t("filters.status")}</legend>
+          <div className="flex flex-wrap items-center gap-2">
+            {statusBoxes(state.scope, state.assignee).map((status) => (
+              <label key={status} className={CHIP}>
+                <input
+                  type="checkbox"
+                  checked={state.statuses.includes(status)}
+                  onChange={() => toggle(status)}
+                  className={BOX}
+                />
+                {t(STATUS_LABEL[status])}
+              </label>
+            ))}
+            <span aria-hidden className="mx-1 hidden h-6 w-px bg-white/30 sm:block" />
+            <label className={CHIP}>
               <input
+                ref={closedBox}
                 type="checkbox"
-                checked={state.statuses.includes(status)}
-                onChange={() => toggle(status)}
+                checked={closed === "checked"}
+                onChange={() => onNavigate(listHref(state, { statuses: toggleClosed(state).statuses }, viewer))}
                 className={BOX}
               />
-              {t(STATUS_LABEL[status])}
+              {t("filters.showClosed")}
             </label>
-          ))}
-          <span aria-hidden className="mx-1 hidden h-6 w-px bg-white/30 sm:block" />
-          <label className={CHIP}>
-            <input
-              ref={closedBox}
-              type="checkbox"
-              checked={closed === "checked"}
-              onChange={() => onNavigate(listHref(state, { statuses: toggleClosed(state).statuses }, viewer))}
-              className={BOX}
-            />
-            {t("filters.showClosed")}
-          </label>
-        </div>
-      </fieldset>
+          </div>
+        </fieldset>
+        {hasActiveFilter(state) && (
+          <Link
+            href={listHref(clearFilters(state), {}, viewer)}
+            prefetch={false}
+            className={`inline-flex min-h-8 shrink-0 items-center self-start rounded-full px-3 text-sm font-semibold text-white underline-offset-2 hover:underline md:self-auto ${FOCUS}`}
+          >
+            {t("filters.clear")}
+          </Link>
+        )}
+      </div>
       {state.scope === "all" && <AllTabFilters {...props} />}
-      {hasActiveFilter(state) && (
-        <Link
-          href={listHref(clearFilters(state), {}, viewer)}
-          prefetch={false}
-          className={`inline-flex min-h-10 items-center rounded-full bg-black/40 px-3 text-sm font-semibold text-white underline-offset-2 hover:underline ${FOCUS}`}
-        >
-          {t("filters.clear")}
-        </Link>
-      )}
     </section>
   );
 }

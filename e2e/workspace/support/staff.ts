@@ -175,17 +175,30 @@ export const T = {
     REJECTED: "Declined",
     WITHDRAWN: "Owner Withdrawn",
   },
-  changeStatus: "Change status",
   assign: "Assign lead",
   reassign: "Reassign",
   closedBanner: "This lead is closed",
   closeConfirm: "A closed lead cannot be reopened",
-  noteField: "Note",
-  nextActionField: "Next action",
-  noteSubmit: "Save note",
-  noteSaved: "Note saved.",
-  noteRequired: "Enter a note.",
-  noteClosedKeepText: "The lead is closed, so the note was not saved. Your text is kept below to copy.",
+  /** "Back" of the close confirmation (not "Back to leads"). */
+  dialogBack: "Back",
+  generic: "Something went wrong. Please try again.",
+  /** The history table of the detail (owner 2026-10-23, D-4). */
+  historyColumns: ["#", "UPDATED", "ACTIVITY", "PIC", "STATUS", "ACTION"],
+  addEntry: "Add log entry",
+  hideEntry: "Hide the new entry",
+  activityField: "Activity",
+  reasonField: "Reason for closing the lead",
+  entryStatus: "Status after this entry",
+  keepStatus: (status: string) => `${status} (no change)`,
+  save: "Save",
+  entrySaved: "Entry saved.",
+  activityRequired: "Enter the activity.",
+  activityTooLong: (max: number) => `The activity has at most ${max} characters.`,
+  historyRuleNoEdit: "Earlier entries cannot be edited or deleted.",
+  copyPhone: "Copy phone number",
+  copyEmail: "Copy email",
+  copied: "Copied.",
+  entryClosedKeepText: "The lead is closed, so the entry was not saved. Your text is kept below to copy.",
   concurrent: "Someone else just updated this lead.",
   map: "Open map / Directions",
   /** The unavailable block has no title in English (englishSessionTexts): its body is the one sentence. */
@@ -194,12 +207,8 @@ export const T = {
   sessionExpiredTitle: "Session expired",
   forbiddenTitle: "You don't have access to this page",
   forbiddenLink: "Back to home",
-  statusSaved: "Status changed.",
   assignSaved: "Lead assigned.",
-  reason: "Reason",
   reasonRequired: "Enter a reason.",
-  reasonTooLong: "A reason has at most 500 characters.",
-  continue: "Continue",
   confirm: "Confirm",
   cancel: "Cancel",
   lookup: "Find",
@@ -412,8 +421,38 @@ export async function expectLeadDetail(page: Page, lead: FixtureLead): Promise<v
 /** The open modal dialog of a lead or territory command. */
 export const dialog = (page: Page, name: string): Locator => page.getByRole("dialog", { name });
 
-/** The status badge in the detail header (the page shows the status once there). */
-export const detailHeader = (page: Page): Locator => mainArea(page).locator("header").filter({ visible: true }).first();
+/** The lead block of the detail (the region "Lead"): request code, status, assignee and the closed banner. */
+export const detailHeader = (page: Page): Locator =>
+  mainArea(page).getByRole("region", { name: "Lead", exact: true }).filter({ visible: true }).first();
+
+/** The History card of the detail. */
+export const historySection = (page: Page): Locator =>
+  mainArea(page)
+    .locator("section")
+    .filter({ has: page.getByRole("heading", { level: 2, name: T.history, exact: true }) })
+    .filter({ visible: true });
+
+/** Opens the new row of the history with its "+" (the row may be open already, from a kept draft). */
+export async function openEntry(page: Page): Promise<void> {
+  const add = historySection(page).getByRole("button", { name: T.addEntry, exact: true });
+  if (await add.isVisible()) await add.click();
+  await expect(entryStatus(page)).toBeVisible();
+}
+
+/** The ACTIVITY input of the new row: named "Activity", or the reason when the chosen status closes the lead. */
+export const entryActivity = (page: Page): Locator =>
+  historySection(page).getByRole("textbox", { name: new RegExp(`^(${T.activityField}|${T.reasonField})$`) });
+
+/** The STATUS select of the new row. */
+export const entryStatus = (page: Page): Locator =>
+  historySection(page).getByRole("combobox", { name: T.entryStatus, exact: true });
+
+/** Save of the new row. */
+export const saveEntry = (page: Page): Promise<void> =>
+  historySection(page).getByRole("button", { name: T.save, exact: true }).click();
+
+/** The confirmation asked before an entry closes the lead. */
+export const closeConfirmDialog = (page: Page): Locator => dialog(page, T.closeConfirm);
 
 /** Signs out from the workspace header and waits for the full load of `/`. */
 export async function signOutFromWorkspace(page: Page): Promise<void> {
@@ -426,22 +465,7 @@ export const hasSignInHint = (page: Page): Promise<boolean> =>
   page.evaluate(() => /(^|;\s*)sv_signed_in=[^;]+/.test(document.cookie));
 
 // ---------------------------------------------------------------------------------------------------------------
-// Dates
-
-/**
- * The current time of day (Vietnam time) `days` from now: the `datetime-local` value to type and the text the workspace
- * shows for it (`dd/MM/yyyy HH:mm`). Taking the time of day from the clock makes the value differ between runs, so a
- * history entry found by it is the one just saved.
- */
-export function futureNextAction(days: number): { input: string; shown: string } {
-  const wall = new Date(Date.now() + days * 86_400_000 + 7 * 3_600_000);
-  const pad = (value: number) => String(value).padStart(2, "0");
-  const y = wall.getUTCFullYear();
-  const m = pad(wall.getUTCMonth() + 1);
-  const d = pad(wall.getUTCDate());
-  const time = `${pad(wall.getUTCHours())}:${pad(wall.getUTCMinutes())}`;
-  return { input: `${y}-${m}-${d}T${time}`, shown: `${d}/${m}/${y} ${time}` };
-}
+// Texts
 
 /** Text that is unique to this run and test, so a note found in the history is the one just typed. */
 export const uniqueText = (label: string): string => `E2E ${label} ${Date.now()}`;

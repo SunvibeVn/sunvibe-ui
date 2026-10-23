@@ -217,7 +217,7 @@ export function AssignDialog({ message, onMessage, onDone, onClose, onBusy }: As
             error={noteError}
             hint={
               <span className={utf16Length(note) > NOTE_MAX ? "font-semibold text-rose-600" : undefined}>
-                {t("assignDialog.noteHint")} {t("noteForm.counter", { count: utf16Length(note), max: NOTE_MAX })}
+                {t("assignDialog.noteHint")} {t("counter", { count: utf16Length(note), max: NOTE_MAX })}
               </span>
             }
           >

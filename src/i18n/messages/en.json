@@ -162,11 +162,7 @@
       "assignee": "Assignee",
       "unassigned": "Unassigned",
       "filterByAssignee": "View leads of {name}",
-      "nextAction": "Next action",
-      "noNextAction": "Not set",
-      "overdue": "Overdue",
       "createdAt": "Created",
-      "changeStatus": "Change status",
       "assign": "Assign lead",
       "reassign": "Reassign",
       "closedBanner": "This lead is closed",
@@ -179,7 +175,11 @@
         "phone": "Phone",
         "email": "Email",
         "callbackTime": "Preferred callback time",
-        "none": "None"
+        "none": "None",
+        "copyPhone": "Copy phone number",
+        "copyEmail": "Copy email",
+        "copied": "Copied.",
+        "copyFailed": "Could not copy. Select the text to copy it."
       },
       "asset": {
         "title": "Property",
@@ -206,49 +206,45 @@
     },
     "history": {
       "title": "History",
+      "caption": "History of the lead",
       "empty": "No history yet.",
       "actorOwner": "Owner",
       "actorSystem": "System",
       "actorUnknown": "Unknown",
       "activityOther": "Other activity",
-      "statusChange": "{from} → {to}",
-      "statusTo": "Status: {to}",
-      "assigneeChange": "{from} → {to}",
-      "assigneeTo": "Assigned to {to}",
-      "nextAction": "Next action: {time}"
-    },
-    "noteForm": {
-      "title": "Note",
-      "note": "Note",
-      "counter": "{count} / {max}",
-      "nextAction": "Next action",
-      "nextActionHint": "Leave empty to keep the current next action.",
-      "currentNextAction": "Current: {time}",
-      "submit": "Save note",
-      "submitting": "Saving…",
-      "saved": "Note saved.",
-      "closedKeepText": "The lead is closed, so the note was not saved. Your text is kept below to copy.",
+      "columns": {
+        "no": "#",
+        "updated": "UPDATED",
+        "activity": "ACTIVITY",
+        "pic": "PIC",
+        "status": "STATUS",
+        "action": "ACTION"
+      },
+      "noStatus": "—",
+      "add": "Add log entry",
+      "hideEntry": "Hide the new entry",
+      "now": "Now",
+      "activityLabel": "Activity",
+      "activityPlaceholder": "What did you do?",
+      "reasonLabel": "Reason for closing the lead",
+      "reasonPlaceholder": "Why is the lead closed?",
+      "statusLabel": "Status after this entry",
+      "keepStatus": "{status} (no change)",
+      "save": "Save",
+      "saved": "Entry saved.",
+      "closedKeepText": "The lead is closed, so the entry was not saved. Your text is kept below to copy.",
       "keptDraft": "Your text",
-      "discardDraft": "Discard this text"
+      "discardDraft": "Discard this text",
+      "noEditRule": "Earlier entries cannot be edited or deleted."
     },
     "statusDialog": {
-      "title": "Change status",
-      "target": "New status",
       "reason": "Reason",
-      "reasonHint": "Required, at most {max} characters.",
-      "note": "Note",
-      "noteHint": "Optional.",
-      "nextAction": "Next action",
       "closeConfirm": "A closed lead cannot be reopened",
       "closeConfirmWith": "Close the lead as {status}?",
       "confirm": "Confirm",
-      "continue": "Continue",
       "back": "Back",
-      "cancel": "Cancel",
       "submitting": "Changing…",
       "allowedValues": "Allowed statuses: {values}",
-      "targetRequired": "Choose the new status.",
-      "saved": "Status changed.",
       "duplicate": {
         "title": "Original lead",
         "hint": "Pick a potential duplicate, or paste a lead link or a request code (SV-XXXX-XXXX).",
@@ -265,7 +261,8 @@
         "required": "Pick or enter the original lead.",
         "other": "Another lead (paste a lead link or request code)",
         "invalid": "Paste a lead link from the Workspace or a request code like SV-XXXX-XXXX."
-      }
+      },
+      "close": "Close"
     },
     "assignDialog": {
       "title": "Assign lead",
@@ -298,19 +295,18 @@
         "reason": "The reason is not valid.",
         "note": "The note is not valid.",
         "duplicateOfLeadId": "The original lead is not valid.",
-        "nextActionAt": "The next action time is not valid.",
         "assigneeUserId": "The selected staff member is not valid.",
         "userId": "The selected staff member is not valid."
       },
       "validation": {
-        "noteRequired": "Enter a note.",
         "noteTooLong": "A note has at most {max} characters.",
         "reasonRequired": "Enter a reason.",
-        "reasonTooLong": "A reason has at most {max} characters.",
         "assigneeRequired": "Choose a staff member.",
-        "nextActionInvalid": "The time is not valid."
+        "activityRequired": "Enter the activity.",
+        "activityTooLong": "The activity has at most {max} characters."
       }
-    }
+    },
+    "counter": "{count} / {max}"
   },
   "SaleTerritories": {
     "title": "TERRITORIES",

@@ -61,7 +61,7 @@ export function toCommandOutcome(result: ApiResult<LeadSummary>): CommandOutcome
 export type CommandMessage =
   | { kind: "stale" | "ineligible" | "forbidden" | "failed" | "bad-request"; correlationId?: string }
   | { kind: "invalid-transition"; allowed?: LeadStatus[]; correlationId?: string }
-  | { kind: "status-saved" | "assigned" };
+  | { kind: "assigned" };
 
 /**
  * The message for a failure that is not shown at a field (a 400 lands here only when no field of the dialog was

@@ -5,25 +5,30 @@ import { corsHeaders, expectSignedInAccount, headerAccountLink, REFRESH_PATH, st
 import {
   type ApiCall,
   clickStatusBox,
-  dialog,
   DESKTOP,
   detailHeader,
   expectLeadDetail,
   expectListPage,
+  filterBar,
   fixture,
-  futureNextAction,
   hasSignInHint,
+  closeConfirmDialog,
+  entryActivity,
+  entryStatus,
   header,
+  historySection,
   isDetailCall,
   isListCall,
   leadCard,
   leadLink,
   leadRow,
   newStaffContext,
+  openEntry,
   openLead,
   PHONE,
   recordApiCalls,
   recordHosts,
+  saveEntry,
   signInAs,
   signOutFromWorkspace,
   statusBox,
@@ -37,7 +42,6 @@ import {
   workspaceE2eReady,
   WORKSPACE_E2E_SKIP_REASON,
   workspaceHeaderLink,
-  byLabel,
   byText,
 } from "./support/staff";
 
@@ -48,7 +52,7 @@ import {
 // source is a plain HTTP fetch with no browser session); intake POSTs 0. One serial describe, one signed-in page; the
 // leads are opened by clicks.
 //
-// Fixtures: the file only adds two notes (and a next action) to L4. The SALE spec runs BEFORE the leader
+// Fixtures: the file only adds two notes to L4. The SALE spec runs BEFORE the leader
 // and admin specs (playwright.workspace.config.ts) because they close L3, L4 and L8 and assign L1 to this SALE, which
 // would change the leads this SALE sees. Run BOTH seeds again before every `npm run e2e:workspace`.
 
@@ -73,6 +77,9 @@ const section = (page: Page, title: string): Locator =>
     .filter({ visible: true });
 
 const cell = (row: Locator, index: number): Locator => row.getByRole("cell").nth(index);
+
+/** Column positions of the detail's history table (D-4). */
+const HCOL = { no: 0, updated: 1, activity: 2, pic: 3, status: 4, action: 5 };
 
 test.describe("SALE in the workspace", () => {
   let context: BrowserContext;
@@ -231,6 +238,42 @@ test.describe("SALE in the workspace", () => {
     }
   });
 
+  test("list layout (owner 2026-10-23): no visible title; a navy filter bar with white text, short chips and Clear filters at the right of the chips", async () => {
+    // The title stays for screen readers only (one h1 per page).
+    const title = await page.getByRole("heading", { level: 1, name: T.listTitle }).boundingBox();
+    expect(title?.width ?? 0, "visible title width").toBeLessThanOrEqual(1);
+
+    const bar = filterBar(page);
+    // navy-950 (#04052b), the background of the site header, and white text.
+    const colors = await bar.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const legend = element.querySelector("legend");
+      return {
+        background: style.backgroundColor,
+        image: style.backgroundImage,
+        legend: legend === null ? "" : getComputedStyle(legend).color,
+      };
+    });
+    expect(colors).toEqual({ background: "rgb(4, 5, 43)", image: "none", legend: "rgb(255, 255, 255)" });
+
+    const chip = statusBox(page, T.status.WITHDRAWN).locator("xpath=..");
+    const chipBox = await chip.boundingBox();
+    expect(chipBox?.height ?? 0, "chip height").toBeLessThanOrEqual(36);
+
+    await clickStatusBox(page, T.status.WITHDRAWN);
+    const clear = bar.getByRole("link", { name: T.clearFilters });
+    await expect(clear).toBeVisible();
+    const [barBox, clearBox, rowChip] = await Promise.all([bar.boundingBox(), clear.boundingBox(), chip.boundingBox()]);
+    if (barBox === null || clearBox === null || rowChip === null) throw new Error("filter bar not laid out");
+    expect(barBox.x + barBox.width - (clearBox.x + clearBox.width), "gap right of Clear filters").toBeLessThanOrEqual(24);
+    expect(clearBox.x, "Clear filters after the chips").toBeGreaterThan(rowChip.x + rowChip.width);
+    expect(Math.abs(clearBox.y + clearBox.height / 2 - (rowChip.y + rowChip.height / 2)), "same row").toBeLessThanOrEqual(4);
+
+    await clear.click();
+    await expect(statusBox(page, T.status.WITHDRAWN)).not.toBeChecked();
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD]);
+  });
+
   test("W11-42: hovering the rows sends no detail request; opening a lead sends one", async () => {
     const from = calls.length;
     for (const lead of [2, 3, 4, 7, 8, 9].map(fixture.lead)) await leadRow(page, lead).hover();
@@ -243,11 +286,16 @@ test.describe("SALE in the workspace", () => {
     expect(calls.slice(beforeOpen).filter((call) => isDetailCall(call, L2.id)), "detail requests of L2").toHaveLength(1);
   });
 
-  test("W11-27, W11-30 and W11-39: the detail of L2 shows the contact with tel:, the map link only after a click, and the history with names", async () => {
+  test("W11-27, W11-30 and W11-39: the detail of L2 shows the contact with a copy button, the map link only after a click, and the history with names", async () => {
     const contact = section(page, T.contact);
     await expect(contact).toContainText(L2.contactName);
-    await expect(contact.getByRole("link", { name: new RegExp(L2.phoneTail) })).toHaveAttribute("href", /^tel:/);
-    await expect(contact.locator('a[href^="mailto:"]')).toHaveCount(0);
+    // D-7: the phone is plain text with a copy button (no tel: or mailto: link); the button copies the shown value.
+    await expect(contact.getByRole("link")).toHaveCount(0);
+    await expect(contact).toContainText(L2.phoneTail);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await contact.getByRole("button", { name: T.copyPhone, exact: true }).click();
+    await expect(contact.getByText(T.copied, { exact: true })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toContain(L2.phoneTail);
     const asset = section(page, T.property);
     await expect(asset).toContainText("88 Võ Văn Kiệt");
     await expect(asset).toContainText(/800\.000/);
@@ -259,14 +307,48 @@ test.describe("SALE in the workspace", () => {
     await expect(map).toHaveAttribute("target", "_blank");
     await expect(map).toHaveAttribute("rel", /noopener/);
     await expect(map).toHaveAttribute("rel", /noreferrer/);
+    // D-8: the map link looks like the primary button (the brand gradient of Save).
+    expect(await map.evaluate((element) => getComputedStyle(element).backgroundImage)).toContain("linear-gradient");
     expect(hosts.filter((host) => /(^|\.)google\.com$/.test(host)), "requests to google.com so far").toHaveLength(0);
 
-    // W11-39: the owner's own entry is "Owner"; the assignment shows the names of both staff.
-    const history = section(page, T.history);
-    await expect(history.getByText("Owner submitted the form")).toBeVisible();
-    await expect(history.getByText("Owner", { exact: true })).toBeVisible();
-    await expect(history.getByText(fixture.leader.name, { exact: true })).toBeVisible();
-    await expect(history.getByText(`Assigned to ${fixture.sale.name}`)).toBeVisible();
+    // D-1 on a desktop (order of D-6): the lead | Potential duplicates, then Owner contact | Property; each row has one
+    // height.
+    const box = async (locator: Locator) => {
+      const found = await locator.boundingBox();
+      if (found === null) throw new Error("detail block not laid out");
+      return found;
+    };
+    const [contactBox, assetBox, leadBox, duplicatesBox] = await Promise.all([
+      box(contact),
+      box(asset),
+      box(detailHeader(page)),
+      box(section(page, "Potential duplicates")),
+    ]);
+    expect(Math.abs(leadBox.y - duplicatesBox.y), "the lead and Potential duplicates on one row").toBeLessThanOrEqual(1);
+    expect(Math.abs(leadBox.height - duplicatesBox.height), "the lead as high as Potential duplicates").toBeLessThanOrEqual(1);
+    expect(leadBox.x, "the lead left of Potential duplicates").toBeLessThan(duplicatesBox.x);
+    expect(contactBox.y, "Owner contact below the lead").toBeGreaterThan(leadBox.y + leadBox.height - 1);
+    expect(Math.abs(contactBox.y - assetBox.y), "Owner contact and Property on one row").toBeLessThanOrEqual(1);
+    expect(Math.abs(contactBox.height - assetBox.height), "Owner contact as high as Property").toBeLessThanOrEqual(1);
+    expect(contactBox.x, "Owner contact left of Property").toBeLessThan(assetBox.x);
+    // The lead block holds the page h1 again (it is first in the DOM).
+    await expect(detailHeader(page).getByRole("heading", { level: 1, name: L2.code })).toBeVisible();
+
+    // D-4: one table, oldest first. W11-39: the owner's own entry has "Owner" as PIC; the assignment the leader's name.
+    const history = historySection(page);
+    await expect(history.getByRole("columnheader")).toHaveText([...T.historyColumns]);
+    const rows = history.locator("tbody tr");
+    await expect(cell(rows.first(), HCOL.no)).toHaveText("1");
+    await expect(cell(rows.first(), HCOL.activity)).toHaveText("Owner submitted the form");
+    await expect(cell(rows.first(), HCOL.pic)).toHaveText("Owner");
+    const assigned = rows.filter({ hasText: fixture.leader.name }).last();
+    await expect(cell(assigned, HCOL.activity)).toHaveText("Assigned");
+    await expect(cell(assigned, HCOL.pic)).toHaveText(fixture.leader.name);
+    // Earlier rows are read only: no input and nothing in ACTION.
+    await expect(rows.locator("input, select, button")).toHaveCount(0);
+    await expect(cell(rows.first(), HCOL.action)).toHaveText("");
+    // D-9: the rules of the history are written under the table.
+    await expect(history.getByText(T.historyRuleNoEdit)).toBeVisible();
   });
 
   test("W11-41: the server HTML of a detail page holds no owner data or staff name, and the title is generic", async () => {
@@ -295,52 +377,61 @@ test.describe("SALE in the workspace", () => {
     await page.getByRole("link", { name: T.back }).click();
     await expectListPage(page);
     await openLead(page, L3);
-    // W11-27: the detail shows the phone as tel: and the email as mailto:.
+    // W11-27 and D-7: phone and email as plain text, each with its copy button.
     const contact = section(page, T.contact);
-    await expect(contact.getByRole("link", { name: new RegExp(L3.phoneTail) })).toHaveAttribute("href", /^tel:/);
-    await expect(contact.locator('a[href="mailto:hanh.e2e@example.com"]')).toBeVisible();
-    // The detail keeps the overdue flag of an open lead with a next action in the past (C-47 drops it from the list only).
-    await expect(detailHeader(page)).toContainText(T.overdue);
+    await expect(contact.getByRole("link")).toHaveCount(0);
+    await expect(contact).toContainText("hanh.e2e@example.com");
+    await expect(contact.getByRole("button", { name: T.copyPhone, exact: true })).toBeVisible();
+    await expect(contact.getByRole("button", { name: T.copyEmail, exact: true })).toBeVisible();
+    // D-2: the lead block shows no next action (not even L3's past one) and has no status button.
     await expect(detailHeader(page)).toContainText(T.status.CONTACTED);
+    await expect(detailHeader(page)).not.toContainText(/Next action|Overdue/);
+    await expect(page.getByRole("button", { name: "Change status" })).toHaveCount(0);
 
-    // The note goes to L4 (ON_HOLD): L3 keeps its overdue next action, so this file can run again on the same data.
+    // The note goes to L4 (ON_HOLD), so L3 stays as seeded for the later specs.
     await page.getByRole("link", { name: T.back }).click();
     await expectListPage(page);
     await openLead(page, L4);
 
-    // An empty note is refused before any call.
-    const noteBox = byLabel(page, T.noteField, { exact: true });
-    await page.getByRole("button", { name: T.noteSubmit }).click();
-    await expect(byText(page, T.noteRequired)).toBeVisible();
+    // D-4: "+" opens the new row; PIC is the signed-in SALE, disabled; STATUS keeps the current status.
+    const history = historySection(page);
+    await openEntry(page);
+    const newRow = history.locator("tbody tr").filter({ has: page.getByRole("combobox", { name: T.entryStatus }) });
+    await expect(cell(newRow, HCOL.pic)).toHaveText(fixture.sale.name);
+    await expect(cell(newRow, HCOL.pic).locator("input, select")).toHaveCount(0);
+    await expect(history.locator("select option:checked")).toHaveText(T.keepStatus(T.status.ON_HOLD));
+    await expect(history.getByRole("textbox", { name: "Next action" })).toHaveCount(0);
+
+    // An empty activity is refused before any call.
+    await saveEntry(page);
+    await expect(history.getByText(T.activityRequired)).toBeVisible();
 
     const text = uniqueText("note L4");
-    const next = futureNextAction(30);
-    await noteBox.fill(text);
-    await expect(byText(page, `${text.length} / 2000`)).toBeVisible();
-    await byLabel(page, T.nextActionField, { exact: true }).fill(next.input);
+    await entryActivity(page).fill(text);
+    await expect(history.getByText(`${text.length} / 2000`)).toBeVisible();
 
     const from = calls.length;
-    await page.getByRole("button", { name: T.noteSubmit }).click();
-    await expect(byText(page, T.noteSaved)).toBeVisible();
-    const history = section(page, T.history);
-    await expect(history.getByText(text)).toBeVisible();
-    await expect(history.getByText(`Next action: ${next.shown}`)).toBeVisible();
-    await expect(detailHeader(page)).toContainText(next.shown);
-    await expect(noteBox).toHaveValue("");
+    await saveEntry(page);
+    await expect(history.getByText(T.entrySaved)).toBeVisible();
+    const added = history.locator("tbody tr").filter({ hasText: text });
+    await expect(cell(added, HCOL.pic)).toHaveText(fixture.sale.name);
+    await expect(cell(added, HCOL.status)).toHaveText(T.noNote);
+    // The row closed; its text is gone from the draft.
+    await expect(entryActivity(page)).toHaveCount(0);
     // The page took the 201 answer: no detail request after the save (a settle for the negative check).
     await page.waitForTimeout(750);
     expect(calls.slice(from).filter((call) => isDetailCall(call)), "detail requests after the note").toHaveLength(0);
 
-    // A second note with the next action left empty keeps the current one.
+    await openEntry(page);
+    await expect(entryActivity(page)).toHaveValue("");
     const second = uniqueText("note L4 two");
-    await noteBox.fill(second);
-    await page.getByRole("button", { name: T.noteSubmit }).click();
-    await expect(history.getByText(second)).toBeVisible();
-    await expect(detailHeader(page)).toContainText(next.shown);
+    await entryActivity(page).fill(second);
+    await saveEntry(page);
+    const secondRow = history.locator("tbody tr").filter({ hasText: second });
+    await expect(secondRow).toBeVisible();
 
     // W14-31: the list's LAST UPDATE of L4 is the time of that latest note in the history (C-49).
-    const entry = history.getByRole("listitem").filter({ hasText: second });
-    const noteTime = (await entry.innerText()).match(TIME)?.[0];
+    const noteTime = (await cell(secondRow, HCOL.updated).innerText()).match(TIME)?.[0];
     expect(noteTime, "time of the note in the history").toBeDefined();
     await page.getByRole("link", { name: T.back }).click();
     await expectListPage(page);
@@ -381,6 +472,24 @@ test.describe("SALE in the workspace", () => {
     await expect(card.getByRole("link", { name: `View ${L2.code}`, exact: true })).toBeVisible();
     expect(await card.innerText()).not.toMatch(/912\d{6}|\+84|@example\.com|Võ Văn Kiệt|E2E Sale|Next action/);
 
+    // D-10 on a phone: the detail does not scroll sideways, the history rows are cards (no column headers on screen,
+    // no empty ACTION cell) and the map link keeps a 44px touch target.
+    await openLead(page, L2);
+    const detailWidths = await page.evaluate(() => ({
+      scroll: document.documentElement.scrollWidth,
+      client: document.documentElement.clientWidth,
+    }));
+    expect(detailWidths.scroll, "the detail does not scroll sideways on a phone").toBeLessThanOrEqual(detailWidths.client);
+    const phoneHistory = historySection(page);
+    await expect(phoneHistory.getByRole("columnheader")).toHaveCount(0);
+    const firstEntry = phoneHistory.locator("tbody tr").first();
+    await expect(firstEntry).toContainText("Owner submitted the form");
+    await expect(firstEntry.getByRole("cell")).toHaveCount(5);
+    expect((await page.getByRole("link", { name: T.map }).boundingBox())?.height ?? 0, "map link height").toBeGreaterThanOrEqual(44);
+    await page.getByRole("link", { name: T.back }).click();
+    await expectListPage(page);
+    await expect(leadLink(page, L2)).toBeVisible();
+
     // Empty state: no lead of the SALE is "Owner Withdrawn" (the open boxes are cleared one by one after it is ticked).
     await clickStatusBox(page, T.status.WITHDRAWN);
     for (const status of [T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD]) await clickStatusBox(page, status);
@@ -418,27 +527,58 @@ test.describe("SALE in the workspace", () => {
     }
   });
 
-  test("W11-43: a typed note and reason survive an unavailable session; a sign-out leaves no lead data (W11-41)", async () => {
+  test("history entry: the row is locked while a change is sent, and a failed confirmation shows its message in the dialog", async () => {
     await openLead(page, L9);
-    const noteDraft = uniqueText("note draft");
-    const reasonDraft = uniqueText("reason draft");
+    await openEntry(page);
+    await entryStatus(page).selectOption({ label: T.status.REJECTED });
+    await entryActivity(page).fill(uniqueText("reason not sent"));
+    await saveEntry(page);
+    await expect(closeConfirmDialog(page)).toBeVisible();
 
-    // A reason typed in the status dialog (closing target) stays after the dialog is cancelled.
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    const statusDialog = dialog(page, T.changeStatus);
-    await statusDialog.getByRole("radio", { name: T.status.REJECTED, exact: true }).check();
-    await statusDialog.getByRole("textbox", { name: T.reason, exact: true }).fill(reasonDraft);
-    await statusDialog.getByRole("button", { name: T.cancel }).last().click();
-    await expect(statusDialog).toHaveCount(0);
+    // The change answers 503 after a short wait: nothing is changed on the server.
+    const statusPath = `${API_URL}/api/v1/staff/owner-leads/${L9.id}/status-changes`;
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route(statusPath, async (route) => {
+      const request = route.request();
+      if (request.method() !== "POST") return route.continue();
+      await held;
+      await route.fulfill({ status: 503, headers: corsHeaders(request), json: { code: "UNAVAILABLE", message: "Down" } });
+    });
+    try {
+      await closeConfirmDialog(page).getByRole("button", { name: T.confirm }).click();
+      // CR-2: while it is on its way the row cannot be hidden (its answer would be lost) and Save is locked.
+      await expect(historySection(page).getByRole("button", { name: T.hideEntry, exact: true })).toBeDisabled();
+      release();
+      await expect(closeConfirmDialog(page).getByText(T.generic)).toBeVisible();
+    } finally {
+      release();
+      await page.unroute(statusPath);
+    }
+    await closeConfirmDialog(page).getByRole("button", { name: T.dialogBack, exact: true }).click();
+    await expect(closeConfirmDialog(page)).toHaveCount(0);
+    await expect(detailHeader(page)).toContainText(T.status.ASSIGNED);
+    // Drop the typed reason, so the next test starts from an empty row.
+    await entryActivity(page).fill("");
+    await entryStatus(page).selectOption({ label: T.keepStatus(T.status.ASSIGNED) });
+    await historySection(page).getByRole("button", { name: T.hideEntry, exact: true }).click();
+  });
 
-    await byLabel(page, T.noteField, { exact: true }).fill(noteDraft);
+  test("W11-43: a typed history entry and its status survive an unavailable session; a sign-out leaves no lead data (W11-41)", async () => {
+    await openLead(page, L9);
+    const draft = uniqueText("entry draft");
+
+    await openEntry(page);
+    await entryStatus(page).selectOption({ label: T.status.CONTACTED });
+    await entryActivity(page).fill(draft);
     // Drafts live in the memory of the tab only (C-33).
-    expect(await storesHolding(page, noteDraft), "stores holding the note").toEqual([]);
-    expect(await storesHolding(page, reasonDraft), "stores holding the reason").toEqual([]);
+    expect(await storesHolding(page, draft), "stores holding the entry").toEqual([]);
 
     // The save gets a 401, the refresh cannot reach the API: the session becomes unavailable.
-    const notePath = `${API_URL}/api/v1/staff/owner-leads/${L9.id}/activities`;
-    await page.route(notePath, async (route) => {
+    const statusPath = `${API_URL}/api/v1/staff/owner-leads/${L9.id}/status-changes`;
+    await page.route(statusPath, async (route) => {
       const request = route.request();
       if (request.method() !== "POST") return route.continue();
       await route.fulfill({
@@ -448,22 +588,18 @@ test.describe("SALE in the workspace", () => {
       });
     });
     await page.route(`${API_URL}${REFRESH_PATH}`, (route) => route.abort());
-    await page.getByRole("button", { name: T.noteSubmit }).click();
+    await saveEntry(page);
     // The refresh is retried at about +2 s and +12 s before the block shows. It is English inside the workspace.
     await expect(page.locator('div[lang="en"]').getByText(T.sessionUnavailable)).toBeVisible({ timeout: 60_000 });
-    await expect(byLabel(page, T.noteField, { exact: true })).toHaveCount(0);
+    await expect(entryActivity(page)).toHaveCount(0);
 
-    // The server is reachable again: retry, and the typed texts are back.
-    await page.unroute(notePath);
+    // The server is reachable again: retry, and the row is open again with the typed text.
+    await page.unroute(statusPath);
     await page.unroute(`${API_URL}${REFRESH_PATH}`);
     await page.getByRole("button", { name: T.sessionRetry }).first().click();
     await expectLeadDetail(page, L9);
-    await expect(byLabel(page, T.noteField, { exact: true })).toHaveValue(noteDraft);
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await statusDialog.getByRole("radio", { name: T.status.REJECTED, exact: true }).check();
-    await expect(statusDialog.getByRole("textbox", { name: T.reason, exact: true })).toHaveValue(reasonDraft);
-    await statusDialog.getByRole("button", { name: T.cancel }).last().click();
-    await expect(statusDialog).toHaveCount(0);
+    await expect(entryActivity(page)).toHaveValue(draft);
+    await expect(historySection(page).locator("select option:checked")).toHaveText(T.status.CONTACTED);
 
     // W11-43 / W11-41: sign out here; the hint is gone, Back shows the login page and no lead data or draft.
     await signOutFromWorkspace(page);
@@ -473,9 +609,9 @@ test.describe("SALE in the workspace", () => {
     await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
     // The whole DOM, hidden Activity copies included (BR-2, C-33).
     const html = await page.content();
-    for (const secret of [L9.code, L9.contactName, noteDraft, reasonDraft, L4.code, L7.code, L8.code]) {
+    for (const secret of [L9.code, L9.contactName, draft, L4.code, L7.code, L8.code]) {
       expect(html.includes(secret), "lead data or draft in the page after the sign-out and Back").toBe(false);
     }
-    expect(await storesHolding(page, noteDraft), "stores holding the note after the sign-out").toEqual([]);
+    expect(await storesHolding(page, draft), "stores holding the entry after the sign-out").toEqual([]);
   });
 });

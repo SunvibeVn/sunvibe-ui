@@ -5,8 +5,11 @@ import { corsHeaders, expectSignedInAccount, REFRESH_PATH, TEXT } from "../suppo
 import {
   assigneeOption,
   clickStatusBox,
+  closeConfirmDialog,
   dialog,
   detailHeader,
+  entryActivity,
+  entryStatus,
   expectLeadDetail,
   expectListPage,
   expectListSettled,
@@ -15,10 +18,13 @@ import {
   findLeadLink,
   goToTab,
   header,
+  historySection,
   leadLink,
   mainArea,
   newStaffContext,
+  openEntry,
   openLead,
+  saveEntry,
   signInAs,
   statusBox,
   statusBoxLabels,
@@ -78,16 +84,11 @@ const ALL_BOXES = [
 const NO_NEW_BOXES = ALL_BOXES.slice(1);
 const OPEN_DEFAULT = [T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD];
 
-const statusDialog = (page: Page): Locator => dialog(page, T.changeStatus);
-const targets = (page: Page): Locator => statusDialog(page).getByRole("radio");
-const target = (page: Page, status: string): Locator => statusDialog(page).getByRole("radio", { name: status, exact: true });
-const cancelDialog = (page: Page): Promise<void> => statusDialog(page).getByRole("button", { name: T.cancel }).last().click();
+/** The options of the new history row's STATUS select (D-4). */
+const statusOptions = (page: Page): Locator => entryStatus(page).locator("option");
+/** Picks `status` in the new history row. */
+const pickStatus = (page: Page, status: string): Promise<string[]> => entryStatus(page).selectOption({ label: status });
 const assigneeFilter = (page: Page): Locator => byLabel(page, T.assigneeFilter, { exact: true });
-const section = (page: Page, title: string): Locator =>
-  page
-    .locator("section")
-    .filter({ has: page.getByRole("heading", { level: 2, name: title, exact: true }) })
-    .filter({ visible: true });
 
 /** Back to the list from a detail page (if on one), then "All Leads" at its default (Unassigned only). */
 async function allLeadsDefault(page: Page): Promise<void> {
@@ -133,15 +134,12 @@ async function changeStatusInSecondPage(
   try {
     await other.goto(lead.path);
     await expectLeadDetail(other, lead);
-    await other.getByRole("button", { name: T.changeStatus }).click();
-    await target(other, status).check();
-    if (reason !== undefined) {
-      await statusDialog(other).getByRole("textbox", { name: T.reason, exact: true }).fill(reason);
-      await statusDialog(other).getByRole("button", { name: T.continue }).click();
-      await expect(statusDialog(other).getByText(T.closeConfirm)).toBeVisible();
-    }
-    await statusDialog(other).getByRole("button", { name: T.confirm }).click();
-    await expect(byText(other, T.statusSaved)).toBeVisible();
+    await openEntry(other);
+    await pickStatus(other, status);
+    if (reason !== undefined) await entryActivity(other).fill(reason);
+    await saveEntry(other);
+    if (reason !== undefined) await closeConfirmDialog(other).getByRole("button", { name: T.confirm }).click();
+    await expect(historySection(other).getByText(T.entrySaved)).toBeVisible();
   } finally {
     await other.close();
   }
@@ -314,118 +312,123 @@ test.describe("SALE_LEADER in the workspace", () => {
     await expect(byText(page, T.emptyFiltered)).toBeVisible();
   });
 
-  test("W11-32: the status dialog offers exactly the allowed targets; closing needs a reason and a confirmation", async () => {
+  test("W11-32: the history row offers exactly the allowed targets; closing needs a reason and a confirmation", async () => {
     await openFromAssignee(page, fixture.sale.id, L2);
 
-    // ASSIGNED -> CONTACTED, ON_HOLD, DUPLICATE, REJECTED, WITHDRAWN.
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await expect(targets(page)).toHaveCount(5);
-    for (const status of ["CONTACTED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"] as const) {
-      await expect(target(page, T.status[status])).toBeVisible();
-    }
-    await expect(target(page, T.status.ASSIGNED)).toHaveCount(0);
-    await cancelDialog(page);
-    await expect(statusDialog(page)).toHaveCount(0);
+    // ASSIGNED: keep it, or CONTACTED, ON_HOLD, DUPLICATE, REJECTED, WITHDRAWN.
+    await openEntry(page);
+    await expect(statusOptions(page)).toHaveText([
+      T.keepStatus(T.status.ASSIGNED),
+      T.status.CONTACTED,
+      T.status.ON_HOLD,
+      T.status.DUPLICATE,
+      T.status.REJECTED,
+      T.status.WITHDRAWN,
+    ]);
 
-    // ON_HOLD (L4) -> CONTACTED, DUPLICATE, REJECTED, WITHDRAWN.
+    // ON_HOLD (L4): keep it, or CONTACTED, DUPLICATE, REJECTED, WITHDRAWN.
     await openFromAssignee(page, fixture.sale.id, L4);
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await expect(targets(page)).toHaveCount(4);
-    await expect(target(page, T.status.ON_HOLD)).toHaveCount(0);
+    await openEntry(page);
+    await expect(statusOptions(page)).toHaveText([
+      T.keepStatus(T.status.ON_HOLD),
+      T.status.CONTACTED,
+      T.status.DUPLICATE,
+      T.status.REJECTED,
+      T.status.WITHDRAWN,
+    ]);
 
-    // A non-closing target has the optional next action; a closing one hides it and asks for a reason.
-    await target(page, T.status.CONTACTED).check();
-    await expect(statusDialog(page).getByLabel(T.nextActionField, { exact: true })).toBeVisible();
-    await target(page, T.status.REJECTED).check();
-    await expect(statusDialog(page).getByLabel(T.nextActionField, { exact: true })).toHaveCount(0);
-    await statusDialog(page).getByRole("button", { name: T.continue }).click();
-    await expect(statusDialog(page).getByText(T.reasonRequired)).toBeVisible();
-    await statusDialog(page).getByRole("textbox", { name: T.reason, exact: true }).fill("x".repeat(501));
-    await statusDialog(page).getByRole("button", { name: T.continue }).click();
-    await expect(statusDialog(page).getByText(T.reasonTooLong)).toBeVisible();
+    // A closing target turns ACTIVITY into the required reason (1..500); no next action anywhere (D-5).
+    await pickStatus(page, T.status.REJECTED);
+    await expect(historySection(page).getByRole("textbox", { name: T.reasonField, exact: true })).toBeVisible();
+    await expect(page.getByRole("textbox", { name: "Next action" })).toHaveCount(0);
+    await saveEntry(page);
+    await expect(historySection(page).getByText(T.reasonRequired)).toBeVisible();
+    await entryActivity(page).fill("x".repeat(501));
+    await saveEntry(page);
+    await expect(historySection(page).getByText(T.activityTooLong(500))).toBeVisible();
 
     const reason = uniqueText("owner declined");
-    await statusDialog(page).getByRole("textbox", { name: T.reason, exact: true }).fill(reason);
-    await statusDialog(page).getByRole("button", { name: T.continue }).click();
-    await expect(statusDialog(page).getByText(T.closeConfirm)).toBeVisible();
-    await statusDialog(page).getByRole("button", { name: T.confirm }).click();
+    await entryActivity(page).fill(reason);
+    await saveEntry(page);
+    await expect(closeConfirmDialog(page)).toBeVisible();
+    await closeConfirmDialog(page).getByRole("button", { name: T.confirm }).click();
 
-    // The lead is closed: banner and reason, no status or assign button, no note form (W11-34: no assign when closed).
-    await expect(byText(page, T.statusSaved)).toBeVisible();
+    // The lead is closed: banner and reason; no "+", no assign button (W11-34: no assign when closed).
+    await expect(historySection(page).getByText(T.entrySaved)).toBeVisible();
     await expect(detailHeader(page)).toContainText(T.status.REJECTED);
     await expect(detailHeader(page)).toContainText(T.closedBanner);
     await expect(detailHeader(page)).toContainText(reason);
-    await expect(page.getByRole("button", { name: T.changeStatus })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: T.addEntry })).toHaveCount(0);
     await expect(page.getByRole("button", { name: T.reassign })).toHaveCount(0);
     await expect(page.getByRole("button", { name: T.assign })).toHaveCount(0);
-    await expect(byLabel(page, T.noteField, { exact: true })).toHaveCount(0);
+    await expect(entryStatus(page)).toHaveCount(0);
   });
 
   test("W11-33: DUPLICATE takes a pasted code or link; the lead itself, an unknown code and a DUPLICATE are refused; a closed original is found", async () => {
     await openFromAssignee(page, fixture.sale.id, L8);
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    const dlg = statusDialog(page);
-    await target(page, T.status.DUPLICATE).check();
+    await openEntry(page);
+    const history = historySection(page);
+    await pickStatus(page, T.status.DUPLICATE);
     // L8 has one possible duplicate (L7): offered as a choice, and "another lead" opens the text field.
-    await expect(dlg.getByRole("radio", { name: new RegExp(L7.code) })).toBeEnabled();
-    await dlg.getByRole("radio", { name: /Another lead/ }).check();
-    const original = dlg.getByRole("textbox", { name: "Lead link or request code", exact: true });
-    const lookup = dlg.getByRole("button", { name: T.lookup, exact: true });
+    await expect(history.getByRole("radio", { name: new RegExp(L7.code) })).toBeEnabled();
+    await history.getByRole("radio", { name: /Another lead/ }).check();
+    const original = history.getByRole("textbox", { name: "Lead link or request code", exact: true });
+    const lookup = history.getByRole("button", { name: T.lookup, exact: true });
     const origin = new URL(page.url()).origin;
 
     // Refusals: the lead itself (a link, at once), an unknown code (after "Find").
     await original.fill(`${origin}${L8.path}`);
-    await expect(dlg.getByText("This lead cannot be its own original.")).toBeVisible();
+    await expect(history.getByText("This lead cannot be its own original.")).toBeVisible();
     await original.fill("SV-E2EA-ZZ9Z");
     await lookup.click();
-    await expect(dlg.getByText("Lead not found, or you cannot see it")).toBeVisible();
+    await expect(history.getByText("Lead not found, or you cannot see it")).toBeVisible();
 
     // A closed original is found (no status filter on the lookup), whatever the case and the outer spaces.
     await original.fill(`  ${L6.code.toLowerCase()} `);
     await lookup.click();
-    await expect(dlg.getByText(new RegExp(`${L6.code} · ${T.status.REJECTED} · ${TIME.source}`))).toBeVisible();
+    await expect(history.getByText(new RegExp(`${L6.code} · ${T.status.REJECTED} · ${TIME.source}`))).toBeVisible();
 
     // A pasted link (relative) shows the id, no preview of the lead.
     await original.fill(L7.path);
-    await expect(dlg.getByText(`Lead ID: ${L7.id}`)).toBeVisible();
+    await expect(history.getByText(`Lead ID: ${L7.id}`)).toBeVisible();
 
     // The original of this DUPLICATE: L7 by its code.
     await original.fill(` ${L7.code.toLowerCase()} `);
     await lookup.click();
-    await expect(dlg.getByText(new RegExp(`${L7.code} · ${T.status.ASSIGNED} · \\d{2}/\\d{2}/\\d{4}`))).toBeVisible();
-    await dlg.getByRole("textbox", { name: T.reason, exact: true }).fill(uniqueText("duplicate of L7"));
-    await dlg.getByRole("button", { name: T.continue }).click();
-    await expect(dlg.getByText(T.closeConfirm)).toBeVisible();
-    await expect(dlg.getByText(new RegExp(L7.code))).toBeVisible();
-    await dlg.getByRole("button", { name: T.confirm }).click();
+    await expect(history.getByText(new RegExp(`${L7.code} · ${T.status.ASSIGNED} · \\d{2}/\\d{2}/\\d{4}`))).toBeVisible();
+    await entryActivity(page).fill(uniqueText("duplicate of L7"));
+    await saveEntry(page);
+    await expect(closeConfirmDialog(page)).toBeVisible();
+    await expect(closeConfirmDialog(page).getByText(new RegExp(L7.code))).toBeVisible();
+    await closeConfirmDialog(page).getByRole("button", { name: T.confirm }).click();
 
-    await expect(byText(page, T.statusSaved)).toBeVisible();
+    await expect(history.getByText(T.entrySaved)).toBeVisible();
     await expect(detailHeader(page)).toContainText(T.status.DUPLICATE);
     await expect(page.getByRole("link", { name: "View original lead" })).toHaveAttribute("href", L7.path);
 
     // L8 is a DUPLICATE now: it cannot be the original of another lead (L10, a NEW lead; nothing is sent).
     await openUnassigned(page, L10);
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await target(page, T.status.DUPLICATE).check();
-    await dlg.getByRole("textbox", { name: "Lead link or request code", exact: true }).fill(L8.code);
-    await dlg.getByRole("button", { name: T.lookup, exact: true }).click();
-    await expect(dlg.getByText("This lead is already a duplicate and cannot be the original.")).toBeVisible();
-    await cancelDialog(page);
-    await expect(dlg).toHaveCount(0);
+    await openEntry(page);
+    await pickStatus(page, T.status.DUPLICATE);
+    await history.getByRole("textbox", { name: "Lead link or request code", exact: true }).fill(L8.code);
+    await history.getByRole("button", { name: T.lookup, exact: true }).click();
+    await expect(history.getByText("This lead is already a duplicate and cannot be the original.")).toBeVisible();
+    await history.getByRole("button", { name: T.hideEntry, exact: true }).click();
+    await expect(entryStatus(page)).toHaveCount(0);
 
     // A pasted link is sent as it is (the id is shown, no preview; the server decides): L5 (the leader's, no possible
     // duplicate, so the text field shows at once) becomes a DUPLICATE of L7. No later test or spec uses L5.
     await openFromAssignee(page, fixture.leader.id, L5);
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await target(page, T.status.DUPLICATE).check();
-    await dlg.getByRole("textbox", { name: "Lead link or request code", exact: true }).fill(`${origin}${L7.path}`);
-    await expect(dlg.getByText(`Lead ID: ${L7.id}`)).toBeVisible();
-    await dlg.getByRole("textbox", { name: T.reason, exact: true }).fill(uniqueText("duplicate of L7 by link"));
-    await dlg.getByRole("button", { name: T.continue }).click();
-    await expect(dlg.getByText(T.closeConfirm)).toBeVisible();
-    await dlg.getByRole("button", { name: T.confirm }).click();
+    await openEntry(page);
+    await pickStatus(page, T.status.DUPLICATE);
+    await history.getByRole("textbox", { name: "Lead link or request code", exact: true }).fill(`${origin}${L7.path}`);
+    await expect(history.getByText(`Lead ID: ${L7.id}`)).toBeVisible();
+    await entryActivity(page).fill(uniqueText("duplicate of L7 by link"));
+    await saveEntry(page);
+    await expect(closeConfirmDialog(page)).toBeVisible();
+    await closeConfirmDialog(page).getByRole("button", { name: T.confirm }).click();
 
-    await expect(byText(page, T.statusSaved)).toBeVisible();
+    await expect(history.getByText(T.entrySaved)).toBeVisible();
     await expect(detailHeader(page)).toContainText(T.status.DUPLICATE);
     await expect(page.getByRole("link", { name: "View original lead" })).toHaveAttribute("href", L7.path);
   });
@@ -445,7 +448,10 @@ test.describe("SALE_LEADER in the workspace", () => {
     await expect(detailHeader(page)).toContainText(fixture.sale.name);
     await expect(detailHeader(page)).toContainText(T.status.ASSIGNED);
     await expect(page.getByRole("button", { name: T.reassign })).toBeVisible();
-    await expect(section(page, T.history)).toContainText(`Assigned to ${fixture.sale.name}`);
+    // D-4: the assignment is the last history row, with the leader as PIC.
+    const assignedRow = historySection(page).locator("tbody tr").last();
+    await expect(assignedRow).toContainText("Assigned");
+    await expect(assignedRow).toContainText(fixture.leader.name);
 
     // The assignee link of the detail header: that person's open leads, never an empty Unassigned list (Review Focus 1).
     await detailHeader(page).getByRole("link", { name: `View leads of ${fixture.sale.name}` }).click();
@@ -463,43 +469,41 @@ test.describe("SALE_LEADER in the workspace", () => {
 
   test("W11-35: a stale status change shows the concurrency message and keeps the typed reason", async () => {
     await openFromAssignee(page, fixture.sale.id, L2);
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await target(page, T.status.REJECTED).check();
+    await openEntry(page);
+    await pickStatus(page, T.status.REJECTED);
     const reason = uniqueText("draft reason L2");
-    await statusDialog(page).getByRole("textbox", { name: T.reason, exact: true }).fill(reason);
-    await statusDialog(page).getByRole("button", { name: T.continue }).click();
-    await expect(statusDialog(page).getByText(T.closeConfirm)).toBeVisible();
+    await entryActivity(page).fill(reason);
+    await saveEntry(page);
+    await expect(closeConfirmDialog(page)).toBeVisible();
 
     // Meanwhile a second page moves L2 to ON_HOLD: the first page holds an old version.
     await changeStatusInSecondPage(context, L2, T.status.ON_HOLD);
 
-    await statusDialog(page).getByRole("button", { name: T.confirm }).click();
-    // The lead reloads with another status: the dialog closes and the message stays under the buttons.
-    await expect(byText(page, T.concurrent)).toBeVisible();
-    await expect(statusDialog(page)).toHaveCount(0);
+    await closeConfirmDialog(page).getByRole("button", { name: T.confirm }).click();
+    // The lead reloads with another status: the confirmation closes and the message stays under the row.
+    await expect(historySection(page).getByText(T.concurrent)).toBeVisible();
+    await expect(closeConfirmDialog(page)).toHaveCount(0);
     await expect(detailHeader(page)).toContainText(T.status.ON_HOLD);
-
-    // The reason is still in the draft when the dialog is opened again.
-    await page.getByRole("button", { name: T.changeStatus }).click();
-    await target(page, T.status.REJECTED).check();
-    await expect(statusDialog(page).getByRole("textbox", { name: T.reason, exact: true })).toHaveValue(reason);
-    await cancelDialog(page);
+    // The row keeps the typed reason.
+    await expect(entryActivity(page)).toHaveValue(reason);
   });
 
   test("W11-36: a note on a lead closed in another page gets the 409 message and the typed text stays visible", async () => {
     await openFromAssignee(page, fixture.sale.id, L3);
+    await openEntry(page);
     const note = uniqueText("note after L3 closed");
-    await byLabel(page, T.noteField, { exact: true }).fill(note);
+    await entryActivity(page).fill(note);
 
     await changeStatusInSecondPage(context, L3, T.status.WITHDRAWN, uniqueText("owner withdrew L3"));
 
-    await page.getByRole("button", { name: T.noteSubmit }).click();
-    await expect(byText(page, T.noteClosedKeepText)).toBeVisible();
+    await saveEntry(page);
+    await expect(byText(page, T.entryClosedKeepText)).toBeVisible();
     await expect(detailHeader(page)).toContainText(T.status.WITHDRAWN);
     // The text is still there, read only and copyable, and it was not saved to the history.
-    await expect(byLabel(page, T.noteField, { exact: true })).toHaveValue(note);
-    await expect(section(page, T.history).getByText(note)).toHaveCount(0);
-    await expect(page.getByRole("button", { name: T.noteSubmit })).toHaveCount(0);
+    await expect(byLabel(page, T.activityField, { exact: true })).toHaveValue(note);
+    await expect(historySection(page).locator("tbody").getByText(note)).toHaveCount(0);
+    await expect(page.getByRole("button", { name: T.save, exact: true })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: T.addEntry })).toHaveCount(0);
   });
 
   test("W11-38: the leader has no territories item and gets the English 403 screen on the URL", async () => {

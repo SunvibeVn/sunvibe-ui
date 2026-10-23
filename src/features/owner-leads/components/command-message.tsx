@@ -13,11 +13,7 @@ import { statusLabelKey } from "../lib/labels";
  */
 export function CommandMessageView({ message }: { message: CommandMessage }) {
   const t = useTranslations("OwnerLeads");
-  if (message.kind === "status-saved" || message.kind === "assigned") {
-    return (
-      <Alert tone="success">{message.kind === "status-saved" ? t("statusDialog.saved") : t("assignDialog.saved")}</Alert>
-    );
-  }
+  if (message.kind === "assigned") return <Alert tone="success">{t("assignDialog.saved")}</Alert>;
 
   const correlationId = "correlationId" in message ? message.correlationId : undefined;
   const support =
