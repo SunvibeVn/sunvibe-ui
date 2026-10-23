@@ -45,8 +45,7 @@ function fakeServer(reply: (sent: Sent) => Response | Promise<Response> = () => 
 
 const MINE: ListState = {
   scope: "mine",
-  statuses: ["NEW", "ASSIGNED", "CONTACTED", "ON_HOLD"],
-  includeClosed: false,
+  statuses: ["ASSIGNED", "CONTACTED", "ON_HOLD", "DUPLICATE"],
   page: 1,
 };
 
@@ -58,21 +57,21 @@ describe("listLeads", () => {
     expect(sent).toHaveLength(1);
     expect(sent[0].method).toBe("GET");
     expect(sent[0].url.pathname).toBe("/api/v1/staff/owner-leads");
-    expect(sent[0].url.searchParams.getAll("status")).toEqual(["NEW", "ASSIGNED", "CONTACTED", "ON_HOLD"]);
+    expect(sent[0].url.searchParams.getAll("status")).toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD", "DUPLICATE"]);
     expect(sent[0].url.searchParams.get("scope")).toBe("mine");
     expect(sent[0].url.searchParams.get("page")).toBe("0");
     expect(sent[0].url.searchParams.get("size")).toBe("20");
   });
 
-  it("omits optional params that are not set", async () => {
+  it("omits optional params that are not set; the status set is always sent", async () => {
     const { sent, deps } = fakeServer();
-    await listLeads(toApiQuery({ scope: "unassigned", statuses: ["NEW"], includeClosed: false, page: 2 }), deps);
+    await listLeads(toApiQuery({ scope: "all", statuses: ["NEW"], page: 2 }), deps);
     const params = sent[0].url.searchParams;
-    expect(params.has("status")).toBe(false);
+    expect(params.getAll("status")).toEqual(["NEW"]);
     expect(params.has("wardCode")).toBe(false);
     expect(params.has("assigneeUserId")).toBe(false);
     expect(params.has("requestCode")).toBe(false);
-    expect(params.get("scope")).toBe("unassigned");
+    expect(params.get("scope")).toBe("all");
     expect(params.get("page")).toBe("1");
   });
 
@@ -81,8 +80,7 @@ describe("listLeads", () => {
     await listLeads(
       toApiQuery({
         scope: "all",
-        statuses: ["NEW"],
-        includeClosed: false,
+        statuses: ["ASSIGNED"],
         ward: "20242",
         assignee: "01JE2EACCT0000000000000002",
         page: 1,

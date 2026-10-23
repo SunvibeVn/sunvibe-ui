@@ -64,7 +64,7 @@ function LoadProblem({ error, onRetry }: { error: LeadUiError; onRetry: () => vo
  * The staff lead detail (spec 5.4). Read in the browser only, one `GET` per open of the page (C-36): the effect runs
  * again when the route is shown after being hidden (Activity) and an answer for another user, another lead, a hidden
  * page or an older call is dropped. A 404 goes back to the list with a one-shot notice (C-37); a 403 shows the
- * forbidden notice in place, without lead data (spec 5.2). "Về danh sách lead" returns to the list URL this user last
+ * forbidden notice in place, without lead data (spec 5.2). "Back to leads" returns to the list URL this user last
  * saw in this tab (CR-10). The parts below get the lead and the commands through `useLeadDetail()`.
  */
 export function LeadDetailView({ leadId }: { leadId: string }) {

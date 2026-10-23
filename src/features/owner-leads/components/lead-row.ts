@@ -1,67 +1,45 @@
-"use client";
-
-import { useTranslations } from "next-intl";
-
 import { formatDateTime } from "../lib/format";
 import { intentLabelKey, type OwnerLeadsKey, propertyTypeLabelKey } from "../lib/labels";
-import { isOverdue } from "../lib/overdue";
-import { isLeadStatus, type LeadSummary } from "../types";
+import type { LeadSummary } from "../types";
 
-import { leadDetailHref } from "./list-href";
-
-/** The text of one list row, shared by the table and the cards. Never holds phone, email or address (BR-7). */
-export type LeadRowView = {
-  key: string;
-  /** Detail route; undefined when the API sent no id. */
-  href?: string;
-  requestCode: string;
-  contactName: string;
+/**
+ * One list row, shared by the table and the cards: the ten fields of C-46 (ACTION opens `id`). Never holds phone,
+ * email, address, next action or assignee (lead-queue BR-7, C-47). Labels are message keys; times are already
+ * `dd/MM/yyyy HH:mm` in Vietnam time (C-51).
+ */
+export type LeadRow = {
+  /** Detail id; undefined when the API sent none (no "View" link then). */
+  id: string | undefined;
+  code: string;
+  owner: string;
   ward: string;
-  intent: string;
-  propertyType: string;
+  /** Intent label key; null for none or an unknown value (the cell stays empty). */
+  requirementKey: OwnerLeadsKey | null;
+  /** Property type label key; null for none or an unknown value (W13). */
+  propertyTypeKey: OwnerLeadsKey | null;
   status: string | undefined;
-  createdAt: string;
-  /** "" when no next action is set. */
-  nextAction: string;
-  /** Open lead whose next action is in the past (C-20). */
-  overdue: boolean;
+  /** `createdAt`. */
+  created: string;
+  /** `lastActivityAt`: the latest entry of the lead's history (C-49). */
+  lastUpdate: string;
   possibleDuplicate: boolean;
-  assignee: string;
-  openLabel: string;
 };
 
-/** "Chưa giao" only for a lead nobody holds; a holder without a name is "Không rõ", as in the history. */
-function assigneeText(lead: LeadSummary, t: (key: "list.unassigned" | "history.actorUnknown") => string): string {
-  if (lead.assignedUserName?.trim()) return lead.assignedUserName;
-  return lead.assignedUserId ? t("history.actorUnknown") : t("list.unassigned");
+function time(iso: string | undefined): string {
+  return iso === undefined ? "" : formatDateTime(iso);
 }
 
-/** The text of an optional label (`null` = the lead has none): "" instead of a missing translation. */
-function optionalLabel(t: (key: OwnerLeadsKey) => string, key: OwnerLeadsKey | null): string {
-  return key === null ? "" : t(key);
-}
-
-/** Builds `LeadRowView`s with the Vietnamese texts; `now` decides which next actions are overdue. */
-export function useLeadRowViews(now: Date): (lead: LeadSummary, index: number) => LeadRowView {
-  const t = useTranslations("OwnerLeads");
-  return (lead, index) => {
-    const requestCode = lead.requestCode ?? "";
-    const status = lead.status;
-    return {
-      key: lead.id ?? `${requestCode}-${index}`,
-      href: lead.id === undefined ? undefined : leadDetailHref(lead.id),
-      requestCode,
-      contactName: lead.contactName ?? "",
-      ward: lead.wardName ?? "",
-      intent: optionalLabel(t, intentLabelKey(lead.intent)),
-      propertyType: optionalLabel(t, propertyTypeLabelKey(lead.propertyType)),
-      status,
-      createdAt: lead.createdAt === undefined ? "" : formatDateTime(lead.createdAt),
-      nextAction: lead.nextActionAt === undefined ? "" : formatDateTime(lead.nextActionAt),
-      overdue: isLeadStatus(status) && isOverdue({ status, nextActionAt: lead.nextActionAt }, now),
-      possibleDuplicate: lead.possibleDuplicate === true,
-      assignee: assigneeText(lead, t),
-      openLabel: t("list.open", { code: requestCode }),
-    };
+export function toLeadRow(lead: LeadSummary): LeadRow {
+  return {
+    id: lead.id,
+    code: lead.requestCode ?? "",
+    owner: lead.contactName ?? "",
+    ward: lead.wardName ?? "",
+    requirementKey: intentLabelKey(lead.intent),
+    propertyTypeKey: propertyTypeLabelKey(lead.propertyType),
+    status: lead.status,
+    created: time(lead.createdAt),
+    lastUpdate: time(lead.lastActivityAt),
+    possibleDuplicate: lead.possibleDuplicate === true,
   };
 }

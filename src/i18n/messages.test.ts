@@ -1,6 +1,11 @@
+import { readFileSync, readdirSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { englishSessionTexts } from "@/features/auth/client";
+import en from "./messages/en.json";
 import vi from "./messages/vi.json";
-import { defaultLocale } from "./config";
+import { defaultLocale, locales } from "./config";
 
 /** The six property types of intake brief BR-3, in form order, with their labels (G2 D-46, D-47). */
 const PROPERTY_TYPE_LABELS = [
@@ -13,8 +18,9 @@ const PROPERTY_TYPE_LABELS = [
 ];
 
 describe("i18n config", () => {
-  it("uses the single Vietnamese locale (D-15, C-FE-1)", () => {
+  it("defaults to Vietnamese; English only for the staff workspace (D-15, C-41)", () => {
     expect(defaultLocale).toBe("vi");
+    expect([...locales]).toEqual(["vi", "en"]);
   });
 });
 
@@ -143,95 +149,205 @@ describe("vi.json Session verbatim spec §7 texts (W10-46)", () => {
   });
 });
 
-describe("vi.json OwnerLeads verbatim spec §5 texts", () => {
-  const m = vi.OwnerLeads;
+/** Every leaf string of a message tree, with its dotted path. */
+function leaves(node: unknown, path = ""): [string, string][] {
+  if (typeof node === "string") return [[path, node]];
+  if (typeof node !== "object" || node === null) return [];
+  return Object.entries(node).flatMap(([key, child]) => leaves(child, path ? `${path}.${key}` : key));
+}
 
-  it("has the status labels of spec 5.6", () => {
+/** Every dotted key path of a message tree (leaves only). */
+function keyPaths(node: unknown): string[] {
+  return leaves(node).map(([path]) => path).sort();
+}
+
+const VIETNAMESE_LETTER = /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
+const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories"];
+
+describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
+  it("en.json has no Vietnamese letters", () => {
+    const vietnamese = leaves(en).filter(([, text]) => VIETNAMESE_LETTER.test(text));
+    expect(vietnamese).toEqual([]);
+  });
+
+  it("Session keys match in vi and en", () => {
+    expect(keyPaths(en.Session)).toEqual(keyPaths(vi.Session));
+  });
+
+  it("workspace namespaces only in en", () => {
+    expect(Object.keys(en).sort()).toEqual([...WORKSPACE_NAMESPACES, "Session"].sort());
+    for (const namespace of WORKSPACE_NAMESPACES) expect(vi).not.toHaveProperty(namespace);
+  });
+
+  it("vi.json has the public workspace entry link", () => {
+    expect(vi.WorkspaceEntry.link).toBe("Khu làm việc");
+  });
+
+  it("takes the English Session texts from englishSessionTexts, no third wording", () => {
+    const s = en.Session;
+    expect({
+      loading: s.loading,
+      leaving: s.leaving,
+      expiredTitle: s.expired.title,
+      expiredBody: s.expired.body,
+      expiredLink: s.expired.link,
+      unavailableTitle: s.unavailable.title,
+      unavailableBody: s.unavailable.body,
+      rateLimited: s.unavailable.rateLimited,
+      retry: s.unavailable.retry,
+      signOutHere: s.unavailable.signOutHere,
+      logoutFailed: s.logoutFailed,
+      tryAgain: s.tryAgain,
+    }).toEqual(englishSessionTexts);
+  });
+
+  it("has English 403 texts", () => {
+    expect(en.Session.forbidden.title).toBe("You don't have access to this page");
+    expect(en.Session.forbidden.link).toBe("Back to home");
+    expect(en.Session.forbiddenNotice).toBe("You don't have permission to do this.");
+  });
+});
+
+describe("no workspace file reads vi.json (W14-20)", () => {
+  const root = fileURLToPath(new URL("..", import.meta.url));
+  const dirs = ["features/owner-leads", "features/workspace", "app/(workspace)"];
+  const allowed = new Set([path.join("features", "workspace", "components", "workspace-link.tsx")]);
+
+  function files(dir: string): string[] {
+    return readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap((entry) => {
+      const relative = path.join(dir, entry.name);
+      if (entry.isDirectory()) return files(relative);
+      return /\.(ts|tsx)$/.test(entry.name) && !/\.test\.ts$/.test(entry.name) ? [path.normalize(relative)] : [];
+    });
+  }
+
+  it("no workspace source imports vi.json or uses WorkspaceEntry", () => {
+    const offenders = dirs
+      .flatMap(files)
+      .filter((file) => !allowed.has(file))
+      .filter((file) => /messages\/vi\.json|WorkspaceEntry/.test(readFileSync(path.join(root, file), "utf8")));
+    expect(offenders).toEqual([]);
+  });
+
+  it("workspace files read only en.json namespaces (no vi-only namespace)", () => {
+    const namespaces = new Set(Object.keys(en));
+    const offenders = dirs
+      .flatMap(files)
+      .filter((file) => !allowed.has(file))
+      .flatMap((file) =>
+        [...readFileSync(path.join(root, file), "utf8").matchAll(/(?:useTranslations|getTranslations)\(\s*"([^".]+)/g)]
+          .map((match) => match[1])
+          .filter((namespace) => !namespaces.has(namespace))
+          .map((namespace) => `${file}: ${namespace}`),
+      );
+    expect(offenders).toEqual([]);
+  });
+});
+
+describe("en.json OwnerLeads texts of spec 5.5", () => {
+  const m = en.OwnerLeads;
+
+  it("has the status labels of C-45", () => {
     expect(m.status).toEqual({
-      NEW: "Chưa giao",
-      ASSIGNED: "Đã giao",
-      CONTACTED: "Đã liên hệ được",
-      ON_HOLD: "Tạm hoãn",
-      DUPLICATE: "Trùng",
-      REJECTED: "Không nhận",
-      WITHDRAWN: "Chủ nhà rút",
+      NEW: "Unassigned",
+      ASSIGNED: "Assigned",
+      CONTACTED: "Contacted",
+      ON_HOLD: "On Hold",
+      DUPLICATE: "Duplicate",
+      REJECTED: "Declined",
+      WITHDRAWN: "Owner Withdrawn",
     });
   });
 
   it("has the page titles (generic, no name or code, BR-2)", () => {
-    expect(m.title).toBe("Lead nguồn hàng");
-    expect(m.detail.title).toBe("Chi tiết lead");
+    expect(m.title).toBe("SUPPLY LEADS");
+    expect(m.detail.title).toBe("Lead");
+  });
+
+  it("has the intents, property types, ward types and activities", () => {
+    expect(m.intent).toEqual({
+      SHORT_TERM_RENT: "Short-term rental",
+      LONG_TERM_RENT: "Long-term rental",
+      SALE: "Sale",
+    });
+    expect(m.propertyType).toEqual({
+      HOUSE: "House",
+      WHOLE_BUILDING: "Whole building",
+      VILLA: "Villa",
+      HOMESTAY: "Homestay",
+      CONDOTEL: "Condotel",
+      APARTMENT: "Apartment",
+    });
+    expect(m.wardType).toEqual({ WARD: "Ward", COMMUNE: "Commune", SPECIAL_ZONE: "Special zone" });
+    expect(m.activity).toEqual({
+      SUBMITTED: "Owner submitted the form",
+      AUTO_ASSIGNED: "Auto-assigned by ward",
+      ASSIGNED: "Assigned",
+      REASSIGNED: "Reassigned",
+      STATUS_CHANGED: "Status changed",
+      NOTE_ADDED: "Note",
+    });
   });
 
   it("has the list texts", () => {
-    expect(m.tabs.mine).toBe("Của tôi");
-    expect(m.tabs.unassigned).toBe("Chưa giao");
-    expect(m.tabs.all).toBe("Tất cả");
-    expect(m.filters.showClosed).toBe("Hiện cả lead đã đóng");
-    expect(m.list.possibleDuplicate).toBe("Có thể trùng");
-    expect(m.list.unassigned).toBe("Chưa giao");
+    expect(m.tabs.mine).toBe("My Leads");
+    expect(m.tabs.all).toBe("All Leads");
+    expect(m.filters.showClosed).toBe("Show closed leads");
+    expect(m.list.possibleDuplicate).toBe("Potential Duplicate");
   });
 
   it("has the former-holder labels (C-34)", () => {
-    expect(m.filters.assigneeFormer).toBe("{name} (không còn nhận lead)");
-    expect(m.filters.assigneeOther).toBe("Nhân viên khác");
+    expect(m.filters.assigneeFormer).toBe("{name} (no longer takes leads)");
+    expect(m.filters.assigneeOther).toBe("Other staff member");
   });
 
-  it("has the history actors (BR-8)", () => {
-    expect(m.history.actorOwner).toBe("Chủ nhà");
-    expect(m.history.actorSystem).toBe("Hệ thống");
-    expect(m.history.actorUnknown).toBe("Không rõ");
+  it("has the history actors (BR-8) and the picker roles", () => {
+    expect(m.history.actorOwner).toBe("Owner");
+    expect(m.history.actorSystem).toBe("System");
+    expect(m.history.actorUnknown).toBe("Unknown");
+    expect(m.role).toEqual({ SALE: "Sale", SALE_LEADER: "Sale leader" });
   });
 
-  it("has the error texts of the 5.2 table", () => {
-    // One sentence with the reload and kept-draft notes (CR-12); it starts with the spec text.
-    expect(m.errors.concurrent.startsWith("Lead vừa được người khác cập nhật.")).toBe(true);
-    expect(m.errors.leadNotFound).toBe("Không tìm thấy lead hoặc bạn không còn quyền xem");
-    expect(m.errors.supportCode).toBe("Mã hỗ trợ: {correlationId}");
+  it("has the error texts of 5.5", () => {
+    expect(m.errors.concurrent.startsWith("Someone else just updated this lead.")).toBe(true);
+    expect(m.errors.leadNotFound).toBe("Lead not found, or you can no longer see it.");
+    expect(m.errors.supportCode).toBe("Support code: {correlationId}");
   });
 
-  it("has the close confirmation and the duplicate lookup texts", () => {
-    expect(m.statusDialog.closeConfirm).toBe("Lead đã đóng không mở lại được");
-    expect(m.statusDialog.duplicate.notFound).toBe("Không tìm thấy lead này hoặc bạn không xem được");
-  });
-
-  it("has the map button and the assign dialog text of 5.4", () => {
-    expect(m.detail.map).toBe("Mở bản đồ / Chỉ đường");
-    expect(m.assignDialog.currentAssignee).toBe("Đang giao cho {name}");
-  });
-
-  it("has the price unit suffixes of 5.6", () => {
-    expect(m.priceUnit).toEqual({ NIGHT: "/đêm", MONTH: "/tháng", TOTAL: " (giá bán)" });
-  });
-
-  it("labels the property types like the intake form (D-47)", () => {
-    expect(Object.entries(m.propertyType)).toEqual(PROPERTY_TYPE_LABELS);
+  it("has the price unit suffixes (A-10)", () => {
+    expect(m.priceUnit).toEqual({ NIGHT: "/night", MONTH: "/month", TOTAL: " (sale price)" });
   });
 });
 
-describe("vi.json Workspace verbatim spec §5 texts", () => {
-  const m = vi.Workspace;
+describe("en.json Workspace texts", () => {
+  const m = en.Workspace;
 
-  it("has the entry and menu names", () => {
-    expect(m.link).toBe("Khu làm việc");
-    expect(m.accountCard.title).toBe("Khu làm việc");
-    expect(m.menu.ownerLeads).toBe("Lead nguồn hàng");
-    expect(m.menu.territories).toBe("Khu vực phụ trách");
+  it("has the shell and menu names (C-42, C-43, A-4)", () => {
+    expect(m.title).toBe("Workspace");
+    expect(m.menu.ownerLeads).toBe("SUPPLY LEADS");
+    expect(m.menu.territories).toBe("TERRITORIES");
+    expect(m.header.signOut).toBe("Sign Out");
+  });
+
+  it("has no public entry link or account card (they live outside the workspace)", () => {
+    expect(m).not.toHaveProperty("link");
+    expect(m).not.toHaveProperty("accountCard");
   });
 });
 
-describe("vi.json SaleTerritories verbatim spec §5 texts", () => {
-  const m = vi.SaleTerritories;
+describe("en.json SaleTerritories texts", () => {
+  const m = en.SaleTerritories;
 
   it("has the page title", () => {
-    expect(m.title).toBe("Khu vực phụ trách");
+    expect(m.title).toBe("TERRITORIES");
   });
 
-  it("has the C-40 flag for a holder who no longer receives leads", () => {
-    expect(m.holder.ineligible).toBe("Không còn nhận được lead: lead mới vào hàng đợi chưa giao");
+  it("has the C-40 flag and the empty holder", () => {
+    expect(m.holder.ineligible).toBe("No longer receives leads: new leads go to the unassigned queue");
+    expect(m.holder.none).toBe("Not assigned");
   });
 
   it("states that a change applies to new leads only (US-8 AC-3)", () => {
-    expect(m.newLeadsOnly).toContain("lead mới");
+    expect(m.newLeadsOnly).toContain("new leads");
   });
 });

@@ -39,7 +39,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - UI kit / styling: Tailwind CSS v4 + own components in src/components/ui (no external UI kit).
   Forms: native <form action> + useActionState with client-function actions (no Server Actions for auth) + zod 4
   schemas. Data fetching: openapi-fetch clients (no query library). i18n: next-intl, Vietnamese messages in
-  src/i18n/messages/vi.json.
+  src/i18n/messages/vi.json; the staff workspace reads English messages from src/i18n/messages/en.json through its
+  own provider (workspace layout).
 
 ## API access (see .cursor/rules/data-fetching.mdc)
 - ADR-001: the browser calls Spring Boot directly at NEXT_PUBLIC_API_URL (publicEnv.apiUrl). No BFF.
@@ -63,7 +64,8 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Never commit a secret: CI gitleaks-scans new commits (.github/workflows/secret-scan.yml). A false positive goes
   into .gitleaksignore as a fingerprint (never the value), only after owner review, in its own PR to main first.
 - User-facing text is Vietnamese (next-intl); keep strings out of logic. Exception: the existing auth screens stay
-  English until the translation wave; no screen mixes languages.
+  English until the translation wave. Exception: the staff workspace (`/workspace`) is English, messages in
+  `src/i18n/messages/en.json` (owner 2026-10-22, W14 C-41). No screen mixes languages.
 
 ## Workflow (Cursor or Claude Code, same inputs and bar)
 - The owner picks one FE tool per feature run: Cursor (default) or Claude Code started here. Both start from the

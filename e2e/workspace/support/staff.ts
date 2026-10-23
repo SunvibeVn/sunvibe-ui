@@ -117,68 +117,105 @@ export const fixture = {
 export const UNKNOWN_LEAD_ID = "01JE2EHEAD0000000000000099";
 
 // ---------------------------------------------------------------------------------------------------------------
-// Texts (src/i18n/messages/vi.json: Workspace, OwnerLeads, SaleTerritories, Session)
+// Texts. The workspace is English (src/i18n/messages/en.json: Workspace, OwnerLeads, SaleTerritories, Session; W14
+// C-41); the public header link and the account card live outside it (vi.json WorkspaceEntry, the English /account).
 
 export const T = {
-  workspace: "Khu làm việc",
-  openWorkspace: "Mở khu làm việc",
-  menuLabel: "Menu khu làm việc",
-  menuOpen: "Mở menu",
-  menuClose: "Đóng menu",
-  menuOwnerLeads: "Lead nguồn hàng",
-  menuTerritories: "Khu vực phụ trách",
-  signOut: "Đăng xuất",
-  listTitle: "Lead nguồn hàng",
-  tabsLabel: "Nhóm lead",
-  tabMine: "Của tôi",
-  tabUnassigned: "Chưa giao",
-  tabAll: "Tất cả",
-  listCaption: "Danh sách lead",
-  back: "Về danh sách lead",
-  leadNotFoundNotice: "Không tìm thấy lead hoặc bạn không còn quyền xem",
-  emptyFiltered: "Không có lead nào khớp bộ lọc.",
-  emptyPastEnd: "Không còn lead ở trang này.",
-  clearFilters: "Xóa bộ lọc",
-  possibleDuplicate: "Có thể trùng",
-  overdue: "Quá hạn",
+  /** The public site header link (vi.json WorkspaceEntry.link). */
+  workspaceLink: "Khu làm việc",
+  /** The /account card (English literals, FC-6). */
+  accountCardTitle: "Workspace",
+  openWorkspace: "Open workspace",
+  /** The label next to the logo in the workspace top bar (C-43). */
+  topBarLabel: "Workspace",
+  menuLabel: "Workspace menu",
+  menuOpen: "Open menu",
+  menuClose: "Close menu",
+  menuOwnerLeads: "SUPPLY LEADS",
+  menuTerritories: "TERRITORIES",
+  signOut: "Sign Out",
+  listTitle: "SUPPLY LEADS",
+  territoriesTitle: "TERRITORIES",
+  tabsLabel: "Lead groups",
+  tabMine: "My Leads",
+  tabAll: "All Leads",
+  listCaption: "Leads",
+  filtersLabel: "Filters",
+  showClosed: "Show closed leads",
+  wardFilter: "Ward / commune",
+  assigneeFilter: "Assignee",
+  assigneeOther: "Other staff member",
+  back: "Back to leads",
+  leadNotFoundNotice: "Lead not found, or you can no longer see it.",
+  emptyFiltered: "No leads match the filters.",
+  emptyPastEnd: "There are no leads on this page.",
+  clearFilters: "Clear filters",
+  possibleDuplicate: "Potential Duplicate",
+  noNote: "—",
+  overdue: "Overdue",
+  /** C-46 column headers, in order. */
+  columns: [
+    "CODE",
+    "OWNER",
+    "WARD / COMMUNE",
+    "REQUIREMENT",
+    "PROPERTY TYPE",
+    "STATUS",
+    "CREATED",
+    "LAST UPDATE",
+    "NOTE",
+    "ACTION",
+  ],
   status: {
-    NEW: "Chưa giao",
-    ASSIGNED: "Đã giao",
-    CONTACTED: "Đã liên hệ được",
-    ON_HOLD: "Tạm hoãn",
-    DUPLICATE: "Trùng",
-    REJECTED: "Không nhận",
-    WITHDRAWN: "Chủ nhà rút",
+    NEW: "Unassigned",
+    ASSIGNED: "Assigned",
+    CONTACTED: "Contacted",
+    ON_HOLD: "On Hold",
+    DUPLICATE: "Duplicate",
+    REJECTED: "Declined",
+    WITHDRAWN: "Owner Withdrawn",
   },
-  changeStatus: "Đổi trạng thái",
-  assign: "Giao lead",
-  reassign: "Giao lại",
-  closedBanner: "Lead đã đóng",
-  closeConfirm: "Lead đã đóng không mở lại được",
-  noteField: "Nội dung ghi chú",
-  nextActionField: "Việc tiếp theo",
-  noteSubmit: "Lưu ghi chú",
-  noteSaved: "Đã lưu ghi chú.",
-  noteRequired: "Vui lòng nhập ghi chú.",
-  noteClosedKeepText: "Lead đã đóng nên không lưu được ghi chú. Nội dung bạn nhập vẫn ở dưới để sao chép.",
-  concurrent: "Lead vừa được người khác cập nhật",
-  map: "Mở bản đồ / Chỉ đường",
-  sessionUnavailableTitle: "Không kết nối được máy chủ",
-  sessionRetry: "Thử lại",
-  forbiddenTitle: "Bạn không có quyền truy cập trang này",
-  statusSaved: "Đã đổi trạng thái.",
-  assignSaved: "Đã giao lead.",
-  reason: "Lý do",
-  reasonRequired: "Vui lòng nhập lý do.",
-  reasonTooLong: "Lý do tối đa 500 ký tự.",
-  continue: "Tiếp tục",
-  confirm: "Xác nhận",
-  cancel: "Hủy",
-  lookup: "Tìm",
+  changeStatus: "Change status",
+  assign: "Assign lead",
+  reassign: "Reassign",
+  closedBanner: "This lead is closed",
+  closeConfirm: "A closed lead cannot be reopened",
+  noteField: "Note",
+  nextActionField: "Next action",
+  noteSubmit: "Save note",
+  noteSaved: "Note saved.",
+  noteRequired: "Enter a note.",
+  noteClosedKeepText: "The lead is closed, so the note was not saved. Your text is kept below to copy.",
+  concurrent: "Someone else just updated this lead.",
+  map: "Open map / Directions",
+  /** The unavailable block has no title in English (englishSessionTexts): its body is the one sentence. */
+  sessionUnavailable: "We couldn't reach the server to restore your session. You're still signed in.",
+  sessionRetry: "Try again",
+  sessionExpiredTitle: "Session expired",
+  forbiddenTitle: "You don't have access to this page",
+  forbiddenLink: "Back to home",
+  statusSaved: "Status changed.",
+  assignSaved: "Lead assigned.",
+  reason: "Reason",
+  reasonRequired: "Enter a reason.",
+  reasonTooLong: "A reason has at most 500 characters.",
+  continue: "Continue",
+  confirm: "Confirm",
+  cancel: "Cancel",
+  lookup: "Find",
+  pagination: "Pagination",
+  previousPage: "Previous page",
+  nextPage: "Next page",
+  history: "History",
+  contact: "Owner contact",
+  property: "Property",
 } as const;
 
-/** The option text of the assignee pickers: "Họ tên · Vai trò" (middle dot U+00B7, `assignDialog.assigneeOption`). */
-export const assigneeOption = (name: string, role: "Sale" | "Trưởng nhóm sale"): string => `${name} · ${role}`;
+/** The option text of the assignee pickers: "Name · Role" (middle dot U+00B7, `assignDialog.assigneeOption`). */
+export const assigneeOption = (name: string, role: "Sale" | "Sale leader"): string => `${name} · ${role}`;
+
+/** `dd/MM/yyyy HH:mm`, the time format of the workspace (C-51). */
+export const TIME = /\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}/;
 
 // ---------------------------------------------------------------------------------------------------------------
 // Request log
@@ -222,9 +259,9 @@ export const isDetailCall = (call: ApiCall, leadId?: string): boolean =>
 /** The workspace header (the `banner`). */
 export const header = (page: Page): Locator => page.getByRole("banner");
 
-/** The "Khu làm việc" link of a header: the site header on `/account`, the workspace header inside `/workspace`. */
+/** The "Khu làm việc" link of the public site header (the workspace top bar has none, A-9). */
 export const workspaceHeaderLink = (page: Page): Locator =>
-  header(page).getByRole("link", { name: T.workspace, exact: true });
+  header(page).getByRole("link", { name: T.workspaceLink, exact: true });
 
 /**
  * Locators below that look for a label or a text keep only what is on screen. Next keeps a route left by a client-side
@@ -261,13 +298,53 @@ export async function goToTab(page: Page, name: string): Promise<void> {
   await expect(link).toHaveAttribute("aria-current", "page");
 }
 
-/** The link of a lead in the list on screen (table row on a desktop, card on a phone). */
+/** The "View <code>" link of a lead in the list on screen (ACTION of a table row on a desktop, a card on a phone). */
 export const leadLink = (page: Page, lead: FixtureLead): Locator =>
-  mainArea(page).getByRole("link", { name: new RegExp(lead.code) });
+  mainArea(page).getByRole("link", { name: `View ${lead.code}`, exact: true });
 
-/** The table row of a lead (desktop). */
+/** The table row of a lead (desktop), found by its "View <code>" link. */
 export const leadRow = (page: Page, lead: FixtureLead): Locator =>
-  page.getByRole("row").filter({ hasText: lead.code });
+  page.getByRole("row").filter({ has: page.getByRole("link", { name: `View ${lead.code}`, exact: true }) });
+
+/** The card of a lead (phone), found by its "View <code>" link. */
+export const leadCard = (page: Page, lead: FixtureLead): Locator =>
+  page
+    .getByRole("list", { name: T.listCaption })
+    .getByRole("listitem")
+    .filter({ has: page.getByRole("link", { name: `View ${lead.code}`, exact: true }) });
+
+/** The filter bar of the list. */
+export const filterBar = (page: Page): Locator => page.getByRole("region", { name: T.filtersLabel });
+
+/** A status checkbox of the filter bar, by its exact label ("Assigned" is also part of "Unassigned"). */
+export const statusBox = (page: Page, label: string): Locator =>
+  filterBar(page).getByRole("checkbox", { name: label, exact: true });
+
+/** Clicks a status checkbox (or "Show closed leads") and waits for the new URL and the list. */
+export async function clickStatusBox(page: Page, label: string): Promise<void> {
+  const before = page.url();
+  await statusBox(page, label).click();
+  await expect(page).not.toHaveURL(before);
+  await expectListSettled(page);
+}
+
+/** The labels of the status checkboxes on screen, in order ("Show closed leads" last). */
+export async function statusBoxLabels(page: Page): Promise<string[]> {
+  const labels: string[] = [];
+  for (const box of await filterBar(page).getByRole("checkbox").all()) {
+    labels.push((await box.locator("xpath=..").innerText()).trim());
+  }
+  return labels;
+}
+
+/** The labels of the ticked checkboxes, in order ("Show closed leads" included when it is checked). */
+export async function tickedStatusLabels(page: Page): Promise<string[]> {
+  const labels: string[] = [];
+  for (const box of await filterBar(page).getByRole("checkbox").all()) {
+    if (await box.isChecked()) labels.push((await box.locator("xpath=..").innerText()).trim());
+  }
+  return labels;
+}
 
 /**
  * Loading skeletons on screen. A route left by a client-side navigation stays mounted but hidden (Activity); a hidden
@@ -276,10 +353,15 @@ export const leadRow = (page: Page, lead: FixtureLead): Locator =>
  */
 const busy = (page: Page): Locator => page.locator('[aria-busy="true"]').filter({ visible: true });
 
-/** Waits until a list has loaded (the "N lead" count is shown). */
+/** Waits until a list has loaded (the "N lead(s)" count is shown; "1,000 leads" from a thousand on). */
 async function expectListLoaded(page: Page): Promise<void> {
   await expect(busy(page)).toHaveCount(0);
-  await expect(byText(page, /^\d+ lead$/)).toBeVisible({ timeout: 20_000 });
+  await expect(byText(page, /^[\d,]+ leads?$/)).toBeVisible({ timeout: 20_000 });
+}
+
+/** Waits until the list on screen is no longer loading (it may be empty). */
+export async function expectListSettled(page: Page): Promise<void> {
+  await expect(busy(page)).toHaveCount(0, { timeout: 20_000 });
 }
 
 /** Follows a pagination link and waits for the new page of the list. */
@@ -294,22 +376,22 @@ async function turnPage(page: Page, link: Locator): Promise<void> {
 
 /**
  * The link of `lead` in the list on screen, turning pages when needed. The local database also holds the leads the
- * public intake E2E specs create on every run (the "Chưa giao" and "Tất cả" tabs hold more than one page), so a
+ * public intake E2E specs create on every run (All Leads holds more than one page of Unassigned leads), so a
  * fixture lead is found by its code, never by its position. Starts from page 1; gives the (missing) link of the last
  * page when the lead is on none, so the caller's expectation fails with its usual message.
  */
 export async function findLeadLink(page: Page, lead: FixtureLead): Promise<Locator> {
   await expectListLoaded(page);
-  const pager = page.getByRole("navigation", { name: "Phân trang" });
+  const pager = page.getByRole("navigation", { name: T.pagination });
   for (let i = 0; i < 100; i += 1) {
-    const previous = pager.getByRole("link", { name: "Trang trước" });
+    const previous = pager.getByRole("link", { name: T.previousPage });
     if ((await previous.count()) === 0) break;
     await turnPage(page, previous);
   }
   for (let i = 0; i < 100; i += 1) {
     const link = leadLink(page, lead);
     if ((await link.count()) > 0) return link;
-    const next = pager.getByRole("link", { name: "Trang sau" });
+    const next = pager.getByRole("link", { name: T.nextPage });
     if ((await next.count()) === 0) break;
     await turnPage(page, next);
   }

@@ -6,7 +6,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { statusLabelKey } from "../lib/labels";
 
 const TONE: Record<string, BadgeTone> = {
-  NEW: "info",
+  NEW: "neutral",
   ASSIGNED: "info",
   CONTACTED: "success",
   ON_HOLD: "warning",

@@ -26,7 +26,7 @@ describe("assigneeOption (C-29)", () => {
     );
   });
 
-  it("falls back to Sale without roles and to no name (the UI says 'Không rõ') without a usable name", () => {
+  it("falls back to Sale without roles and to no name (the UI says 'Unknown') without a usable name", () => {
     expect(assigneeOption({ userId: "U5" })).toEqual({ name: null, roleKey: "role.SALE" });
     expect(assigneeOption({ userId: "U6", fullName: "  ", roles: ["SALE"] })).toEqual({
       name: null,

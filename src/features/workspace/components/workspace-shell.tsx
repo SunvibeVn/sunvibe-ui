@@ -5,20 +5,18 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/logo";
-import { LogOutIcon } from "@/components/icons";
-import { RequireRole, RequireSession, useSession, useSignOutHere } from "@/features/auth/client";
+import { RequireRole, RequireSession, englishSessionTexts, useSession, useSignOutHere } from "@/features/auth/client";
 import { STAFF_WORKSPACE_ROLES, workspaceNav } from "../lib/nav";
-import { WorkspaceLink } from "./workspace-link";
 import { WorkspaceNav } from "./workspace-nav";
 
 /**
- * Client shell of every workspace page: session → staff role → header, menu and the page. `RequireSession` without
- * `texts` uses the Vietnamese `Session` messages. The server layout renders it, and the pages load their data in the
+ * Client shell of every workspace page: session → staff role → header, menu and the page. The workspace is English
+ * (C-41), so `RequireSession` gets the English session texts. The server layout renders it, and the pages load their data in the
  * browser after hydration (spec 5.2). The drafts follow the session through `DraftSessionSync` in the root layout.
  */
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   return (
-    <RequireSession>
+    <RequireSession texts={englishSessionTexts}>
       <RequireRole anyOf={STAFF_WORKSPACE_ROLES}>
         <WorkspaceFrame>{children}</WorkspaceFrame>
       </RequireRole>
@@ -77,7 +75,8 @@ function WorkspaceFrame({ children }: { children: ReactNode }) {
       >
         {t("skipToContent")}
       </a>
-      <header className="sticky top-0 z-50 bg-navy-950">
+      {/* White bar of the mockup (A-9): logo, "Workspace", the user's name and "Sign Out"; no link to the workspace itself. */}
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white">
         <div className="flex h-16 items-center justify-between gap-3 px-4 sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <button
@@ -87,30 +86,34 @@ function WorkspaceFrame({ children }: { children: ReactNode }) {
               aria-expanded={drawerOpen}
               aria-controls="workspace-drawer"
               aria-label={drawerOpen ? t("menu.close") : t("menu.open")}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-white hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white md:hidden"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-slate-700 hover:bg-slate-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 md:hidden"
             >
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 {drawerOpen ? <path d="M6 6l12 12M18 6L6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
               </svg>
             </button>
-            <Link href="/" aria-label={t("header.home")}>
-              <Logo tone="light" size="lg" />
+            <Link
+              href="/"
+              aria-label={t("header.home")}
+              className="rounded-lg focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
+            >
+              <Logo compactBelowSm />
             </Link>
+            <span className="hidden border-l border-slate-200 pl-3 text-sm font-medium text-slate-500 sm:inline">
+              {t("title")}
+            </span>
           </div>
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
-            <span className="hidden sm:inline-flex">
-              <WorkspaceLink />
-            </span>
-            <span className="min-w-0 max-w-28 truncate text-sm font-medium text-white/90 sm:max-w-xs">
+            {/* The full name stays readable when a long one is cut on a phone (C-43). */}
+            <span title={user?.fullName} className="min-w-0 max-w-40 truncate text-sm font-semibold text-slate-900 sm:max-w-xs">
               {user?.fullName}
             </span>
             <button
               type="button"
               onClick={signOutHere}
-              className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-white/10 p-2 text-sm sm:px-4 font-medium text-white transition-colors hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="shrink-0 whitespace-nowrap rounded-lg px-2 py-2 text-sm font-semibold text-violet-700 hover:bg-violet-50 hover:text-violet-800 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
             >
-              <LogOutIcon size={16} />
-              <span className="sr-only sm:not-sr-only">{t("header.signOut")}</span>
+              {t("header.signOut")}
             </button>
           </div>
         </div>

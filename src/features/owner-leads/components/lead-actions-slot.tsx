@@ -16,7 +16,7 @@ import { StatusDialog } from "./status-dialog";
 type OpenDialog = { kind: "status" | "assign"; status: string | undefined; no: number };
 
 /**
- * The action buttons of the detail header (BR-1): "Đổi trạng thái" on open leads, "Giao / Giao lại" for `ALL` viewers
+ * The action buttons of the detail header (BR-1): "Change status" on open leads, "Assign / Reassign" for `ALL` viewers
  * on open leads; a closed lead shows neither. Holds the open dialog and the last command message, so the message stays
  * visible when the dialog closes. A dialog closes when the lead reloads with another status (someone else changed it,
  * or our own change went through) and when the route is hidden (Activity).

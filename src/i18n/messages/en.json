@@ -1,0 +1,383 @@
+{
+  "Session": {
+    "loading": "Loading…",
+    "leaving": "Redirecting to log in…",
+    "expired": {
+      "title": "Session expired",
+      "body": "Your session has ended. Please log in again.",
+      "link": "Log in again"
+    },
+    "forbidden": {
+      "title": "You don't have access to this page",
+      "body": "Your account has not been given access to this page. Contact an administrator if you need it.",
+      "link": "Back to home"
+    },
+    "forbiddenNotice": "You don't have permission to do this.",
+    "logoutFailed": "You're signed out on this device, but we couldn't end your session on the server.",
+    "tryAgain": "Try again",
+    "unavailable": {
+      "title": "",
+      "body": "We couldn't reach the server to restore your session. You're still signed in.",
+      "retry": "Try again",
+      "signOutHere": "Sign out on this device",
+      "rateLimited": "Too many requests. Please wait {n} seconds and try again."
+    }
+  },
+  "Workspace": {
+    "title": "Workspace",
+    "menu": {
+      "label": "Workspace menu",
+      "open": "Open menu",
+      "close": "Close menu",
+      "ownerLeads": "SUPPLY LEADS",
+      "territories": "TERRITORIES"
+    },
+    "header": {
+      "home": "Sunvibe home",
+      "signOut": "Sign Out"
+    },
+    "skipToContent": "Skip to main content",
+    "error": {
+      "title": "Something went wrong",
+      "message": "This page could not be loaded. Please try again.",
+      "retry": "Try again"
+    }
+  },
+  "OwnerLeads": {
+    "title": "SUPPLY LEADS",
+    "status": {
+      "NEW": "Unassigned",
+      "ASSIGNED": "Assigned",
+      "CONTACTED": "Contacted",
+      "ON_HOLD": "On Hold",
+      "DUPLICATE": "Duplicate",
+      "REJECTED": "Declined",
+      "WITHDRAWN": "Owner Withdrawn"
+    },
+    "statusUnknown": "Other status",
+    "intent": {
+      "SHORT_TERM_RENT": "Short-term rental",
+      "LONG_TERM_RENT": "Long-term rental",
+      "SALE": "Sale"
+    },
+    "propertyType": {
+      "HOUSE": "House",
+      "WHOLE_BUILDING": "Whole building",
+      "VILLA": "Villa",
+      "HOMESTAY": "Homestay",
+      "CONDOTEL": "Condotel",
+      "APARTMENT": "Apartment"
+    },
+    "wardType": {
+      "WARD": "Ward",
+      "COMMUNE": "Commune",
+      "SPECIAL_ZONE": "Special zone"
+    },
+    "activity": {
+      "SUBMITTED": "Owner submitted the form",
+      "AUTO_ASSIGNED": "Auto-assigned by ward",
+      "ASSIGNED": "Assigned",
+      "REASSIGNED": "Reassigned",
+      "STATUS_CHANGED": "Status changed",
+      "NOTE_ADDED": "Note"
+    },
+    "role": {
+      "SALE": "Sale",
+      "SALE_LEADER": "Sale leader"
+    },
+    "source": {
+      "WEB": "Web form",
+      "REFERRAL": "Referral",
+      "OUTBOUND": "Sale outreach",
+      "PARTNER": "Partner",
+      "STAFF_ENTRY": "Staff entry"
+    },
+    "sourceUnknown": "Other source",
+    "priceUnit": {
+      "NIGHT": "/night",
+      "MONTH": "/month",
+      "TOTAL": " (sale price)"
+    },
+    "tabs": {
+      "label": "Lead groups",
+      "mine": "My Leads",
+      "all": "All Leads"
+    },
+    "filters": {
+      "label": "Filters",
+      "status": "Status",
+      "showClosed": "Show closed leads",
+      "ward": "Ward / commune",
+      "wardAny": "All wards / communes",
+      "wardOption": "{type} {name}",
+      "wardLoadFailed": "Could not load the wards and communes.",
+      "assignee": "Assignee",
+      "assigneeAny": "All staff",
+      "assigneeFormer": "{name} (no longer takes leads)",
+      "assigneeOther": "Other staff member",
+      "assigneeLoadFailed": "Could not load the staff list.",
+      "clear": "Clear filters"
+    },
+    "list": {
+      "caption": "Leads",
+      "columns": {
+        "code": "CODE",
+        "owner": "OWNER",
+        "ward": "WARD / COMMUNE",
+        "requirement": "REQUIREMENT",
+        "propertyType": "PROPERTY TYPE",
+        "status": "STATUS",
+        "created": "CREATED",
+        "lastUpdate": "LAST UPDATE",
+        "note": "NOTE",
+        "action": "ACTION"
+      },
+      "possibleDuplicate": "Potential Duplicate",
+      "noNote": "—",
+      "view": "View",
+      "viewLabel": "View {code}",
+      "loading": "Loading leads…",
+      "total": "{count, plural, one {# lead} other {# leads}}",
+      "pagination": {
+        "label": "Pagination",
+        "previous": "Previous page",
+        "next": "Next page",
+        "pageOf": "Page {page} of {total}"
+      }
+    },
+    "empty": {
+      "mine": "You have no leads yet. New leads assigned to you will show here.",
+      "unassigned": "There are no unassigned leads.",
+      "filtered": "No leads match the filters.",
+      "pastEnd": "There are no leads on this page.",
+      "firstPage": "Go to page 1"
+    },
+    "notice": {
+      "dismiss": "Dismiss"
+    },
+    "detail": {
+      "title": "Lead",
+      "back": "Back to leads",
+      "loading": "Loading lead…",
+      "assignee": "Assignee",
+      "unassigned": "Unassigned",
+      "filterByAssignee": "View leads of {name}",
+      "nextAction": "Next action",
+      "noNextAction": "Not set",
+      "overdue": "Overdue",
+      "createdAt": "Created",
+      "changeStatus": "Change status",
+      "assign": "Assign lead",
+      "reassign": "Reassign",
+      "closedBanner": "This lead is closed",
+      "closeReason": "Close reason",
+      "originalLead": "Original lead",
+      "openOriginal": "View original lead",
+      "contact": {
+        "title": "Owner contact",
+        "name": "Full name",
+        "phone": "Phone",
+        "email": "Email",
+        "callbackTime": "Preferred callback time",
+        "none": "None"
+      },
+      "asset": {
+        "title": "Property",
+        "address": "Address",
+        "ward": "Ward / commune",
+        "intent": "Requirement",
+        "propertyType": "Property type",
+        "askingPrice": "Asking price",
+        "availableFrom": "Available from",
+        "notes": "Owner's notes",
+        "source": "Source",
+        "none": "None"
+      },
+      "consent": {
+        "title": "Consent to contact",
+        "summary": "Accepted at {acceptedAt}, notice version {version}."
+      },
+      "map": "Open map / Directions",
+      "duplicates": {
+        "title": "Potential duplicates",
+        "empty": "No potential duplicates.",
+        "open": "View lead {code}"
+      }
+    },
+    "history": {
+      "title": "History",
+      "empty": "No history yet.",
+      "actorOwner": "Owner",
+      "actorSystem": "System",
+      "actorUnknown": "Unknown",
+      "activityOther": "Other activity",
+      "statusChange": "{from} → {to}",
+      "statusTo": "Status: {to}",
+      "assigneeChange": "{from} → {to}",
+      "assigneeTo": "Assigned to {to}",
+      "nextAction": "Next action: {time}"
+    },
+    "noteForm": {
+      "title": "Note",
+      "note": "Note",
+      "counter": "{count} / {max}",
+      "nextAction": "Next action",
+      "nextActionHint": "Leave empty to keep the current next action.",
+      "currentNextAction": "Current: {time}",
+      "submit": "Save note",
+      "submitting": "Saving…",
+      "saved": "Note saved.",
+      "closedKeepText": "The lead is closed, so the note was not saved. Your text is kept below to copy.",
+      "keptDraft": "Your text",
+      "discardDraft": "Discard this text"
+    },
+    "statusDialog": {
+      "title": "Change status",
+      "target": "New status",
+      "reason": "Reason",
+      "reasonHint": "Required, at most {max} characters.",
+      "note": "Note",
+      "noteHint": "Optional.",
+      "nextAction": "Next action",
+      "closeConfirm": "A closed lead cannot be reopened",
+      "closeConfirmWith": "Close the lead as {status}?",
+      "confirm": "Confirm",
+      "continue": "Continue",
+      "back": "Back",
+      "cancel": "Cancel",
+      "submitting": "Changing…",
+      "allowedValues": "Allowed statuses: {values}",
+      "targetRequired": "Choose the new status.",
+      "saved": "Status changed.",
+      "duplicate": {
+        "title": "Original lead",
+        "hint": "Pick a potential duplicate, or paste a lead link or a request code (SV-XXXX-XXXX).",
+        "candidates": "Potential duplicates",
+        "candidateDisabled": "This lead is already a duplicate and cannot be the original.",
+        "input": "Lead link or request code",
+        "lookup": "Find",
+        "looking": "Finding…",
+        "preview": "{code} · {status} · {createdAt}",
+        "linkPreview": "Lead ID: {id}",
+        "notFound": "Lead not found, or you cannot see it",
+        "isSelf": "This lead cannot be its own original.",
+        "isDuplicate": "This lead is already a duplicate and cannot be the original.",
+        "required": "Pick or enter the original lead.",
+        "other": "Another lead (paste a lead link or request code)",
+        "invalid": "Paste a lead link from the Workspace or a request code like SV-XXXX-XXXX."
+      }
+    },
+    "assignDialog": {
+      "title": "Assign lead",
+      "titleReassign": "Reassign lead",
+      "assignee": "Assign to",
+      "assigneeOption": "{name} · {role}",
+      "assigneePlaceholder": "Choose a staff member",
+      "currentAssignee": "Assigned to {name}",
+      "note": "Note",
+      "noteHint": "Optional.",
+      "noOptions": "No staff member can take leads yet.",
+      "confirm": "Assign",
+      "cancel": "Cancel",
+      "submitting": "Assigning…",
+      "loading": "Loading staff…",
+      "saved": "Lead assigned."
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "network": "Could not reach Sunvibe. Check your connection and try again.",
+      "loadFailed": "Could not load the data.",
+      "retry": "Try again",
+      "supportCode": "Support code: {correlationId}",
+      "leadNotFound": "Lead not found, or you can no longer see it.",
+      "invalidTransition": "The lead cannot move to this status.",
+      "concurrent": "Someone else just updated this lead. The lead has been reloaded. Your text is kept.",
+      "ineligibleAssignee": "This person no longer takes leads. The staff list has been reloaded.",
+      "badRequest": "Some details are not valid. Please check them.",
+      "fields": {
+        "reason": "The reason is not valid.",
+        "note": "The note is not valid.",
+        "duplicateOfLeadId": "The original lead is not valid.",
+        "nextActionAt": "The next action time is not valid.",
+        "assigneeUserId": "The selected staff member is not valid.",
+        "userId": "The selected staff member is not valid."
+      },
+      "validation": {
+        "noteRequired": "Enter a note.",
+        "noteTooLong": "A note has at most {max} characters.",
+        "reasonRequired": "Enter a reason.",
+        "reasonTooLong": "A reason has at most {max} characters.",
+        "assigneeRequired": "Choose a staff member.",
+        "nextActionInvalid": "The time is not valid."
+      }
+    }
+  },
+  "SaleTerritories": {
+    "title": "TERRITORIES",
+    "description": "The staff member who gets the new leads of each ward and commune in Da Nang.",
+    "newLeadsOnly": "A change applies to new leads only. Leads in progress keep their assignee.",
+    "loading": "Loading territories…",
+    "empty": "There are no wards or communes to show.",
+    "loadFailed": "Could not load the territories.",
+    "eligibleLoadFailed": "Could not load the staff who take leads, so holders who no longer take leads are not marked yet.",
+    "retry": "Try again",
+    "table": {
+      "caption": "Territories by ward and commune",
+      "ward": "Ward / commune",
+      "type": "Type",
+      "holder": "Holder",
+      "assignedAt": "Assigned on",
+      "actions": "Actions"
+    },
+    "holder": {
+      "none": "Not assigned",
+      "unknown": "Unknown",
+      "ineligible": "No longer receives leads: new leads go to the unassigned queue"
+    },
+    "actions": {
+      "assign": "Assign",
+      "change": "Change",
+      "remove": "Remove",
+      "assignFor": "Assign a holder for {ward}",
+      "changeFor": "Change the holder of {ward}",
+      "removeFor": "Remove the holder of {ward}"
+    },
+    "dialog": {
+      "titleAssign": "Assign holder",
+      "titleChange": "Change holder",
+      "ward": "Territory: {ward}",
+      "assignee": "Holder",
+      "assigneePlaceholder": "Choose a staff member",
+      "noOptions": "No staff member can take leads yet.",
+      "loading": "Loading staff…",
+      "loadFailed": "Could not load the staff list.",
+      "currentHolder": "Current holder: {name}",
+      "assigneeRequired": "Choose a staff member.",
+      "confirm": "Save",
+      "cancel": "Cancel",
+      "submitting": "Saving…"
+    },
+    "removeDialog": {
+      "title": "Remove holder",
+      "body": "Remove {holder} from {ward}? New leads of this territory will go to the unassigned queue.",
+      "confirm": "Remove",
+      "cancel": "Cancel",
+      "submitting": "Removing…"
+    },
+    "success": {
+      "assigned": "{holder} now holds {ward}.",
+      "changed": "The holder of {ward} is now {holder}.",
+      "removed": "The holder of {ward} was removed.",
+      "oldHolderLeads": "View the leads of {holder} to reassign them",
+      "dismiss": "Dismiss"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "network": "Could not reach Sunvibe. Check your connection and try again.",
+      "supportCode": "Support code: {correlationId}",
+      "ineligibleAssignee": "This person no longer takes leads. The staff list has been reloaded.",
+      "badRequest": "Some details are not valid. Please check them.",
+      "userIdInvalid": "The selected staff member is not valid."
+    }
+  }
+}

@@ -16,7 +16,7 @@ const linkClass =
  * workspace checks the session and roles again, and the API decides every call.
  */
 export function WorkspaceLink() {
-  const t = useTranslations("Workspace");
+  const t = useTranslations("WorkspaceEntry");
   const { status, user } = useSession();
   if (status !== "signed-in" || !user || !isStaff(user.roles)) {
     return <span aria-hidden className={boxClass} />;

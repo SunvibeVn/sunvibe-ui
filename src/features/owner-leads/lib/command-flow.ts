@@ -7,7 +7,7 @@ import { toLeadUiError, withCorrelation } from "./lead-ui-error";
 /** Why an assign or status change did not go through; the dialogs map each kind to a message and an action (5.2). */
 export type CommandFailure =
   /**
-   * 409 `CONCURRENT_MODIFICATION` (or any 409 but a transition): "Lead vừa được người khác cập nhật", reload, draft
+   * 409 `CONCURRENT_MODIFICATION` (or any 409 but a transition): "Someone else just updated this lead", reload, draft
    * kept.
    */
   | { kind: "stale"; correlationId?: string }

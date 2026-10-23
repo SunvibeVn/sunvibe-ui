@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { formatDateTime } from "../lib/format";
-import { historyActor } from "../lib/history-actor";
+import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";
 import { activityLabelKey, statusLabelKey } from "../lib/labels";
 import type { LeadActivity } from "../types";
 
@@ -20,14 +20,7 @@ function assigneeSide(id: string | undefined, name: string | null | undefined): 
 function HistoryEntry({ activity }: { activity: LeadActivity }) {
   const t = useTranslations("OwnerLeads");
   const actor = historyActor(activity);
-  const actorText =
-    actor.kind === "name"
-      ? actor.name
-      : actor.kind === "owner"
-        ? t("history.actorOwner")
-        : actor.kind === "system"
-          ? t("history.actorSystem")
-          : t("history.actorUnknown");
+  const actorText = actor.kind === "name" ? actor.name : t(HISTORY_ACTOR_KEY[actor.kind]);
 
   const when = activity.occurredAt === undefined ? "" : formatDateTime(activity.occurredAt);
   const from = assigneeSide(activity.fromAssigneeId, activity.fromAssigneeName);

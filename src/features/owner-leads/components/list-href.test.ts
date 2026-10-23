@@ -17,27 +17,24 @@ describe("listHref (security: a link never leaves the viewer's tabs, W11-23)", (
     expect(href).toBe(`${LIST_PATH}?scope=mine`);
   });
 
-  it("a SALE asking for unassigned gets mine", () => {
-    expect(listHref(stateOf("", sale), { scope: "unassigned" }, sale)).toBe(`${LIST_PATH}?scope=mine`);
-  });
-
   it("an ADMIN asking for mine gets the default tab", () => {
-    expect(listHref(stateOf("scope=all", admin), { scope: "mine" }, admin)).toBe(`${LIST_PATH}?scope=unassigned`);
+    expect(listHref(stateOf("scope=all", admin), { scope: "mine" }, admin)).toBe(`${LIST_PATH}?scope=all`);
   });
 
   it("a leader keeps the filters of the tab and a change resets the page", () => {
     const state = stateOf("scope=all&ward=20242&page=3");
-    expect(listHref(state, { assignee: "U1" }, leader)).toBe(`${LIST_PATH}?scope=all&ward=20242&assignee=U1`);
+    expect(listHref(state, { ward: "20243" }, leader)).toBe(`${LIST_PATH}?scope=all&ward=20243`);
   });
 
-  it("leaving the all tab drops its ward and assignee", () => {
-    const state = stateOf("scope=all&ward=20242&assignee=U1");
+  it("leaving the all tab drops its ward and assignee and takes the mine default", () => {
+    const state = stateOf("scope=all&ward=20242&assignee=U1&status=REJECTED");
     expect(listHref(state, { scope: "mine" }, leader)).toBe(`${LIST_PATH}?scope=mine`);
   });
 
-  it("the unassigned tab never carries a status", () => {
-    const state = stateOf("scope=mine&status=CONTACTED");
-    expect(listHref(state, { scope: "unassigned" }, leader)).toBe(`${LIST_PATH}?scope=unassigned`);
+  it("All → My → All ends on Unassigned only (W14-26)", () => {
+    const mine = stateOf(listHref(stateOf(""), { scope: "mine" }, leader).split("?")[1]);
+    expect(listHref(mine, { scope: "all" }, leader)).toBe(`${LIST_PATH}?scope=all`);
+    expect(stateOf("scope=all").statuses).toEqual(["NEW"]);
   });
 
   it("a link without a change goes to the same normalized list; page can be set", () => {
@@ -54,11 +51,16 @@ describe("leadDetailHref", () => {
   });
 });
 
-describe("assigneeListHref (territories notice and detail assignee link, C-27, C-34)", () => {
-  it("sends an ADMIN to the all tab filtered by the former holder, exactly", () => {
+describe("assigneeListHref (territories notice and detail assignee link, A-6, W14-28)", () => {
+  it("sends an ADMIN to All Leads filtered by the former holder, exactly", () => {
     expect(assigneeListHref("01J9Z3K8M2Q4R5T6V7W8X9Y0ZA", admin)).toBe(
       "/workspace/owner-leads?scope=all&assignee=01J9Z3K8M2Q4R5T6V7W8X9Y0ZA",
     );
+  });
+
+  it("opens that person's open leads, never an empty Unassigned list (Review Focus 1)", () => {
+    const state = stateOf(assigneeListHref("U1", leader).split("?")[1]);
+    expect(state).toEqual({ scope: "all", statuses: ["ASSIGNED", "CONTACTED", "ON_HOLD"], assignee: "U1", page: 1 });
   });
 
   it("never puts an id that is not a plain id into the URL", () => {

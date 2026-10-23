@@ -21,7 +21,7 @@ export function WorkspaceNav({ items, onNavigate }: { items: readonly WorkspaceN
                 prefetch={false}
                 aria-current={current ? "page" : undefined}
                 onClick={onNavigate}
-                className={`block rounded-xl px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 ${
+                className={`block rounded-xl px-3 py-2 text-[13px] font-semibold tracking-wide transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 ${
                   current ? "bg-violet-50 text-violet-800" : "text-slate-700 hover:bg-slate-100"
                 }`}
               >

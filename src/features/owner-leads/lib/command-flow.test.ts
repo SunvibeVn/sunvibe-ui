@@ -16,7 +16,7 @@ const http = (
 
 describe("toCommandOutcome (spec 5.2, assign and status change)", () => {
   it("takes the summary of a 2xx", () => {
-    const summary: LeadSummary = { id: "L1", status: "CONTACTED", version: 4 };
+    const summary: LeadSummary = { id: "L1", status: "CONTACTED", version: 4, lastActivityAt: "2026-10-20T03:00:00Z" };
     expect(toCommandOutcome({ ok: true, data: summary, status: 200, replayed: false })).toEqual({
       kind: "saved",
       summary,

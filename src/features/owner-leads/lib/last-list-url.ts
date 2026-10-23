@@ -12,7 +12,7 @@ export type LastListUrl = {
 const isListHref = (href: string): boolean => href === LIST_PATH || href.startsWith(`${LIST_PATH}?`);
 
 /**
- * The list URL (tab, filters, page) the user last saw, for the detail's "Về danh sách lead" link (CR-10). In the memory
+ * The list URL (tab, filters, page) the user last saw, for the detail's "Back to leads" link (CR-10). In the memory
  * of this tab only (no storage), bound to the user, dropped on sign-out and on a user change like the drafts.
  */
 export function createLastListUrl(): LastListUrl {

@@ -21,7 +21,7 @@ type TerritoryAssignDialogProps = {
   /** Sends the pick; resolves when the call is over. A pick equal to the holder never reaches it. */
   onSubmit(userId: string, holderName: string | undefined): Promise<void>;
   onUnchanged(): void;
-  /** Esc, the backdrop, the close button or "Hủy": the view always closes the dialog (Dialog contract). */
+  /** Esc, the backdrop, the close button or "Cancel": the view always closes the dialog (Dialog contract). */
   onClose(): void;
 };
 

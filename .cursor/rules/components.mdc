@@ -13,4 +13,5 @@ alwaysApply: false
 - Page or shared-component work: check it against hub-docs/setup/checklists/ui-ux-review.md (mobile widths, long
   Vietnamese text, keyboard, states) and keep the existing palette, Geist and src/components/ui.
 - Vietnamese UI text through next-intl (src/i18n/messages/vi.json); keep strings out of logic. Exception: the
-  existing auth screens stay English until the translation wave; no screen mixes languages.
+  existing auth screens stay English until the translation wave. Exception: the staff workspace (`/workspace`) is
+  English, messages in `src/i18n/messages/en.json` (owner 2026-10-22, W14 C-41). No screen mixes languages.

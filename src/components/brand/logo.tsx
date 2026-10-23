@@ -5,10 +5,13 @@ export function Logo({
   className = "",
   tone = "dark",
   size = "md",
+  compactBelowSm = false,
 }: {
   className?: string;
   tone?: "dark" | "light";
   size?: "md" | "lg";
+  /** Only the mark below `sm`, for a crowded bar; the link around it carries the name. */
+  compactBelowSm?: boolean;
 }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
@@ -25,7 +28,7 @@ export function Logo({
             : "h-9 w-9 rounded-xl shadow-md shadow-violet-600/25 ring-1 ring-navy-950/10"
         }
       />
-      <span className={`${size === "lg" ? "text-[1.3125rem]" : "text-xl"} font-semibold tracking-tight ${tone === "light" ? "text-white" : "text-navy-950"}`}>
+      <span className={`${compactBelowSm ? "hidden sm:inline " : ""}${size === "lg" ? "text-[1.3125rem]" : "text-xl"} font-semibold tracking-tight ${tone === "light" ? "text-white" : "text-navy-950"}`}>
         {siteConfig.name}
       </span>
     </span>

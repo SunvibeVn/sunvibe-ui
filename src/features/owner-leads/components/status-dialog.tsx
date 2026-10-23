@@ -72,7 +72,7 @@ type StatusDialogProps = {
   onMessage(message: CommandMessage | null): void;
   /** The change went through (or nothing was sent): the slot closes the dialog and shows `message`. */
   onDone(message: CommandMessage | null): void;
-  /** Esc, the backdrop, the close button or "Hủy": the slot always closes the dialog (Dialog contract). */
+  /** Esc, the backdrop, the close button or "Cancel": the slot always closes the dialog (Dialog contract). */
   onClose(): void;
   /** True while the change is on its way (also after the dialog closed); the slot locks its buttons meanwhile. */
   onBusy(busy: boolean): void;
@@ -82,9 +82,9 @@ type StatusDialogProps = {
 type SentDrafts = { reason: string; note: string; nextAction: string; duplicate: string };
 
 /**
- * "Đổi trạng thái" (US-6): exactly the targets of `allowedTargets`; a non-closing target takes an optional note and
- * next action; a closing target needs a reason (1..500), hides the next action and asks a second time "Lead đã đóng
- * không mở lại được" before sending. DUPLICATE needs the original (C-21). Typed text lives only in the drafts (C-33).
+ * "Change status" (US-6): exactly the targets of `allowedTargets`; a non-closing target takes an optional note and
+ * next action; a closing target needs a reason (1..500), hides the next action and asks a second time "A closed lead
+ * cannot be reopened" before sending. DUPLICATE needs the original (C-21). Typed text lives only in the drafts (C-33).
  * Every send carries the version of the last answer; a 2xx is applied, then the detail reloads (C-36).
  */
 export function StatusDialog({ message, onMessage, onDone, onClose, onBusy }: StatusDialogProps) {
@@ -101,7 +101,7 @@ export function StatusDialog({ message, onMessage, onDone, onClose, onBusy }: St
   const [duplicateText, setDuplicateText, clearDuplicate] = useDraft({ userId, leadId, form: "duplicate" });
 
   const [target, setTarget] = useState<LeadStatus | null>(null);
-  /** "Tìm" was pressed: the pending action is the lookup ("Đang tìm…" on its button). */
+  /** "Find" was pressed: the pending action is the lookup ("Finding…" on its button). */
   const [lookupAsked, setLookupAsked] = useState(false);
   const [pick, setPick] = useState<OriginalPick>(() => (duplicateText.trim() !== "" ? { kind: "text" } : null));
 

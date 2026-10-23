@@ -36,8 +36,6 @@ type Loaded = {
   userId: string;
   /** The normalized query string of the call. */
   key: string;
-  /** When the answer arrived: the clock for "overdue" (C-20). */
-  at: Date;
   outcome: { kind: "page"; page: LeadPage } | { kind: "error"; error: LeadUiError };
 };
 
@@ -115,7 +113,7 @@ function LeadListContent() {
     };
   }, [userId]);
 
-  // The list URL this user sees now: the detail's "Về danh sách lead" link returns to it (CR-10, memory only).
+  // The list URL this user sees now: the detail's "Back to leads" link returns to it (CR-10, memory only).
   useEffect(() => {
     if (userId === null || !normalized || pathname !== LIST_PATH) return;
     lastListUrl.set(userId, canonical === "" ? LIST_PATH : `${LIST_PATH}?${canonical}`);
@@ -139,7 +137,6 @@ function LeadListContent() {
       setLoaded({
         userId: startedFor,
         key: canonical,
-        at: new Date(),
         outcome:
           error === null && result.ok
             ? { kind: "page", page: result.data }
@@ -170,10 +167,7 @@ function LeadListContent() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-4">
-      <header>
-        <h1 className="text-2xl font-bold text-slate-900">{t("title")}</h1>
-        <p className="mt-1 text-sm text-slate-600">{t("description")}</p>
-      </header>
+      <h1 className="text-2xl font-bold tracking-wider text-slate-900">{t("title")}</h1>
       {notice !== null && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
@@ -205,7 +199,6 @@ function LeadListContent() {
         ) : (
           <ListResults
             page={current.outcome.page}
-            now={current.at}
             state={state}
             viewer={viewer}
             filtered={hasActiveFilter(state)}
@@ -218,13 +211,12 @@ function LeadListContent() {
 
 type ListResultsProps = {
   page: LeadPage;
-  now: Date;
   state: ListState;
   viewer: Viewer;
   filtered: boolean;
 };
 
-function ListResults({ page, now, state, viewer, filtered }: ListResultsProps) {
+function ListResults({ page, state, viewer, filtered }: ListResultsProps) {
   const t = useTranslations("OwnerLeads");
   const items = page.items ?? NO_LEADS;
   const range = paginationRange(state.page, LIST_PAGE_SIZE, page.totalElements ?? 0);
@@ -245,18 +237,17 @@ function ListResults({ page, now, state, viewer, filtered }: ListResultsProps) {
   }
 
   if (items.length === 0) {
+    // Unfiltered "All Leads" is its default, Unassigned only (C-44).
+    const empty = filtered ? "empty.filtered" : state.scope === "mine" ? "empty.mine" : "empty.unassigned";
     return (
-      <p className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-700 shadow-sm">
-        {filtered ? t("empty.filtered") : t(`empty.${state.scope}`)}
-      </p>
+      <p className="rounded-xl border border-slate-200 bg-white p-6 text-center text-slate-700 shadow-sm">{t(empty)}</p>
     );
   }
 
-  const showAssignee = state.scope === "all";
   return (
     <div className="space-y-4">
-      <LeadTable leads={items} showAssignee={showAssignee} now={now} />
-      <LeadCards leads={items} showAssignee={showAssignee} now={now} />
+      <LeadTable leads={items} />
+      <LeadCards leads={items} />
       <Pagination
         page={state.page}
         totalPages={range.totalPages}

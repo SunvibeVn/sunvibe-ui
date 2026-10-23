@@ -1,4 +1,4 @@
-import type vi from "@/i18n/messages/vi.json";
+import type en from "@/i18n/messages/en.json";
 
 import type {
   ActivityType,
@@ -11,7 +11,7 @@ import type {
   WardType,
 } from "../types";
 
-type Messages = typeof vi.OwnerLeads;
+type Messages = typeof en.OwnerLeads;
 
 /** Dotted path of every leaf string below a message object: "status.NEW", "detail.contact.title", ... */
 type LeafPaths<T> = {
@@ -20,7 +20,7 @@ type LeafPaths<T> = {
 
 /**
  * A key of the `OwnerLeads` namespace. Use it with `useTranslations("OwnerLeads")`: `t(STATUS_LABEL[status])`.
- * A path that does not exist in vi.json fails `npm run typecheck`.
+ * A path that does not exist in en.json fails `npm run typecheck`.
  */
 export type OwnerLeadsKey = LeafPaths<Messages>;
 
@@ -81,7 +81,7 @@ export const ROLE_LABEL: Record<AssigneeRole, OwnerLeadsKey> = {
   SALE_LEADER: "role.SALE_LEADER",
 };
 
-/** Suffix after the amount: "/đêm", "/tháng", " (giá bán)". Used by `formatPrice`. */
+/** Suffix after the amount: "/night", "/month", " (sale price)". Used by `formatPrice`. */
 export const PRICE_UNIT_LABEL: Record<PriceUnit, OwnerLeadsKey> = {
   NIGHT: "priceUnit.NIGHT",
   MONTH: "priceUnit.MONTH",

@@ -26,7 +26,7 @@ export function LeadDetailHeader() {
 
   const assigneeName = lead.assignedUserName?.trim() ? lead.assignedUserName : null;
   const assigneeId = lead.assignedUserId;
-  // An `ALL` viewer follows the assignee to "Tất cả" filtered by that person (C-34). Built like every list link, so
+  // An `ALL` viewer follows the assignee to "All Leads" filtered by that person (C-34). Built like every list link, so
   // the viewer's tabs and the URL rules apply.
   const assigneeHref = viewer.access === "ALL" && assigneeId ? assigneeListHref(assigneeId, viewer) : undefined;
   const assigneeText = assigneeName ?? (assigneeId ? t("history.actorUnknown") : t("detail.unassigned"));
