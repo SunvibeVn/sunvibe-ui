@@ -4,7 +4,7 @@ import { LeadDetailView } from "@/features/owner-leads";
 
 // The title is generic: never the request code or a name (BR-2, W11-41).
 export const metadata: Metadata = {
-  title: "Chi tiết lead",
+  title: "Lead",
 };
 
 async function OwnerLeadDetail({ params }: { params: Promise<{ leadId: string }> }) {

@@ -44,7 +44,7 @@ type AssigneePickerProps = {
 
 /**
  * The assignee select of the assign dialogs (C-29, US-8): loading text; load error with the forbidden notice or the
- * message, support code and retry; "no options"; else a required select of "<tên> · <vai trò>" options with a
+ * message, support code and retry; "no options"; else a required select of "<name> · <role>" options with a
  * placeholder while nothing is selected.
  */
 export function AssigneePicker({

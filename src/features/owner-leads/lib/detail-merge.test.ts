@@ -35,6 +35,7 @@ describe("mergeNoteResult (C-36: the 201 body updates the page, no reload)", () 
     assignedUserId: "U1",
     assignedUserName: "Bình",
     nextActionAt: "2026-10-25T02:00:00Z",
+    lastActivityAt: "2026-10-24T02:00:00Z",
   };
 
   it("appends the activity and takes version and next action from the lead, keeping the contact data", () => {
@@ -59,7 +60,7 @@ describe("mergeNoteResult (C-36: the 201 body updates the page, no reload)", () 
 
 describe("mergeSummary (version from every 2xx, even if the reload that follows fails)", () => {
   it("takes status, version, assignee and next action; an absent next action means none", () => {
-    const next = mergeSummary(detail, { id: "L1", status: "REJECTED", version: 5, assignedUserId: "U1" });
+    const next = mergeSummary(detail, { id: "L1", status: "REJECTED", version: 5, assignedUserId: "U1", lastActivityAt: "2026-10-24T02:00:00Z" });
     expect(next.status).toBe("REJECTED");
     expect(next.version).toBe(5);
     expect(next.nextActionAt).toBeUndefined();

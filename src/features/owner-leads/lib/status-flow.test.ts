@@ -42,7 +42,7 @@ function deps(lookup: ApiResult<LeadPage> = page([]), reply?: ApiResult<LeadSumm
     },
     changeStatus: async (leadId, input) => {
       sent.push({ leadId, input });
-      return reply ?? { ok: true, data: { id: leadId, version: 9 }, status: 200, replayed: false };
+      return reply ?? { ok: true, data: { id: leadId, version: 9, lastActivityAt: "2026-10-20T03:00:00Z" }, status: 200, replayed: false };
     },
   };
   return { lookups, sent, flowDeps };
@@ -161,7 +161,7 @@ describe("prepareStatusChange: closing targets (US-6 AC-2, AC-4)", () => {
   });
 
   it("DUPLICATE with a code looks it up and previews the hit", async () => {
-    const hit: LeadSummary = { id: ORIGINAL, requestCode: "SV-AAAA-BBBB", status: "REJECTED", createdAt: "2026-10-01T03:00:00Z" };
+    const hit: LeadSummary = { id: ORIGINAL, requestCode: "SV-AAAA-BBBB", status: "REJECTED", createdAt: "2026-10-01T03:00:00Z", lastActivityAt: "2026-10-20T03:00:00Z" };
     const { flowDeps, lookups } = deps(page([hit]));
     const step = await prepareStatusChange(
       form({ target: "DUPLICATE", reason: "trùng", original: { kind: "text", text: " sv-aaaa-bbbb " } }),
@@ -237,17 +237,17 @@ describe("resolveOriginal (C-21, W11-33)", () => {
       kind: "problem",
       problem: "not-found",
     });
-    const self = page([{ id: LEAD, requestCode: "SV-AAAA-BBBB", status: "NEW" }]);
+    const self = page([{ id: LEAD, requestCode: "SV-AAAA-BBBB", status: "NEW", lastActivityAt: "2026-10-20T03:00:00Z" }]);
     expect(await resolveOriginal({ kind: "text", text: "SV-AAAA-BBBB" }, ctx(), deps(self).flowDeps)).toEqual({
       kind: "problem",
       problem: "self",
     });
-    const dup = page([{ id: ORIGINAL, requestCode: "SV-AAAA-BBBB", status: "DUPLICATE" }]);
+    const dup = page([{ id: ORIGINAL, requestCode: "SV-AAAA-BBBB", status: "DUPLICATE", lastActivityAt: "2026-10-20T03:00:00Z" }]);
     expect(await resolveOriginal({ kind: "text", text: "SV-AAAA-BBBB" }, ctx(), deps(dup).flowDeps)).toEqual({
       kind: "problem",
       problem: "duplicate",
     });
-    const other = page([{ id: ORIGINAL, requestCode: "SV-ZZZZ-ZZZZ", status: "NEW" }]);
+    const other = page([{ id: ORIGINAL, requestCode: "SV-ZZZZ-ZZZZ", status: "NEW", lastActivityAt: "2026-10-20T03:00:00Z" }]);
     expect(await resolveOriginal({ kind: "text", text: "SV-AAAA-BBBB" }, ctx(), deps(other).flowDeps)).toEqual({
       kind: "problem",
       problem: "not-found",
@@ -276,7 +276,7 @@ describe("sendStatusChange (spec 5.2 versions)", () => {
     const { flowDeps, sent } = deps();
     const outcome = await sendStatusChange(LEAD, { toStatus: "CONTACTED" }, 7, flowDeps);
     expect(sent).toEqual([{ leadId: LEAD, input: { toStatus: "CONTACTED", expectedVersion: 7 } }]);
-    expect(outcome).toEqual({ kind: "saved", summary: { id: LEAD, version: 9 } });
+    expect(outcome).toEqual({ kind: "saved", summary: { id: LEAD, version: 9, lastActivityAt: "2026-10-20T03:00:00Z" } });
   });
 
   it("returns the mapped failure", async () => {

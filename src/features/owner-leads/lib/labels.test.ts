@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import vi from "@/i18n/messages/vi.json";
+import en from "@/i18n/messages/en.json";
 
 import { CLOSED_STATUSES, LEAD_STATUSES, OPEN_STATUSES } from "../types";
 
@@ -28,7 +28,7 @@ function resolve(path: string): unknown {
       return (node as Record<string, unknown>)[part];
     }
     return undefined;
-  }, vi.OwnerLeads);
+  }, en.OwnerLeads);
 }
 
 const MAPS = {
@@ -45,7 +45,7 @@ const MAPS = {
 
 describe("label maps (W11-40)", () => {
   for (const [name, map] of Object.entries(MAPS)) {
-    it(`${name}: every value has a non-empty string in vi.json OwnerLeads`, () => {
+    it(`${name}: every value has a non-empty string in en.json OwnerLeads`, () => {
       for (const [value, key] of Object.entries(map)) {
         const text = resolve(key);
         expect(typeof text, `${name}.${value} -> ${key}`).toBe("string");
@@ -80,28 +80,28 @@ describe("label maps (W11-40)", () => {
   });
 });
 
-describe("status labels (spec 5.6, verbatim)", () => {
+describe("status labels (W14 C-45, spec 5.5)", () => {
   const text = (status: keyof typeof STATUS_LABEL) => resolve(STATUS_LABEL[status]);
 
-  it("uses the brief wording", () => {
-    expect(text("NEW")).toBe("Chưa giao");
-    expect(text("ASSIGNED")).toBe("Đã giao");
-    expect(text("CONTACTED")).toBe("Đã liên hệ được");
-    expect(text("ON_HOLD")).toBe("Tạm hoãn");
-    expect(text("DUPLICATE")).toBe("Trùng");
-    expect(text("REJECTED")).toBe("Không nhận");
-    expect(text("WITHDRAWN")).toBe("Chủ nhà rút");
+  it("uses the owner wording", () => {
+    expect(text("NEW")).toBe("Unassigned");
+    expect(text("ASSIGNED")).toBe("Assigned");
+    expect(text("CONTACTED")).toBe("Contacted");
+    expect(text("ON_HOLD")).toBe("On Hold");
+    expect(text("DUPLICATE")).toBe("Duplicate");
+    expect(text("REJECTED")).toBe("Declined");
+    expect(text("WITHDRAWN")).toBe("Owner Withdrawn");
   });
 
-  it("uses the assumed activity and role wording", () => {
-    expect(resolve(ACTIVITY_LABEL.SUBMITTED)).toBe("Chủ nhà gửi form");
-    expect(resolve(ACTIVITY_LABEL.AUTO_ASSIGNED)).toBe("Tự giao theo khu vực");
-    expect(resolve(ACTIVITY_LABEL.ASSIGNED)).toBe("Giao");
-    expect(resolve(ACTIVITY_LABEL.REASSIGNED)).toBe("Giao lại");
-    expect(resolve(ACTIVITY_LABEL.STATUS_CHANGED)).toBe("Đổi trạng thái");
-    expect(resolve(ACTIVITY_LABEL.NOTE_ADDED)).toBe("Ghi chú");
+  it("uses the spec 5.5 activity and role wording", () => {
+    expect(resolve(ACTIVITY_LABEL.SUBMITTED)).toBe("Owner submitted the form");
+    expect(resolve(ACTIVITY_LABEL.AUTO_ASSIGNED)).toBe("Auto-assigned by ward");
+    expect(resolve(ACTIVITY_LABEL.ASSIGNED)).toBe("Assigned");
+    expect(resolve(ACTIVITY_LABEL.REASSIGNED)).toBe("Reassigned");
+    expect(resolve(ACTIVITY_LABEL.STATUS_CHANGED)).toBe("Status changed");
+    expect(resolve(ACTIVITY_LABEL.NOTE_ADDED)).toBe("Note");
     expect(resolve(ROLE_LABEL.SALE)).toBe("Sale");
-    expect(resolve(ROLE_LABEL.SALE_LEADER)).toBe("Trưởng nhóm sale");
+    expect(resolve(ROLE_LABEL.SALE_LEADER)).toBe("Sale leader");
   });
 });
 

@@ -67,7 +67,7 @@ export function LeadNoteForm() {
 
   if (isClosedLeadStatus(lead.status)) {
     if (note === "") return null;
-    // "Không lưu được" only when this note was refused because the lead closed (409); else a neutral label.
+    // The "not saved" text only when this note was refused because the lead closed (409); else a neutral label.
     const refused = state.outcome?.kind === "closed" ? state.outcome : null;
     return (
       <DetailSection title={t("noteForm.title")}>

@@ -31,15 +31,15 @@ type AssignDialogProps = {
   onMessage(message: CommandMessage | null): void;
   /** Assigned (or the same person, nothing sent): the slot closes the dialog and shows `message`. */
   onDone(message: CommandMessage | null): void;
-  /** Esc, the backdrop, the close button or "Hủy": the slot always closes the dialog (Dialog contract). */
+  /** Esc, the backdrop, the close button or "Cancel": the slot always closes the dialog (Dialog contract). */
   onClose(): void;
   /** True while the assignment is on its way (also after the dialog closed); the slot locks its buttons meanwhile. */
   onBusy(busy: boolean): void;
 };
 
 /**
- * "Giao / Giao lại" (US-7, C-29), for `ALL` viewers: a select of the eligible assignees as "<tên> · Sale" or
- * "<tên> · Trưởng nhóm sale", the current assignee preselected when listed (else "Đang giao cho <tên>" above), an
+ * "Assign / Reassign" (US-7, C-29), for `ALL` viewers: a select of the eligible assignees as "<name> · Sale" or
+ * "<name> · Sale leader", the current assignee preselected when listed (else "Assigned to <name>" above), an
  * optional note (draft). The same person sends nothing. 422 reloads the list; a 2xx is applied, then the detail
  * reloads (C-36).
  */

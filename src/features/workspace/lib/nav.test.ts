@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import en from "@/i18n/messages/en.json";
 import { STAFF_WORKSPACE_ROLES, WORKSPACE_HOME, isStaff, workspaceNav } from "./nav";
 
 const OWNER_LEADS = { href: "/workspace/owner-leads", labelKey: "ownerLeads" };
@@ -25,6 +26,15 @@ describe("workspaceNav", () => {
   it("workspaceNav_customerOrNoRole_isEmpty", () => {
     expect(workspaceNav(["CUSTOMER"])).toEqual([]);
     expect(workspaceNav([])).toEqual([]);
+  });
+});
+
+describe("workspaceNav labels (C-42, A-4)", () => {
+  const labels = (roles: string[]) => workspaceNav(roles).map((item) => en.Workspace.menu[item.labelKey]);
+
+  it("SALE sees SUPPLY LEADS, ADMIN also TERRITORIES", () => {
+    expect(labels(["SALE"])).toEqual(["SUPPLY LEADS"]);
+    expect(labels(["ADMIN"])).toEqual(["SUPPLY LEADS", "TERRITORIES"]);
   });
 });
 

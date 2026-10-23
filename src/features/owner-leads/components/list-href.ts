@@ -28,7 +28,7 @@ export function listHref(state: ListState, change: ListFilterChange, viewer: Vie
 }
 
 /**
- * "Tất cả" filtered by one assignee (C-27, C-34): the former holder of the territories notice, the assignee link of the
+ * "All Leads" filtered by one assignee, with the assignee default (C-27, C-34, A-6): the former holder of the territories notice, the assignee link of the
  * detail header. Goes through `listHref`, so an id that is not a plain user id never reaches the URL and a viewer
  * without the all tab gets the default tab.
  */

@@ -943,6 +943,11 @@ export interface components {
             id?: string;
             /** @enum {string} */
             intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /**
+             * Format: date-time
+             * @description Time of the lead's latest activity (any history entry: submitted, auto-assigned, assigned, reassigned, status changed, note). Opening the lead does not count.
+             */
+            lastActivityAt: string;
             /** Format: date-time */
             nextActionAt?: string;
             /** @description True when the lead has at least one possible duplicate the caller can see */

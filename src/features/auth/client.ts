@@ -5,6 +5,7 @@ export type { ApiCall, ApiResult, CallApi } from "./session/api-client";
 export { RequireRole } from "./components/require-role";
 export { RequireSession } from "./components/require-session";
 export { useSessionTexts } from "./components/session-screens";
+export { englishSessionTexts } from "./lib/english-session-texts";
 export { ForbiddenNotice } from "./components/forbidden-notice";
 export type { SessionTexts } from "./lib/session-view";
 export { useSession } from "./session/use-session";

@@ -15,7 +15,7 @@ import type { DuplicateCandidate } from "../types";
 /** Which way the original is given: a candidate of the lead, or the text field (link or request code). */
 export type OriginalPick = { kind: "candidate"; id: string } | { kind: "text" } | null;
 
-/** The result of the last "Tìm", for the text it was made for. */
+/** The result of the last "Find", for the text it was made for. */
 export type OriginalLookup = { text: string; resolution: OriginalResolution };
 
 const PROBLEM_KEY = {
@@ -26,7 +26,7 @@ const PROBLEM_KEY = {
   "not-found": "statusDialog.duplicate.notFound",
 } as const satisfies Record<OriginalProblem, string>;
 
-/** "SV-XXXX-XXXX · Không nhận · 01/10/2026 10:00", or "Mã lead: <id>" for a pasted link (no preview, C-21). */
+/** "SV-XXXX-XXXX · Declined · 01/10/2026 10:00", or "Lead ID: <id>" for a pasted link (no preview, C-21). */
 export function useOriginalText(): (original: OriginalPreview) => string {
   const t = useTranslations("OwnerLeads");
   return (original) =>
@@ -54,7 +54,7 @@ type DuplicatePickerProps = {
   onText(text: string): void;
   lookup: OriginalLookup | null;
   onLookup(): void;
-  /** The lookup is running: its button says "Đang tìm…". */
+  /** The lookup is running: its button says "Finding…". */
   looking: boolean;
   disabled: boolean;
   /** Message of the last submit for the original (client check or the server's 400). */
@@ -63,7 +63,7 @@ type DuplicatePickerProps = {
 
 /**
  * The original of a DUPLICATE (spec 5.4, C-21): one of the lead's possible duplicates (those already in DUPLICATE are
- * disabled), or a pasted workspace lead link or request code. A code is previewed after "Tìm" (code, status, date); a
+ * disabled), or a pasted workspace lead link or request code. A code is previewed after "Find" (code, status, date); a
  * link shows only the id and the server decides. The lead itself is refused at once.
  */
 export function DuplicatePicker({
@@ -88,7 +88,7 @@ export function DuplicatePicker({
 
   const textPicked = candidates.length === 0 || pick?.kind === "text";
 
-  // What the text says right now: a link shows its id at once; a code shows the result of "Tìm" made for this text.
+  // What the text says right now: a link shows its id at once; a code shows the result of "Find" made for this text.
   const parsed = parseDuplicateInput(text);
   let preview: string | null = null;
   let problem: string | null = null;

@@ -37,8 +37,8 @@ export function formatDate(isoDate: string): string {
 }
 
 /**
- * `3.500.000 ₫/tháng`: `Intl` VND amount followed by the unit suffix. `label` reads an `OwnerLeads` key (pass the
- * component's `t`): the suffix is `PRICE_UNIT_LABEL[unit]` ("/đêm", "/tháng", " (giá bán)").
+ * `3.500.000 ₫/month`: `Intl` VND amount followed by the unit suffix. `label` reads an `OwnerLeads` key (pass the
+ * component's `t`): the suffix is `PRICE_UNIT_LABEL[unit]` ("/night", "/month", " (sale price)").
  */
 export function formatPrice(
   price: { amount: number | string; unit: PriceUnit | string },

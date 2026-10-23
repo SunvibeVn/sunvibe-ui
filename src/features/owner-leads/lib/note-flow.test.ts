@@ -16,7 +16,7 @@ const http = (status: number, code?: string, fieldErrors: FieldError[] = [], cor
   correlationId,
 });
 
-const created: LeadNoteResult = { activity: { type: "NOTE_ADDED", note: "x" }, lead: { id: "L1", version: 2 } };
+const created: LeadNoteResult = { activity: { type: "NOTE_ADDED", note: "x" }, lead: { id: "L1", version: 2, lastActivityAt: "2026-10-20T03:00:00Z" } };
 
 function deps(reply: ApiResult<LeadNoteResult>) {
   const calls: { leadId: string; input: unknown }[] = [];

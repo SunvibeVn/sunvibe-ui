@@ -1,11 +1,20 @@
 import type { LeadActivity } from "../types";
 
-/** Who a history entry shows as its actor (spec 5.4). The UI picks the Vietnamese text per kind. */
+import type { OwnerLeadsKey } from "./labels";
+
+/** Who a history entry shows as its actor (spec 5.4). The UI shows the name, or the label of `HISTORY_ACTOR_KEY`. */
 export type HistoryActor =
   | { kind: "name"; name: string }
   | { kind: "owner" }
   | { kind: "system" }
   | { kind: "unknown" };
+
+/** Label of an actor without a name: "Owner", "System", "Unknown" (BR-8, spec 5.5). */
+export const HISTORY_ACTOR_KEY: Record<Exclude<HistoryActor["kind"], "name">, OwnerLeadsKey> = {
+  owner: "history.actorOwner",
+  system: "history.actorSystem",
+  unknown: "history.actorUnknown",
+};
 
 /**
  * `actorName` when present. Without an actor id, `SUBMITTED` is the owner and `AUTO_ASSIGNED` the system. Anything else

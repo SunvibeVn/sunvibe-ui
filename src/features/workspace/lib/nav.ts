@@ -5,7 +5,7 @@ export { STAFF_WORKSPACE_ROLES, WORKSPACE_HOME };
 
 export type WorkspaceNavItem = {
   href: string;
-  /** Key under `Workspace.menu` in vi.json. */
+  /** Key under `Workspace.menu` in en.json. */
   labelKey: "ownerLeads" | "territories";
 };
 
