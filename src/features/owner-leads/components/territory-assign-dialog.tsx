@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 
 import { selectedAssignee } from "../lib/assignee-pick";
-import { prepareTerritoryAssign, type TerritoryProblem } from "../lib/territory-flags";
+import { holderId, prepareTerritoryAssign, type TerritoryProblem } from "../lib/territory-flags";
 import type { Territory } from "../types";
 
 import { type AssigneePickerLabels, AssigneePicker, type AssigneesLoad } from "./assignee-picker";
@@ -41,7 +41,7 @@ export function TerritoryAssignDialog({
 }: TerritoryAssignDialogProps) {
   const t = useTranslations("SaleTerritories");
   const list = eligible.state === "ready" ? eligible.list : [];
-  const currentId = territory.userId === "" ? undefined : territory.userId;
+  const currentId = holderId(territory);
   const [picked, setPicked] = useState<string | null>(null);
   const selected = selectedAssignee(list, picked, currentId);
   const [required, setRequired] = useState(false);

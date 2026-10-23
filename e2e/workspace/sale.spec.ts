@@ -263,10 +263,15 @@ test.describe("SALE in the workspace", () => {
     await clickStatusBox(page, T.status.WITHDRAWN);
     const clear = bar.getByRole("link", { name: T.clearFilters });
     await expect(clear).toBeVisible();
-    const [barBox, clearBox, rowChip] = await Promise.all([bar.boundingBox(), clear.boundingBox(), chip.boundingBox()]);
+    // At 1280 px the chips wrap onto two rows: "Clear filters" ends the last row, next to "Show closed leads".
+    const lastChip = statusBox(page, T.showClosed).locator("xpath=..");
+    const [barBox, clearBox, rowChip] = await Promise.all([bar.boundingBox(), clear.boundingBox(), lastChip.boundingBox()]);
     if (barBox === null || clearBox === null || rowChip === null) throw new Error("filter bar not laid out");
+    const chipsRight = await bar
+      .getByRole("checkbox")
+      .evaluateAll((boxes) => Math.max(...boxes.map((box) => (box.parentElement as HTMLElement).getBoundingClientRect().right)));
     expect(barBox.x + barBox.width - (clearBox.x + clearBox.width), "gap right of Clear filters").toBeLessThanOrEqual(24);
-    expect(clearBox.x, "Clear filters after the chips").toBeGreaterThan(rowChip.x + rowChip.width);
+    expect(clearBox.x, "Clear filters after the chips").toBeGreaterThan(chipsRight);
     expect(Math.abs(clearBox.y + clearBox.height / 2 - (rowChip.y + rowChip.height / 2)), "same row").toBeLessThanOrEqual(4);
 
     await clear.click();

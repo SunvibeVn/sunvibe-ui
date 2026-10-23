@@ -30,7 +30,7 @@ export function LeadAsset({ lead }: { lead: LeadDetail }) {
     askingPrice?.amount != null && askingPrice.unit != null
       ? formatPrice({ amount: askingPrice.amount, unit: askingPrice.unit }, (key) => t(key))
       : "";
-  const availableFrom = lead.availableFrom === undefined ? "" : formatDate(lead.availableFrom);
+  const availableFrom = lead.availableFrom == null ? "" : formatDate(lead.availableFrom);
   const acceptedAt = consent?.acceptedAt === undefined ? "" : formatDateTime(consent.acceptedAt);
   const version = consent?.noticeVersion?.trim() ?? "";
 

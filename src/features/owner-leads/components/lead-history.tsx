@@ -11,6 +11,7 @@ import { formatDateTime } from "../lib/format";
 import type { CommandMessage } from "../lib/command-flow";
 import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";
 import { entryDraftOpen, entryTargets } from "../lib/history-entry";
+import { historyStatus } from "../lib/history-status";
 import { activityLabelKey } from "../lib/labels";
 import { isClosedLeadStatus, type LeadActivity } from "../types";
 
@@ -32,6 +33,7 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
   const pic = actor.kind === "name" ? actor.name : t(HISTORY_ACTOR_KEY[actor.kind]);
   const when = activity.occurredAt === undefined ? "" : formatDateTime(activity.occurredAt);
   const note = activity.note?.trim();
+  const status = historyStatus(activity);
   const label = (column: "no" | "updated" | "activity" | "pic" | "status") => t(`history.columns.${column}`);
   return (
     <tr role="row" className={HISTORY_ROW}>
@@ -48,10 +50,10 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
         {pic}
       </td>
       <td role="cell" data-label={label("status")} className={HISTORY_CELL}>
-        {activity.toStatus === undefined ? (
+        {status === undefined ? (
           <span className="text-slate-500">{t("history.noStatus")}</span>
         ) : (
-          <LeadStatusBadge status={activity.toStatus} />
+          <LeadStatusBadge status={status} />
         )}
       </td>
       {/* Read only: nothing to do here; the empty cell is left out of the card below `xl`. */}

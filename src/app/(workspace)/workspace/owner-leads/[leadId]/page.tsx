@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Lead",
 };
 
+// The workspace shell renders this page only once the browser has the session: no instant navigation to validate.
+export const instant = false;
+
 async function OwnerLeadDetail({ params }: { params: Promise<{ leadId: string }> }) {
   const { leadId } = await params;
   // Only the id goes to the client view; the lead is read in the browser after hydration, so the server HTML holds no
