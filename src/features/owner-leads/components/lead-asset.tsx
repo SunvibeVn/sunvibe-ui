@@ -7,15 +7,19 @@ import { intentLabelKey, propertyTypeLabelKey, sourceLabelKey } from "../lib/lab
 import { mapDirectionsUrl } from "../lib/map-link";
 import type { LeadDetail } from "../types";
 
-import { DetailFields, DetailRow, DetailSection } from "./detail-layout";
+import { DetailCell, DetailGrid, DetailSection } from "./detail-layout";
 
+/** The map link in the primary button style of Save (owner 2026-10-23, D-8); 44px high on a phone (touch target). */
 const BUTTON =
-  "inline-flex min-h-10 items-center justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:border-violet-200 hover:bg-violet-50/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600";
+  "inline-flex min-h-11 items-center justify-center rounded-full bg-brand-gradient px-4 py-1.5 sm:min-h-8 text-sm font-semibold text-white shadow-lg shadow-orange-700/25 transition-all hover:shadow-xl hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600";
 
 /** True for a finite number: a lead without a position has no coordinates at all (null or missing). */
 const isCoordinate = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 
-/** The property side of the owner request, with consent and, when there are coordinates, the map button. */
+/**
+ * The property side of the owner request, with consent, in columns that follow the card width (D-3, D-10); when
+ * there are coordinates, the map button on its own row below.
+ */
 export function LeadAsset({ lead }: { lead: LeadDetail }) {
   const t = useTranslations("OwnerLeads");
   const none = <span className="text-slate-500">{t("detail.asset.none")}</span>;
@@ -32,27 +36,27 @@ export function LeadAsset({ lead }: { lead: LeadDetail }) {
 
   return (
     <DetailSection title={t("detail.asset.title")}>
-      <DetailFields>
-        <DetailRow label={t("detail.asset.address")}>{lead.addressDetail?.trim() || none}</DetailRow>
-        <DetailRow label={t("detail.asset.ward")}>{lead.wardName?.trim() || none}</DetailRow>
-        <DetailRow label={t("detail.asset.intent")}>
+      <DetailGrid>
+        <DetailCell label={t("detail.asset.address")}>{lead.addressDetail?.trim() || none}</DetailCell>
+        <DetailCell label={t("detail.asset.ward")}>{lead.wardName?.trim() || none}</DetailCell>
+        <DetailCell label={t("detail.asset.intent")}>
           {intentKey === null ? none : t(intentKey)}
-        </DetailRow>
-        <DetailRow label={t("detail.asset.propertyType")}>
+        </DetailCell>
+        <DetailCell label={t("detail.asset.propertyType")}>
           {propertyTypeKey === null ? none : t(propertyTypeKey)}
-        </DetailRow>
-        <DetailRow label={t("detail.asset.askingPrice")}>{price || none}</DetailRow>
-        <DetailRow label={t("detail.asset.availableFrom")}>{availableFrom || none}</DetailRow>
-        <DetailRow label={t("detail.asset.notes")}>
+        </DetailCell>
+        <DetailCell label={t("detail.asset.askingPrice")}>{price || none}</DetailCell>
+        <DetailCell label={t("detail.asset.availableFrom")}>{availableFrom || none}</DetailCell>
+        <DetailCell label={t("detail.asset.notes")} wide>
           {lead.notes?.trim() ? <span className="whitespace-pre-wrap">{lead.notes}</span> : none}
-        </DetailRow>
-        <DetailRow label={t("detail.asset.source")}>
+        </DetailCell>
+        <DetailCell label={t("detail.asset.source")}>
           {lead.source === undefined ? none : t(sourceLabelKey(lead.source))}
-        </DetailRow>
-        <DetailRow label={t("detail.consent.title")}>
+        </DetailCell>
+        <DetailCell label={t("detail.consent.title")} wide>
           {acceptedAt === "" ? none : t("detail.consent.summary", { acceptedAt, version })}
-        </DetailRow>
-      </DetailFields>
+        </DetailCell>
+      </DetailGrid>
       {isCoordinate(latitude) && isCoordinate(longitude) && (
         <div className="mt-3">
           {/* Opens Google Maps only on this click (C-22); nothing is requested from Google before. */}

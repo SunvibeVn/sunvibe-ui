@@ -12,18 +12,11 @@ import { createListFlash } from "./list-flash";
 // detail), cleared by the form on success, and dropped on sign-out or when another user signs in.
 
 /**
- * `note` / `nextAction`: the note form. `reason`, `duplicate` (pasted link or code), `statusNote`, `statusNextAction`:
- * the status dialog, kept apart from the note form so one never fills or clears the other. `assignNote`: the assign
- * dialog.
+ * `activity`, `entryStatus` (the chosen STATUS) and `duplicate` (pasted link or code of the original): the new history
+ * entry (owner 2026-10-23, D-4).
+ * `assignNote`: the assign dialog.
  */
-export type DraftForm =
-  | "note"
-  | "nextAction"
-  | "reason"
-  | "duplicate"
-  | "statusNote"
-  | "statusNextAction"
-  | "assignNote";
+export type DraftForm = "activity" | "entryStatus" | "duplicate" | "assignNote";
 
 export type DraftKey = { userId: string; leadId: string; form: DraftForm };
 

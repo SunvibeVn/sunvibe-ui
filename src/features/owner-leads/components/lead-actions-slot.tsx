@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 
 import type { CommandMessage } from "../lib/command-flow";
@@ -10,24 +10,23 @@ import { isClosedLeadStatus, isLeadStatus } from "../types";
 import { AssignDialog } from "./assign-dialog";
 import { CommandMessageView } from "./command-message";
 import { useLeadDetail } from "./lead-detail-context";
-import { StatusDialog } from "./status-dialog";
 
-/** The open dialog, with the lead status it was opened for and its instance number. */
-type OpenDialog = { kind: "status" | "assign"; status: string | undefined; no: number };
+/** The open assign dialog, with the lead status it was opened for and its instance number. */
+type OpenDialog = { status: string | undefined; no: number };
 
 /**
- * The action buttons of the detail header (BR-1): "Change status" on open leads, "Assign / Reassign" for `ALL` viewers
- * on open leads; a closed lead shows neither. Holds the open dialog and the last command message, so the message stays
- * visible when the dialog closes. A dialog closes when the lead reloads with another status (someone else changed it,
- * or our own change went through) and when the route is hidden (Activity).
+ * The assign button of the lead block (BR-1): "Assign / Reassign" for `ALL` viewers on open leads; a closed lead has
+ * none. The status changes in the history (owner 2026-10-23, D-2). Holds the open dialog and the last command message,
+ * so the message stays visible when the dialog closes. The dialog closes when the lead reloads with another status
+ * (someone else changed it) and when the route is hidden (Activity).
  *
- * One command at a time (CR-2): while a command is on its way, even after its dialog closed, both buttons are locked.
- * Each dialog gets an instance number; a dialog that is no longer the current one (the route was hidden since) cannot
- * close a newer dialog, set the message or unlock the buttons of another command.
+ * One command at a time on the page (CR-2): while a command is on its way, here or in the history, the button is
+ * locked. Each dialog gets an instance number; a dialog that is no longer the current one (the route was hidden since)
+ * cannot close a newer dialog, set the message or unlock the button for another command.
  */
 export function LeadActionsSlot() {
   const t = useTranslations("OwnerLeads");
-  const { lead, viewer, version } = useLeadDetail();
+  const { lead, viewer, version, busy, setBusy } = useLeadDetail();
   const [dialog, setDialog] = useState<OpenDialog | null>(null);
   const [message, setMessage] = useState<CommandMessage | null>(null);
   /** Instance number of the dialog whose command is on its way; null when none. */
@@ -36,7 +35,7 @@ export function LeadActionsSlot() {
   const current = useRef(0);
 
   // Adjusting state while rendering (React "storing information from previous renders"): the dialog was opened for
-  // another status, so its targets or its sense are gone. Its message, if any, stays below the buttons.
+  // another status, so its sense is gone. Its message, if any, stays below the button.
   if (dialog !== null && dialog.status !== lead.status) setDialog(null);
 
   // Activity hides the route without unmounting it: close the dialog (and drop the message) before it is hidden, so it
@@ -51,16 +50,20 @@ export function LeadActionsSlot() {
     [],
   );
 
-  const closed = isClosedLeadStatus(lead.status);
-  const open = isLeadStatus(lead.status) && !closed;
-  const canAssign = open && viewer.access === "ALL";
-  const ready = version !== undefined && busyNo === null;
+  // The page-wide lock follows the command of this slot.
+  useEffect(() => {
+    setBusy("assign", busyNo !== null);
+  }, [busyNo, setBusy]);
 
-  const show = (kind: OpenDialog["kind"]) => {
-    if (busyNo !== null) return;
+  const open = isLeadStatus(lead.status) && !isClosedLeadStatus(lead.status);
+  const canAssign = open && viewer.access === "ALL";
+  const ready = version !== undefined && busyNo === null && !busy;
+
+  const show = () => {
+    if (busyNo !== null || busy) return;
     current.current += 1;
     setMessage(null);
-    setDialog({ kind, status: lead.status, no: current.current });
+    setDialog({ status: lead.status, no: current.current });
   };
   // Dialog contract: every close request closes; a pending call goes on and reports through `message`.
   const close = () => setDialog(null);
@@ -75,31 +78,22 @@ export function LeadActionsSlot() {
       setDialog(null);
       setMessage(next);
     },
-    onBusy(busy: boolean) {
-      // Only the instance that locked the buttons unlocks them.
-      setBusyNo((locked) => (busy ? no : locked === no ? null : locked));
+    onBusy(isBusy: boolean) {
+      // Only the instance that locked the button unlocks it.
+      setBusyNo((locked) => (isBusy ? no : locked === no ? null : locked));
     },
   });
 
   return (
     <>
-      {(open || canAssign) && (
-        <div className="flex flex-wrap gap-2">
-          {open && (
-            <Button variant="secondary" className="px-4 py-2" disabled={!ready} onClick={() => show("status")}>
-              {t("detail.changeStatus")}
-            </Button>
-          )}
-          {canAssign && (
-            <Button variant="secondary" className="px-4 py-2" disabled={!ready} onClick={() => show("assign")}>
-              {lead.assignedUserId ? t("detail.reassign") : t("detail.assign")}
-            </Button>
-          )}
-        </div>
+      {canAssign && (
+        <Button className="px-5! py-2!" disabled={!ready} onClick={show}>
+          {lead.assignedUserId ? t("detail.reassign") : t("detail.assign")}
+        </Button>
       )}
 
       {dialog === null && message !== null && (
-        <div className="space-y-2" aria-live="polite">
+        <div className="basis-full space-y-2" aria-live="polite">
           <CommandMessageView message={message} />
           <button
             type="button"
@@ -111,10 +105,7 @@ export function LeadActionsSlot() {
         </div>
       )}
 
-      {dialog?.kind === "status" && (
-        <StatusDialog key={dialog.no} message={message} onClose={close} {...callbacksOf(dialog.no)} />
-      )}
-      {dialog?.kind === "assign" && (
+      {dialog !== null && (
         <AssignDialog key={dialog.no} message={message} onClose={close} {...callbacksOf(dialog.no)} />
       )}
     </>

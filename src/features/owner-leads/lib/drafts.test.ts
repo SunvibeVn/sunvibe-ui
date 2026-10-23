@@ -13,7 +13,7 @@ import {
   type DraftSessionView,
 } from "./drafts";
 
-const key = (userId: string, leadId: string, form: DraftKey["form"] = "note"): DraftKey => ({ userId, leadId, form });
+const key = (userId: string, leadId: string, form: DraftKey["form"] = "activity"): DraftKey => ({ userId, leadId, form });
 
 const signedIn = (userId: string): DraftSessionView => ({ status: "signed-in", user: { userId } });
 
@@ -22,7 +22,7 @@ describe("createDraftStore", () => {
     const store = createDraftStore();
     store.set(key("u1", "L2"), "gọi lại lúc 9h");
     // A new mount builds a new key object: the draft is read back by value (W11-43).
-    expect(store.get({ userId: "u1", leadId: "L2", form: "note" })).toBe("gọi lại lúc 9h");
+    expect(store.get({ userId: "u1", leadId: "L2", form: "activity" })).toBe("gọi lại lúc 9h");
 
     store.resetFor("u2");
     expect(store.get(key("u1", "L2"))).toBeUndefined();
@@ -34,25 +34,25 @@ describe("createDraftStore", () => {
 
   it("keeps the drafts of the user it is reset for", () => {
     const store = createDraftStore();
-    store.set(key("u1", "L1", "reason"), "chủ nhà rút");
-    store.set(key("u2", "L1", "reason"), "other");
+    store.set(key("u1", "L1", "assignNote"), "chủ nhà rút");
+    store.set(key("u2", "L1", "assignNote"), "other");
     store.resetFor("u1");
-    expect(store.get(key("u1", "L1", "reason"))).toBe("chủ nhà rút");
-    expect(store.get(key("u2", "L1", "reason"))).toBeUndefined();
+    expect(store.get(key("u1", "L1", "assignNote"))).toBe("chủ nhà rút");
+    expect(store.get(key("u2", "L1", "assignNote"))).toBeUndefined();
   });
 
   it("separates drafts by user, lead and form", () => {
     const store = createDraftStore();
-    store.set(key("u1", "L1", "note"), "a");
-    store.set(key("u1", "L1", "nextAction"), "b");
-    store.set(key("u1", "L2", "note"), "c");
-    expect(store.get(key("u1", "L1", "note"))).toBe("a");
-    expect(store.get(key("u1", "L1", "nextAction"))).toBe("b");
-    expect(store.get(key("u1", "L2", "note"))).toBe("c");
-    expect(store.get(key("u2", "L1", "note"))).toBeUndefined();
+    store.set(key("u1", "L1", "activity"), "a");
+    store.set(key("u1", "L1", "duplicate"), "b");
+    store.set(key("u1", "L2", "activity"), "c");
+    expect(store.get(key("u1", "L1", "activity"))).toBe("a");
+    expect(store.get(key("u1", "L1", "duplicate"))).toBe("b");
+    expect(store.get(key("u1", "L2", "activity"))).toBe("c");
+    expect(store.get(key("u2", "L1", "activity"))).toBeUndefined();
     // No ambiguity when ids contain separators.
-    store.set(key("u1:L", "1", "note"), "x");
-    expect(store.get(key("u1", "L:1", "note"))).toBeUndefined();
+    store.set(key("u1:L", "1", "activity"), "x");
+    expect(store.get(key("u1", "L:1", "activity"))).toBeUndefined();
   });
 
   it("clears one draft (after a success) and treats an empty text as no draft", () => {
@@ -176,7 +176,7 @@ describe("createTabMemory (SEC-M2: the app-level sync drops everything with no f
     const memory = createTabMemory();
     memory.guard.observe(signedIn("u1"));
     memory.drafts.set(key("u1", "L2"), "note u1");
-    memory.drafts.set(key("u1", "L2", "reason"), "reason u1");
+    memory.drafts.set(key("u1", "L2", "assignNote"), "reason u1");
     memory.listFlash.set("u1", "leadNotFound");
     memory.lastListUrl.set("u1", "/workspace/owner-leads?scope=all");
 
@@ -184,7 +184,7 @@ describe("createTabMemory (SEC-M2: the app-level sync drops everything with no f
     memory.guard.observe({ status: "signed-out", user: null });
 
     expect(memory.drafts.get(key("u1", "L2"))).toBeUndefined();
-    expect(memory.drafts.get(key("u1", "L2", "reason"))).toBeUndefined();
+    expect(memory.drafts.get(key("u1", "L2", "assignNote"))).toBeUndefined();
     expect(memory.listFlash.take("u1")).toBeNull();
     expect(memory.lastListUrl.get("u1")).toBeNull();
   });

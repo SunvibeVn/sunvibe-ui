@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { copyText } from "../lib/copy-text";
+import { copyText } from "@/lib/utils/copy-text";
 
 export type SubmitSuccessProps = {
   requestCode: string;

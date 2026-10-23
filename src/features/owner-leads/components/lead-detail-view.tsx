@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowLeftIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
@@ -19,14 +20,13 @@ import type { LeadDetail, LeadNoteResult, LeadSummary } from "../types";
 import { LeadAsset } from "./lead-asset";
 import { LeadContact } from "./lead-contact";
 import { LeadDetailHeader } from "./lead-detail-header";
-import { type LeadDetailController, LeadDetailProvider } from "./lead-detail-context";
+import { type CommandSource, type LeadDetailController, LeadDetailProvider } from "./lead-detail-context";
 import { LeadDuplicates } from "./lead-duplicates";
 import { LeadHistory } from "./lead-history";
-import { LeadNoteForm } from "./lead-note-form";
 import { LIST_PATH } from "./list-href";
 
 /** A detail answer, for one user and one lead. */
-type Loaded = { userId: string; leadId: string; lead: LeadDetail; at: Date };
+type Loaded = { userId: string; leadId: string; lead: LeadDetail };
 type Problem = { userId: string; leadId: string; error: LeadUiError };
 
 const NO_ITEMS: readonly never[] = [];
@@ -77,6 +77,13 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [problem, setProblem] = useState<Problem | null>(null);
+  /** The parts with a command on its way (CR-2: one command at a time on the page). */
+  const [busySources, setBusySources] = useState<readonly CommandSource[]>([]);
+  const setBusy = useCallback((source: CommandSource, isBusy: boolean) => {
+    setBusySources((prev) =>
+      isBusy ? (prev.includes(source) ? prev : [...prev, source]) : prev.filter((item) => item !== source),
+    );
+  }, []);
   /** The user and lead the page is showing now; null while the route is hidden. Answers for anything else are dropped. */
   const live = useRef<{ userId: string; leadId: string } | null>(null);
   /** Number of the newest load; an older answer is dropped. */
@@ -98,7 +105,7 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
 
       const error = toLeadUiError(result);
       if (error === null && result.ok) {
-        setLoaded({ userId, leadId, lead: result.data, at: new Date() });
+        setLoaded({ userId, leadId, lead: result.data });
         setProblem(null);
         return true;
       }
@@ -130,10 +137,9 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
 
   const applyNoteResult = useCallback(
     (result: LeadNoteResult) => {
-      const at = new Date();
       setLoaded((prev) =>
         prev !== null && prev.userId === userId && prev.leadId === leadId
-          ? { ...prev, lead: mergeNoteResult(prev.lead, result), at }
+          ? { ...prev, lead: mergeNoteResult(prev.lead, result) }
           : prev,
       );
     },
@@ -142,10 +148,9 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
 
   const applyCommandResult = useCallback(
     (summary: LeadSummary) => {
-      const at = new Date();
       setLoaded((prev) =>
         prev !== null && prev.userId === userId && prev.leadId === leadId
-          ? { ...prev, lead: mergeSummary(prev.lead, summary), at }
+          ? { ...prev, lead: mergeSummary(prev.lead, summary) }
           : prev,
       );
     },
@@ -154,18 +159,23 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
 
   if (userId === null) return null;
 
+  const busy = busySources.length > 0;
+
   const current = loaded !== null && loaded.userId === userId && loaded.leadId === leadId ? loaded : null;
   const failure = problem !== null && problem.userId === userId && problem.leadId === leadId ? problem.error : null;
   const retry = () => void load();
 
   // In-memory, per user (dropped on sign-out or a user change); the plain list when this tab saw none.
   const backHref = lastListUrl.get(userId) ?? LIST_PATH;
+  // A violet pill at 90% opacity with a back arrow (owner 2026-10-23); white on it stays above 5:1 on the page
+  // background. Full violet on hover.
   const back = (
     <Link
       href={backHref}
       prefetch={false}
-      className="inline-flex min-h-10 items-center text-sm font-semibold text-violet-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
+      className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-violet-600/90 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
     >
+      <ArrowLeftIcon size={16} />
       {t("detail.back")}
     </Link>
   );
@@ -173,7 +183,7 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
   if (failure?.kind === "forbidden") {
     // 403 (E-2): the forbidden notice in place of the lead; nothing of the lead stays on screen.
     return (
-      <div className="mx-auto max-w-4xl space-y-4">
+      <div className="space-y-4">
         {back}
         <ForbiddenNotice />
         {failure.correlationId !== undefined && (
@@ -185,7 +195,7 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
 
   if (current === null) {
     return (
-      <div className="mx-auto max-w-4xl space-y-4">
+      <div className="space-y-4">
         {back}
         <div aria-live="polite">
           {failure === null ? <DetailSkeleton /> : <LoadProblem error={failure} onRetry={retry} />}
@@ -200,24 +210,32 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
     lead: current.lead,
     version: current.lead.version,
     viewer,
-    now: current.at,
     reload: load,
     applyNoteResult,
     applyCommandResult,
+    busy,
+    setBusy,
     leaveToList,
   };
 
   return (
     <LeadDetailProvider value={controller}>
-      <div className="mx-auto max-w-4xl space-y-4">
+      <div className="space-y-4">
         {back}
         {failure !== null && <LoadProblem error={failure} onRetry={retry} />}
-        <LeadDetailHeader />
-        <LeadContact lead={current.lead} />
-        <LeadAsset lead={current.lead} />
-        <LeadDuplicates candidates={current.lead.duplicateCandidates ?? NO_ITEMS} />
+        {/*
+          From `xl` up a 2x2 grid whose rows share one height (owner 2026-10-23, D-1 in the order of D-6): the lead |
+          Potential duplicates, then Owner contact | Property. Narrower, the cards stack at full width (a half card of
+          a 1024px screen is too narrow for its fields). The DOM follows the visual order, so Tab and a screen reader
+          do too, and the lead block with the page h1 comes first.
+        */}
+        <div className="grid gap-4 xl:grid-cols-2">
+          <LeadDetailHeader />
+          <LeadDuplicates candidates={current.lead.duplicateCandidates ?? NO_ITEMS} />
+          <LeadContact lead={current.lead} />
+          <LeadAsset lead={current.lead} />
+        </div>
         <LeadHistory activities={current.lead.activities ?? NO_ITEMS} />
-        <LeadNoteForm />
       </div>
     </LeadDetailProvider>
   );

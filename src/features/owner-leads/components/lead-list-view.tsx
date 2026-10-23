@@ -167,7 +167,8 @@ function LeadListContent() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-wider text-slate-900">{t("title")}</h1>
+      {/* No visible title (owner 2026-10-23); the page keeps its one h1 for screen readers. */}
+      <h1 className="sr-only">{t("title")}</h1>
       {notice !== null && (
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0 flex-1">
