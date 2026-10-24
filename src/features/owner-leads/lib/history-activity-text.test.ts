@@ -6,7 +6,7 @@ import { historyActivityText } from "./history-activity-text";
 import type { OwnerLeadsKey } from "./labels";
 
 const translator = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });
-const t = (key: OwnerLeadsKey) => translator(key);
+const t = (key: OwnerLeadsKey, values?: Record<string, string | number>) => translator(key, values);
 
 describe("historyActivityText (survey-schedule spec 6.3, A-12)", () => {
   it("labels a survey row with its appointment number", () => {
@@ -30,5 +30,23 @@ describe("historyActivityText (survey-schedule spec 6.3, A-12)", () => {
 
   it("gives a generic label for a type this UI does not know", () => {
     expect(historyActivityText({ type: "SOMETHING_NEW" as never }, t)).toBe(translator("history.activityOther"));
+  });
+
+  it("labels checklist rows with the checklist number and, for a save, the group (survey-checklist spec 6.4)", () => {
+    expect(historyActivityText({ type: "CHECKLIST_STARTED", referenceNo: 1 }, t)).toBe("Checklist #1 started");
+    expect(historyActivityText({ type: "CHECKLIST_TAKEN_OVER", referenceNo: 2 }, t)).toBe("Checklist #2 taken over");
+    expect(historyActivityText({ type: "CHECKLIST_SAVED", referenceNo: 2, referenceDetail: "DIMENSIONS" }, t)).toBe(
+      "Checklist #2: Size and layout saved",
+    );
+    expect(historyActivityText({ type: "CHECKLIST_SAVED", referenceNo: 3, referenceDetail: "TERMS" }, t)).toBe(
+      "Checklist #3: Rental terms saved",
+    );
+  });
+
+  it("falls back to the plain label for a checklist save of a group this UI does not know", () => {
+    expect(historyActivityText({ type: "CHECKLIST_SAVED", referenceNo: 2, referenceDetail: "NEW_GROUP" }, t)).toBe(
+      "Checklist saved · #2",
+    );
+    expect(historyActivityText({ type: "CHECKLIST_STARTED", referenceNo: null }, t)).toBe("Checklist started");
   });
 });

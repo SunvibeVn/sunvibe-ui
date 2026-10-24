@@ -7,6 +7,8 @@ import { CLOSED_STATUSES, LEAD_STATUSES, OPEN_STATUSES } from "../types";
 import {
   ACTIVITY_LABEL,
   activityLabelKey,
+  CHECKLIST_GROUP_LABEL,
+  checklistGroupLabelKey,
   INTENT_LABEL,
   intentLabelKey,
   PRICE_UNIT_LABEL,
@@ -83,6 +85,9 @@ describe("label maps (W11-40)", () => {
       "SURVEY_UNCONFIRMED",
       "SURVEY_VISITED",
       "INTENT_CHANGED",
+      "CHECKLIST_STARTED",
+      "CHECKLIST_TAKEN_OVER",
+      "CHECKLIST_SAVED",
     ].sort());
     expect(Object.keys(ROLE_LABEL).sort()).toEqual(["SALE", "SALE_LEADER"]);
     expect(Object.keys(PRICE_UNIT_LABEL).sort()).toEqual(["MONTH", "NIGHT", "TOTAL"]);
@@ -125,6 +130,33 @@ describe("survey activity labels (survey-schedule spec 6.6)", () => {
     expect(resolve(ACTIVITY_LABEL.SURVEY_VISITED)).toBe("Site visit recorded");
     expect(resolve(ACTIVITY_LABEL.SURVEY_RESUMED)).toBe("Survey resumed");
     expect(resolve(ACTIVITY_LABEL.INTENT_CHANGED)).toBe("Requirement changed");
+  });
+});
+
+describe("checklist activity labels and groups (survey-checklist spec 6.4)", () => {
+  it("labels the three checklist types", () => {
+    expect(resolve(ACTIVITY_LABEL.CHECKLIST_STARTED)).toBe("Checklist started");
+    expect(resolve(ACTIVITY_LABEL.CHECKLIST_TAKEN_OVER)).toBe("Checklist taken over");
+    expect(resolve(ACTIVITY_LABEL.CHECKLIST_SAVED)).toBe("Checklist saved");
+  });
+
+  it("names every group with the spec 6.4 wording", () => {
+    expect(Object.fromEntries(Object.entries(CHECKLIST_GROUP_LABEL).map(([group, key]) => [group, resolve(key)]))).toEqual({
+      IDENTIFICATION: "Identification",
+      PARTS: "Private and shared parts",
+      DIMENSIONS: "Size and layout",
+      CONDITION: "Condition and availability",
+      SAFETY: "Access and risks",
+      AMENITIES: "Amenities and furniture",
+      EVIDENCE: "Photos",
+      TERMS: "Rental terms",
+    });
+  });
+
+  it("gives null for a group this UI does not know", () => {
+    expect(checklistGroupLabelKey("TERMS")).toBe("checklist.groups.TERMS");
+    expect(checklistGroupLabelKey("SOMETHING_NEW")).toBeNull();
+    expect(checklistGroupLabelKey(null)).toBeNull();
   });
 });
 

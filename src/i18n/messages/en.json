@@ -89,7 +89,10 @@
       "SURVEY_CANCELLED": "Survey cancelled",
       "SURVEY_VISITED": "Site visit recorded",
       "SURVEY_RESUMED": "Survey resumed",
-      "INTENT_CHANGED": "Requirement changed"
+      "INTENT_CHANGED": "Requirement changed",
+      "CHECKLIST_STARTED": "Checklist started",
+      "CHECKLIST_TAKEN_OVER": "Checklist taken over",
+      "CHECKLIST_SAVED": "Checklist saved"
     },
     "role": {
       "SALE": "Sale",
@@ -245,7 +248,13 @@
       "closedKeepText": "The lead is closed, so the entry was not saved. Your text is kept below to copy.",
       "keptDraft": "Your text",
       "discardDraft": "Discard this text",
-      "noEditRule": "Earlier entries cannot be edited or deleted."
+      "noEditRule": "Earlier entries cannot be edited or deleted.",
+      "checklistStarted": "Checklist #{no} started",
+      "checklistTakenOver": "Checklist #{no} taken over",
+      "checklistSaved": "Checklist #{no}: {group} saved",
+      "checklistSaves": "Checklist #{no}: {count} saves by {name} ({from}–{to})",
+      "showSaves": "Show the {count} saves",
+      "hideSaves": "Hide the saves"
     },
     "statusDialog": {
       "reason": "Reason",
@@ -564,6 +573,473 @@
       "basisText": "How the owner agreed",
       "warning": "This cancels the scheduled survey and starts a new requirement cycle. Earlier visits no longer count.",
       "saved": "Requirement changed."
+    },
+    "checklist": {
+      "groups": {
+        "IDENTIFICATION": "Identification",
+        "PARTS": "Private and shared parts",
+        "DIMENSIONS": "Size and layout",
+        "CONDITION": "Condition and availability",
+        "SAFETY": "Access and risks",
+        "AMENITIES": "Amenities and furniture",
+        "EVIDENCE": "Photos",
+        "TERMS": "Rental terms"
+      },
+      "provenance": {
+        "site": "Seen on site at survey #{no} by {name}, {date}",
+        "measured": "Measured at survey #{no} by {name}, {date}",
+        "estimated": "Estimated at survey #{no} by {name}, {date}",
+        "owner": "Owner said on {date} (heard by {name})",
+        "ownerRelay": "Owner said on {date} (heard by {name}; passed on: {relay})",
+        "form": "Owner's form, submitted {date}",
+        "note": "Note by {name}, {date}",
+        "noteNotCheck": "Note by {name}, {date} (not a check)",
+        "cleared": "Cleared by {name} {date} (was {line})",
+        "entered": "entered by {name} {when}",
+        "corrected": "Corrected by {name}: {reason}",
+        "unknownName": "Unknown"
+      },
+      "action": {
+        "start": "Start checklist (survey #{no})",
+        "starting": "Starting the checklist…",
+        "open": "Open checklist #{no}"
+      },
+      "blockedBy": {
+        "NO_CURRENT_VISIT": "No site visit to record yet.",
+        "INTENT": "Checklists are for long-term rental leads.",
+        "LEAD_STATUS": "The lead is not in Survey Scheduled.",
+        "ALREADY_STARTED": "A checklist for this visit already exists.",
+        "NOT_ASSIGNEE": "Only the lead's assignee starts the checklist.",
+        "ASSIGNEE_INELIGIBLE": "The assignee can no longer take leads. Reassign the lead first."
+      },
+      "readOnly": {
+        "INTENT_CHANGED": "The requirement changed after this visit, so this checklist no longer counts.",
+        "NEWER_VISIT": "A newer site visit exists.",
+        "LEAD_STATUS": "The lead is not in Survey Scheduled.",
+        "NOT_ASSIGNEE": "Only the lead's assignee edits the checklist.",
+        "ASSIGNEE_INELIGIBLE": "The assignee can no longer take leads. Reassign the lead first.",
+        "TAKEOVER_REQUIRED": "You are the new assignee. Take over this draft before editing."
+      },
+      "intake": {
+        "title": "Start checklist (survey #{no})",
+        "intro": "You did not perform this visit. Before you start, say where your information comes from.",
+        "reason": "Reason",
+        "basisDate": "Date of the basis",
+        "basisText": "Basis",
+        "hint": "Say where your information comes from, for example the handover of {performer}'s visit.",
+        "start": "Start checklist",
+        "starting": "Starting…",
+        "close": "Close"
+      },
+      "startErrors": {
+        "notAllowed": "The checklist cannot be started now. The section has been reloaded.",
+        "alreadyStarted": "A checklist for this visit already exists. The section has been reloaded.",
+        "surveyorIneligible": "The assignee can no longer take leads. Reassign the lead first.",
+        "forbidden": "Only the lead's assignee starts the checklist.",
+        "badRequest": "Some details are not valid. The section has been reloaded.",
+        "failed": "The checklist could not be started. Please try again."
+      },
+      "lines": {
+        "title": "Checklists",
+        "line": "Checklist #{no} · Draft · {missing, plural, =0 {no items missing} one {# item missing} other {# items missing}} · held by {holder}",
+        "saved": "saved {when} by {name}",
+        "open": "Open checklist #{no}"
+      },
+      "page": {
+        "loading": "Loading the checklist…",
+        "loadFailed": "The checklist could not be loaded.",
+        "backToLead": "Back to the lead",
+        "heading": "Checklist #{no}",
+        "surveyLine": "Survey #{no} · visited {when} by {name}",
+        "proxyRecord": "Recorded by a manager: {name}, {when}",
+        "template": "Long-term rental checklist (version {version})",
+        "holder": "Held by {name}",
+        "editors": "Edited by {names}",
+        "legal": "Site survey record. It is not a legal or safety check.",
+        "media": "Photos and submission open once survey photos are available. You can save and preview this draft now.",
+        "laterVisit": "This checklist starts empty. Values seen only at survey #{surveyNo} stay in checklist #{checklistNo}. Record here what was seen at this visit, or what the owner said again with who heard it.",
+        "tabs": {
+          "label": "Checklist views",
+          "edit": "Edit",
+          "preview": "Preview"
+        },
+        "groupNav": "Groups",
+        "readOnlyTitle": "Read only",
+        "leaveConfirm": "You have unsaved changes. Leave this page?",
+        "reloading": "Reloading the checklist…"
+      },
+      "errors": {
+        "forbidden": "Only the lead's assignee edits the checklist.",
+        "readOnlyNow": "The checklist is read-only now. It has been reloaded.",
+        "takeoverRequired": "You are the new assignee. Take over this draft before editing.",
+        "surveyorIneligible": "The assignee can no longer take leads. Reassign the lead first.",
+        "takeoverStale": "The checklist changed meanwhile. It has been reloaded; take over again.",
+        "takeoverNotAllowed": "You cannot take over this draft now. The checklist has been reloaded.",
+        "badRequest": "Some details are not valid. Please check them.",
+        "failed": "Something went wrong. Please try again."
+      },
+      "takeover": {
+        "prompt": "You are the new assignee. Take over this draft before editing.",
+        "button": "Take over",
+        "title": "Take over this draft",
+        "reason": "Reason",
+        "basisDate": "Date of the basis",
+        "basisText": "Basis",
+        "basisHint": "Say what you take over from, for example the handover of the previous holder.",
+        "save": "Take over",
+        "saving": "Taking over…",
+        "close": "Close",
+        "listTitle": "Takeovers",
+        "kind": {
+          "START_BY_OTHER": "Started by someone else",
+          "TAKEOVER": "Takeover"
+        },
+        "item": "{kind} #{no} · {when}",
+        "fromTo": "From {from} to {to}",
+        "to": "By {to}",
+        "reasonLine": "Reason: {reason}",
+        "basisLine": "Basis: {date}, {text}",
+        "viewSnapshot": "View snapshot",
+        "snapshotTitle": "Snapshot before takeover #{no}",
+        "snapshotLoading": "Loading the snapshot…",
+        "snapshotFailed": "The snapshot could not be loaded.",
+        "closeSnapshot": "Back to the checklist",
+        "nobody": "nobody"
+      },
+      "states": {
+        "UNKNOWN": "Not checked",
+        "UNCONFIRMED": "Not confirmed",
+        "NOT_APPLICABLE": "Not applicable",
+        "VALUE": "Recorded",
+        "label": "State",
+        "naReason": "Why it does not apply"
+      },
+      "sources": {
+        "label": "Source",
+        "OBSERVED_ON_SITE": "Seen on site",
+        "OWNER_STATED": "Owner said",
+        "OWNER_FORM": "Owner's form",
+        "MEASURED": "Measured",
+        "ESTIMATED": "Estimated"
+      },
+      "receiver": {
+        "confirmedOn": "Date the owner said it",
+        "label": "Who heard it",
+        "placeholder": "Choose who heard it",
+        "me": "Me",
+        "relay": "How it reached you",
+        "notListed": "Not in the list? A leader or manager who really spoke with the owner can record that contact as a note on the lead (no figures), then pick them here.",
+        "nobodyListed": "If nobody listed heard it, leave the value unknown or confirm it with the owner yourself."
+      },
+      "reminder": {
+        "unsourced": "What you enter here without a source counts as seen at survey #{no} by {performer}. Record your own new site observations after a new visit. Leave a value unknown if it was only seen at an earlier visit.",
+        "noCodes": "Do not write door codes, passwords or phone numbers."
+      },
+      "panel": {
+        "save": "Save",
+        "saving": "Saving…",
+        "savedBy": "Saved {when} by {name}",
+        "neverSaved": "Not saved yet",
+        "unsaved": "Unsaved changes",
+        "notSaved": "Not saved: {reason}",
+        "notSavedNetwork": "Not saved. Check your connection and save again.",
+        "reasonInvalid": "check the marked fields.",
+        "reasonServer": "some details are not valid.",
+        "reasonFailed": "please try again.",
+        "reasonForbidden": "only the lead's assignee edits the checklist.",
+        "reasonIneligible": "the assignee can no longer take leads.",
+        "reasonCorrection": "a correction is needed.",
+        "locked": "Another save is on its way. Wait for it to finish.",
+        "notKept": "Not kept: {items}",
+        "conflict": "This group changed since you opened it. Compare and choose.",
+        "savedNow": "Saved now",
+        "yours": "Yours",
+        "saveMine": "Save mine on top",
+        "discardMine": "Discard mine",
+        "removed": "Removed",
+        "nothing": "Nothing",
+        "groupTitle": "G{no} {name}",
+        "choose": "Choose…",
+        "reasonStale": "{group} changed since you opened it. Compare and choose."
+      },
+      "correction": {
+        "title": "Correction",
+        "seenBy": "Recorded as seen by {name} at survey #{no}.",
+        "heardBy": "Heard by {name}.",
+        "enteredBy": "Entered by {name}.",
+        "needed": "Changing it needs a correction: reason, date and basis.",
+        "receiverHint": "If the owner really told this person the same on {date}, say so here. If they said it on another day, change the date instead.",
+        "reason": "Reason for the correction",
+        "basisDate": "Date of the basis",
+        "basisText": "Basis",
+        "save": "Save with the correction",
+        "cancel": "Cancel"
+      },
+      "fields": {
+        "observedAddress": "Address seen",
+        "addressText": "Address",
+        "ward": "Ward / commune",
+        "differenceNote": "How the address differs from the lead",
+        "propertyType": "Property type",
+        "fit": "Fit with the rental scope",
+        "fitReason": "Why",
+        "rentalScope": "Rental scope",
+        "spaces": "Spaces viewed",
+        "spaceCode": "Code",
+        "spaceCodeHint": "Letters A-Z, digits, space, dot, dash, slash or underscore; at most 20.",
+        "spaceLocation": "Where it is",
+        "spaceDescription": "Description",
+        "otherPartsNote": "Parts the owner mentioned that nobody viewed",
+        "generalNote": "General note",
+        "accessRoute": "Way in",
+        "sharedAreas": "Shared areas",
+        "totalFloors": "Floors in the building",
+        "floor": "Floor",
+        "privateAreas": "Private areas",
+        "actualAccess": "How far you got in",
+        "accessNote": "What you could not reach",
+        "area": "Area (m2)",
+        "bedrooms": "Bedrooms",
+        "privateBathrooms": "Private bathrooms",
+        "sharedBathroomUse": "Uses a shared bathroom",
+        "layoutNote": "Layout note",
+        "occupancy": "Occupancy on the visit day",
+        "expectedVacantFrom": "Expected vacant from",
+        "availableFrom": "Available from",
+        "mainSpace": "Main space",
+        "kitchen": "Kitchen",
+        "bathroom": "Bathroom",
+        "sharedKitchen": "Shared kitchen",
+        "sharedBathroom": "Shared bathroom",
+        "checkResult": "Check",
+        "noneObserved": "Anything to note?",
+        "nothingSeen": "Nothing seen",
+        "somethingSeen": "Something seen",
+        "checkNote": "What you saw",
+        "notEnteredReason": "What was not reached and why",
+        "notEnteredNote": "Note",
+        "notEnteredNoteHint": "What you saw from outside, or what the owner said.",
+        "egress": "Ways in and out",
+        "accessRestrictions": "Access restrictions",
+        "restrictionNote": "What restricts access",
+        "hazards": "Risks",
+        "hazardsNone": "None seen",
+        "hazardsList": "Risks seen",
+        "hazardDescription": "Description",
+        "hazardSeverity": "Severity",
+        "hazardStatus": "Status",
+        "hazardStatusNote": "Status note",
+        "hazardSpace": "Space",
+        "ownerReportedOn": "Date the owner reported the fix",
+        "wholeProperty": "Whole property",
+        "furnishing": "Furnishing",
+        "sharedItems": "Shared amenities",
+        "spaceItems": "Amenities of this space",
+        "otherItems": "Other items",
+        "otherItemLabel": "Item",
+        "otherItemSpace": "Where",
+        "presence": "Present",
+        "monthlyRent": "Monthly rent (VND)",
+        "deposit": "Deposit",
+        "depositMonths": "Months of rent",
+        "depositAmount": "Amount (VND)",
+        "paymentPeriodMonths": "Pay every (months)",
+        "minimumTermMonths": "Minimum term (months)",
+        "electricity": "Electricity",
+        "water": "Water",
+        "internet": "Internet",
+        "parking": "Parking",
+        "serviceFee": "Service fee",
+        "chargeAmount": "Amount (VND)",
+        "chargeUnit": "Per",
+        "chargeNote": "Note",
+        "otherFees": "Other fees",
+        "spaceFees": "Fees for this space only",
+        "feeName": "Fee",
+        "feeAmount": "Amount (VND)",
+        "houseRules": "House rules",
+        "pets": "Pets",
+        "petsNote": "Conditions",
+        "handoverMaintenance": "Handover and maintenance"
+      },
+      "values": {
+        "scope": {
+          "WHOLE": "Whole property",
+          "PARTS": "Separate parts",
+          "none": "Not chosen"
+        },
+        "fit": {
+          "IN_SCOPE": "In scope",
+          "OUT_OF_SCOPE": "Out of scope",
+          "UNDETERMINED": "Not sure yet"
+        },
+        "extent": {
+          "ENTERED_ALL": "Entered all of it",
+          "ENTERED_PART": "Entered only part of it"
+        },
+        "occupancy": {
+          "VACANT": "Vacant",
+          "OCCUPIED": "Occupied",
+          "UNDER_RENOVATION": "Under renovation",
+          "SUSPENDED": "Not in use"
+        },
+        "yesNo": {
+          "YES": "Yes",
+          "NO": "No"
+        },
+        "areaCheck": {
+          "INSPECTED": "Inspected (the whole area)",
+          "NOT_ENTERED": "Not entered or only partly entered"
+        },
+        "severity": {
+          "IMPORTANT": "Important",
+          "MINOR": "Minor",
+          "UNCLASSIFIED": "Not sure yet"
+        },
+        "status": {
+          "OPEN": "Open",
+          "OWNER_REPORTED_FIXED": "Owner says fixed",
+          "OBSERVED_RESOLVED": "Seen resolved at this visit"
+        },
+        "furnishing": {
+          "FULLY_FURNISHED": "Fully furnished",
+          "BASIC": "Basic",
+          "UNFURNISHED": "Unfurnished"
+        },
+        "items": {
+          "AIR_CONDITIONER": "Air conditioner",
+          "WATER_HEATER": "Water heater",
+          "WASHING_MACHINE": "Washing machine",
+          "REFRIGERATOR": "Refrigerator",
+          "BED": "Bed",
+          "WARDROBE": "Wardrobe",
+          "DESK": "Desk",
+          "KITCHEN_EQUIPMENT": "Kitchen equipment",
+          "INTERNET": "Internet",
+          "ELEVATOR": "Elevator",
+          "MOTORBIKE_PARKING": "Motorbike parking",
+          "CAR_PARKING": "Car parking",
+          "BALCONY": "Balcony",
+          "WINDOW": "Window",
+          "SECURITY": "Security",
+          "CCTV": "CCTV",
+          "POOL": "Pool",
+          "GARDEN": "Garden"
+        },
+        "notChecked": "Not checked",
+        "depositBasis": {
+          "MONTHS": "Months of rent",
+          "AMOUNT": "Amount"
+        },
+        "chargeBasis": {
+          "AMOUNT": "Amount",
+          "INCLUDED": "Included",
+          "PROVIDER_TARIFF": "Provider tariff",
+          "NOT_OFFERED": "Not offered"
+        },
+        "chargeUnit": {
+          "PER_MONTH": "per month",
+          "PER_KWH": "per kWh",
+          "PER_M3": "per m3",
+          "PER_PERSON_PER_MONTH": "per person per month",
+          "PER_VEHICLE_PER_MONTH": "per vehicle per month",
+          "ONE_OFF": "one-off"
+        },
+        "pets": {
+          "ALLOWED": "Allowed",
+          "NOT_ALLOWED": "Not allowed",
+          "CONDITIONAL": "Allowed with conditions"
+        },
+        "months": "{count, plural, one {# month} other {# months}}",
+        "noDeposit": "No deposit",
+        "noFees": "None",
+        "fee": "{name}: {amount} {unit}",
+        "noneObserved": "None seen",
+        "withNote": "{value}: {note}",
+        "notEnteredLine": "Not entered or only partly entered: {reason}",
+        "pin": "pin {lat}, {lng}"
+      },
+      "identification": {
+        "useLeadAddress": "Use the lead address",
+        "useOwnerForm": "Use the owner's form",
+        "fromLead": "This address differs from the lead address.",
+        "fromMeetingPlace": "This address differs from the meeting place.",
+        "addSpace": "Add a space",
+        "removeSpace": "Remove {code}",
+        "removeWarning": "Removing {code} deletes its entries in the other groups.",
+        "toWhole": "Switching to the whole property clears the shared kitchen and bathroom and the per-space charges and fees.",
+        "toParts": "Switching to separate parts clears the rent and available-from date taken from the owner's form.",
+        "newSpace": "New space",
+        "saveG1First": "Save the spaces in Identification first: the other groups follow the saved spaces.",
+        "keepSpace": "Keep {code}"
+      },
+      "safety": {
+        "addHazard": "Add a risk",
+        "removeHazard": "Remove this risk",
+        "earlierTitle": "Risks from earlier checklists",
+        "earlierItem": "Checklist #{no}: {description}",
+        "earlierOpen": "Open",
+        "resolvedAt": "Seen resolved at checklist #{no}",
+        "carriedTo": "Carried to checklist #{no}",
+        "recordStatus": "Record status at this visit",
+        "linkedTo": "Status at this visit of a risk from checklist #{no}",
+        "earlierDescription": "Earlier description",
+        "rule": "A minor rating or the owner's word does not clear an earlier risk."
+      },
+      "amenities": {
+        "addOther": "Add another item",
+        "removeOther": "Remove this item",
+        "notListed": "An amenity not ticked counts as not checked."
+      },
+      "terms": {
+        "common": "Applies to every space (as the source said)",
+        "override": "Different for this space",
+        "addFee": "Add a fee",
+        "removeFee": "Remove",
+        "notAgreed": "Terms as offered or seen; not agreed lease terms."
+      },
+      "evidence": {
+        "text": "Photos: waiting for survey photos. Photos and submission open once survey photos are available."
+      },
+      "preview": {
+        "gaps": "Known gaps before submission",
+        "noGaps": "No known gaps so far.",
+        "unconfirmed": "Rental terms not confirmed yet",
+        "noUnconfirmed": "Every rental term is confirmed.",
+        "warnings": "Warnings",
+        "noWarnings": "No warnings.",
+        "submission": "Submission is not available until survey photos are built. These lists may grow when submission and review are added.",
+        "effective": "Rental terms per space",
+        "originCommon": "common value",
+        "originSpace": "this space",
+        "commonFees": "Common fees",
+        "spaceFees": "Fees of this space",
+        "assetLevel": "Whole property",
+        "space": "Space {code}",
+        "item": "{group} · {field}",
+        "spaceItem": "{group} · {space} · {field}",
+        "problem": {
+          "NOT_CHECKED": "Not checked",
+          "REQUIRED_AREA_NOT_ENTERED": "Not entered or only partly entered: {area}",
+          "SCOPE_MISSING": "Choose whole property or separate parts",
+          "NO_SPACES": "Add at least one space",
+          "NOT_IN_SCOPE": "A full assessment needs \"In scope\"",
+          "DIFFERENCE_NOTE_MISSING": "Explain how the address differs from the lead",
+          "EVIDENCE_PENDING": "Photos: waiting for survey photos"
+        },
+        "warning": {
+          "OPEN_IMPORTANT_HAZARD": "Important or unclassified risk not seen resolved",
+          "EARLIER_HAZARD_OPEN": "Open risk from checklist #{no}",
+          "PARTIAL_ACCESS": "Partly entered: {space}"
+        }
+      },
+      "problems": {
+        "codeChars": "Use only letters A-Z, digits, space, dot, dash, slash or underscore.",
+        "duplicate": "Another space has this code.",
+        "tooMany": "There are too many entries here.",
+        "notAllowed": "Leave this empty: it is only for someone else's statement.",
+        "server": "The server did not accept this value."
+      }
     }
   },
   "SaleTerritories": {

@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { SurveyBlock, SurveyCommandResult, SurveyUiError } from "@/features/surveys";
+import type { ChecklistStarted, SurveyBlock, SurveyCommandResult, SurveyUiError } from "@/features/surveys";
 
 import type { CommandSource } from "../lib/command-lock";
 import type { Viewer } from "../lib/viewer";
@@ -37,6 +37,11 @@ export type LeadDetailController = {
    * History row is appended. No reload.
    */
   applySurveyResult(result: SurveyCommandResult): void;
+  /**
+   * Applies a checklist start (survey-checklist spec 6.1): the History row is appended, the lead row is untouched. No
+   * reload; the page then opens the checklist.
+   */
+  applyChecklistStarted(result: ChecklistStarted): void;
   /**
    * Loads the detail and the survey block again (C-36, A-23: after an assign, a status or requirement change, or a
    * refused survey command). Resolves to true when the detail answer was applied;

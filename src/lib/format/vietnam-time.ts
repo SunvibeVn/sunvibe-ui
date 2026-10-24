@@ -83,3 +83,8 @@ export function instantToLocalInput(iso: string): string {
 export function vietnamDate(iso: string): string {
   return instantToLocalInput(iso).slice(0, 10);
 }
+
+/** Today's Vietnam calendar date (`yyyy-MM-dd`) at `now`, whatever the browser time zone (checklist date rules, A-7). */
+export function todayInVietnam(now: Date = new Date()): string {
+  return vietnamDate(now.toISOString());
+}

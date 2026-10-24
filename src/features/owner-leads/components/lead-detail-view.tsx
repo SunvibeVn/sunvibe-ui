@@ -8,11 +8,11 @@ import { ArrowLeftIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
-import { type SurveyCommandResult, toSurveyUiError } from "@/features/surveys";
+import { type ChecklistStarted, type SurveyCommandResult, toSurveyUiError } from "@/features/surveys";
 
 import { add, isBusy, remove } from "../lib/command-lock";
 import { detailFailureAction } from "../lib/detail-failure";
-import { applySurveyCommandResult, mergeNoteResult, mergeSummary } from "../lib/detail-merge";
+import { applyChecklistStart, applySurveyCommandResult, mergeNoteResult, mergeSummary } from "../lib/detail-merge";
 import { lastListUrl, listFlash } from "../lib/drafts";
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import { viewerOf } from "../lib/viewer";
@@ -219,6 +219,17 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
     [userId, leadId],
   );
 
+  const applyChecklistStarted = useCallback(
+    (result: ChecklistStarted) => {
+      setLoaded((prev) =>
+        prev !== null && prev.userId === userId && prev.leadId === leadId
+          ? { ...prev, lead: applyChecklistStart(prev.lead, result) }
+          : prev,
+      );
+    },
+    [userId, leadId],
+  );
+
   const applyNoteResult = useCallback(
     (result: LeadNoteResult) => {
       setLoaded((prev) =>
@@ -301,6 +312,7 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
     survey,
     reloadSurvey,
     applySurveyResult,
+    applyChecklistStarted,
     reload,
     applyNoteResult,
     applyCommandResult,

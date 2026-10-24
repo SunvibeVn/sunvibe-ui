@@ -19,6 +19,7 @@ import { useLeadDetail } from "../lead-detail-context";
 
 import { type AppointmentAction, AppointmentCard } from "./appointment-card";
 import { AppointmentHistory } from "./appointment-history";
+import { ChecklistAction } from "./checklist-action";
 import { BookDialog } from "./book-dialog";
 import { CancelDialog } from "./cancel-dialog";
 import { ChangeDialog } from "./change-dialog";
@@ -35,7 +36,7 @@ const NO_ITEMS: readonly never[] = [];
 
 /**
  * The Survey section of the lead detail (spec 6.1, A-20), between the 2x2 grid and History, anchor `#survey`: the top
- * action (book, re-survey or the reason booking is blocked; resume), the scheduled appointment with its buttons, the
+ * action (book, re-survey or the reason booking is blocked; resume; the checklist action of the current visit), the scheduled appointment with its buttons, the
  * earlier appointments collapsed and the requirement changes. Loading, empty and error states. Every button waits
  * while any command of the page runs (CR-2).
  */
@@ -130,6 +131,7 @@ export function SurveySection() {
             </Button>
           )}
           {showBlocked && <p className="text-sm text-slate-600">{t(`survey.blocked.${blockedBy}`)}</p>}
+          <ChecklistAction block={block} />
         </div>
 
         {gone && <Alert>{t("survey.appointmentChanged")}</Alert>}

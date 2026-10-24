@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,6 +12,7 @@ import type { CommandMessage } from "../lib/command-flow";
 import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";
 import { entryDraftOpen, entryTargets } from "../lib/history-entry";
 import { historyActivityText } from "../lib/history-activity-text";
+import { collapseChecklistSaves, collapsedSavesText, type HistoryRow as HistoryRowModel } from "../lib/history-collapse";
 import { historyStatus } from "../lib/history-status";
 import { isClosedLeadStatus, type LeadActivity } from "../types";
 
@@ -62,6 +63,58 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
 }
 
 /**
+ * Consecutive checklist saves of one actor on one checklist as one line (survey-checklist A-21): "Checklist #m: k
+ * saves by <name> (HH:mm–HH:mm)"; expanding it lists every save as its own row.
+ */
+function SavesRow({ row, withAction }: { row: Extract<HistoryRowModel, { kind: "saves" }>; withAction: boolean }) {
+  const t = useTranslations("OwnerLeads");
+  const [open, setOpen] = useState(false);
+  const label = (column: "no" | "updated" | "activity" | "pic" | "status") => t(`history.columns.${column}`);
+  const lastNo = row.firstNo + row.count - 1;
+  return (
+    <>
+      <tr role="row" className={HISTORY_ROW}>
+        <td role="cell" data-label={label("no")} className={`${HISTORY_CELL} text-slate-500`}>
+          {row.firstNo}–{lastNo}
+        </td>
+        <td role="cell" data-label={label("updated")} className={`${HISTORY_CELL} whitespace-nowrap`}>
+          {row.lastAt === "" ? "" : formatDateTime(row.lastAt)}
+        </td>
+        <td role="cell" data-label={label("activity")} className={`${HISTORY_CELL} break-words`}>
+          <span className="min-w-0">
+            {collapsedSavesText(row, t)}{" "}
+            <button
+              type="button"
+              className="whitespace-nowrap text-sm font-medium text-violet-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600"
+              aria-expanded={open}
+              onClick={() => setOpen((value) => !value)}
+            >
+              {open ? t("history.hideSaves") : t("history.showSaves", { count: row.count })}
+            </button>
+          </span>
+        </td>
+        <td role="cell" data-label={label("pic")} className={HISTORY_CELL}>
+          {row.actorName ?? t("history.actorUnknown")}
+        </td>
+        <td role="cell" data-label={label("status")} className={HISTORY_CELL}>
+          <span className="text-slate-500">{t("history.noStatus")}</span>
+        </td>
+        {withAction && <td role="cell" className={`${HISTORY_CELL} max-xl:hidden`} />}
+      </tr>
+      {open &&
+        row.entries.map((entry, index) => (
+          <HistoryRow
+            key={`${entry.occurredAt ?? ""}-${index}`}
+            activity={entry}
+            no={row.firstNo + index}
+            withAction={withAction}
+          />
+        ))}
+    </>
+  );
+}
+
+/**
  * The history of the lead as one table, oldest first as the API sends it (US-4 AC-5, owner 2026-10-23, D-4):
  * `# | UPDATED | ACTIVITY | PIC | STATUS | ACTION`. The "+" opens one new row at the end (`HistoryEntryForm`); it is
  * there on an open lead only. Text typed for a lead that closed meanwhile stays readable and copyable (W11-36) until
@@ -80,6 +133,7 @@ export function LeadHistory({ activities }: { activities: readonly LeadActivity[
   /** The last note was refused because the lead closed meanwhile (409), with its support code. */
   const [refused, setRefused] = useState<{ correlationId?: string } | null>(null);
 
+  const rows = useMemo(() => collapseChecklistSaves(activities), [activities]);
   const closed = isClosedLeadStatus(lead.status);
   const canAdd = entryTargets(lead.status).length > 0;
   const rowOpen = canAdd && open;
@@ -146,14 +200,18 @@ export function LeadHistory({ activities }: { activities: readonly LeadActivity[
                 </td>
               </tr>
             )}
-            {activities.map((activity, index) => (
-              <HistoryRow
-                key={`${activity.occurredAt ?? ""}-${activity.type ?? ""}-${index}`}
-                activity={activity}
-                no={index + 1}
-                withAction={canAdd}
-              />
-            ))}
+            {rows.map((row) =>
+              row.kind === "saves" ? (
+                <SavesRow key={`saves-${row.firstNo}`} row={row} withAction={canAdd} />
+              ) : (
+                <HistoryRow
+                  key={`${row.entry.occurredAt ?? ""}-${row.entry.type ?? ""}-${row.no}`}
+                  activity={row.entry}
+                  no={row.no}
+                  withAction={canAdd}
+                />
+              ),
+            )}
             {rowOpen && (
               <HistoryEntryForm
                 no={activities.length + 1}

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import type { SurveyAppointment, SurveyResumption } from "@/features/surveys";
 import { formatDate, formatDateTime } from "@/lib/format/vietnam-time";
 
+import { ChecklistLines } from "./checklist-lines";
 import { RevisionList } from "./revision-list";
 import { SurveyPlace } from "./survey-place";
 
@@ -27,7 +28,7 @@ type AppointmentHistoryProps = {
 /**
  * Earlier appointments, newest first, collapsed (spec 6.1): a visit with performer, arrival, own or proxy record,
  * recorder and recording time, note, proxy reason and basis; a cancellation with reason, description, by and at; the
- * revisions of each. The survey resumptions follow.
+ * checklists of a visit (survey-checklist spec 6.1); the revisions of each. The survey resumptions follow.
  */
 export function AppointmentHistory({ appointments, resumptions }: AppointmentHistoryProps) {
   const t = useTranslations("OwnerLeads");
@@ -91,6 +92,7 @@ export function AppointmentHistory({ appointments, resumptions }: AppointmentHis
                   </>
                 )}
               </dl>
+              <ChecklistLines appointment={appointment} />
               <RevisionList revisions={appointment.revisions ?? []} />
             </article>
           );

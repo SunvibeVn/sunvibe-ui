@@ -17,6 +17,8 @@ import { createListFlash } from "./list-flash";
  * `assignNote`: the assign dialog.
  * `survey*` and `requirement`: the survey dialogs and the requirement change; each keeps all its fields as one JSON
  * text (`writeFormDraft`), the change dialog with the appointment version it was typed for.
+ * `checklistIntake`: the intake declaration of a checklist start by someone other than the performer.
+ * `checklist:<checklistId>:<group>`: the edits of one checklist group (`checklist/checklist-draft.ts`).
  */
 export type DraftForm =
   | "activity"
@@ -29,7 +31,9 @@ export type DraftForm =
   | "surveyCancel"
   | "surveyVisit"
   | "surveyResume"
-  | "requirement";
+  | "requirement"
+  | "checklistIntake"
+  | `checklist:${string}`;
 
 export type DraftKey = { userId: string; leadId: string; form: DraftForm };
 
@@ -44,6 +48,8 @@ export type DraftStore = {
   clear(key: DraftKey, submitted?: string): void;
   /** Drops every draft not owned by `userId`; `null` drops them all. */
   resetFor(userId: string | null): void;
+  /** Drops every draft whose key matches (a lead's checklist drafts after a 404). */
+  clearMatching(match: (key: DraftKey) => boolean): void;
   /** Called after each change that added, changed or removed a draft. */
   subscribe(listener: () => void): () => void;
 };
@@ -83,6 +89,18 @@ export function createDraftStore(): DraftStore {
       const id = idOf(key);
       if (submitted !== undefined && drafts.get(id)?.value !== submitted) return;
       if (drafts.delete(id)) notify();
+    },
+
+    clearMatching(match) {
+      let changed = false;
+      for (const id of [...drafts.keys()]) {
+        const [userId, leadId, form] = JSON.parse(id) as [string, string, DraftForm];
+        if (match({ userId, leadId, form })) {
+          drafts.delete(id);
+          changed = true;
+        }
+      }
+      if (changed) notify();
     },
 
     resetFor(userId) {
@@ -213,6 +231,8 @@ export function createTabMemory() {
 
 const tabMemory = createTabMemory();
 const draftStore = tabMemory.drafts;
+/** The drafts of this tab, for the checklist page that reads and rebases several group drafts at once. */
+export const tabDrafts: DraftStore = draftStore;
 const sessionGuard = tabMemory.guard;
 /** The list's one-shot notice of this tab (C-37). */
 export const listFlash = tabMemory.listFlash;
