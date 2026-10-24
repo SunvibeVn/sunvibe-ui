@@ -119,7 +119,7 @@ test.describe("SALE in the workspace", () => {
     await expect(workspaceHeaderLink(page)).toHaveCount(0);
     // C-42: the menu item; a SALE has no territories item.
     const menu = page.getByRole("navigation", { name: T.menuLabel });
-    await expect(menu.getByRole("link")).toHaveText([T.menuOwnerLeads]);
+    await expect(menu.getByRole("link")).toHaveText([T.menuOwnerLeads, T.menuSurveys]);
     // W14-23: the workspace subtree is English, the document stays Vietnamese.
     await expect(page.locator('div[lang="en"]').getByRole("heading", { level: 1, name: T.listTitle })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "vi");
@@ -150,20 +150,21 @@ test.describe("SALE in the workspace", () => {
     expect(await statusBoxLabels(page)).toEqual([
       T.status.ASSIGNED,
       T.status.CONTACTED,
+      T.status.SURVEY_SCHEDULED,
       T.status.ON_HOLD,
       T.status.DUPLICATE,
       T.status.REJECTED,
       T.status.WITHDRAWN,
       T.showClosed,
     ]);
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
 
     const sent = calls.slice(from);
     const listCalls = sent.filter(isListCall);
     expect(listCalls.length, "list calls").toBeGreaterThan(0);
     for (const call of listCalls) {
       expect(call.url.searchParams.get("scope"), "scope of a list call").toBe("mine");
-      expect(call.url.searchParams.getAll("status"), "status of a list call").toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD"]);
+      expect(call.url.searchParams.getAll("status"), "status of a list call").toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
       expect(call.url.searchParams.has("assigneeUserId"), "assigneeUserId on a list call").toBe(false);
     }
     expect(sent.filter((call) => call.url.searchParams.get("scope") !== null && call.url.searchParams.get("scope") !== "mine")).toHaveLength(0);
@@ -172,8 +173,9 @@ test.describe("SALE in the workspace", () => {
   });
 
   test("W11-27, W14-30 and W14-33: the table has the C-46 columns and never a next action, assignee, phone, email or address", async () => {
-    // The SALE sees exactly these six open leads; the others (L1, L5, L6, L10) are not theirs.
-    for (const lead of [2, 3, 4, 7, 8, 9].map(fixture.lead)) await expect(leadLink(page, lead)).toBeVisible();
+    // The SALE sees exactly these eight open leads (L11 and L12 of the survey seed too); the others (L1, L5, L6,
+    // L10) are not theirs.
+    for (const lead of [2, 3, 4, 7, 8, 9, 11, 12].map(fixture.lead)) await expect(leadLink(page, lead)).toBeVisible();
     for (const lead of [1, 5, 6, 10].map(fixture.lead)) await expect(leadLink(page, lead)).toHaveCount(0);
 
     const table = page.getByRole("table", { name: T.listCaption });
@@ -276,12 +278,12 @@ test.describe("SALE in the workspace", () => {
 
     await clear.click();
     await expect(statusBox(page, T.status.WITHDRAWN)).not.toBeChecked();
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
   });
 
   test("W11-42: hovering the rows sends no detail request; opening a lead sends one", async () => {
     const from = calls.length;
-    for (const lead of [2, 3, 4, 7, 8, 9].map(fixture.lead)) await leadRow(page, lead).hover();
+    for (const lead of [2, 3, 4, 7, 8, 9, 11, 12].map(fixture.lead)) await leadRow(page, lead).hover();
     // A negative check needs a short settle: a hover prefetch would have started by now.
     await page.waitForTimeout(750);
     expect(calls.slice(from).filter((call) => isDetailCall(call)), "detail requests after hovering").toHaveLength(0);
@@ -497,12 +499,12 @@ test.describe("SALE in the workspace", () => {
 
     // Empty state: no lead of the SALE is "Owner Withdrawn" (the open boxes are cleared one by one after it is ticked).
     await clickStatusBox(page, T.status.WITHDRAWN);
-    for (const status of [T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD]) await clickStatusBox(page, status);
+    for (const status of [T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]) await clickStatusBox(page, status);
     await expect(statusBox(page, T.status.WITHDRAWN)).toBeChecked();
     await expect(byText(page, T.emptyFiltered)).toBeVisible();
     await page.getByRole("link", { name: T.clearFilters }).click();
     await expect(leadLink(page, L2)).toBeVisible();
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
 
     // The menu drawer (phone only): focus goes to the first link, Esc closes it, focus returns to the menu button.
     const menuButton = header(page).locator('button[aria-controls="workspace-drawer"]');
@@ -572,6 +574,8 @@ test.describe("SALE in the workspace", () => {
   });
 
   test("W11-43: a typed history entry and its status survive an unavailable session; a sign-out leaves no lead data (W11-41)", async () => {
+    await page.getByRole("link", { name: T.back }).click();
+    await expectListPage(page);
     await openLead(page, L9);
     const draft = uniqueText("entry draft");
 

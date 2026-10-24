@@ -55,13 +55,15 @@ export type AssigneeRole = NonNullable<EligibleAssignee["roles"]>[number];
 export type PriceUnit = NonNullable<Schemas["AskingPriceResponse"]["unit"]>;
 
 /**
- * The seven statuses of the W9 queue. The API enum also lists later statuses (VALIDATING, SURVEY_SCHEDULED, QUALIFIED,
- * AGREEMENT_PENDING, ONBOARDED) that W9 never produces; the workspace labels and offers only these seven.
+ * The eight statuses the workspace knows, in chip order (survey-schedule A-21). The API enum also lists later statuses
+ * (VALIDATING, QUALIFIED, AGREEMENT_PENDING, ONBOARDED) that nothing produces yet; the workspace labels and offers only
+ * these eight.
  */
 export const LEAD_STATUSES = [
   "NEW",
   "ASSIGNED",
   "CONTACTED",
+  "SURVEY_SCHEDULED",
   "ON_HOLD",
   "DUPLICATE",
   "REJECTED",
@@ -71,7 +73,13 @@ export const LEAD_STATUSES = [
 export type LeadStatus = (typeof LEAD_STATUSES)[number];
 
 /** Statuses a lead can still leave. */
-export const OPEN_STATUSES = ["NEW", "ASSIGNED", "CONTACTED", "ON_HOLD"] as const satisfies readonly LeadStatus[];
+export const OPEN_STATUSES = [
+  "NEW",
+  "ASSIGNED",
+  "CONTACTED",
+  "SURVEY_SCHEDULED",
+  "ON_HOLD",
+] as const satisfies readonly LeadStatus[];
 /** Statuses a lead never leaves (acquisition BR-3). */
 export const CLOSED_STATUSES = ["DUPLICATE", "REJECTED", "WITHDRAWN"] as const satisfies readonly LeadStatus[];
 

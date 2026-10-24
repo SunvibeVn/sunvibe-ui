@@ -60,7 +60,7 @@ describe("assigneeListHref (territories notice and detail assignee link, A-6, W1
 
   it("opens that person's open leads, never an empty Unassigned list (Review Focus 1)", () => {
     const state = stateOf(assigneeListHref("U1", leader).split("?")[1]);
-    expect(state).toEqual({ scope: "all", statuses: ["ASSIGNED", "CONTACTED", "ON_HOLD"], assignee: "U1", page: 1 });
+    expect(state).toEqual({ scope: "all", statuses: ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"], assignee: "U1", page: 1 });
   });
 
   it("never puts an id that is not a plain id into the URL", () => {

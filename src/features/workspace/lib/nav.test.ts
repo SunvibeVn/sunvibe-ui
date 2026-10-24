@@ -3,24 +3,25 @@ import en from "@/i18n/messages/en.json";
 import { STAFF_WORKSPACE_ROLES, WORKSPACE_HOME, isStaff, workspaceNav } from "./nav";
 
 const OWNER_LEADS = { href: "/workspace/owner-leads", labelKey: "ownerLeads" };
+const SURVEYS = { href: "/workspace/surveys", labelKey: "surveys" };
 const TERRITORIES = { href: "/workspace/settings/territories", labelKey: "territories" };
 
 describe("workspaceNav", () => {
-  it("workspaceNav_sale_ownerLeadsOnly", () => {
-    expect(workspaceNav(["SALE"])).toEqual([OWNER_LEADS]);
+  it("workspaceNav_sale_ownerLeadsAndSurveys", () => {
+    expect(workspaceNav(["SALE"])).toEqual([OWNER_LEADS, SURVEYS]);
   });
 
-  it("workspaceNav_saleLeaderAndSalesManager_ownerLeadsOnly", () => {
-    expect(workspaceNav(["SALE_LEADER"])).toEqual([OWNER_LEADS]);
-    expect(workspaceNav(["SALES_MANAGER"])).toEqual([OWNER_LEADS]);
+  it("workspaceNav_saleLeaderAndSalesManager_ownerLeadsAndSurveys", () => {
+    expect(workspaceNav(["SALE_LEADER"])).toEqual([OWNER_LEADS, SURVEYS]);
+    expect(workspaceNav(["SALES_MANAGER"])).toEqual([OWNER_LEADS, SURVEYS]);
   });
 
-  it("workspaceNav_admin_addsTerritories", () => {
-    expect(workspaceNav(["ADMIN"])).toEqual([OWNER_LEADS, TERRITORIES]);
+  it("workspaceNav_admin_addsTerritoriesAfterSurveys", () => {
+    expect(workspaceNav(["ADMIN"])).toEqual([OWNER_LEADS, SURVEYS, TERRITORIES]);
   });
 
   it("workspaceNav_superAdmin_countsAsAdmin", () => {
-    expect(workspaceNav(["SUPER_ADMIN"])).toEqual([OWNER_LEADS, TERRITORIES]);
+    expect(workspaceNav(["SUPER_ADMIN"])).toEqual([OWNER_LEADS, SURVEYS, TERRITORIES]);
   });
 
   it("workspaceNav_customerOrNoRole_isEmpty", () => {
@@ -32,9 +33,9 @@ describe("workspaceNav", () => {
 describe("workspaceNav labels (C-42, A-4)", () => {
   const labels = (roles: string[]) => workspaceNav(roles).map((item) => en.Workspace.menu[item.labelKey]);
 
-  it("SALE sees SUPPLY LEADS, ADMIN also TERRITORIES", () => {
-    expect(labels(["SALE"])).toEqual(["SUPPLY LEADS"]);
-    expect(labels(["ADMIN"])).toEqual(["SUPPLY LEADS", "TERRITORIES"]);
+  it("SALE sees SUPPLY LEADS and SURVEYS, ADMIN also TERRITORIES (survey-schedule spec 6.5)", () => {
+    expect(labels(["SALE"])).toEqual(["SUPPLY LEADS", "SURVEYS"]);
+    expect(labels(["ADMIN"])).toEqual(["SUPPLY LEADS", "SURVEYS", "TERRITORIES"]);
   });
 });
 

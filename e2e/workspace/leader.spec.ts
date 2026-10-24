@@ -75,6 +75,7 @@ const ALL_BOXES = [
   T.status.NEW,
   T.status.ASSIGNED,
   T.status.CONTACTED,
+  T.status.SURVEY_SCHEDULED,
   T.status.ON_HOLD,
   T.status.DUPLICATE,
   T.status.REJECTED,
@@ -82,7 +83,7 @@ const ALL_BOXES = [
   T.showClosed,
 ];
 const NO_NEW_BOXES = ALL_BOXES.slice(1);
-const OPEN_DEFAULT = [T.status.ASSIGNED, T.status.CONTACTED, T.status.ON_HOLD];
+const OPEN_DEFAULT = [T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD];
 
 /** The options of the new history row's STATUS select (D-4). */
 const statusOptions = (page: Page): Locator => entryStatus(page).locator("option");
@@ -480,9 +481,10 @@ test.describe("SALE_LEADER in the workspace", () => {
     await changeStatusInSecondPage(context, L2, T.status.ON_HOLD);
 
     await closeConfirmDialog(page).getByRole("button", { name: T.confirm }).click();
-    // The lead reloads with another status: the confirmation closes and the message stays under the row.
-    await expect(historySection(page).getByText(T.concurrent)).toBeVisible();
+    // The lead reloads with another status: the confirmation closes and the message stays under the row. The dialog
+    // shows the message too while the reload runs, so wait for it to close first.
     await expect(closeConfirmDialog(page)).toHaveCount(0);
+    await expect(historySection(page).getByText(T.concurrent)).toBeVisible();
     await expect(detailHeader(page)).toContainText(T.status.ON_HOLD);
     // The row keeps the typed reason.
     await expect(entryActivity(page)).toHaveValue(reason);

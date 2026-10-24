@@ -10,9 +10,11 @@ import { toApiQuery, type ListState } from "../lib/list-url-state";
 import {
   addNote,
   assignLead,
+  changeIntent,
   changeStatus,
   findLeadByRequestCode,
   getLead,
+  getLeadSurvey,
   listAssignees,
   listLeads,
   listWards,
@@ -239,5 +241,64 @@ describe("lookups", () => {
       },
     });
     await expect(listWards({ client })).resolves.toEqual({ ok: false, kind: "network" });
+  });
+});
+
+describe("changeIntent (survey-schedule US-5, spec 7.1)", () => {
+  const basis = { confirmedOn: "2026-10-23", text: "Owner said so on the phone" };
+
+  it("posts the new intent with its price", async () => {
+    const { sent, deps } = fakeServer(() => json({ id: "L12", status: "CONTACTED", version: 2 }));
+    const body = {
+      expectedVersion: 1,
+      newIntent: "LONG_TERM_RENT" as const,
+      askingPrice: { amount: "12000000", currency: "VND" as const, unit: "MONTH" as const },
+      reason: "Owner wants long stays",
+      basis,
+    };
+    const result = await changeIntent("L12", body, deps);
+    expect(result.ok).toBe(true);
+    expect(sent[0].method).toBe("POST");
+    expect(sent[0].url.pathname).toBe("/api/v1/staff/owner-leads/L12/intent-changes");
+    expect(sent[0].body).toEqual(body);
+  });
+
+  it("sends askingPrice: null explicitly for no price (the key is required)", async () => {
+    const { sent, deps } = fakeServer();
+    await changeIntent(
+      "L12",
+      { expectedVersion: 1, newIntent: "SHORT_TERM_RENT", askingPrice: null, reason: "r", basis },
+      deps,
+    );
+    expect(sent[0].body).toHaveProperty("askingPrice", null);
+  });
+});
+
+describe("getLeadSurvey (spec 6.1: loaded with the detail, one GET per open)", () => {
+  it("reads the survey block and shares an in-flight read of the same user and lead", async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const { sent, deps } = fakeServer(async () => {
+      await gate;
+      return json({ leadId: "L1", appointments: [] });
+    });
+
+    const first = getLeadSurvey("L1", "U1", deps);
+    const second = getLeadSurvey("L1", "U1", deps);
+    const forOther = getLeadSurvey("L1", "U2", deps);
+    await Promise.resolve();
+    expect(first).toBe(second);
+    expect(forOther).not.toBe(first);
+    release();
+    await Promise.all([first, second, forOther]);
+    expect(sent.map((s) => s.url.pathname)).toEqual([
+      "/api/v1/staff/owner-leads/L1/survey",
+      "/api/v1/staff/owner-leads/L1/survey",
+    ]);
+
+    await getLeadSurvey("L1", "U1", deps);
+    expect(sent).toHaveLength(3);
   });
 });

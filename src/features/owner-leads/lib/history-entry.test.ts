@@ -20,6 +20,13 @@ describe("entryTargets", () => {
     expect(entryTargets("NEW")).toEqual([KEEP_STATUS, "DUPLICATE", "REJECTED", "WITHDRAWN"]);
   });
 
+  it("offers On Hold and the three closing statuses from Survey Scheduled, never Survey Scheduled (W15-35)", () => {
+    expect(entryTargets("SURVEY_SCHEDULED")).toEqual([KEEP_STATUS, "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
+    for (const status of ["NEW", "ASSIGNED", "CONTACTED", "ON_HOLD"]) {
+      expect(entryTargets(status)).not.toContain("SURVEY_SCHEDULED");
+    }
+  });
+
   it("offers nothing on a closed lead or an unknown status", () => {
     expect(entryTargets("REJECTED")).toEqual([]);
     expect(entryTargets(undefined)).toEqual([]);

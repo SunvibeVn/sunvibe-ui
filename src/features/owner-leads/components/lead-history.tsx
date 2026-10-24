@@ -11,8 +11,8 @@ import { formatDateTime } from "../lib/format";
 import type { CommandMessage } from "../lib/command-flow";
 import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";
 import { entryDraftOpen, entryTargets } from "../lib/history-entry";
+import { historyActivityText } from "../lib/history-activity-text";
 import { historyStatus } from "../lib/history-status";
-import { activityLabelKey } from "../lib/labels";
 import { isClosedLeadStatus, type LeadActivity } from "../types";
 
 import { CommandMessageView } from "./command-message";
@@ -32,7 +32,6 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
   const actor = historyActor(activity);
   const pic = actor.kind === "name" ? actor.name : t(HISTORY_ACTOR_KEY[actor.kind]);
   const when = activity.occurredAt === undefined ? "" : formatDateTime(activity.occurredAt);
-  const note = activity.note?.trim();
   const status = historyStatus(activity);
   const label = (column: "no" | "updated" | "activity" | "pic" | "status") => t(`history.columns.${column}`);
   return (
@@ -44,7 +43,7 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
         {when}
       </td>
       <td role="cell" data-label={label("activity")} className={`${HISTORY_CELL} whitespace-pre-wrap break-words`}>
-        <span className="min-w-0">{note ? activity.note : t(activityLabelKey(activity.type))}</span>
+        <span className="min-w-0">{historyActivityText(activity, t)}</span>
       </td>
       <td role="cell" data-label={label("pic")} className={HISTORY_CELL}>
         {pic}

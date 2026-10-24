@@ -30,6 +30,7 @@
       "open": "Open menu",
       "close": "Close menu",
       "ownerLeads": "SUPPLY LEADS",
+      "surveys": "SURVEYS",
       "territories": "TERRITORIES"
     },
     "header": {
@@ -49,6 +50,7 @@
       "NEW": "Unassigned",
       "ASSIGNED": "Assigned",
       "CONTACTED": "Contacted",
+      "SURVEY_SCHEDULED": "Survey Scheduled",
       "ON_HOLD": "On Hold",
       "DUPLICATE": "Duplicate",
       "REJECTED": "Declined",
@@ -79,7 +81,15 @@
       "ASSIGNED": "Assigned",
       "REASSIGNED": "Reassigned",
       "STATUS_CHANGED": "Status changed",
-      "NOTE_ADDED": "Note"
+      "NOTE_ADDED": "Note",
+      "SURVEY_BOOKED": "Survey booked",
+      "SURVEY_CHANGED": "Survey changed",
+      "SURVEY_CONFIRMED": "Owner confirmation recorded",
+      "SURVEY_UNCONFIRMED": "Owner confirmation removed",
+      "SURVEY_CANCELLED": "Survey cancelled",
+      "SURVEY_VISITED": "Site visit recorded",
+      "SURVEY_RESUMED": "Survey resumed",
+      "INTENT_CHANGED": "Requirement changed"
     },
     "role": {
       "SALE": "Sale",
@@ -306,7 +316,255 @@
         "activityTooLong": "The activity has at most {max} characters."
       }
     },
-    "counter": "{count} / {max}"
+    "counter": "{count} / {max}",
+    "survey": {
+      "title": "Survey",
+      "loading": "Loading the survey…",
+      "loadingWards": "Loading wards…",
+      "loadFailed": "The survey could not be loaded.",
+      "appointmentChanged": "This appointment changed meanwhile, so the form was closed. Check the appointment below.",
+      "empty": "No survey appointments yet",
+      "book": "Book survey",
+      "bookResurvey": "Book re-survey",
+      "resume": "Resume survey",
+      "blocked": {
+        "NO_ASSIGNEE": "Assign the lead first",
+        "LEAD_STATUS": "A survey cannot be booked for this lead now.",
+        "INTENT": "Change the requirement to a rental before booking",
+        "SURVEYOR_INELIGIBLE": "The assignee can no longer take leads. Reassign the lead first.",
+        "UNKNOWN": "A survey cannot be booked for this lead now."
+      },
+      "kind": {
+        "FIRST": "Survey",
+        "RESURVEY": "Re-survey"
+      },
+      "appointmentTitle": "{kind} #{no}",
+      "follows": "Follows visit #{no}",
+      "status": {
+        "SCHEDULED": "Scheduled",
+        "VISITED": "Visited",
+        "CANCELLED": "Cancelled"
+      },
+      "fields": {
+        "when": "When",
+        "duration": "Duration",
+        "surveyor": "Surveyor",
+        "meetingPlace": "Meeting place",
+        "leadPlace": "Lead address",
+        "locationReason": "Why another place",
+        "accessNote": "Access note",
+        "onSiteContact": "On-site contact",
+        "resurveyReason": "Re-survey reason",
+        "confirmation": "Owner confirmation",
+        "bookedBy": "Booked by"
+      },
+      "minutes": "{minutes} min",
+      "personTime": "{name} · {time}",
+      "contact": "{name} · {role}",
+      "unknownPerson": "Unknown",
+      "showMap": "Open map",
+      "cannotBePerformed": "Cannot be performed: reassign the lead",
+      "confirmation": {
+        "confirmed": "Owner confirmed",
+        "notConfirmed": "Not confirmed by the owner",
+        "needsReconfirmation": "Needs reconfirmation",
+        "withCause": "Needs reconfirmation ({cause})",
+        "cause": {
+          "TIME_CHANGED": "time changed",
+          "LOCATION_CHANGED": "place changed",
+          "REASSIGNED": "lead reassigned",
+          "USER": "confirmation removed"
+        }
+      },
+      "actions": {
+        "edit": "Edit",
+        "confirm": "Mark owner confirmed",
+        "unconfirm": "Remove confirmation",
+        "visit": "Record visit",
+        "cancel": "Cancel appointment"
+      },
+      "earlier": "Earlier appointments ({count})",
+      "visit": {
+        "performer": "Visited by",
+        "arrivedAt": "Arrived",
+        "recordKind": {
+          "OWN": "Recorded by the surveyor",
+          "PROXY": "Recorded by a manager"
+        },
+        "recordedBy": "Recorded by",
+        "note": "Visit note",
+        "proxyReason": "Reason for the record",
+        "basis": "Basis"
+      },
+      "basisValue": "{date}: {text}",
+      "cancelReason": {
+        "OWNER_CANCELLED": "Owner cancelled",
+        "STAFF_CANCELLED": "Staff cancelled",
+        "OWNER_ABSENT": "Owner not present",
+        "NO_ACCESS": "Could not get in",
+        "OTHER": "Other",
+        "LEAD_ON_HOLD": "Lead put on hold",
+        "LEAD_CLOSED": "Lead closed",
+        "INTENT_CHANGED": "Requirement changed"
+      },
+      "cancellation": {
+        "reason": "Cancel reason",
+        "description": "Description",
+        "by": "Cancelled by"
+      },
+      "revisions": {
+        "title": "Changes",
+        "item": "Version {no}",
+        "reason": "Reason",
+        "by": "Changed by"
+      },
+      "resumptions": {
+        "title": "Survey resumed",
+        "item": "Resumed for visit #{no}",
+        "reason": "Reason",
+        "basis": "Basis",
+        "by": "By"
+      },
+      "requirementChanges": {
+        "title": "Requirement changes",
+        "change": "{from} → {to}",
+        "noPrice": "No price",
+        "price": "Price",
+        "reason": "Reason",
+        "basis": "Owner agreement",
+        "by": "By",
+        "cycle": "Requirement cycle {cycle}"
+      },
+      "form": {
+        "start": "Start (Vietnam time)",
+        "shownVietnam": "{value} Vietnam time",
+        "duration": "Duration",
+        "address": "Meeting address",
+        "ward": "Ward / commune",
+        "wardPlaceholder": "Choose a ward / commune",
+        "wardsFailed": "The ward list could not be loaded.",
+        "useLeadPlace": "Use the lead address",
+        "placeDiffers": "This place is not the lead address.",
+        "locationReason": "Why meet at another place",
+        "accessNote": "Access note",
+        "onSiteName": "On-site contact name",
+        "onSiteRole": "On-site contact role",
+        "reminder": "Do not write door codes, passwords or phone numbers",
+        "ownerConfirmed": "Owner confirmed",
+        "ownerConfirmedHint": "Tick only when the owner has agreed to this time.",
+        "confirmationNote": "Confirmation note",
+        "resurveyReason": "Re-survey reason",
+        "reason": "Reason for the change",
+        "removesConfirmation": "Changing the time or the place removes the owner confirmation.",
+        "summary": "Summary",
+        "summaryWhen": "{time}, {minutes} min",
+        "save": "Save",
+        "saving": "Saving…",
+        "close": "Close",
+        "note": "Note",
+        "map": {
+          "label": "Pin on the map",
+          "hint": "Click the map to set a pin; drag the pin to adjust it. Optional.",
+          "loading": "Loading the map…",
+          "failed": "The map could not be loaded. You can still save without a pin.",
+          "specialZone": "No map pin for the special zone {name}.",
+          "clear": "Remove pin",
+          "locate": "Use current location",
+          "locating": "Getting the location…",
+          "pinOutOfArea": "The pin is outside the area Sunvibe serves.",
+          "outOfArea": "Your current location is outside the area Sunvibe serves.",
+          "denied": "Location access was not allowed. You can still save without a pin.",
+          "locationFailed": "The current location could not be read. You can still save without a pin.",
+          "unsupported": "This browser cannot share its location."
+        }
+      },
+      "overlap": {
+        "checking": "Checking the surveyor's other appointments…",
+        "title": "The surveyor has other appointments at this time",
+        "text": "You can still save.",
+        "item": "{code} · {time} · {minutes} min",
+        "failed": "Other appointments could not be checked. You can still save."
+      },
+      "bookDialog": {
+        "title": "Book survey",
+        "titleResurvey": "Book re-survey"
+      },
+      "changeDialog": {
+        "title": "Edit appointment"
+      },
+      "confirmDialog": {
+        "titleConfirm": "Mark owner confirmed",
+        "titleUnconfirm": "Remove confirmation",
+        "textConfirm": "Record that the owner agreed to this appointment.",
+        "textUnconfirm": "The appointment will show as needing reconfirmation."
+      },
+      "cancelDialog": {
+        "title": "Cancel appointment",
+        "reason": "Cancel reason",
+        "reasonPlaceholder": "Choose a reason",
+        "description": "Description"
+      },
+      "visitDialog": {
+        "title": "Record visit",
+        "arrivedAt": "Arrival time (Vietnam time)",
+        "note": "Visit note",
+        "hint": "Record a visit only when you reached the property or its entrance, even if you could not go in. If the property is not at the lead address, say where you went.",
+        "performer": "Who reached the property",
+        "proxyNotice": "This record is made for someone else: give the reason and the basis.",
+        "proxyReason": "Reason for the record",
+        "basisDate": "Date of the confirmation",
+        "basisText": "How it was confirmed"
+      },
+      "resumeDialog": {
+        "title": "Resume survey",
+        "reason": "Reason",
+        "basisDate": "Date the owner confirmed",
+        "basisText": "What the owner confirmed",
+        "basisHint": "The owner confirmed that the requirement and scope have not changed."
+      },
+      "problems": {
+        "required": "Fill in this field.",
+        "tooLong": "Use at most {max} characters.",
+        "phone": "Remove the phone number: it must not be stored here.",
+        "invalid": "Enter a valid value.",
+        "startTooEarly": "The start cannot be in the past.",
+        "startTooLate": "The start can be at most 90 days ahead.",
+        "arrivedTooLate": "The arrival cannot be in the future.",
+        "dateTooLate": "The date cannot be after today.",
+        "dateTooEarly": "The date is too early.",
+        "notAllowed": "Only a sale leader, a sales manager or an admin can record a visit for someone else."
+      },
+      "errors": {
+        "stale": "Someone else just updated this lead. The lead has been reloaded. Your text is kept.",
+        "alreadyScheduled": "This lead already has a scheduled survey.",
+        "notAllowed": "A survey cannot be booked for this lead now.",
+        "noCurrentVisit": "There is no visit to resume.",
+        "invalidTransition": "This action is not allowed in the lead's current status.",
+        "surveyorIneligible": "The assignee can no longer take leads. Reassign the lead first.",
+        "performerMismatch": "This person did not hold the appointment at that time.",
+        "nothingChanged": "Nothing changed.",
+        "badRequest": "Some details are not valid. Please check them.",
+        "forbidden": "You are not allowed to do this.",
+        "failed": "The survey could not be saved. Please try again."
+      },
+      "saved": "Saved."
+    },
+    "requirement": {
+      "button": "Change requirement",
+      "title": "Change requirement",
+      "current": "Current requirement: {intent}",
+      "newIntent": "New requirement",
+      "newIntentPlaceholder": "Choose a requirement",
+      "pricePerNight": "Price per night (VND)",
+      "pricePerMonth": "Price per month (VND)",
+      "price": "Price (VND)",
+      "noPrice": "No price until confirmed",
+      "reason": "Reason",
+      "basisDate": "Date the owner agreed",
+      "basisText": "How the owner agreed",
+      "warning": "This cancels the scheduled survey and starts a new requirement cycle. Earlier visits no longer count.",
+      "saved": "Requirement changed."
+    }
   },
   "SaleTerritories": {
     "title": "TERRITORIES",
@@ -374,6 +632,80 @@
       "ineligibleAssignee": "This person no longer takes leads. The staff list has been reloaded.",
       "badRequest": "Some details are not valid. Please check them.",
       "userIdInvalid": "The selected staff member is not valid."
+    }
+  },
+  "Surveys": {
+    "title": "Surveys",
+    "tabs": {
+      "label": "Survey lists",
+      "mine": "My Surveys",
+      "all": "All Surveys"
+    },
+    "filters": {
+      "surveyor": "Surveyor",
+      "allSurveyors": "All surveyors",
+      "loadFailed": "The staff list could not be loaded.",
+      "other": "Other staff member"
+    },
+    "groups": {
+      "OVERDUE": "Overdue",
+      "TODAY": "Today",
+      "UPCOMING": "Upcoming"
+    },
+    "columns": {
+      "when": "WHEN",
+      "duration": "DURATION",
+      "code": "CODE",
+      "owner": "OWNER",
+      "ward": "WARD / COMMUNE",
+      "surveyor": "SURVEYOR",
+      "confirmation": "CONFIRMATION",
+      "flag": "FLAG",
+      "action": "ACTION"
+    },
+    "kind": {
+      "FIRST": "Survey",
+      "RESURVEY": "Re-survey"
+    },
+    "minutes": "{minutes} min",
+    "confirmation": {
+      "confirmed": "Owner confirmed",
+      "notConfirmed": "Not confirmed by the owner",
+      "needsReconfirmation": "Needs reconfirmation",
+      "withCause": "Needs reconfirmation ({cause})",
+      "cause": {
+        "TIME_CHANGED": "time changed",
+        "LOCATION_CHANGED": "place changed",
+        "REASSIGNED": "lead reassigned",
+        "USER": "confirmation removed"
+      }
+    },
+    "flag": "Cannot be performed: reassign the lead",
+    "noFlag": "None",
+    "view": "View",
+    "viewLabel": "View the survey of lead {code}",
+    "unknown": "Unknown",
+    "caption": "Scheduled surveys",
+    "loading": "Loading surveys…",
+    "empty": {
+      "mine": "You have no scheduled surveys.",
+      "all": "No scheduled surveys.",
+      "filtered": "No scheduled surveys for this surveyor."
+    },
+    "pastEnd": "This page is empty.",
+    "firstPage": "Go to the first page",
+    "total": "{count, plural, one {# scheduled survey} other {# scheduled surveys}}",
+    "pagination": {
+      "label": "Survey pages",
+      "pageOf": "Page {page} of {total}",
+      "previous": "Previous",
+      "next": "Next"
+    },
+    "errors": {
+      "loadFailed": "Could not load the surveys.",
+      "forbidden": "You are not allowed to see these surveys.",
+      "retry": "Try again",
+      "supportCode": "Support code: {correlationId}"
     }
   }
 }

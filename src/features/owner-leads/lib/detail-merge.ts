@@ -1,4 +1,6 @@
-import type { LeadActivity, LeadDetail, LeadNoteResult, LeadSummary } from "../types";
+import type { SurveyCommandResult, SurveyHistoryEntry } from "@/features/surveys";
+
+import { isLeadStatus, type LeadActivity, type LeadDetail, type LeadNoteResult, type LeadSummary } from "../types";
 
 /**
  * Puts the fields a command answer (`LeadSummary`) carries onto the detail. Status and version stay when the answer
@@ -35,4 +37,45 @@ export function mergeNoteResult(detail: LeadDetail, result: LeadNoteResult): Lea
   const history = merged.activities ?? [];
   if (history.some((entry) => sameActivity(entry, activity))) return merged;
   return { ...merged, activities: [...history, activity] };
+}
+
+const statusOf = (value: string | null | undefined): LeadActivity["toStatus"] =>
+  isLeadStatus(value) ? value : undefined;
+
+/** The History row of a survey command answer as a lead activity (survey rows carry no note, only the reference). */
+function surveyActivity(entry: NonNullable<SurveyHistoryEntry>): LeadActivity {
+  return {
+    type: entry.type ?? undefined,
+    actorUserId: entry.actorUserId,
+    actorName: entry.actorName,
+    fromStatus: statusOf(entry.fromStatus),
+    toStatus: statusOf(entry.toStatus),
+    occurredAt: entry.occurredAt ?? undefined,
+    referenceId: entry.referenceId,
+    referenceNo: entry.referenceNo,
+  };
+}
+
+/**
+ * The page after a survey command answer (A-23): the lead's status and version from `lead`, the History row appended
+ * once. A no-op answer (no History row, A-6) leaves the lead as it is. The survey block is replaced by the caller.
+ */
+export function applySurveyCommandResult(
+  detail: LeadDetail,
+  result: Pick<NonNullable<SurveyCommandResult>, "lead" | "historyEntry">,
+): LeadDetail {
+  const entry = result.historyEntry;
+  if (entry === null || entry === undefined) return detail;
+  const lead = result.lead;
+  const merged: LeadDetail = {
+    ...detail,
+    status: lead?.status ?? detail.status,
+    version: lead?.version ?? detail.version,
+  };
+  const activity = surveyActivity(entry);
+  const history = merged.activities ?? [];
+  const known = history.some(
+    (row) => row.type === activity.type && row.occurredAt === activity.occurredAt && row.referenceId === activity.referenceId,
+  );
+  return known ? merged : { ...merged, activities: [...history, activity] };
 }

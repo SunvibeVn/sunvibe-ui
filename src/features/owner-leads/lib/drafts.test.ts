@@ -11,6 +11,8 @@ import {
   createTabMemory,
   type DraftKey,
   type DraftSessionView,
+  readFormDraft,
+  writeFormDraft,
 } from "./drafts";
 
 const key = (userId: string, leadId: string, form: DraftKey["form"] = "activity"): DraftKey => ({ userId, leadId, form });
@@ -211,5 +213,61 @@ describe("createTabMemory (SEC-M2: the app-level sync drops everything with no f
     memory.guard.observe({ status: "unavailable", user: null });
     expect(memory.drafts.get(key("u1", "L2"))).toBe("note u1");
     expect(memory.lastListUrl.get("u1")).toBe("/workspace/owner-leads?scope=mine");
+  });
+});
+
+describe("multi-field drafts of the survey dialogs (spec 6.2)", () => {
+  const defaults = {
+    start: "",
+    duration: "60",
+    place: { addressText: "25 Trần Phú", wardCode: "20242", latitude: 16.07 as number | null, longitude: 108.22 as number | null },
+    ownerConfirmed: false,
+  };
+
+  it("round-trips the fields as one JSON text", () => {
+    const typed = { ...defaults, start: "2026-10-25T10:00", place: { ...defaults.place, latitude: null, longitude: null } };
+    const text = writeFormDraft(typed, defaults);
+    expect(typeof text).toBe("string");
+    expect(readFormDraft(text, defaults)).toEqual(typed);
+  });
+
+  it("keeps no draft for an untouched form", () => {
+    expect(writeFormDraft(defaults, defaults)).toBe("");
+    expect(readFormDraft("", defaults)).toEqual(defaults);
+  });
+
+  it("ignores unreadable text and fields of the wrong type", () => {
+    expect(readFormDraft("{not json", defaults)).toEqual(defaults);
+    expect(readFormDraft(JSON.stringify({ fields: { start: 5, duration: "90", extra: "x" } }), defaults)).toEqual({
+      ...defaults,
+      duration: "90",
+    });
+  });
+
+  it("drops a change draft written for an older appointment version", () => {
+    const text = writeFormDraft({ ...defaults, start: "2026-10-25T10:00" }, defaults, 3);
+    expect(readFormDraft(text, defaults, 3).start).toBe("2026-10-25T10:00");
+    expect(readFormDraft(text, defaults, 4)).toEqual(defaults);
+  });
+
+  it("drops a draft typed for another appointment with the same version (tag = id and version)", () => {
+    const text = writeFormDraft({ ...defaults, start: "2026-10-25T10:00" }, defaults, "A1:0");
+    expect(readFormDraft(text, defaults, "A1:0").start).toBe("2026-10-25T10:00");
+    expect(readFormDraft(text, defaults, "A2:0")).toEqual(defaults);
+  });
+
+  it("keeps only the fields the user changed, laid over newer defaults (a reload after a conflict)", () => {
+    const text = writeFormDraft({ ...defaults, start: "2026-10-25T10:00" }, defaults, "A1:0");
+    const newer = { ...defaults, duration: "90", place: { ...defaults.place, addressText: "7 Lê Lợi" } };
+    expect(readFormDraft(text, newer, "A1:0")).toEqual({ ...newer, start: "2026-10-25T10:00" });
+  });
+
+  it("is dropped on sign-out like every draft", () => {
+    const memory = createTabMemory();
+    memory.guard.observe(signedIn("U1"));
+    const surveyKey: DraftKey = { userId: "U1", leadId: "L1", form: "surveyBook" };
+    memory.drafts.set(surveyKey, writeFormDraft({ ...defaults, start: "2026-10-25T10:00" }, defaults));
+    memory.guard.observe({ status: "signed-out", user: null });
+    expect(memory.drafts.get(surveyKey)).toBeUndefined();
   });
 });

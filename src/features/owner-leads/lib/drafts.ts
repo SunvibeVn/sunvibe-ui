@@ -15,8 +15,21 @@ import { createListFlash } from "./list-flash";
  * `activity`, `entryStatus` (the chosen STATUS) and `duplicate` (pasted link or code of the original): the new history
  * entry (owner 2026-10-23, D-4).
  * `assignNote`: the assign dialog.
+ * `survey*` and `requirement`: the survey dialogs and the requirement change; each keeps all its fields as one JSON
+ * text (`writeFormDraft`), the change dialog with the appointment version it was typed for.
  */
-export type DraftForm = "activity" | "entryStatus" | "duplicate" | "assignNote";
+export type DraftForm =
+  | "activity"
+  | "entryStatus"
+  | "duplicate"
+  | "assignNote"
+  | "surveyBook"
+  | "surveyChange"
+  | "surveyConfirm"
+  | "surveyCancel"
+  | "surveyVisit"
+  | "surveyResume"
+  | "requirement";
 
 export type DraftKey = { userId: string; leadId: string; form: DraftForm };
 
@@ -90,6 +103,69 @@ export function createDraftStore(): DraftStore {
       };
     },
   };
+}
+
+type FormValue = string | number | boolean | null | { [key: string]: FormValue };
+export type FormFields = { [key: string]: FormValue };
+
+/** True when `value` may stand in for `fallback`: the same type, or a number where the default is null and back. */
+function fits(value: unknown, fallback: FormValue): boolean {
+  const nullableNumber = (item: unknown) => item === null || typeof item === "number";
+  if (nullableNumber(fallback) && nullableNumber(value)) return true;
+  if (fallback === null || typeof fallback !== "object") return typeof value === typeof fallback;
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+/** `defaults` with every field of `stored` that has the right type (nested objects field by field). */
+function mergeFields<T extends FormFields>(defaults: T, stored: Record<string, unknown>): T {
+  const result: FormFields = { ...defaults };
+  for (const [key, fallback] of Object.entries(defaults)) {
+    const value = stored[key];
+    if (!Object.hasOwn(stored, key) || !fits(value, fallback)) continue;
+    result[key] =
+      fallback !== null && typeof fallback === "object"
+        ? mergeFields(fallback, value as Record<string, unknown>)
+        : (value as FormValue);
+  }
+  return result as T;
+}
+
+/**
+ * What a draft was typed for: the appointment id (and version) a survey dialog edits. A draft read with another tag
+ * is dropped, so a draft never lands on another appointment or on a newer version of it.
+ */
+export type DraftTag = string | number;
+
+/**
+ * The draft text of a multi-field form: as JSON, only the fields that differ from `defaults`, with the tag of what it
+ * edits when given; "" (no draft) when nothing differs. Read over newer defaults (a reload after a conflict), the
+ * fields the user did not touch take the newer values, so a resubmit never puts back what someone else changed.
+ */
+export function writeFormDraft<T extends FormFields>(fields: T, defaults: T, version?: DraftTag): string {
+  const changed = Object.fromEntries(
+    Object.entries(fields).filter(([key, value]) => JSON.stringify(value) !== JSON.stringify(defaults[key])),
+  );
+  if (Object.keys(changed).length === 0) return "";
+  return JSON.stringify(version === undefined ? { fields: changed } : { fields: changed, version });
+}
+
+/**
+ * The fields of a draft text over `defaults`: unreadable text, a field of the wrong type and unknown fields are
+ * ignored; a draft typed for another `version` (an appointment changed meanwhile) gives the defaults.
+ */
+export function readFormDraft<T extends FormFields>(text: string, defaults: T, version?: DraftTag): T {
+  if (text === "") return defaults;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return defaults;
+  }
+  if (typeof parsed !== "object" || parsed === null) return defaults;
+  const draft = parsed as { fields?: unknown; version?: unknown };
+  if (version !== undefined && draft.version !== version) return defaults;
+  if (typeof draft.fields !== "object" || draft.fields === null) return defaults;
+  return mergeFields(defaults, draft.fields as Record<string, unknown>);
 }
 
 /** The part of the session the drafts depend on. */
@@ -180,4 +256,23 @@ export function useDraft(key: DraftKey): [string, (value: string) => void, (subm
   );
 
   return [value, setValue, clear];
+}
+
+/**
+ * The draft of a multi-field form (the survey dialogs, the requirement change): `[fields, setFields, clear]`, kept as
+ * one JSON text in the tab's drafts. `version` ties the draft to what it edits: a draft of another tag is dropped.
+ * Pass the tag of the opening (not a value that changes while the dialog is open), so a reload after a conflict keeps
+ * the typed text (spec 6.7). `clear(submitted)` clears only the draft of the fields that were sent.
+ */
+export function useFormDraft<T extends FormFields>(
+  key: DraftKey,
+  defaults: T,
+  version?: DraftTag,
+): [T, (next: T) => void, (submitted?: T) => void] {
+  const [text, setText, clearText] = useDraft(key);
+  const fields = readFormDraft(text, defaults, version);
+  const setFields = (next: T) => setText(writeFormDraft(next, defaults, version));
+  const clear = (submitted?: T) =>
+    clearText(submitted === undefined ? undefined : writeFormDraft(submitted, defaults, version));
+  return [fields, setFields, clear];
 }

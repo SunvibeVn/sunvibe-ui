@@ -10,6 +10,7 @@ import * as leadDetailPage from "./owner-leads/[leadId]/page";
 import * as leadListPage from "./owner-leads/page";
 import * as workspacePage from "./page";
 import * as territoriesPage from "./settings/territories/page";
+import * as surveysPage from "./surveys/page";
 
 type Props = { children?: ReactNode; [key: string]: unknown };
 
@@ -51,6 +52,7 @@ describe("workspace pages opt out of instant-navigation validation", () => {
     "owner-leads/page.tsx": leadListPage,
     "owner-leads/[leadId]/page.tsx": leadDetailPage,
     "settings/territories/page.tsx": territoriesPage,
+    "surveys/page.tsx": surveysPage,
   };
 
   it("checks every page of the workspace", () => {

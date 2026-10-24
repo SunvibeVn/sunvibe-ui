@@ -78,7 +78,7 @@ describe("vi.json OwnerIntake verbatim brief texts", () => {
     expect(JSON.stringify(m)).not.toContain("Hoàng Sa");
   });
 
-  it("keeps the map attribution out of the messages (Leaflet renders it as HTML; see lib/map-tiles.ts)", () => {
+  it("keeps the map attribution out of the messages (Leaflet renders it as HTML; see src/lib/map/map-tiles.ts)", () => {
     expect(m.map).not.toHaveProperty("attribution");
   });
 
@@ -162,7 +162,7 @@ function keyPaths(node: unknown): string[] {
 }
 
 const VIETNAMESE_LETTER = /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
-const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories"];
+const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys"];
 
 describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
   it("en.json has no Vietnamese letters", () => {
@@ -252,6 +252,7 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       NEW: "Unassigned",
       ASSIGNED: "Assigned",
       CONTACTED: "Contacted",
+      SURVEY_SCHEDULED: "Survey Scheduled",
       ON_HOLD: "On Hold",
       DUPLICATE: "Duplicate",
       REJECTED: "Declined",
@@ -286,6 +287,14 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       REASSIGNED: "Reassigned",
       STATUS_CHANGED: "Status changed",
       NOTE_ADDED: "Note",
+      SURVEY_BOOKED: "Survey booked",
+      SURVEY_CHANGED: "Survey changed",
+      SURVEY_CONFIRMED: "Owner confirmation recorded",
+      SURVEY_UNCONFIRMED: "Owner confirmation removed",
+      SURVEY_CANCELLED: "Survey cancelled",
+      SURVEY_VISITED: "Site visit recorded",
+      SURVEY_RESUMED: "Survey resumed",
+      INTENT_CHANGED: "Requirement changed",
     });
   });
 
@@ -349,5 +358,51 @@ describe("en.json SaleTerritories texts", () => {
 
   it("states that a change applies to new leads only (US-8 AC-3)", () => {
     expect(m.newLeadsOnly).toContain("new leads");
+  });
+});
+
+describe("en.json survey texts (survey-schedule spec 6.6, D-48)", () => {
+  const s = en.OwnerLeads.survey;
+
+  it("has the spec 6.6 wording", () => {
+    expect(s.kind).toEqual({ FIRST: "Survey", RESURVEY: "Re-survey" });
+    expect(s.confirmation.confirmed).toBe("Owner confirmed");
+    expect(s.confirmation.notConfirmed).toBe("Not confirmed by the owner");
+    expect(s.confirmation.needsReconfirmation).toBe("Needs reconfirmation");
+    expect(s.confirmation.cause).toEqual({
+      TIME_CHANGED: "time changed",
+      LOCATION_CHANGED: "place changed",
+      REASSIGNED: "lead reassigned",
+      USER: "confirmation removed",
+    });
+    expect(s.cancelReason).toEqual({
+      OWNER_CANCELLED: "Owner cancelled",
+      STAFF_CANCELLED: "Staff cancelled",
+      OWNER_ABSENT: "Owner not present",
+      NO_ACCESS: "Could not get in",
+      OTHER: "Other",
+      LEAD_ON_HOLD: "Lead put on hold",
+      LEAD_CLOSED: "Lead closed",
+      INTENT_CHANGED: "Requirement changed",
+    });
+    expect(s.visit.recordKind).toEqual({ OWN: "Recorded by the surveyor", PROXY: "Recorded by a manager" });
+    expect(s.cannotBePerformed).toBe("Cannot be performed: reassign the lead");
+    expect(s.form.reminder).toBe("Do not write door codes, passwords or phone numbers");
+    expect(s.errors.alreadyScheduled).toBe("This lead already has a scheduled survey.");
+    expect(s.errors.notAllowed).toBe("A survey cannot be booked for this lead now.");
+    expect(s.errors.noCurrentVisit).toBe("There is no visit to resume.");
+    expect(s.errors.performerMismatch).toBe("This person did not hold the appointment at that time.");
+    expect(s.errors.surveyorIneligible).toBe("The assignee can no longer take leads. Reassign the lead first.");
+    expect(s.errors.nothingChanged).toBe("Nothing changed.");
+  });
+
+  it("has no Vietnamese letters (the workspace is English)", () => {
+    const texts: string[] = [];
+    const collect = (node: unknown): void => {
+      if (typeof node === "string") texts.push(node);
+      else if (node !== null && typeof node === "object") Object.values(node).forEach(collect);
+    };
+    collect(s);
+    for (const text of texts) expect(text, text).not.toMatch(/[ăâđêôơưàáạảãèéẹẻẽìíịỉĩòóọỏõùúụủũỳýỵỷỹ]/i);
   });
 });

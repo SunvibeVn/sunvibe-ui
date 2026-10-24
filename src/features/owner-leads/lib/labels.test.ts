@@ -62,6 +62,7 @@ describe("label maps (W11-40)", () => {
       "NEW",
       "ON_HOLD",
       "REJECTED",
+      "SURVEY_SCHEDULED",
       "WITHDRAWN",
     ]);
     expect(Object.keys(INTENT_LABEL).sort()).toEqual(["LONG_TERM_RENT", "SALE", "SHORT_TERM_RENT"]);
@@ -74,7 +75,15 @@ describe("label maps (W11-40)", () => {
       "REASSIGNED",
       "STATUS_CHANGED",
       "SUBMITTED",
-    ]);
+      "SURVEY_BOOKED",
+      "SURVEY_CANCELLED",
+      "SURVEY_CHANGED",
+      "SURVEY_CONFIRMED",
+      "SURVEY_RESUMED",
+      "SURVEY_UNCONFIRMED",
+      "SURVEY_VISITED",
+      "INTENT_CHANGED",
+    ].sort());
     expect(Object.keys(ROLE_LABEL).sort()).toEqual(["SALE", "SALE_LEADER"]);
     expect(Object.keys(PRICE_UNIT_LABEL).sort()).toEqual(["MONTH", "NIGHT", "TOTAL"]);
   });
@@ -87,6 +96,7 @@ describe("status labels (W14 C-45, spec 5.5)", () => {
     expect(text("NEW")).toBe("Unassigned");
     expect(text("ASSIGNED")).toBe("Assigned");
     expect(text("CONTACTED")).toBe("Contacted");
+    expect(text("SURVEY_SCHEDULED")).toBe("Survey Scheduled");
     expect(text("ON_HOLD")).toBe("On Hold");
     expect(text("DUPLICATE")).toBe("Duplicate");
     expect(text("REJECTED")).toBe("Declined");
@@ -105,21 +115,44 @@ describe("status labels (W14 C-45, spec 5.5)", () => {
   });
 });
 
+describe("survey activity labels (survey-schedule spec 6.6)", () => {
+  it("uses the spec 6.6 wording", () => {
+    expect(resolve(ACTIVITY_LABEL.SURVEY_BOOKED)).toBe("Survey booked");
+    expect(resolve(ACTIVITY_LABEL.SURVEY_CHANGED)).toBe("Survey changed");
+    expect(resolve(ACTIVITY_LABEL.SURVEY_CONFIRMED)).toBe("Owner confirmation recorded");
+    expect(resolve(ACTIVITY_LABEL.SURVEY_UNCONFIRMED)).toBe("Owner confirmation removed");
+    expect(resolve(ACTIVITY_LABEL.SURVEY_CANCELLED)).toBe("Survey cancelled");
+    expect(resolve(ACTIVITY_LABEL.SURVEY_VISITED)).toBe("Site visit recorded");
+    expect(resolve(ACTIVITY_LABEL.SURVEY_RESUMED)).toBe("Survey resumed");
+    expect(resolve(ACTIVITY_LABEL.INTENT_CHANGED)).toBe("Requirement changed");
+  });
+});
+
 describe("status groups", () => {
-  it("splits the seven W9 statuses into open and closed", () => {
-    expect([...OPEN_STATUSES]).toEqual(["NEW", "ASSIGNED", "CONTACTED", "ON_HOLD"]);
+  it("splits the eight workspace statuses into open and closed (A-21)", () => {
+    expect([...LEAD_STATUSES]).toEqual([
+      "NEW",
+      "ASSIGNED",
+      "CONTACTED",
+      "SURVEY_SCHEDULED",
+      "ON_HOLD",
+      "DUPLICATE",
+      "REJECTED",
+      "WITHDRAWN",
+    ]);
+    expect([...OPEN_STATUSES]).toEqual(["NEW", "ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
     expect([...CLOSED_STATUSES]).toEqual(["DUPLICATE", "REJECTED", "WITHDRAWN"]);
     expect([...OPEN_STATUSES, ...CLOSED_STATUSES].sort()).toEqual([...LEAD_STATUSES].sort());
   });
 });
 
 describe("statusLabelKey", () => {
-  it("returns the W9 label for the seven statuses", () => {
+  it("returns the label for the eight workspace statuses", () => {
     for (const status of LEAD_STATUSES) expect(statusLabelKey(status)).toBe(STATUS_LABEL[status]);
   });
 
   it("falls back to a generic label for the other API statuses and for no status", () => {
-    for (const status of ["VALIDATING", "SURVEY_SCHEDULED", "QUALIFIED", "AGREEMENT_PENDING", "ONBOARDED", "", "x"]) {
+    for (const status of ["VALIDATING", "QUALIFIED", "AGREEMENT_PENDING", "ONBOARDED", "", "x"]) {
       const key = statusLabelKey(status);
       expect(key).toBe("statusUnknown");
       expect(typeof resolve(key)).toBe("string");

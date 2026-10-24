@@ -21,6 +21,16 @@ describe("allowedTargets (acquisition BR-3, W11-32)", () => {
     expect(allowedTargets("ON_HOLD")).toEqual(["CONTACTED", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
   });
 
+  it("SURVEY_SCHEDULED can be put on hold or closed (survey-schedule B-2, BR-3)", () => {
+    expect(allowedTargets("SURVEY_SCHEDULED")).toEqual(["ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
+  });
+
+  it("never offers SURVEY_SCHEDULED: only a survey command moves a lead there (spec 4.3)", () => {
+    for (const status of [...OPEN_STATUSES, ...CLOSED_STATUSES]) {
+      expect(allowedTargets(status)).not.toContain("SURVEY_SCHEDULED");
+    }
+  });
+
   it.each(CLOSED_STATUSES)("closed %s has no target", (status) => {
     expect(allowedTargets(status)).toEqual([]);
   });
@@ -44,7 +54,7 @@ describe("isClosing", () => {
     expect(isClosing(status)).toBe(true);
   });
 
-  it.each(["NEW", "ASSIGNED", "CONTACTED", "ON_HOLD"] as const)("%s does not close a lead", (status) => {
+  it.each(["NEW", "ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"] as const)("%s does not close a lead", (status) => {
     expect(isClosing(status)).toBe(false);
   });
 });
