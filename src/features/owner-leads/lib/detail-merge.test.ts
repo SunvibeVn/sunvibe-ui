@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { LeadActivity, LeadDetail, LeadNoteResult, LeadSummary } from "../types";
 
-import { applySurveyCommandResult, mergeNoteResult, mergeSummary } from "./detail-merge";
+import { applyChecklistStart, applySurveyCommandResult, mergeNoteResult, mergeSummary } from "./detail-merge";
 
 const submitted: LeadActivity = { type: "SUBMITTED", occurredAt: "2026-10-18T01:00:00Z" };
 
@@ -111,5 +111,41 @@ describe("applySurveyCommandResult (A-23: the answer updates the page, no reload
     const merged = applySurveyCommandResult(detail, { lead: null, historyEntry: booked });
     expect(merged.status).toBe("ASSIGNED");
     expect(merged.version).toBe(3);
+  });
+});
+
+describe("applyChecklistStart (survey-checklist spec 6.1: no reload after a start)", () => {
+  const started = {
+    lead: { id: "L1", status: "SURVEY_SCHEDULED" as const, version: 4, lastActivityAt: "2026-10-24T02:00:00Z" },
+    historyEntry: {
+      type: "CHECKLIST_STARTED" as const,
+      actorUserId: "U1",
+      actorName: "Bình",
+      occurredAt: "2026-10-24T02:00:00Z",
+      referenceId: "C1",
+      referenceNo: 1,
+      referenceDetail: null,
+      fromStatus: null,
+      toStatus: null,
+    },
+  };
+
+  it("appends the History row once, with the checklist reference, and keeps the lead's status and version", () => {
+    const once = applyChecklistStart({ ...detail, status: "SURVEY_SCHEDULED", version: 4 }, started);
+    expect(once.activities?.at(-1)).toMatchObject({
+      type: "CHECKLIST_STARTED",
+      referenceId: "C1",
+      referenceNo: 1,
+      occurredAt: "2026-10-24T02:00:00Z",
+    });
+    expect(once.activities).toHaveLength(2);
+    expect(once.version).toBe(4);
+    const twice = applyChecklistStart(once, started);
+    expect(twice.activities).toHaveLength(2);
+  });
+
+  it("leaves the detail as it is without a History row", () => {
+    const same = { ...detail };
+    expect(applyChecklistStart(same, { lead: started.lead, historyEntry: undefined })).toBe(same);
   });
 });

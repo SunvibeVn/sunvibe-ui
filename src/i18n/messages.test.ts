@@ -295,6 +295,9 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       SURVEY_VISITED: "Site visit recorded",
       SURVEY_RESUMED: "Survey resumed",
       INTENT_CHANGED: "Requirement changed",
+      CHECKLIST_STARTED: "Checklist started",
+      CHECKLIST_TAKEN_OVER: "Checklist taken over",
+      CHECKLIST_SAVED: "Checklist saved",
     });
   });
 

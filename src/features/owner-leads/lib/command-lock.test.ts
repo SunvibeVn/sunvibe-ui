@@ -26,4 +26,11 @@ describe("command lock (CR-2, Review Focus 5)", () => {
     const sources = add([], "entry");
     expect(remove(sources, "survey")).toBe(sources);
   });
+
+  it("locks the page for every source while a checklist start is on its way (survey-checklist spec 6.1)", () => {
+    const busy = add([], "checklist");
+    expect(isBusy(busy)).toBe(true);
+    expect(isBusy(add(busy, "survey"))).toBe(true);
+    expect(isBusy(remove(busy, "checklist"))).toBe(false);
+  });
 });

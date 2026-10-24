@@ -7,6 +7,7 @@ import { WorkspaceShell } from "@/features/workspace";
 import en from "@/i18n/messages/en.json";
 import WorkspaceLayout, { metadata } from "./layout";
 import * as leadDetailPage from "./owner-leads/[leadId]/page";
+import * as checklistPage from "./owner-leads/[leadId]/survey-checklists/[checklistId]/page";
 import * as leadListPage from "./owner-leads/page";
 import * as workspacePage from "./page";
 import * as territoriesPage from "./settings/territories/page";
@@ -51,6 +52,7 @@ describe("workspace pages opt out of instant-navigation validation", () => {
     "page.tsx": workspacePage,
     "owner-leads/page.tsx": leadListPage,
     "owner-leads/[leadId]/page.tsx": leadDetailPage,
+    "owner-leads/[leadId]/survey-checklists/[checklistId]/page.tsx": checklistPage,
     "settings/territories/page.tsx": territoriesPage,
     "surveys/page.tsx": surveysPage,
   };

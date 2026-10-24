@@ -716,6 +716,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/survey-appointments/{appointmentId}/checklists": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start a survey checklist on the current visit (the lead's eligible assignee only)
+         * @description A DRAFT with every field unknown, held by the caller. An assignee who did not perform the visit sends an intake declaration (reason and basis); the performer sends intake null. Unknown keys are refused. The lead's status and version do not change.
+         */
+        post: operations["startSurveyChecklist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/survey-appointments/{appointmentId}/confirmation": {
         parameters: {
             query?: never;
@@ -750,6 +770,206 @@ export interface paths {
          * @description An own record is the current surveyor's visit, who held the appointment at arrivedAt and can take leads now. Every other record is a proxy record of a manager with proxy.reason and proxy.basis. The lead stays SURVEY_SCHEDULED.
          */
         post: operations["visit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a survey checklist (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The checklist as stored, with the viewer's editability, the readiness computed now, the effective terms per space, the earlier hazards of the requirement, takeovers, corrections and editors. Reading it is access-logged.
+         */
+        get: operations["getSurveyChecklist"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/amenities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the amenities group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G6 amenities: furnishing and the checked items of the property and of each space. The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistAmenities"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/condition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the condition group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G4 condition: occupancy, availability and the checks of the main space, kitchen and bathroom of each space; the shared wet areas in separate parts only. The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistCondition"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/dimensions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the dimensions group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G3 dimensions: area, bedrooms and bathrooms of each space. The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistDimensions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/identification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the identification group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G1 identification: observed address, asset type, fit, rental scope and spaces. A space left out of spaces is removed and its entries in the other groups go with it; a scope change clears what the new scope does not hold. otherGroupVersions names each group such a save changes. The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistIdentification"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/parts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the parts group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G2 parts: access route, shared areas, floors and the parts of each space. The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistParts"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/safety": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the safety group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G5 safety: egress, access restrictions and hazards (a new hazard carries a client ULID). The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistSafety"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/takeovers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a survey checklist draft over (the lead's eligible assignee only)
+         * @description The caller becomes the holder; every group as it was is kept as a checkpoint only readers of the lead can read. Unknown keys are refused.
+         */
+        post: operations["takeOverSurveyChecklist"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/takeovers/{takeoverNo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read a takeover checkpoint (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The takeover and the groups as they were just before it. An intake declaration has no checkpoint. Reading it is access-logged.
+         */
+        get: operations["getSurveyChecklistCheckpoint"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Save the terms group of a survey checklist draft (the holder, who is the lead's eligible assignee)
+         * @description G8 terms as surveyed or offered: rent, deposit, payment period, minimum term, charges, fees, house rules, pets and handover. The same content again changes nothing (200, no new version). Every key is sent; unknown keys and server fields are refused. A change of what someone else observed or heard needs a correction.
+         */
+        put: operations["saveSurveyChecklistTerms"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -974,6 +1194,1869 @@ export interface components {
             /** @enum {string} */
             toStatus: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
         };
+        /** @description The access actually had to a space */
+        ChecklistActualAccess: {
+            /** @enum {string} */
+            extent: "ENTERED_ALL" | "ENTERED_PART";
+            /** @description 1..500 characters, required for ENTERED_PART */
+            note: string | null;
+        };
+        /** @description Actual access field of a survey checklist, as read */
+        ChecklistActualAccessField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistActualAccess"] | null;
+        };
+        /** @description Actual access field of a survey checklist, as sent */
+        ChecklistActualAccessFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistActualAccess"] | null;
+        };
+        /** @description How the observed address differs from the lead and from the meeting place */
+        ChecklistAddressDifference: {
+            fromLead?: boolean;
+            fromMeetingPlace?: boolean;
+        };
+        /** @description A later hazard that addresses an earlier one */
+        ChecklistAddressedBy: {
+            checklistId?: string;
+            /** Format: int32 */
+            checklistNo?: number;
+            hazardId?: string;
+            /** @enum {string} */
+            kind?: "RESOLVED" | "CARRIED";
+        };
+        /** @description G6 amenities, as read */
+        ChecklistAmenitiesContent: {
+            otherItems?: components["schemas"]["ChecklistOtherItem"][];
+            sharedItems?: components["schemas"]["ChecklistAmenityItem"][];
+            spaces?: components["schemas"]["ChecklistAmenitiesSpace"][];
+        };
+        /** @description The amenities group: its version, last save and content */
+        ChecklistAmenitiesGroup: {
+            content?: components["schemas"]["ChecklistAmenitiesContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G6 amenities, as sent */
+        ChecklistAmenitiesInput: {
+            otherItems: components["schemas"]["ChecklistOtherItemInput"][];
+            sharedItems: components["schemas"]["ChecklistAmenityItemInput"][];
+            spaces: components["schemas"]["ChecklistAmenitiesSpaceInput"][];
+        };
+        /** @description G6 values of one space, as read */
+        ChecklistAmenitiesSpace: {
+            furnishing?: components["schemas"]["ChecklistFurnishingField"];
+            items?: components["schemas"]["ChecklistAmenityItem"][];
+            spaceId?: string;
+        };
+        /** @description G6 values of one space, as sent */
+        ChecklistAmenitiesSpaceInput: {
+            furnishing: components["schemas"]["ChecklistFurnishingFieldInput"];
+            items: components["schemas"]["ChecklistAmenityItemInput"][];
+            spaceId: string;
+        };
+        /** @description A checked amenity of a level, as read */
+        ChecklistAmenityItem: {
+            /** @enum {string} */
+            code?: "AIR_CONDITIONER" | "WATER_HEATER" | "WASHING_MACHINE" | "REFRIGERATOR" | "BED" | "WARDROBE" | "DESK" | "KITCHEN_EQUIPMENT" | "INTERNET" | "ELEVATOR" | "MOTORBIKE_PARKING" | "CAR_PARKING" | "BALCONY" | "WINDOW" | "SECURITY" | "CCTV" | "POOL" | "GARDEN";
+            /** Format: date */
+            confirmedOn?: string | null;
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @enum {string} */
+            presence?: "YES" | "NO";
+            receivedByUserId?: string | null;
+            relayBasis?: string | null;
+            /**
+             * @description Where an amenity or furnishing came from
+             * @enum {string}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED";
+        };
+        /** @description A checked amenity of a level, as sent */
+        ChecklistAmenityItemInput: {
+            /** @enum {string} */
+            code: "AIR_CONDITIONER" | "WATER_HEATER" | "WASHING_MACHINE" | "REFRIGERATOR" | "BED" | "WARDROBE" | "DESK" | "KITCHEN_EQUIPMENT" | "INTERNET" | "ELEVATOR" | "MOTORBIKE_PARKING" | "CAR_PARKING" | "BALCONY" | "WINDOW" | "SECURITY" | "CCTV" | "POOL" | "GARDEN";
+            /**
+             * Format: date
+             * @description OWNER_STATED only
+             */
+            confirmedOn: string | null;
+            /** @enum {string} */
+            presence: "YES" | "NO";
+            /** @description OWNER_STATED only */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it */
+            relayBasis: string | null;
+            /**
+             * @description Where an amenity or furnishing came from
+             * @enum {string}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED";
+        };
+        /** @description The check of a main space, kitchen, bathroom or shared wet area */
+        ChecklistAreaCheck: {
+            /** @description INSPECTED only */
+            noneObserved: boolean | null;
+            /** @description NOT_ENTERED only: what was not reached and why, 1..500 characters */
+            notEnteredReason: string | null;
+            /** @description 1..1000 characters; for NOT_ENTERED what was seen from outside or what the owner said */
+            note: string | null;
+            /** @enum {string} */
+            result: "INSPECTED" | "NOT_ENTERED";
+        };
+        /** @description Area check field of a survey checklist, as read */
+        ChecklistAreaCheckField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistAreaCheck"] | null;
+        };
+        /** @description Area check field of a survey checklist, as sent */
+        ChecklistAreaCheckFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistAreaCheck"] | null;
+        };
+        /** @description Area field in square metres with one decimal of a survey checklist, as read */
+        ChecklistAreaField: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "MEASURED" | "ESTIMATED" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: number | null;
+        };
+        /** @description Area field in square metres with one decimal of a survey checklist, as sent */
+        ChecklistAreaFieldInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "MEASURED" | "ESTIMATED" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: number | null;
+        };
+        /** @description The basis of a takeover, intake declaration or correction */
+        ChecklistBasis: {
+            /** Format: date */
+            confirmedOn?: string;
+            text?: string;
+        };
+        /** @description The basis of a takeover, intake declaration or correction */
+        ChecklistBasisRequest: {
+            /**
+             * Format: date
+             * @description Vietnam date, from the visit's arrival date to today
+             */
+            confirmedOn: string | null;
+            /** @description 1..500 characters, no phone number */
+            text: string | null;
+        };
+        /** @description A charge: its basis and, exactly for AMOUNT, the amount and its unit */
+        ChecklistCharge: {
+            /** @description AMOUNT only */
+            amount: components["schemas"]["ChecklistMoney"] | null;
+            /** @enum {string} */
+            basis: "AMOUNT" | "INCLUDED" | "PROVIDER_TARIFF" | "NOT_OFFERED";
+            /**
+             * @description AMOUNT only
+             * @enum {string|null}
+             */
+            chargeUnit: "PER_MONTH" | "PER_KWH" | "PER_M3" | "PER_PERSON_PER_MONTH" | "PER_VEHICLE_PER_MONTH" | "ONE_OFF" | null;
+            /** @description 1..200 characters */
+            note: string | null;
+        };
+        /** @description The charges that differ for one space, each null for the common charge */
+        ChecklistChargeOverrides: {
+            electricity?: components["schemas"]["ChecklistChargeTerm"] | null;
+            internet?: components["schemas"]["ChecklistChargeTerm"] | null;
+            parking?: components["schemas"]["ChecklistChargeTerm"] | null;
+            serviceFee?: components["schemas"]["ChecklistChargeTerm"] | null;
+            water?: components["schemas"]["ChecklistChargeTerm"] | null;
+        };
+        /** @description The charges that differ for one space, each null for the common charge, as sent */
+        ChecklistChargeOverridesInput: {
+            electricity: components["schemas"]["ChecklistChargeTermInput"] | null;
+            internet: components["schemas"]["ChecklistChargeTermInput"] | null;
+            parking: components["schemas"]["ChecklistChargeTermInput"] | null;
+            serviceFee: components["schemas"]["ChecklistChargeTermInput"] | null;
+            water: components["schemas"]["ChecklistChargeTermInput"] | null;
+        };
+        /** @description Charge term of a survey checklist, as read */
+        ChecklistChargeTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistCharge"] | null;
+        };
+        /** @description Charge term of a survey checklist, as sent */
+        ChecklistChargeTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistCharge"] | null;
+        };
+        /** @description A takeover and its checkpoint */
+        ChecklistCheckpointResponse: {
+            snapshot?: components["schemas"]["ChecklistSnapshotResponse"];
+            takeover?: components["schemas"]["ChecklistTakeover"];
+        };
+        /** @description G4 condition, as read; shared wet areas only in PARTS scope */
+        ChecklistConditionContent: {
+            /** @description Null unless the property is in separate parts */
+            sharedBathroom?: components["schemas"]["ChecklistAreaCheckField"] | null;
+            /** @description Null unless the property is in separate parts */
+            sharedKitchen?: components["schemas"]["ChecklistAreaCheckField"] | null;
+            spaces?: components["schemas"]["ChecklistConditionSpace"][];
+        };
+        /** @description The condition group: its version, last save and content */
+        ChecklistConditionGroup: {
+            content?: components["schemas"]["ChecklistConditionContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G4 condition, as sent */
+        ChecklistConditionInput: {
+            /** @description Required in separate parts, null otherwise */
+            sharedBathroom: components["schemas"]["ChecklistAreaCheckFieldInput"] | null;
+            /** @description Required in separate parts, null otherwise */
+            sharedKitchen: components["schemas"]["ChecklistAreaCheckFieldInput"] | null;
+            spaces: components["schemas"]["ChecklistConditionSpaceInput"][];
+        };
+        /** @description G4 values of one space, as read */
+        ChecklistConditionSpace: {
+            availableFrom?: components["schemas"]["ChecklistDateTerm"];
+            bathroom?: components["schemas"]["ChecklistAreaCheckField"];
+            expectedVacantFrom?: components["schemas"]["ChecklistDateTerm"];
+            kitchen?: components["schemas"]["ChecklistAreaCheckField"];
+            mainSpace?: components["schemas"]["ChecklistAreaCheckField"];
+            occupancy?: components["schemas"]["ChecklistOccupancyField"];
+            spaceId?: string;
+        };
+        /** @description G4 values of one space, as sent */
+        ChecklistConditionSpaceInput: {
+            availableFrom: components["schemas"]["ChecklistDateTermInput"];
+            bathroom: components["schemas"]["ChecklistAreaCheckFieldInput"];
+            expectedVacantFrom: components["schemas"]["ChecklistDateTermInput"];
+            kitchen: components["schemas"]["ChecklistAreaCheckFieldInput"];
+            mainSpace: components["schemas"]["ChecklistAreaCheckFieldInput"];
+            occupancy: components["schemas"]["ChecklistOccupancyFieldInput"];
+            spaceId: string;
+        };
+        /** @description A unit a correction covered, with the code its space had */
+        ChecklistCorrectedUnit: {
+            spaceCode?: string | null;
+            unitKey?: string;
+        };
+        /** @description A correcting save */
+        ChecklistCorrection: {
+            actorName?: string | null;
+            actorUserId?: string;
+            basis?: components["schemas"]["ChecklistBasis"];
+            /** @enum {string} */
+            group?: "IDENTIFICATION" | "PARTS" | "DIMENSIONS" | "CONDITION" | "SAFETY" | "AMENITIES" | "EVIDENCE" | "TERMS";
+            reason?: string;
+            saveId?: string;
+            /** Format: date-time */
+            savedAt?: string;
+            units?: components["schemas"]["ChecklistCorrectedUnit"][];
+        };
+        /** @description Why a save corrects values someone else observed or heard, and on what basis */
+        ChecklistCorrectionRequest: {
+            basis: components["schemas"]["ChecklistBasisRequest"];
+            /** @description 1..500 characters, no phone number */
+            reason: string;
+        };
+        /** @description Count field of a survey checklist, as read */
+        ChecklistCountField: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * Format: int32
+             * @description Present exactly when state is VALUE
+             */
+            value?: number | null;
+        };
+        /** @description Count field of a survey checklist, as sent */
+        ChecklistCountFieldInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * Format: int32
+             * @description Present exactly when state is VALUE
+             */
+            value: number | null;
+        };
+        /** @description Date term of a survey checklist, as read */
+        ChecklistDateTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * Format: date
+             * @description Present exactly when state is VALUE
+             */
+            value?: string | null;
+        };
+        /** @description Date term of a survey checklist, as sent */
+        ChecklistDateTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * Format: date
+             * @description Present exactly when state is VALUE
+             */
+            value: string | null;
+        };
+        /** @description A deposit as months (0..12) or an amount; 0 means no deposit */
+        ChecklistDeposit: {
+            /** @description AMOUNT only */
+            amount: components["schemas"]["ChecklistMoney"] | null;
+            /** @enum {string} */
+            basis: "MONTHS" | "AMOUNT";
+            /**
+             * Format: int32
+             * @description MONTHS only, 0..12
+             */
+            months: number | null;
+        };
+        /** @description Deposit term of a survey checklist, as read */
+        ChecklistDepositTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistDeposit"] | null;
+        };
+        /** @description Deposit term of a survey checklist, as sent */
+        ChecklistDepositTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistDeposit"] | null;
+        };
+        /** @description G3 dimensions, as read; one entry per G1 space in G1 order */
+        ChecklistDimensionsContent: {
+            spaces?: components["schemas"]["ChecklistDimensionsSpace"][];
+        };
+        /** @description The metadata of the layout note of a space */
+        ChecklistDimensionsFieldMeta: {
+            layoutNote?: components["schemas"]["ChecklistUnitMeta"] | null;
+        };
+        /** @description The dimensions group: its version, last save and content */
+        ChecklistDimensionsGroup: {
+            content?: components["schemas"]["ChecklistDimensionsContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G3 dimensions, as sent */
+        ChecklistDimensionsInput: {
+            spaces: components["schemas"]["ChecklistDimensionsSpaceInput"][];
+        };
+        /** @description G3 values of one space, as read */
+        ChecklistDimensionsSpace: {
+            area?: components["schemas"]["ChecklistAreaField"];
+            bedrooms?: components["schemas"]["ChecklistCountField"];
+            fieldMeta?: components["schemas"]["ChecklistDimensionsFieldMeta"];
+            layoutNote?: string | null;
+            privateBathrooms?: components["schemas"]["ChecklistCountField"];
+            sharedBathroomUse?: components["schemas"]["ChecklistYesNoCountField"];
+            spaceId?: string;
+        };
+        /** @description G3 values of one space, as sent */
+        ChecklistDimensionsSpaceInput: {
+            area: components["schemas"]["ChecklistAreaFieldInput"];
+            bedrooms: components["schemas"]["ChecklistCountFieldInput"];
+            /** @description 1..1000 characters */
+            layoutNote: string | null;
+            privateBathrooms: components["schemas"]["ChecklistCountFieldInput"];
+            sharedBathroomUse: components["schemas"]["ChecklistYesNoCountFieldInput"];
+            spaceId: string;
+        };
+        /** @description An important or unclassified hazard of an earlier checklist of the cycle, as recorded */
+        ChecklistEarlierHazard: {
+            /** @description Empty: the hazard warns EARLIER_HAZARD_OPEN */
+            addressedBy?: components["schemas"]["ChecklistAddressedBy"][];
+            checklistId?: string;
+            /** Format: int32 */
+            checklistNo?: number;
+            hazard?: components["schemas"]["ChecklistHazard"];
+        };
+        /** @description Someone who saved the draft, with their latest save */
+        ChecklistEditor: {
+            /** Format: date-time */
+            lastSavedAt?: string;
+            name?: string | null;
+            userId?: string;
+        };
+        /** @description The charge a space gets and where it comes from */
+        ChecklistEffectiveCharge: {
+            /** @enum {string} */
+            origin?: "COMMON" | "SPACE";
+            term?: components["schemas"]["ChecklistChargeTerm"];
+        };
+        /** @description The fees a space gets: the common list and its own */
+        ChecklistEffectiveFees: {
+            common?: components["schemas"]["ChecklistFeeListTerm"];
+            space?: components["schemas"]["ChecklistFeeListTerm"] | null;
+        };
+        /** @description One fee of a fee list */
+        ChecklistFee: {
+            amount: components["schemas"]["ChecklistMoney"];
+            /** @enum {string} */
+            chargeUnit: "PER_MONTH" | "PER_KWH" | "PER_M3" | "PER_PERSON_PER_MONTH" | "PER_VEHICLE_PER_MONTH" | "ONE_OFF";
+            /** @description 1..100 characters */
+            name: string;
+        };
+        /** @description Fee list term; VALUE with an empty list means none of a survey checklist, as read */
+        ChecklistFeeListTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistFee"][] | null;
+        };
+        /** @description Fee list term; VALUE with an empty list means none of a survey checklist, as sent */
+        ChecklistFeeListTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistFee"][] | null;
+        };
+        /** @description The fit judgement of the six-type rental scope with its reason */
+        ChecklistFit: {
+            /** @enum {string} */
+            assessment: "IN_SCOPE" | "OUT_OF_SCOPE" | "UNDETERMINED";
+            /** @description 1..1000 characters */
+            reason: string;
+        };
+        /** @description Fit field of a survey checklist, as read */
+        ChecklistFitField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistFit"] | null;
+        };
+        /** @description Fit field of a survey checklist, as sent */
+        ChecklistFitFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistFit"] | null;
+        };
+        /** @description Furnishing field of a survey checklist, as read */
+        ChecklistFurnishingField: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value?: "FULLY_FURNISHED" | "BASIC" | "UNFURNISHED" | null;
+        };
+        /** @description Furnishing field of a survey checklist, as sent */
+        ChecklistFurnishingFieldInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value: "FULLY_FURNISHED" | "BASIC" | "UNFURNISHED" | null;
+        };
+        /** @description The seven stored groups of a checklist */
+        ChecklistGroups: {
+            amenities?: components["schemas"]["ChecklistAmenitiesGroup"];
+            condition?: components["schemas"]["ChecklistConditionGroup"];
+            dimensions?: components["schemas"]["ChecklistDimensionsGroup"];
+            identification?: components["schemas"]["ChecklistIdentificationGroup"];
+            parts?: components["schemas"]["ChecklistPartsGroup"];
+            safety?: components["schemas"]["ChecklistSafetyGroup"];
+            terms?: components["schemas"]["ChecklistTermsGroup"];
+        };
+        /** @description A hazard of G5, as read */
+        ChecklistHazard: {
+            description?: string;
+            hazardId?: string;
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** Format: date */
+            ownerReportedOn?: string | null;
+            previous?: components["schemas"]["ChecklistHazardLink"] | null;
+            receivedByName?: string | null;
+            receivedByUserId?: string | null;
+            relayBasis?: string | null;
+            /** @enum {string} */
+            severity?: "IMPORTANT" | "MINOR" | "UNCLASSIFIED";
+            spaceId?: string | null;
+            /** @enum {string} */
+            status?: "OPEN" | "OWNER_REPORTED_FIXED" | "OBSERVED_RESOLVED";
+            statusNote?: string | null;
+        };
+        /** @description A hazard of G5, as sent; a new hazard carries a client ULID */
+        ChecklistHazardInput: {
+            /** @description 1..500 characters */
+            description: string;
+            /** @description ULID */
+            hazardId: string;
+            /**
+             * Format: date
+             * @description OWNER_REPORTED_FIXED only: the day the owner reported the fix
+             */
+            ownerReportedOn: string | null;
+            /** @description The hazard of an earlier checklist of this lead and requirement it continues */
+            previous: components["schemas"]["ChecklistHazardLink"] | null;
+            /** @description OWNER_REPORTED_FIXED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description Exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /** @enum {string} */
+            severity: "IMPORTANT" | "MINOR" | "UNCLASSIFIED";
+            /** @description A space of this checklist, or null for the whole property */
+            spaceId: string | null;
+            /** @enum {string} */
+            status: "OPEN" | "OWNER_REPORTED_FIXED" | "OBSERVED_RESOLVED";
+            /** @description 1..500 characters */
+            statusNote: string | null;
+        };
+        /** @description A link to a hazard of an earlier checklist of the same lead and requirement */
+        ChecklistHazardLink: {
+            checklistId: string;
+            hazardId: string;
+        };
+        /** @description Hazard list field; VALUE with an empty list means none seen of a survey checklist, as read */
+        ChecklistHazardListField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistHazard"][] | null;
+        };
+        /** @description Hazard list field; VALUE with an empty list means none seen of a survey checklist, as sent */
+        ChecklistHazardListFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistHazardInput"][] | null;
+        };
+        /** @description The lead History entry written by a checklist command */
+        ChecklistHistoryEntryResponse: {
+            /** @description Full name of the staff member; null when the id has no user row */
+            actorName?: string | null;
+            actorUserId?: string;
+            /** @description Always null */
+            fromAssigneeId?: string | null;
+            /** @description Always null */
+            fromAssigneeName?: string | null;
+            /** @description Always null: a checklist command keeps the lead's status */
+            fromStatus?: string | null;
+            /**
+             * Format: date-time
+             * @description Always null
+             */
+            nextActionAt?: string | null;
+            /** @description Always null: checklist History entries carry no text */
+            note?: string | null;
+            /** Format: date-time */
+            occurredAt?: string;
+            /** @description The group of a CHECKLIST_SAVED entry; null otherwise */
+            referenceDetail?: string | null;
+            /** @description The checklist */
+            referenceId?: string;
+            /**
+             * Format: int32
+             * @description The checklist number
+             */
+            referenceNo?: number;
+            /** @description Always null */
+            toAssigneeId?: string | null;
+            /** @description Always null */
+            toAssigneeName?: string | null;
+            /** @description Always null: a checklist command keeps the lead's status */
+            toStatus?: string | null;
+            /** @enum {string} */
+            type?: "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED";
+        };
+        /** @description G1 identification, as read */
+        ChecklistIdentificationContent: {
+            difference?: components["schemas"]["ChecklistAddressDifference"];
+            differenceNote?: string | null;
+            fieldMeta?: components["schemas"]["ChecklistIdentificationFieldMeta"];
+            fit?: components["schemas"]["ChecklistFitField"];
+            generalNote?: string | null;
+            observedAddress?: components["schemas"]["ChecklistLocationField"];
+            otherPartsNote?: string | null;
+            propertyType?: components["schemas"]["ChecklistPropertyTypeField"];
+            /** @description The catalog name of the observed province; null while the address is unknown */
+            provinceName?: string | null;
+            /** @enum {string|null} */
+            rentalScope?: "WHOLE" | "PARTS" | null;
+            spaces?: components["schemas"]["ChecklistObservedSpace"][];
+            /** @description The catalog name of the observed ward; null while the address is unknown */
+            wardName?: string | null;
+        };
+        /** @description The metadata of the plain fields of G1 */
+        ChecklistIdentificationFieldMeta: {
+            differenceNote?: components["schemas"]["ChecklistUnitMeta"] | null;
+            generalNote?: components["schemas"]["ChecklistUnitMeta"] | null;
+            otherPartsNote?: components["schemas"]["ChecklistUnitMeta"] | null;
+            rentalScope?: components["schemas"]["ChecklistUnitMeta"] | null;
+        };
+        /** @description The identification group: its version, last save and content */
+        ChecklistIdentificationGroup: {
+            content?: components["schemas"]["ChecklistIdentificationContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G1 identification, as sent */
+        ChecklistIdentificationInput: {
+            /** @description 1..500 characters */
+            differenceNote: string | null;
+            fit: components["schemas"]["ChecklistFitFieldInput"];
+            /** @description 1..2000 characters */
+            generalNote: string | null;
+            observedAddress: components["schemas"]["ChecklistLocationFieldInput"];
+            /** @description 1..1000 characters */
+            otherPartsNote: string | null;
+            propertyType: components["schemas"]["ChecklistPropertyTypeFieldInput"];
+            /** @enum {string|null} */
+            rentalScope: "WHOLE" | "PARTS" | null;
+            /** @description At most 50; WHOLE has exactly one */
+            spaces: components["schemas"]["ChecklistObservedSpaceInput"][];
+        };
+        /** @description The intake declaration of a starter who did not perform the visit */
+        ChecklistIntakeRequest: {
+            basis: components["schemas"]["ChecklistBasisRequest"] | null;
+            /** @description 1..500 characters, no phone number */
+            reason: string | null;
+        };
+        /** @description The checklist's lead: its request code and status */
+        ChecklistLeadSummary: {
+            requestCode?: string;
+            status?: string;
+        };
+        /** @description Address field of a survey checklist, as read */
+        ChecklistLocationField: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistObservedLocation"] | null;
+        };
+        /** @description Address field of a survey checklist, as sent */
+        ChecklistLocationFieldInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistObservedLocation"] | null;
+        };
+        /** @description A known gap before a full-assessment submission */
+        ChecklistMissingItem: {
+            field?: string | null;
+            /** @enum {string} */
+            group?: "IDENTIFICATION" | "PARTS" | "DIMENSIONS" | "CONDITION" | "SAFETY" | "AMENITIES" | "EVIDENCE" | "TERMS";
+            /** @enum {string} */
+            problem?: "NOT_CHECKED" | "REQUIRED_AREA_NOT_ENTERED" | "SCOPE_MISSING" | "NO_SPACES" | "NOT_IN_SCOPE" | "DIFFERENCE_NOTE_MISSING" | "EVIDENCE_PENDING";
+            spaceId?: string | null;
+        };
+        /** @description An amount in whole VND that is not a price per period */
+        ChecklistMoney: {
+            /**
+             * Format: int64
+             * @description 0 to 999999999999999; 0 means confirmed free or no deposit
+             */
+            amount: number;
+            /** @description VND */
+            currency: string;
+        };
+        /** @description Months term of a survey checklist, as read */
+        ChecklistMonthsTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * Format: int32
+             * @description Present exactly when state is VALUE
+             */
+            value?: number | null;
+        };
+        /** @description Months term of a survey checklist, as sent */
+        ChecklistMonthsTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * Format: int32
+             * @description Present exactly when state is VALUE
+             */
+            value: number | null;
+        };
+        /** @description A checked result: nothing observed, or a note of what was */
+        ChecklistObservation: {
+            noneObserved: boolean;
+            /** @description 1..1000 characters, required when noneObserved is false */
+            note: string | null;
+        };
+        /** @description Observation field of a survey checklist, as read */
+        ChecklistObservationField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistObservation"] | null;
+        };
+        /** @description Observation field of a survey checklist, as sent */
+        ChecklistObservationFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistObservation"] | null;
+        };
+        /** @description An address seen or given at the survey: address text, province and ward codes of the catalog, optional pin */
+        ChecklistObservedLocation: {
+            addressText: string;
+            /** @description Give both latitude and longitude, or neither */
+            latitude: number | null;
+            longitude: number | null;
+            provinceCode: string;
+            wardCode: string;
+        };
+        /** @description A viewed rentable space of G1, as read */
+        ChecklistObservedSpace: {
+            code?: string;
+            description?: string | null;
+            location?: string;
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            spaceId?: string;
+        };
+        /** @description A viewed rentable space of G1, as sent; a new space carries a client ULID */
+        ChecklistObservedSpaceInput: {
+            /** @description 1..20 characters, unique ignoring case */
+            code: string;
+            /** @description 1..500 characters */
+            description: string | null;
+            /** @description 1..100 characters */
+            location: string;
+            /** @description ULID; an id not stored yet is a new space */
+            spaceId: string;
+        };
+        /** @description Occupancy field of a survey checklist, as read */
+        ChecklistOccupancyField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value?: "VACANT" | "OCCUPIED" | "UNDER_RENOVATION" | "SUSPENDED" | null;
+        };
+        /** @description Occupancy field of a survey checklist, as sent */
+        ChecklistOccupancyFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value: "VACANT" | "OCCUPIED" | "UNDER_RENOVATION" | "SUSPENDED" | null;
+        };
+        /** @description The versions of the groups a G1 save cascades into, as the caller read them */
+        ChecklistOtherGroupVersions: {
+            /** Format: int64 */
+            amenities?: number | null;
+            /** Format: int64 */
+            condition?: number | null;
+            /** Format: int64 */
+            dimensions?: number | null;
+            /** Format: int64 */
+            parts?: number | null;
+            /** Format: int64 */
+            safety?: number | null;
+            /** Format: int64 */
+            terms?: number | null;
+        };
+        /** @description An amenity outside the v1 codes, as read */
+        ChecklistOtherItem: {
+            /** Format: date */
+            confirmedOn?: string | null;
+            itemId?: string;
+            label?: string;
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @enum {string} */
+            presence?: "YES" | "NO";
+            receivedByUserId?: string | null;
+            relayBasis?: string | null;
+            /**
+             * @description Where an amenity or furnishing came from
+             * @enum {string}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED";
+            spaceId?: string | null;
+        };
+        /** @description An amenity outside the v1 codes, as sent */
+        ChecklistOtherItemInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only
+             */
+            confirmedOn: string | null;
+            /** @description ULID */
+            itemId: string;
+            /** @description 1..100 characters */
+            label: string;
+            /** @enum {string} */
+            presence: "YES" | "NO";
+            /** @description OWNER_STATED only */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it */
+            relayBasis: string | null;
+            /**
+             * @description Where an amenity or furnishing came from
+             * @enum {string}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED";
+            /** @description A space of this checklist, or null for the property */
+            spaceId: string | null;
+        };
+        /** @description The owner's own web form values an owner's-form source may use */
+        ChecklistOwnerForm: {
+            addressDetail?: string;
+            /** Format: date */
+            availableFrom?: string | null;
+            latitude?: number | null;
+            longitude?: number | null;
+            /** @description Null unless a price per month was submitted */
+            monthlyAskingPrice?: components["schemas"]["ChecklistRentMoney"] | null;
+            provinceCode?: string;
+            /** Format: date */
+            submittedOn?: string;
+            wardCode?: string;
+        };
+        /** @description G2 parts, as read; one entry per G1 space in G1 order */
+        ChecklistPartsContent: {
+            accessRoute?: components["schemas"]["ChecklistTextField"];
+            sharedAreas?: components["schemas"]["ChecklistTextField"];
+            spaces?: components["schemas"]["ChecklistPartsSpace"][];
+            totalFloors?: components["schemas"]["ChecklistCountField"];
+        };
+        /** @description The parts group: its version, last save and content */
+        ChecklistPartsGroup: {
+            content?: components["schemas"]["ChecklistPartsContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G2 parts, as sent */
+        ChecklistPartsInput: {
+            accessRoute: components["schemas"]["ChecklistTextFieldInput"];
+            sharedAreas: components["schemas"]["ChecklistTextFieldInput"];
+            spaces: components["schemas"]["ChecklistPartsSpaceInput"][];
+            totalFloors: components["schemas"]["ChecklistCountFieldInput"];
+        };
+        /** @description G2 values of one space, as read */
+        ChecklistPartsSpace: {
+            actualAccess?: components["schemas"]["ChecklistActualAccessField"];
+            floor?: components["schemas"]["ChecklistTextField"];
+            privateAreas?: components["schemas"]["ChecklistTextField"];
+            spaceId?: string;
+        };
+        /** @description G2 values of one space, as sent */
+        ChecklistPartsSpaceInput: {
+            actualAccess: components["schemas"]["ChecklistActualAccessFieldInput"];
+            floor: components["schemas"]["ChecklistTextFieldInput"];
+            privateAreas: components["schemas"]["ChecklistTextFieldInput"];
+            spaceId: string;
+        };
+        /** @description The pets policy */
+        ChecklistPets: {
+            /** @description 1..500 characters, required for CONDITIONAL */
+            note: string | null;
+            /** @enum {string} */
+            policy: "ALLOWED" | "NOT_ALLOWED" | "CONDITIONAL";
+        };
+        /** @description Pets term of a survey checklist, as read */
+        ChecklistPetsTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistPets"] | null;
+        };
+        /** @description Pets term of a survey checklist, as sent */
+        ChecklistPetsTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistPets"] | null;
+        };
+        /** @description Asset type field of a survey checklist, as read */
+        ChecklistPropertyTypeField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+        };
+        /** @description Asset type field of a survey checklist, as sent */
+        ChecklistPropertyTypeFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+        };
+        /** @description The gaps known so far, computed on every read; submission is not available in this slice */
+        ChecklistReadiness: {
+            missing?: components["schemas"]["ChecklistMissingItem"][];
+            submissionAvailable?: boolean;
+            submissionUnavailableReason?: string;
+            unconfirmedTerms?: components["schemas"]["ChecklistUnconfirmedTerm"][];
+            warnings?: components["schemas"]["ChecklistWarning"][];
+        };
+        /** @description A monthly rent in whole VND */
+        ChecklistRentMoney: {
+            /**
+             * Format: int64
+             * @description 1 to 999999999999999
+             */
+            amount: number;
+            /** @description VND */
+            currency: string;
+            /** @description MONTH */
+            unit: string;
+        };
+        /** @description Monthly rent term of a survey checklist, as read */
+        ChecklistRentTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: components["schemas"]["ChecklistRentMoney"] | null;
+        };
+        /** @description Monthly rent term of a survey checklist, as sent */
+        ChecklistRentTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: components["schemas"]["ChecklistRentMoney"] | null;
+        };
+        /** @description A survey checklist as a reader of its lead sees it */
+        ChecklistResponse: {
+            /** Format: int32 */
+            checklistNo?: number;
+            corrections?: components["schemas"]["ChecklistCorrection"][];
+            /** Format: date-time */
+            createdAt?: string;
+            createdByName?: string | null;
+            createdByUserId?: string;
+            earlierHazards?: components["schemas"]["ChecklistEarlierHazard"][];
+            editable?: boolean;
+            editors?: components["schemas"]["ChecklistEditor"][];
+            effectiveTerms?: components["schemas"]["ChecklistSpaceTerms"][];
+            groups?: components["schemas"]["ChecklistGroups"];
+            holderName?: string | null;
+            holderUserId?: string;
+            id?: string;
+            /** @enum {string} */
+            kind?: "FULL_ASSESSMENT";
+            lead?: components["schemas"]["ChecklistLeadSummary"];
+            leadId?: string;
+            /** @description Empty unless the viewer can edit */
+            leadStaff?: components["schemas"]["ChecklistStaffMember"][];
+            ownerForm?: components["schemas"]["ChecklistOwnerForm"] | null;
+            /** @enum {string|null} */
+            readOnlyReason?: "INTENT_CHANGED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
+            readiness?: components["schemas"]["ChecklistReadiness"];
+            /** @enum {string} */
+            status?: "DRAFT";
+            takeovers?: components["schemas"]["ChecklistTakeover"][];
+            templateCode?: string;
+            /** Format: int32 */
+            templateVersion?: number;
+            /**
+             * Format: date-time
+             * @description The latest group save or takeover, else the creation
+             */
+            updatedAt?: string;
+            /** Format: int64 */
+            version?: number;
+            visit?: components["schemas"]["ChecklistVisit"];
+        };
+        /** @description G5 safety, as read */
+        ChecklistSafetyContent: {
+            accessRestrictions?: components["schemas"]["ChecklistObservationField"];
+            egress?: components["schemas"]["ChecklistTextField"];
+            hazards?: components["schemas"]["ChecklistHazardListField"];
+        };
+        /** @description The safety group: its version, last save and content */
+        ChecklistSafetyGroup: {
+            content?: components["schemas"]["ChecklistSafetyContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G5 safety, as sent */
+        ChecklistSafetyInput: {
+            accessRestrictions: components["schemas"]["ChecklistObservationFieldInput"];
+            egress: components["schemas"]["ChecklistTextFieldInput"];
+            /** @description At most 30 hazards */
+            hazards: components["schemas"]["ChecklistHazardListFieldInput"];
+        };
+        /** @description Save the amenities group */
+        ChecklistSaveAmenitiesRequest: {
+            content: components["schemas"]["ChecklistAmenitiesInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The group version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description Save the condition group */
+        ChecklistSaveConditionRequest: {
+            content: components["schemas"]["ChecklistConditionInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The group version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description Save the dimensions group */
+        ChecklistSaveDimensionsRequest: {
+            content: components["schemas"]["ChecklistDimensionsInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The group version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description Save G1 */
+        ChecklistSaveIdentificationRequest: {
+            content: components["schemas"]["ChecklistIdentificationInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The G1 version the caller read
+             */
+            expectedVersion: number | null;
+            /** @description Required for each group a space removal or scope change clears */
+            otherGroupVersions?: components["schemas"]["ChecklistOtherGroupVersions"] | null;
+        };
+        /** @description Save the parts group */
+        ChecklistSavePartsRequest: {
+            content: components["schemas"]["ChecklistPartsInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The group version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description Save the safety group */
+        ChecklistSaveSafetyRequest: {
+            content: components["schemas"]["ChecklistSafetyInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The group version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description Save the terms group */
+        ChecklistSaveTermsRequest: {
+            content: components["schemas"]["ChecklistTermsInput"] | null;
+            /** @description Required when the save changes what someone else observed or heard */
+            correction: components["schemas"]["ChecklistCorrectionRequest"] | null;
+            /**
+             * Format: int64
+             * @description The group version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description A checkpoint: every group as it was just before a takeover */
+        ChecklistSnapshotResponse: {
+            groups?: components["schemas"]["ChecklistGroups"];
+        };
+        /** @description The effective G8 values of one space in the preview */
+        ChecklistSpaceTerms: {
+            electricity?: components["schemas"]["ChecklistEffectiveCharge"];
+            fees?: components["schemas"]["ChecklistEffectiveFees"];
+            internet?: components["schemas"]["ChecklistEffectiveCharge"];
+            parking?: components["schemas"]["ChecklistEffectiveCharge"];
+            serviceFee?: components["schemas"]["ChecklistEffectiveCharge"];
+            spaceId?: string;
+            water?: components["schemas"]["ChecklistEffectiveCharge"];
+        };
+        /** @description A staff member of the lead who may be named as the receiver of an owner statement */
+        ChecklistStaffMember: {
+            name?: string | null;
+            userId?: string;
+        };
+        /** @description Start a survey checklist on the current visit */
+        ChecklistStartRequest: {
+            /** @description Null when the caller performed the visit, required otherwise */
+            intake: components["schemas"]["ChecklistIntakeRequest"] | null;
+        };
+        /** @description Whether the viewer can start a checklist on the current visit */
+        ChecklistStartStateResponse: {
+            allowed?: boolean;
+            /**
+             * @description The first block that applies, null when allowed
+             * @enum {string|null}
+             */
+            blockedBy?: "NO_CURRENT_VISIT" | "INTENT" | "LEAD_STATUS" | "ALREADY_STARTED" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | null;
+            intakeDeclarationRequired?: boolean;
+            visitAppointmentId?: string | null;
+        };
+        /** @description The answer of a checklist start */
+        ChecklistStartedResponse: {
+            checklist?: components["schemas"]["ChecklistResponse"];
+            historyEntry?: components["schemas"]["ChecklistHistoryEntryResponse"];
+            lead?: components["schemas"]["SurveyLeadStateResponse"];
+        };
+        /** @description A checklist of a VISITED appointment in the survey block */
+        ChecklistSummaryResponse: {
+            /** Format: int32 */
+            checklistNo?: number;
+            editable?: boolean;
+            holderName?: string | null;
+            holderUserId?: string;
+            id?: string;
+            /** Format: int32 */
+            missingCount?: number;
+            /** @enum {string|null} */
+            readOnlyReason?: "INTENT_CHANGED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
+            /** @enum {string} */
+            status?: "DRAFT";
+            /** Format: date-time */
+            updatedAt?: string;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+        };
+        /** @description The answer of a takeover */
+        ChecklistTakenOverResponse: {
+            checklist?: components["schemas"]["ChecklistResponse"];
+            historyEntry?: components["schemas"]["ChecklistHistoryEntryResponse"];
+        };
+        /** @description A takeover of the draft */
+        ChecklistTakeover: {
+            basis?: components["schemas"]["ChecklistBasis"];
+            fromName?: string | null;
+            fromUserId?: string | null;
+            /** @description Whether a checkpoint can be read (never for START_BY_OTHER) */
+            hasSnapshot?: boolean;
+            /** @enum {string} */
+            kind?: "START_BY_OTHER" | "TAKEOVER";
+            /** Format: date-time */
+            occurredAt?: string;
+            reason?: string;
+            /** Format: int32 */
+            takeoverNo?: number;
+            toName?: string | null;
+            toUserId?: string;
+        };
+        /** @description Take a survey checklist draft over from its holder */
+        ChecklistTakeoverRequest: {
+            basis: components["schemas"]["ChecklistBasisRequest"] | null;
+            /**
+             * Format: int64
+             * @description The checklist version the caller read
+             */
+            expectedVersion: number | null;
+            /** @description 1..500 characters, no phone number */
+            reason: string | null;
+        };
+        /** @description The common G8 terms, as read */
+        ChecklistTermsCommon: {
+            electricity?: components["schemas"]["ChecklistChargeTerm"];
+            handoverMaintenance?: components["schemas"]["ChecklistTextTerm"];
+            houseRules?: components["schemas"]["ChecklistTextTerm"];
+            internet?: components["schemas"]["ChecklistChargeTerm"];
+            otherFees?: components["schemas"]["ChecklistFeeListTerm"];
+            parking?: components["schemas"]["ChecklistChargeTerm"];
+            pets?: components["schemas"]["ChecklistPetsTerm"];
+            serviceFee?: components["schemas"]["ChecklistChargeTerm"];
+            water?: components["schemas"]["ChecklistChargeTerm"];
+        };
+        /** @description The common G8 terms, as sent */
+        ChecklistTermsCommonInput: {
+            electricity: components["schemas"]["ChecklistChargeTermInput"];
+            handoverMaintenance: components["schemas"]["ChecklistTextTermInput"];
+            houseRules: components["schemas"]["ChecklistTextTermInput"];
+            internet: components["schemas"]["ChecklistChargeTermInput"];
+            otherFees: components["schemas"]["ChecklistFeeListTermInput"];
+            parking: components["schemas"]["ChecklistChargeTermInput"];
+            pets: components["schemas"]["ChecklistPetsTermInput"];
+            serviceFee: components["schemas"]["ChecklistChargeTermInput"];
+            water: components["schemas"]["ChecklistChargeTermInput"];
+        };
+        /** @description G8 terms, as read; surveyed or offered, not agreed lease terms */
+        ChecklistTermsContent: {
+            common?: components["schemas"]["ChecklistTermsCommon"];
+            spaces?: components["schemas"]["ChecklistTermsSpace"][];
+        };
+        /** @description The terms group: its version, last save and content */
+        ChecklistTermsGroup: {
+            content?: components["schemas"]["ChecklistTermsContent"];
+            /** Format: date-time */
+            updatedAt?: string | null;
+            updatedByName?: string | null;
+            updatedByUserId?: string | null;
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description G8 terms, as sent */
+        ChecklistTermsInput: {
+            common: components["schemas"]["ChecklistTermsCommonInput"];
+            spaces: components["schemas"]["ChecklistTermsSpaceInput"][];
+        };
+        /** @description G8 values of one space, as read */
+        ChecklistTermsSpace: {
+            /** @description Separate parts only */
+            chargeOverrides?: components["schemas"]["ChecklistChargeOverrides"] | null;
+            deposit?: components["schemas"]["ChecklistDepositTerm"];
+            minimumTermMonths?: components["schemas"]["ChecklistMonthsTerm"];
+            monthlyRent?: components["schemas"]["ChecklistRentTerm"];
+            paymentPeriodMonths?: components["schemas"]["ChecklistMonthsTerm"];
+            /** @description Separate parts only; adds to the common fees */
+            spaceFees?: components["schemas"]["ChecklistFeeListTerm"] | null;
+            spaceId?: string;
+        };
+        /** @description G8 values of one space, as sent */
+        ChecklistTermsSpaceInput: {
+            /** @description Required in separate parts, null otherwise */
+            chargeOverrides: components["schemas"]["ChecklistChargeOverridesInput"] | null;
+            deposit: components["schemas"]["ChecklistDepositTermInput"];
+            minimumTermMonths: components["schemas"]["ChecklistMonthsTermInput"];
+            monthlyRent: components["schemas"]["ChecklistRentTermInput"];
+            paymentPeriodMonths: components["schemas"]["ChecklistMonthsTermInput"];
+            /** @description Separate parts only; adds to the common fees */
+            spaceFees: components["schemas"]["ChecklistFeeListTermInput"] | null;
+            spaceId: string;
+        };
+        /** @description Text field of a survey checklist, as read */
+        ChecklistTextField: {
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: string | null;
+        };
+        /** @description Text field of a survey checklist, as sent */
+        ChecklistTextFieldInput: {
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: string | null;
+        };
+        /** @description Text term of a survey checklist, as read */
+        ChecklistTextTerm: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value?: string | null;
+        };
+        /** @description Text term of a survey checklist, as sent */
+        ChecklistTextTermInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /** @description Present exactly when state is VALUE */
+            value: string | null;
+        };
+        /** @description A rental term or availability date still not confirmed */
+        ChecklistUnconfirmedTerm: {
+            field?: string;
+            /** @enum {string} */
+            group?: "IDENTIFICATION" | "PARTS" | "DIMENSIONS" | "CONDITION" | "SAFETY" | "AMENITIES" | "EVIDENCE" | "TERMS";
+            spaceId?: string | null;
+        };
+        /** @description Who last changed a unit and who observed or heard its value */
+        ChecklistUnitMeta: {
+            /** @description The save whose correction covered the last change */
+            correctionSaveId?: string | null;
+            /** Format: date-time */
+            enteredAt?: string;
+            enteredByName?: string | null;
+            enteredByUserId?: string;
+            /** @description address, askingPrice or availableFrom for an owner form value */
+            formField?: string | null;
+            /**
+             * @description The source the unit last held, also after it was cleared
+             * @enum {string|null}
+             */
+            lastSource?: "OBSERVED_ON_SITE" | "MEASURED" | "ESTIMATED" | "OWNER_STATED" | "OWNER_FORM" | null;
+            observedByName?: string | null;
+            /** @description The performer for on-site values, the receiver for owner statements, null for the owner form or a note */
+            observedByUserId?: string | null;
+            /** Format: date */
+            observedOn?: string | null;
+        };
+        /** @description The visit a checklist belongs to, as it was recorded */
+        ChecklistVisit: {
+            appointmentId?: string;
+            /** Format: int32 */
+            appointmentNo?: number;
+            /** Format: date-time */
+            arrivedAt?: string;
+            /** @enum {string} */
+            intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT";
+            /** Format: int32 */
+            intentCycle?: number;
+            /** @enum {string} */
+            kind?: "FIRST" | "RESURVEY";
+            leadLocation?: components["schemas"]["SurveyLocationResponse"];
+            meetingLocation?: components["schemas"]["SurveyLocationResponse"];
+            performedByName?: string | null;
+            performedByUserId?: string;
+            /** @enum {string} */
+            recordKind?: "OWN" | "PROXY";
+            /** Format: date-time */
+            recordedAt?: string;
+            recordedByName?: string | null;
+            recordedByUserId?: string;
+        };
+        /** @description A warning of the preview */
+        ChecklistWarning: {
+            checklistId?: string | null;
+            /** Format: int32 */
+            checklistNo?: number | null;
+            hazardId?: string | null;
+            spaceId?: string | null;
+            /** @enum {string} */
+            type?: "OPEN_IMPORTANT_HAZARD" | "EARLIER_HAZARD_OPEN" | "PARTIAL_ACCESS";
+        };
+        /** @description Yes or no field with a count source of a survey checklist, as read */
+        ChecklistYesNoCountField: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn?: string | null;
+            /** @description Null until the unit is first changed */
+            meta?: components["schemas"]["ChecklistUnitMeta"] | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason?: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId?: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis?: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state?: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value?: "YES" | "NO" | null;
+        };
+        /** @description Yes or no field with a count source of a survey checklist, as sent */
+        ChecklistYesNoCountFieldInput: {
+            /**
+             * Format: date
+             * @description OWNER_STATED only: the day the owner said it
+             */
+            confirmedOn: string | null;
+            /** @description Present exactly when state is NOT_APPLICABLE, 1..500 characters */
+            naReason: string | null;
+            /** @description OWNER_STATED only: who heard it, one of the lead's staff */
+            receivedByUserId: string | null;
+            /** @description OWNER_STATED only, exactly when someone else heard it: how it reached the person entering it */
+            relayBasis: string | null;
+            /**
+             * @description Required with VALUE
+             * @enum {string|null}
+             */
+            source: "OBSERVED_ON_SITE" | "OWNER_STATED" | null;
+            /** @enum {string} */
+            state: "UNKNOWN" | "VALUE" | "NOT_APPLICABLE";
+            /**
+             * @description Present exactly when state is VALUE
+             * @enum {string|null}
+             */
+            value: "YES" | "NO" | null;
+        };
         /** @description A verification code was sent */
         CodeSentResponse: {
             /**
@@ -1050,11 +3133,13 @@ export interface components {
             note?: string;
             /** Format: date-time */
             occurredAt?: string;
-            /** @description The survey appointment the entry concerns (survey-schedule); null when none */
+            /** @description The checklist group a CHECKLIST_SAVED entry concerns; null otherwise */
+            referenceDetail?: string | null;
+            /** @description The survey appointment (survey types) or survey checklist (checklist types) the entry concerns; null when none */
             referenceId?: string | null;
             /**
              * Format: int32
-             * @description That appointment's number within the lead; null when none
+             * @description That appointment's or checklist's number within the lead; null when none
              */
             referenceNo?: number | null;
             toAssigneeId?: string;
@@ -1063,7 +3148,7 @@ export interface components {
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
-            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED";
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED";
         };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
@@ -1578,6 +3663,8 @@ export interface components {
             appointmentNo?: number;
             cancellation?: components["schemas"]["SurveyCancellationResponse"];
             cannotBePerformed?: boolean;
+            /** @description The survey checklists of a VISITED appointment, newest first; empty otherwise (survey-checklist spec 7.2) */
+            checklists?: components["schemas"]["ChecklistSummaryResponse"][];
             confirmation?: components["schemas"]["SurveyConfirmationResponse"];
             /** Format: date-time */
             createdAt?: string;
@@ -1624,6 +3711,8 @@ export interface components {
         SurveyBlockResponse: {
             appointments?: components["schemas"]["SurveyAppointmentResponse"][];
             booking?: components["schemas"]["SurveyBookingResponse"];
+            /** @description Whether the viewer can start a survey checklist on the current visit (survey-checklist spec 7.2) */
+            checklistStart?: components["schemas"]["ChecklistStartStateResponse"];
             currentVisitId?: string;
             /** Format: int32 */
             intentCycle?: number;
@@ -4244,6 +6333,86 @@ export interface operations {
             };
         };
     };
+    startSurveyChecklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistStartRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist, the lead and its History entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistStartedResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on intake or intake.* (a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_NOT_ALLOWED (field appointmentId: not the lead's current visit; intent, allowedValues [LONG_TERM_RENT]; status, allowedValues [SURVEY_SCHEDULED]); CHECKLIST_ALREADY_STARTED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     confirmation: {
         parameters: {
             query?: never;
@@ -4394,6 +6563,754 @@ export interface operations {
                 };
             };
             /** @description PERFORMER_MISMATCH (field performedByUserId): that person did not hold the appointment then; SURVEYOR_INELIGIBLE (field performedByUserId): an own record by someone who can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSurveyChecklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The checklist */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistAmenities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSaveAmenitiesRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistCondition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSaveConditionRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistDimensions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSaveDimensionsRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistIdentification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSaveIdentificationRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistParts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSavePartsRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistSafety: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSaveSafetyRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    takeOverSurveyChecklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistTakeoverRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist and its History entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistTakenOverResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on expectedVersion, reason, basis or basis.* (a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_NOT_ALLOWED (field holder): the caller already holds it; CONCURRENT_MODIFICATION (field expectedVersion) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSurveyChecklistCheckpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+                takeoverNo: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The takeover and its checkpoint */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistCheckpointResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on takeoverNo: not a number */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist or checkpoint, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveSurveyChecklistTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSaveTermsRequest"];
+            };
+        };
+        responses: {
+            /** @description The checklist after the save */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED, every failing rule on its JSON path (content.*, expectedVersion, correction or correction.*; a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
             422: {
                 headers: {
                     [name: string]: unknown;
