@@ -1,4 +1,4 @@
-/** OpenStreetMap raster tiles for the owner intake map (C-FE-2). */
+/** OpenStreetMap raster tiles for the map pickers (owner intake C-FE-2, survey meeting place). */
 export const TILE_URL = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 
 /**

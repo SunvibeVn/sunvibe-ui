@@ -24,13 +24,13 @@ const sale = viewerOf(["SALE"]);
 
 const q = (s: string) => new URLSearchParams(s);
 
-const OPEN_ON_MINE = ["ASSIGNED", "CONTACTED", "ON_HOLD"];
-const WITH_CLOSED = ["ASSIGNED", "CONTACTED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"];
+const OPEN_ON_MINE = ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"];
+const WITH_CLOSED = ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"];
 
 describe("list URL state: plan B3 cases (spec 5.3, A-6..A-8)", () => {
   it("defaults per viewer", () => {
     expect(parseListState(q(""), leader)).toEqual({ scope: "all", statuses: ["NEW"], page: 1 });
-    expect(parseListState(q(""), sale)).toEqual({ scope: "mine", statuses: ["ASSIGNED", "CONTACTED", "ON_HOLD"], page: 1 });
+    expect(parseListState(q(""), sale)).toEqual({ scope: "mine", statuses: ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"], page: 1 });
     expect(viewerOf(["ADMIN"]).tabs).toEqual(["all"]);
     expect(viewerOf(["SALES_MANAGER"]).defaultScope).toBe("all");
     expect(leader.tabs).toEqual(["mine", "all"]);
@@ -42,22 +42,22 @@ describe("list URL state: plan B3 cases (spec 5.3, A-6..A-8)", () => {
     expect(parseListState(q("scope=unassigned"), sale).scope).toBe("mine");
     expect(parseListState(q("scope=all&closed=1"), leader).statuses).toEqual(LEAD_STATUSES);
     expect(parseListState(q("scope=all&closed=1&assignee=U1"), leader).statuses)
-      .toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
+      .toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
     expect(parseListState(q("scope=mine&closed=1"), leader).statuses)
-      .toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
+      .toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
     expect(parseListState(q("scope=all&closed=1&status=ON_HOLD"), leader).statuses).toEqual(["ON_HOLD"]);
-    expect(parseListState(q("scope=mine&status=NEW"), leader).statuses).toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD"]);
+    expect(parseListState(q("scope=mine&status=NEW"), leader).statuses).toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
   });
 
   it("assignee link without status gets the assignee default", () => {
-    expect(parseListState(q("scope=all&assignee=U1"), leader).statuses).toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD"]);
+    expect(parseListState(q("scope=all&assignee=U1"), leader).statuses).toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
     expect(parseListState(q(assigneeListHref("U1", leader).split("?")[1]), leader).statuses)
-      .toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD"]);
+      .toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
   });
 
   it("assignee set and cleared", () => {
     const def = parseListState(q(""), leader);
-    expect(withFilter(def, { assignee: "U1" }).statuses).toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD"]);
+    expect(withFilter(def, { assignee: "U1" }).statuses).toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
     const picked = withFilter(def, { statuses: ["NEW", "DUPLICATE"] });
     expect(withFilter(picked, { assignee: "U1" }).statuses).toEqual(["DUPLICATE"]);
     const withA = withFilter(def, { assignee: "U1" });
@@ -67,7 +67,7 @@ describe("list URL state: plan B3 cases (spec 5.3, A-6..A-8)", () => {
   it("tab switch resets", () => {
     const s = withFilter(parseListState(q(""), leader), { statuses: ["ASSIGNED"], ward: "20242" });
     const mine = withFilter(s, { scope: "mine" });
-    expect(mine).toEqual({ scope: "mine", statuses: ["ASSIGNED", "CONTACTED", "ON_HOLD"], page: 1 });
+    expect(mine).toEqual({ scope: "mine", statuses: ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"], page: 1 });
     expect(withFilter(mine, { scope: "all" }).statuses).toEqual(["NEW"]);
   });
 
@@ -77,12 +77,12 @@ describe("list URL state: plan B3 cases (spec 5.3, A-6..A-8)", () => {
     expect(clearFilters(withFilter(def, { assignee: "U1", ward: "20242" }))).toEqual(def);
     const mine = parseListState(q(""), sale);
     expect(closedToggle(mine)).toBe("unchecked");
-    expect(toggleClosed(mine).statuses).toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
+    expect(toggleClosed(mine).statuses).toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
     const mixed = withFilter(mine, { statuses: ["ASSIGNED", "REJECTED"] });
     expect(closedToggle(mixed)).toBe("mixed");
     expect(toggleClosed(mixed).statuses).toEqual(["ASSIGNED", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
     const closedOnly = withFilter(mine, { statuses: ["DUPLICATE", "REJECTED", "WITHDRAWN"] });
-    expect(toggleClosed(closedOnly).statuses).toEqual(["ASSIGNED", "CONTACTED", "ON_HOLD"]); // empty → default
+    expect(toggleClosed(closedOnly).statuses).toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]); // empty → default
   });
 
   it("serialize and api query", () => {
@@ -93,7 +93,7 @@ describe("list URL state: plan B3 cases (spec 5.3, A-6..A-8)", () => {
 
   it("SALE never leaves mine (W11-23)", () => {
     const s = parseListState(q("scope=all&assignee=U1&ward=20242"), sale);
-    expect(toApiQuery(s)).toEqual({ scope: "mine", status: ["ASSIGNED", "CONTACTED", "ON_HOLD"], page: 0, size: 20 });
+    expect(toApiQuery(s)).toEqual({ scope: "mine", status: ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"], page: 0, size: 20 });
   });
 });
 
@@ -104,11 +104,17 @@ describe("statusBoxes and defaultStatuses (spec 5.3 table, C-45)", () => {
     expect(defaultStatuses("mine")).toEqual(OPEN_ON_MINE);
   });
 
-  it("All Leads shows all seven without an assignee, and drops Unassigned with one", () => {
+  it("All Leads shows all eight without an assignee, and drops Unassigned with one", () => {
     expect(statusBoxes("all")).toEqual(LEAD_STATUSES);
+    expect(statusBoxes("all")).toEqual(["NEW", ...WITH_CLOSED]);
     expect(defaultStatuses("all")).toEqual(["NEW"]);
     expect(statusBoxes("all", "U1")).toEqual(WITH_CLOSED);
     expect(defaultStatuses("all", "U1")).toEqual(OPEN_ON_MINE);
+  });
+
+  it("keeps Survey Scheduled from the URL on both tabs (C-3d)", () => {
+    expect(parseListState(q("scope=mine&status=SURVEY_SCHEDULED"), sale).statuses).toEqual(["SURVEY_SCHEDULED"]);
+    expect(parseListState(q("scope=all&status=SURVEY_SCHEDULED"), leader).statuses).toEqual(["SURVEY_SCHEDULED"]);
   });
 
   it("returns fresh arrays", () => {
@@ -282,7 +288,8 @@ describe("serializeListState (never writes closed; leaves out the default set an
   it("keeps the url short", () => {
     expect(serializeListState(samples[1])).toBe("scope=mine&page=4");
     expect(serializeListState(samples[2])).toBe(
-      "scope=mine&status=ASSIGNED&status=CONTACTED&status=ON_HOLD&status=DUPLICATE&status=REJECTED&status=WITHDRAWN",
+      "scope=mine&status=ASSIGNED&status=CONTACTED&status=SURVEY_SCHEDULED&status=ON_HOLD&status=DUPLICATE&status=REJECTED" +
+        "&status=WITHDRAWN",
     );
     expect(serializeListState(samples[3])).toBe("scope=all&status=NEW&status=WITHDRAWN&ward=20242&page=2");
     expect(serializeListState(samples[4])).toBe("scope=all&assignee=x");
@@ -374,7 +381,7 @@ describe("closedToggle and toggleClosed (A-8)", () => {
 
   it("is checked with all three closed ticked", () => {
     const checked = toggleClosed(all);
-    expect(checked.statuses).toEqual(LEAD_STATUSES.filter((s) => s === "NEW" || WITH_CLOSED.slice(3).includes(s)));
+    expect(checked.statuses).toEqual(LEAD_STATUSES.filter((s) => s === "NEW" || WITH_CLOSED.slice(4).includes(s)));
     expect(closedToggle(checked)).toBe("checked");
     expect(toggleClosed(checked)).toEqual({ ...all, page: 1 });
   });

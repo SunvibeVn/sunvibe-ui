@@ -54,8 +54,11 @@ const LEGACY_UNASSIGNED = "unassigned";
 const WARD_CODE = /^[0-9]{1,10}$/;
 const USER_ID = /^[A-Za-z0-9]{1,26}$/;
 const PAGE = /^[1-9][0-9]*$/;
-/** "My Leads", and "All Leads" with an assignee, start on these: the open set without the hidden Unassigned (A-6). */
-const OPEN_WITHOUT_NEW: readonly LeadStatus[] = ["ASSIGNED", "CONTACTED", "ON_HOLD"];
+/**
+ * "My Leads", and "All Leads" with an assignee, start on these: the open set without the hidden Unassigned (A-6),
+ * Survey Scheduled included (survey-schedule C-3d).
+ */
+const OPEN_WITHOUT_NEW: readonly LeadStatus[] = ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"];
 
 function isScope(value: unknown): value is Scope {
   return typeof value === "string" && (SCOPES as readonly string[]).includes(value);
@@ -71,7 +74,10 @@ export function statusBoxes(scope: Scope, assignee?: string): LeadStatus[] {
   return showsNew(scope, assignee) ? [...LEAD_STATUSES] : LEAD_STATUSES.filter((status) => status !== "NEW");
 }
 
-/** The statuses a tab starts on (spec 5.3 table): Unassigned on "All Leads", else Assigned, Contacted, On Hold. */
+/**
+ * The statuses a tab starts on (spec 5.3 table): Unassigned on "All Leads", else Assigned, Contacted, Survey Scheduled,
+ * On Hold.
+ */
 export function defaultStatuses(scope: Scope, assignee?: string): LeadStatus[] {
   return showsNew(scope, assignee) ? ["NEW"] : [...OPEN_WITHOUT_NEW];
 }

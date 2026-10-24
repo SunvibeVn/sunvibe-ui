@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Supply Leads",
 };
 
+// The workspace shell renders this page only once the browser has the session: no instant navigation to validate.
+export const instant = false;
+
 export default function OwnerLeadsPage() {
   return <LeadListView />;
 }

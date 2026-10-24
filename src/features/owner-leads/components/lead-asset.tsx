@@ -1,13 +1,19 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 
 import { formatDate, formatDateTime, formatPrice } from "../lib/format";
 import { intentLabelKey, propertyTypeLabelKey, sourceLabelKey } from "../lib/labels";
 import { mapDirectionsUrl } from "../lib/map-link";
+import { canChangeRequirement } from "../lib/requirement-form";
 import type { LeadDetail } from "../types";
 
 import { DetailCell, DetailGrid, DetailSection } from "./detail-layout";
+import { useLeadDetail } from "./lead-detail-context";
+import { RequirementDialog } from "./requirement-dialog";
 
 /** The map link in the primary button style of Save (owner 2026-10-23, D-8); 44px high on a phone (touch target). */
 const BUTTON =
@@ -18,10 +24,14 @@ const isCoordinate = (value: unknown): value is number => typeof value === "numb
 
 /**
  * The property side of the owner request, with consent, in columns that follow the card width (D-3, D-10); when
- * there are coordinates, the map button on its own row below.
+ * there are coordinates, the map button on its own row below. "Change requirement" (survey-schedule A-18) for a lead
+ * that is open and assigned; it waits while any command of the page runs (CR-2).
  */
 export function LeadAsset({ lead }: { lead: LeadDetail }) {
   const t = useTranslations("OwnerLeads");
+  const { busy } = useLeadDetail();
+  const [changing, setChanging] = useState(false);
+  const [changed, setChanged] = useState(false);
   const none = <span className="text-slate-500">{t("detail.asset.none")}</span>;
   const { askingPrice, latitude, longitude, consent } = lead;
   const intentKey = intentLabelKey(lead.intent);
@@ -30,7 +40,7 @@ export function LeadAsset({ lead }: { lead: LeadDetail }) {
     askingPrice?.amount != null && askingPrice.unit != null
       ? formatPrice({ amount: askingPrice.amount, unit: askingPrice.unit }, (key) => t(key))
       : "";
-  const availableFrom = lead.availableFrom === undefined ? "" : formatDate(lead.availableFrom);
+  const availableFrom = lead.availableFrom == null ? "" : formatDate(lead.availableFrom);
   const acceptedAt = consent?.acceptedAt === undefined ? "" : formatDateTime(consent.acceptedAt);
   const version = consent?.noticeVersion?.trim() ?? "";
 
@@ -57,6 +67,35 @@ export function LeadAsset({ lead }: { lead: LeadDetail }) {
           {acceptedAt === "" ? none : t("detail.consent.summary", { acceptedAt, version })}
         </DetailCell>
       </DetailGrid>
+      {changed && (
+        <div className="mt-3" aria-live="polite">
+          <Alert tone="success">{t("requirement.saved")}</Alert>
+        </div>
+      )}
+      {canChangeRequirement(lead.status) && (
+        <div className="mt-3">
+          <Button
+            variant="secondary"
+            className="px-4 py-2"
+            disabled={busy}
+            onClick={() => {
+              setChanged(false);
+              setChanging(true);
+            }}
+          >
+            {t("requirement.button")}
+          </Button>
+        </div>
+      )}
+      {changing && (
+        <RequirementDialog
+          onClose={() => setChanging(false)}
+          onSaved={() => {
+            setChanging(false);
+            setChanged(true);
+          }}
+        />
+      )}
       {isCoordinate(latitude) && isCoordinate(longitude) && (
         <div className="mt-3">
           {/* Opens Google Maps only on this click (C-22); nothing is requested from Google before. */}

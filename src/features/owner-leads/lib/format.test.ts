@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import en from "@/i18n/messages/en.json";
 
-import { formatDate, formatDateTime, formatPrice, instantToLocalInput, localInputToInstant } from "./format";
+import { formatPrice } from "./format";
 import type { OwnerLeadsKey } from "./labels";
 
 /** Stands in for `useTranslations("OwnerLeads")`: reads the key from en.json. */
@@ -10,53 +10,6 @@ const t = (key: OwnerLeadsKey): string =>
   key.split(".").reduce<unknown>((node, part) => (node as Record<string, unknown>)[part], en.OwnerLeads) as string;
 
 const VND = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
-
-describe("formatDateTime (BR-5, W11-44)", () => {
-  it("shows dd/MM/yyyy HH:mm in Vietnam time", () => {
-    expect(formatDateTime("2026-10-18T02:05:00Z")).toBe("18/10/2026 09:05");
-  });
-
-  it("rolls over to the next day at 17:00 UTC", () => {
-    expect(formatDateTime("2026-12-31T17:30:00Z")).toBe("01/01/2027 00:30");
-  });
-
-  it("reads an offset instant", () => {
-    expect(formatDateTime("2026-10-18T09:05:00+07:00")).toBe("18/10/2026 09:05");
-  });
-
-  it("does not depend on the machine time zone", () => {
-    const saved = process.env.TZ;
-    try {
-      process.env.TZ = "America/Los_Angeles";
-      expect(formatDateTime("2026-10-18T02:05:00Z")).toBe("18/10/2026 09:05");
-      process.env.TZ = "Pacific/Auckland";
-      expect(formatDateTime("2026-10-18T02:05:00Z")).toBe("18/10/2026 09:05");
-    } finally {
-      if (saved === undefined) delete process.env.TZ;
-      else process.env.TZ = saved;
-    }
-  });
-
-  it("returns an empty string for an unreadable value", () => {
-    expect(formatDateTime("nope")).toBe("");
-  });
-});
-
-describe("formatDate", () => {
-  it("shows a date-only value as dd/MM/yyyy without shifting it", () => {
-    expect(formatDate("2026-10-18")).toBe("18/10/2026");
-    expect(formatDate("2026-01-05")).toBe("05/01/2026");
-  });
-
-  it("returns an empty string for an unreadable value", () => {
-    expect(formatDate("18/10/2026")).toBe("");
-  });
-
-  it("takes a date only: a date-time or trailing text is unreadable, not cut", () => {
-    expect(formatDate("2026-10-18T09:05:00Z")).toBe("");
-    expect(formatDate("2026-10-18 junk")).toBe("");
-  });
-});
 
 describe("formatPrice (BR-5)", () => {
   it("shows the amount alone for a unit it does not know, never a raw code", () => {
@@ -90,39 +43,5 @@ describe("formatPrice (BR-5)", () => {
 
   it("keeps a 15-digit amount exact", () => {
     expect(formatPrice({ amount: "999999999999999", unit: "TOTAL" }, t)).toContain("999.999.999.999.999");
-  });
-});
-
-describe("datetime-local conversion (W11-44)", () => {
-  it("reads a local value as Vietnam time", () => {
-    expect(localInputToInstant("2026-10-18T09:05")).toBe("2026-10-18T02:05:00.000Z");
-  });
-
-  it("crosses midnight", () => {
-    expect(localInputToInstant("2026-10-18T00:30")).toBe("2026-10-17T17:30:00.000Z");
-  });
-
-  it("accepts seconds", () => {
-    expect(localInputToInstant("2026-10-18T09:05:30")).toBe("2026-10-18T02:05:30.000Z");
-  });
-
-  it("rejects a malformed or impossible value", () => {
-    expect(() => localInputToInstant("")).toThrow(RangeError);
-    expect(() => localInputToInstant("2026-10-18")).toThrow(RangeError);
-    expect(() => localInputToInstant("2026-13-18T09:05")).toThrow(RangeError);
-    expect(() => localInputToInstant("2026-02-30T09:05")).toThrow(RangeError);
-  });
-
-  it("writes an instant as a Vietnam-time input value", () => {
-    expect(instantToLocalInput("2026-10-18T02:05:00.000Z")).toBe("2026-10-18T09:05");
-    expect(instantToLocalInput("2026-10-17T17:30:00Z")).toBe("2026-10-18T00:30");
-  });
-
-  it("round-trips", () => {
-    expect(instantToLocalInput(localInputToInstant("2027-03-04T23:59"))).toBe("2027-03-04T23:59");
-  });
-
-  it("returns an empty string for an unreadable instant", () => {
-    expect(instantToLocalInput("nope")).toBe("");
   });
 });

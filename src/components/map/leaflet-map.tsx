@@ -3,12 +3,11 @@
 import "leaflet/dist/leaflet.css";
 
 import { icon, type LatLngExpression, type LeafletMouseEvent, type Marker as LeafletMarker } from "leaflet";
-import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { MapContainer, Marker, TileLayer, useMap, useMapEvents } from "react-leaflet";
 
-import type { Pin } from "../lib/geo";
-import { TILE_ATTRIBUTION, TILE_REFERRER_POLICY, TILE_URL } from "../lib/map-tiles";
+import type { Pin } from "@/lib/map/geo";
+import { TILE_ATTRIBUTION, TILE_REFERRER_POLICY, TILE_URL } from "@/lib/map/map-tiles";
 
 /** Center of Đà Nẵng and a zoom that shows the city. */
 const CENTER: LatLngExpression = [16.0544, 108.2022];
@@ -30,6 +29,8 @@ export type LeafletMapProps = {
   onPick: (latitude: number, longitude: number) => boolean;
   /** False while submitting: the pin cannot move. */
   interactive: boolean;
+  /** Accessible name of the map. */
+  label: string;
 };
 
 function ClickToPick({ onPick, interactive }: Pick<LeafletMapProps, "onPick" | "interactive">) {
@@ -53,10 +54,9 @@ function KeepPinInView({ pin }: { pin?: Pin }) {
 }
 
 /** Leaflet map with OSM tiles; browser only (load it through next/dynamic with ssr: false). */
-export function LeafletMap({ pin, onPick, interactive }: LeafletMapProps) {
-  const t = useTranslations("OwnerIntake");
+export function LeafletMap({ pin, onPick, interactive, label }: LeafletMapProps) {
   return (
-    <MapContainer center={CENTER} zoom={ZOOM} scrollWheelZoom={false} className="h-full w-full" aria-label={t("map.label")}>
+    <MapContainer center={CENTER} zoom={ZOOM} scrollWheelZoom={false} className="h-full w-full" aria-label={label}>
       <TileLayer url={TILE_URL} attribution={TILE_ATTRIBUTION} referrerPolicy={TILE_REFERRER_POLICY} />
       <ClickToPick onPick={onPick} interactive={interactive} />
       <KeepPinInView pin={pin} />

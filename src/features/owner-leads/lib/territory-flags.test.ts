@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { EligibleAssignee, Territory } from "../types";
 
-import { holderFlag, prepareTerritoryAssign, territoryProblem } from "./territory-flags";
+import { holderFlag, holderId, prepareTerritoryAssign, territoryProblem } from "./territory-flags";
 
 const eligible: EligibleAssignee[] = [
   { userId: "U1", fullName: "Nguyễn Văn An", roles: ["SALE"] },
@@ -16,10 +16,30 @@ const ward = (extra: Partial<Territory> = {}): Territory => ({
   ...extra,
 });
 
+/** A ward as the API sends it when nobody looks after it: the holder fields are null, not left out. */
+const emptyWard = (): Territory =>
+  JSON.parse('{"wardCode":"20242","wardName":"Hải Châu","wardType":"WARD","userId":null,"userName":null,"assignedAt":null}') as Territory;
+
+describe("holderId", () => {
+  it("is the holder's user id", () => {
+    expect(holderId(ward({ userId: "U1" }))).toBe("U1");
+  });
+
+  it("is undefined when nobody looks after the ward: null, left out or blank", () => {
+    expect(holderId(emptyWard())).toBeUndefined();
+    expect(holderId(ward())).toBeUndefined();
+    expect(holderId(ward({ userId: "" }))).toBeUndefined();
+  });
+});
+
 describe("holderFlag (C-40)", () => {
   it("is none when nobody looks after the ward", () => {
     expect(holderFlag(ward(), eligible)).toBe("none");
     expect(holderFlag(ward({ userId: undefined, userName: null }), eligible)).toBe("none");
+  });
+
+  it("is none for a ward the API sends with a null holder", () => {
+    expect(holderFlag(emptyWard(), eligible)).toBe("none");
   });
 
   it("is none for a blank user id", () => {

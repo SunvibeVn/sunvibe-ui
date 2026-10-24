@@ -13,7 +13,7 @@ import { formatDateTime } from "../lib/format";
 import { wardTypeLabelKey } from "../lib/labels";
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import { sendTerritoryChange } from "../lib/territory-flow";
-import { holderFlag, type TerritoryProblem } from "../lib/territory-flags";
+import { holderFlag, holderId, type TerritoryProblem } from "../lib/territory-flags";
 import { viewerOf } from "../lib/viewer";
 import { listAssignees } from "../services/owner-leads-api";
 import { listTerritories } from "../services/territories-api";
@@ -204,9 +204,10 @@ function TerritoriesContent() {
     setNotice(null);
     const shownIn = openNo.current;
     const ward = territory.wardName ?? "";
+    const previousId = holderId(territory);
     const previous =
-      territory.userId !== undefined && territory.userId !== ""
-        ? { id: territory.userId, name: territory.userName?.trim() ? territory.userName : t("holder.unknown") }
+      previousId !== undefined
+        ? { id: previousId, name: territory.userName?.trim() ? territory.userName : t("holder.unknown") }
         : undefined;
 
     const outcome = await sendTerritoryChange(wardCode, userId);
@@ -264,7 +265,7 @@ function TerritoriesContent() {
       key: "holder",
       header: t("table.holder"),
       cell: (row) => {
-        if (row.userId === undefined || row.userId === "") {
+        if (holderId(row) === undefined) {
           return <span className="text-slate-500">{t("holder.none")}</span>;
         }
         return (
@@ -278,7 +279,7 @@ function TerritoriesContent() {
     {
       key: "assignedAt",
       header: t("table.assignedAt"),
-      cell: (row) => (row.assignedAt === undefined ? "" : formatDateTime(row.assignedAt)),
+      cell: (row) => (row.assignedAt == null ? "" : formatDateTime(row.assignedAt)),
     },
     {
       key: "actions",
@@ -287,7 +288,7 @@ function TerritoriesContent() {
         const code = row.wardCode;
         if (code === undefined) return null;
         const ward = row.wardName ?? "";
-        const held = row.userId !== undefined && row.userId !== "";
+        const held = holderId(row) !== undefined;
         return (
           <div className="flex flex-wrap gap-2">
             <Button

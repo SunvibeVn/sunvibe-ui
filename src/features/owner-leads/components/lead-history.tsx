@@ -11,7 +11,8 @@ import { formatDateTime } from "../lib/format";
 import type { CommandMessage } from "../lib/command-flow";
 import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";
 import { entryDraftOpen, entryTargets } from "../lib/history-entry";
-import { activityLabelKey } from "../lib/labels";
+import { historyActivityText } from "../lib/history-activity-text";
+import { historyStatus } from "../lib/history-status";
 import { isClosedLeadStatus, type LeadActivity } from "../types";
 
 import { CommandMessageView } from "./command-message";
@@ -31,7 +32,7 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
   const actor = historyActor(activity);
   const pic = actor.kind === "name" ? actor.name : t(HISTORY_ACTOR_KEY[actor.kind]);
   const when = activity.occurredAt === undefined ? "" : formatDateTime(activity.occurredAt);
-  const note = activity.note?.trim();
+  const status = historyStatus(activity);
   const label = (column: "no" | "updated" | "activity" | "pic" | "status") => t(`history.columns.${column}`);
   return (
     <tr role="row" className={HISTORY_ROW}>
@@ -42,16 +43,16 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
         {when}
       </td>
       <td role="cell" data-label={label("activity")} className={`${HISTORY_CELL} whitespace-pre-wrap break-words`}>
-        <span className="min-w-0">{note ? activity.note : t(activityLabelKey(activity.type))}</span>
+        <span className="min-w-0">{historyActivityText(activity, t)}</span>
       </td>
       <td role="cell" data-label={label("pic")} className={HISTORY_CELL}>
         {pic}
       </td>
       <td role="cell" data-label={label("status")} className={HISTORY_CELL}>
-        {activity.toStatus === undefined ? (
+        {status === undefined ? (
           <span className="text-slate-500">{t("history.noStatus")}</span>
         ) : (
-          <LeadStatusBadge status={activity.toStatus} />
+          <LeadStatusBadge status={status} />
         )}
       </td>
       {/* Read only: nothing to do here; the empty cell is left out of the card below `xl`. */}

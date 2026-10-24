@@ -17,8 +17,8 @@ import {
 // the shell only; nothing here logs a password or a token.
 //
 // BEFORE EVERY `npm run e2e:workspace` run the owner runs both seeds again (FE handoff section 6): the specs change
-// the fixture data (L1 assigned, L2 status, L3, L4, L5 and L8 closed, An Hải handed over and back) and a second run on
-// changed data fails on its preconditions.
+// the fixture data (L1 assigned, L2 status, L3, L4, L5 and L8 closed, An Hải handed over and back, surveys booked on
+// L11 and the requirement of L12 changed) and a second run on changed data fails on its preconditions.
 
 export const WORKSPACE_E2E_SKIP_REASON =
   `The workspace E2E specs need the local API at ${API_URL} (dev profile), both seeds ` +
@@ -96,10 +96,12 @@ const FIXTURE_LEADS: ReadonlyArray<readonly [code: string, contactName: string, 
   ["SV-E2EA-AA2H", "Hoàng Thị Mai", "912000007"],
   ["SV-E2EA-AA2J", "Bùi Văn Sơn", "912000009"],
   ["SV-E2EA-AA2K", "Ngô Thị Yến", "912000010"],
+  ["SV-E2EA-AA2L", "Đỗ Thị Hoa", "912000011"],
+  ["SV-E2EA-AA2M", "Lý Văn Phúc", "912000012"],
 ];
 
 export const fixture = {
-  /** L1..L10 by their fixed id and request code (never by list position). */
+  /** L1..L12 by their fixed id and request code (never by list position). */
   lead(n: number): FixtureLead {
     const row = FIXTURE_LEADS[n - 1];
     if (row === undefined) throw new Error(`No fixture lead L${n}`);
@@ -132,6 +134,7 @@ export const T = {
   menuOpen: "Open menu",
   menuClose: "Close menu",
   menuOwnerLeads: "SUPPLY LEADS",
+  menuSurveys: "SURVEYS",
   menuTerritories: "TERRITORIES",
   signOut: "Sign Out",
   listTitle: "SUPPLY LEADS",
@@ -170,6 +173,7 @@ export const T = {
     NEW: "Unassigned",
     ASSIGNED: "Assigned",
     CONTACTED: "Contacted",
+    SURVEY_SCHEDULED: "Survey Scheduled",
     ON_HOLD: "On Hold",
     DUPLICATE: "Duplicate",
     REJECTED: "Declined",

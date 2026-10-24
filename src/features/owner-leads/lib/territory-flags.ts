@@ -2,6 +2,11 @@ import type { EligibleAssignee, Territory } from "../types";
 
 import type { LeadUiError } from "./lead-ui-error";
 
+/** User id of the person who looks after the ward; undefined when nobody does. */
+export function holderId(territory: Territory): string | undefined {
+  return territory.userId === null || territory.userId === "" ? undefined : territory.userId;
+}
+
 /** How a ward's holder stands against the people who can take leads now. */
 export type HolderFlag = "none" | "ok" | "ineligible";
 
@@ -11,8 +16,8 @@ export type HolderFlag = "none" | "ok" | "ineligible";
  * Call it only with a list that loaded; against a list that failed, flagging everybody would be false.
  */
 export function holderFlag(territory: Territory, eligible: readonly EligibleAssignee[]): HolderFlag {
-  const holder = territory.userId;
-  if (holder === undefined || holder === "") return "none";
+  const holder = holderId(territory);
+  if (holder === undefined) return "none";
   return eligible.some((person) => person.userId === holder) ? "ok" : "ineligible";
 }
 

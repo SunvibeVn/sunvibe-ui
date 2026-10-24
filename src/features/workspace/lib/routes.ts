@@ -6,3 +6,6 @@ export const STAFF_WORKSPACE_ROLES = ["SALE", "SALE_LEADER", "SALES_MANAGER", "A
 
 /** Where the workspace entry points lead. */
 export const WORKSPACE_HOME = "/workspace/owner-leads";
+
+/** The survey list (survey-schedule spec 6.5). */
+export const SURVEYS_PATH = "/workspace/surveys";

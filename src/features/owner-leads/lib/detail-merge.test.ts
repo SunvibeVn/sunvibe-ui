@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { LeadActivity, LeadDetail, LeadNoteResult, LeadSummary } from "../types";
 
-import { mergeNoteResult, mergeSummary } from "./detail-merge";
+import { applySurveyCommandResult, mergeNoteResult, mergeSummary } from "./detail-merge";
 
 const submitted: LeadActivity = { type: "SUBMITTED", occurredAt: "2026-10-18T01:00:00Z" };
 
@@ -67,5 +67,49 @@ describe("mergeSummary (version from every 2xx, even if the reload that follows 
     expect(next.assignedUserName).toBeUndefined();
     expect(next.activities).toEqual([submitted]);
     expect(next.phone).toBe("0909123456");
+  });
+});
+
+describe("applySurveyCommandResult (A-23: the answer updates the page, no reload)", () => {
+  const booked = {
+    type: "SURVEY_BOOKED" as const,
+    actorUserId: "U1",
+    actorName: "Bình",
+    fromStatus: "ASSIGNED",
+    toStatus: "SURVEY_SCHEDULED",
+    note: null,
+    nextActionAt: null,
+    occurredAt: "2026-10-23T03:00:00Z",
+    referenceId: "A1",
+    referenceNo: 1,
+  };
+
+  it("takes status and version from the answer and appends its history row once", () => {
+    const result = { lead: { id: "L1", status: "SURVEY_SCHEDULED" as const, version: 4 }, historyEntry: booked };
+    const merged = applySurveyCommandResult(detail, result);
+    expect(merged.status).toBe("SURVEY_SCHEDULED");
+    expect(merged.version).toBe(4);
+    expect(merged.activities).toHaveLength(2);
+    expect(merged.activities?.[1]).toMatchObject({ type: "SURVEY_BOOKED", referenceNo: 1, toStatus: "SURVEY_SCHEDULED" });
+    expect(applySurveyCommandResult(merged, result).activities).toHaveLength(2);
+  });
+
+  it("reads a status the workspace does not know as no status on the row", () => {
+    const merged = applySurveyCommandResult(detail, {
+      lead: { status: "ASSIGNED", version: 4 },
+      historyEntry: { ...booked, fromStatus: null, toStatus: "SOMETHING" },
+    });
+    expect(merged.activities?.[1].toStatus).toBeUndefined();
+    expect(merged.activities?.[1].fromStatus).toBeUndefined();
+  });
+
+  it("changes nothing for a no-op answer (no history row)", () => {
+    expect(applySurveyCommandResult(detail, { lead: { status: "ASSIGNED", version: 3 }, historyEntry: null })).toBe(detail);
+  });
+
+  it("keeps status and version when the answer has none", () => {
+    const merged = applySurveyCommandResult(detail, { lead: null, historyEntry: booked });
+    expect(merged.status).toBe("ASSIGNED");
+    expect(merged.version).toBe(3);
   });
 });

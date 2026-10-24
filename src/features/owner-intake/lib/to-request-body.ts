@@ -1,7 +1,7 @@
 import type { FormValues, OwnerIntakeRequestBody, PriceUnit } from "../types/form";
 
 import { CONSENT_NOTICE_VERSION } from "./consent";
-import { roundCoordinate } from "./geo";
+import { roundCoordinate } from "@/lib/map/geo";
 
 /** Price unit derived from the intent; the owner never picks it (BR-4). */
 export const PRICE_UNIT_BY_INTENT = {

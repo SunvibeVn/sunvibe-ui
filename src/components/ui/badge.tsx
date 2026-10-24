@@ -12,14 +12,15 @@ export type BadgeTone = keyof typeof tones;
 
 type BadgeProps = {
   tone?: BadgeTone;
+  /** Long text (a confirmation cause, a flag) wraps inside its container instead of overflowing a phone screen. */
+  wrap?: boolean;
   children: ReactNode;
 };
 
-export function Badge({ tone = "neutral", children }: BadgeProps) {
+export function Badge({ tone = "neutral", wrap = false, children }: BadgeProps) {
+  const shape = wrap ? "max-w-full whitespace-normal rounded-xl text-left" : "whitespace-nowrap rounded-full";
   return (
-    <span
-      className={`inline-flex items-center whitespace-nowrap rounded-full border px-2.5 py-0.5 text-xs font-semibold ${tones[tone]}`}
-    >
+    <span className={`inline-flex items-center border px-2.5 py-0.5 text-xs font-semibold ${shape} ${tones[tone]}`}>
       {children}
     </span>
   );

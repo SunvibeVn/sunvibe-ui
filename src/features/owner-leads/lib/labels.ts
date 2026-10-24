@@ -29,6 +29,7 @@ export const STATUS_LABEL: Record<LeadStatus, OwnerLeadsKey> = {
   NEW: "status.NEW",
   ASSIGNED: "status.ASSIGNED",
   CONTACTED: "status.CONTACTED",
+  SURVEY_SCHEDULED: "status.SURVEY_SCHEDULED",
   ON_HOLD: "status.ON_HOLD",
   DUPLICATE: "status.DUPLICATE",
   REJECTED: "status.REJECTED",
@@ -36,7 +37,7 @@ export const STATUS_LABEL: Record<LeadStatus, OwnerLeadsKey> = {
 };
 
 /**
- * Label key for a status the API sent. The API enum has twelve values but the workspace labels the seven W9 ones; any
+ * Label key for a status the API sent. The API enum has twelve values but the workspace labels its eight; any
  * other value (or none) gets a generic label, so a badge never shows a raw code.
  */
 export function statusLabelKey(status: string | undefined): OwnerLeadsKey {
@@ -73,6 +74,14 @@ export const ACTIVITY_LABEL: Record<ActivityType, OwnerLeadsKey> = {
   REASSIGNED: "activity.REASSIGNED",
   STATUS_CHANGED: "activity.STATUS_CHANGED",
   NOTE_ADDED: "activity.NOTE_ADDED",
+  SURVEY_BOOKED: "activity.SURVEY_BOOKED",
+  SURVEY_CHANGED: "activity.SURVEY_CHANGED",
+  SURVEY_CONFIRMED: "activity.SURVEY_CONFIRMED",
+  SURVEY_UNCONFIRMED: "activity.SURVEY_UNCONFIRMED",
+  SURVEY_CANCELLED: "activity.SURVEY_CANCELLED",
+  SURVEY_VISITED: "activity.SURVEY_VISITED",
+  SURVEY_RESUMED: "activity.SURVEY_RESUMED",
+  INTENT_CHANGED: "activity.INTENT_CHANGED",
 };
 
 /** Roles an assignee can hold (C-29): SALE and SALE_LEADER. */

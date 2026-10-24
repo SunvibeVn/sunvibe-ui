@@ -1,5 +1,6 @@
 import type { components } from "@/api/generated/schema";
 import { callApi, type ApiResult, type CallApi } from "@/features/auth/client";
+import { getSurvey, type SurveyBlock } from "@/features/surveys";
 import { createPublicClient, toPublicResult, type PublicApiResult } from "@/lib/api";
 
 import { dedupeInflight } from "../lib/inflight";
@@ -33,6 +34,13 @@ export type WardsDeps = { client?: ReturnType<typeof createPublicClient> };
 export type AddNoteInput = Pick<Schemas["AddLeadNoteRequest"], "note" | "nextActionAt">;
 export type ChangeStatusInput = Omit<Schemas["ChangeLeadStatusRequest"], "toStatus"> & { toStatus: LeadStatus };
 export type AssignLeadInput = Schemas["AssignLeadRequest"];
+/** A rental price in the unit of the new intent (NIGHT for short-term, MONTH for long-term); amount in whole VND. */
+export type RentalPriceInput = { amount: string; currency: "VND"; unit: "NIGHT" | "MONTH" };
+/** The requirement change body (survey-schedule A-17): `askingPrice` always present, `null` for no price. */
+export type ChangeIntentInput = Omit<Schemas["ChangeLeadIntentRequest"], "newIntent" | "askingPrice"> & {
+  newIntent: "SHORT_TERM_RENT" | "LONG_TERM_RENT";
+  askingPrice: RentalPriceInput | null;
+};
 
 /** GET /api/v1/staff/owner-leads. `query` comes from `toApiQuery`, which never holds an empty value. */
 export function listLeads(query: ListApiQuery, deps: OwnerLeadsDeps = DEFAULT_DEPS): Promise<ApiResult<LeadPage>> {
@@ -74,6 +82,31 @@ function detailLoader(deps: OwnerLeadsDeps): (key: DetailKey) => Promise<ApiResu
   return loader;
 }
 
+/**
+ * GET /api/v1/staff/owner-leads/{leadId}/survey for the detail page, read with the detail (survey-schedule spec 6.1).
+ * Overlapping calls of the same user for the same lead share one request, as `getLead`: every read writes a survey
+ * access-log row (A-13), so a development double render must not read twice.
+ */
+export function getLeadSurvey(
+  leadId: string,
+  userId: string,
+  deps: OwnerLeadsDeps = DEFAULT_DEPS,
+): Promise<ApiResult<SurveyBlock>> {
+  return surveyLoader(deps)({ leadId, userId });
+}
+
+const surveyLoaders = new WeakMap<CallApi, (key: DetailKey) => Promise<ApiResult<SurveyBlock>>>();
+
+function surveyLoader(deps: OwnerLeadsDeps): (key: DetailKey) => Promise<ApiResult<SurveyBlock>> {
+  let loader = surveyLoaders.get(deps.callApi);
+  if (loader === undefined) {
+    const byKey = dedupeInflight((joined: string) => getSurvey(joined.slice(joined.indexOf(":") + 1), deps));
+    loader = ({ leadId, userId }) => byKey(`${userId}:${leadId}`);
+    surveyLoaders.set(deps.callApi, loader);
+  }
+  return loader;
+}
+
 /** POST /api/v1/staff/owner-leads/{leadId}/activities. */
 export function addNote(
   leadId: string,
@@ -104,6 +137,17 @@ export function assignLead(
 ): Promise<ApiResult<LeadSummary>> {
   return deps.callApi((client) =>
     client.POST("/api/v1/staff/owner-leads/{leadId}/assign", { params: { path: { leadId } }, body: input }),
+  );
+}
+
+/** POST /api/v1/staff/owner-leads/{leadId}/intent-changes (survey-schedule US-5): the new requirement with its basis. */
+export function changeIntent(
+  leadId: string,
+  input: ChangeIntentInput,
+  deps: OwnerLeadsDeps = DEFAULT_DEPS,
+): Promise<ApiResult<LeadSummary>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/owner-leads/{leadId}/intent-changes", { params: { path: { leadId } }, body: input }),
   );
 }
 

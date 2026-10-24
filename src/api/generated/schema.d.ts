@@ -495,6 +495,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/owner-leads/{leadId}/intent-changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change the requirement (rental intent and price) of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Allowed in ASSIGNED, CONTACTED, ON_HOLD and SURVEY_SCHEDULED; ASSIGNED and SURVEY_SCHEDULED move to CONTACTED. Starts a new intent cycle and cancels the scheduled survey appointment, if any. askingPrice must be sent: a price or null.
+         */
+        post: operations["changeIntent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-leads/{leadId}/status-changes": {
         parameters: {
             query?: never;
@@ -509,6 +529,86 @@ export interface paths {
          * @description Closing (DUPLICATE, REJECTED, WITHDRAWN) needs a reason; DUPLICATE also needs duplicateOfLeadId, a lead the caller can see.
          */
         post: operations["changeStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/survey": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the survey block of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Appointments with places, access notes and on-site contacts, revisions, events, the visit and the resumptions. Every call is recorded in the survey access log.
+         */
+        get: operations["block"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/survey-appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Book a survey appointment (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The surveyor is the lead's assignee. A first survey is booked from ASSIGNED or CONTACTED, a re-survey (the current requirement cycle already has a visit; needs resurveyReason) from CONTACTED or SURVEY_SCHEDULED; only rental leads. A meeting place other than the lead's needs locationReason. Overlapping appointments of the surveyor are listed, never refused.
+         */
+        post: operations["book"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/survey-overlaps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Check overlaps before booking or changing a survey (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Only request codes and times. On an edit, excludeAppointmentId leaves the appointment itself out. Not recorded in the access log.
+         */
+        get: operations["overlaps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/survey-resumptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resume the survey work of a held owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description ON_HOLD with a current visit goes back to SURVEY_SCHEDULED, with a reason and the owner's confirmation (basis) dated from the day the lead went on hold.
+         */
+        post: operations["resume"];
         delete?: never;
         options?: never;
         head?: never;
@@ -551,6 +651,106 @@ export interface paths {
          * @description 204 also when nobody looked after the ward. Existing leads keep their assignee.
          */
         delete: operations["unassign"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-appointments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List scheduled survey appointments (SALE, SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description scope=mine (default): the caller's own appointments; all: every appointment, optionally of one surveyor (not for a SALE). Ordered by group (OVERDUE, TODAY, UPCOMING; Vietnam days), start, id. The items hold no phone, address, coordinates, access note or on-site contact.
+         */
+        get: operations["listSurveyAppointments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-appointments/{appointmentId}/cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cancel a scheduled survey appointment (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The lead stays SURVEY_SCHEDULED when it has a current visit, else goes back to CONTACTED. An overdue appointment can be cancelled; the surveyor need not be eligible.
+         */
+        post: operations["cancel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-appointments/{appointmentId}/changes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change a scheduled survey appointment (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Every editable value plus a reason; a new revision keeps them and the earlier ones stay. A change of start, duration or place removes the owner's confirmation. A change of time lists overlapping appointments of the surveyor.
+         */
+        post: operations["change"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-appointments/{appointmentId}/confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record or remove the owner's confirmation (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The same value again changes nothing: 200 with historyEntry null and the lead version unchanged.
+         */
+        post: operations["confirmation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-appointments/{appointmentId}/visit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record the visit of a scheduled survey appointment (SALE: own visit only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN also for others)
+         * @description An own record is the current surveyor's visit, who held the appointment at arrivedAt and can take leads now. Every other record is a proxy record of a manager with proxy.reason and proxy.basis. The lead stays SURVEY_SCHEDULED.
+         */
+        post: operations["visit"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -656,6 +856,104 @@ export interface components {
             errorTime?: string;
             message?: string;
         };
+        /** @description The basis of a proxy visit record or a resumption */
+        BasisRequest: {
+            /**
+             * Format: date
+             * @description Vietnam date
+             */
+            confirmedOn: string;
+            text: string;
+        };
+        /** @description Book a survey appointment for an owner lead */
+        BookAppointmentRequest: {
+            /** @description No door codes, passwords or phone numbers */
+            accessNote?: string;
+            /** @description Only with ownerConfirmed */
+            confirmationNote?: string;
+            /**
+             * Format: int32
+             * @description 15..480 in steps of 15; 60 when left out
+             */
+            durationMinutes?: number;
+            /**
+             * Format: int64
+             * @description The lead version the caller last saw
+             */
+            expectedLeadVersion: number;
+            /** @description Required when the meeting place differs from the lead's place */
+            locationReason?: string;
+            /** @description Left out: the lead's own place */
+            meetingLocation?: components["schemas"]["MeetingLocationRequest"];
+            onSiteContactName?: string;
+            onSiteContactRole?: string;
+            /** @description Staff recorded that the owner agreed; false when left out */
+            ownerConfirmed?: boolean;
+            /** @description Required when the lead already has a visit in its current requirement cycle */
+            resurveyReason?: string;
+            /**
+             * Format: date-time
+             * @description Whole minute, from the current minute to 90 days ahead
+             */
+            startAt: string;
+        };
+        /** @description Cancel a scheduled survey appointment */
+        CancelAppointmentRequest: {
+            /**
+             * @description One of OWNER_CANCELLED, STAFF_CANCELLED, OWNER_ABSENT, NO_ACCESS, OTHER; the system reasons are refused
+             * @enum {string}
+             */
+            cancelReason: "OWNER_CANCELLED" | "STAFF_CANCELLED" | "OWNER_ABSENT" | "NO_ACCESS" | "OTHER" | "LEAD_ON_HOLD" | "LEAD_CLOSED" | "INTENT_CHANGED";
+            /** @description Required for OTHER */
+            description?: string;
+            /** Format: int64 */
+            expectedAppointmentVersion: number;
+            /** Format: int64 */
+            expectedLeadVersion: number;
+        };
+        /** @description Change a scheduled survey appointment; every key is required, optional values may be null */
+        ChangeAppointmentRequest: {
+            /** @description Null to clear; no door codes, passwords or phone numbers */
+            accessNote: string | null;
+            /**
+             * Format: int32
+             * @description 15..480 in steps of 15
+             */
+            durationMinutes: number;
+            /** Format: int64 */
+            expectedAppointmentVersion: number;
+            /** Format: int64 */
+            expectedLeadVersion: number;
+            meetingLocation: components["schemas"]["MeetingLocationRequest"];
+            /** @description Null to clear */
+            onSiteContactName: string | null;
+            /** @description Null to clear */
+            onSiteContactRole: string | null;
+            reason: string;
+            /**
+             * Format: date-time
+             * @description Whole minute; a new start lies from the current minute to 90 days ahead
+             */
+            startAt: string;
+        };
+        /** @description Record a new requirement (rental intent and price) of an owner lead */
+        ChangeLeadIntentRequest: {
+            /** @description The new price, its unit NIGHT for SHORT_TERM_RENT or MONTH for LONG_TERM_RENT; null for none */
+            askingPrice: components["schemas"]["AskingPriceRequest"] | null;
+            basis: components["schemas"]["LeadIntentChangeBasisRequest"];
+            /**
+             * Format: int64
+             * @description The lead version the caller last saw
+             */
+            expectedVersion: number;
+            /**
+             * @description SHORT_TERM_RENT or LONG_TERM_RENT, different from the current intent
+             * @enum {string}
+             */
+            newIntent: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /** @description Why the requirement changed; no phone number */
+            reason: string;
+        };
         /** @description Move an owner lead to another status */
         ChangeLeadStatusRequest: {
             /** @description Required for DUPLICATE: id of the lead this one repeats */
@@ -698,6 +996,15 @@ export interface components {
              * @example 091****678
              */
             sentTo?: string;
+        };
+        /** @description Record or remove the owner's confirmation of a scheduled survey appointment */
+        ConfirmationRequest: {
+            confirmed: boolean;
+            /** Format: int64 */
+            expectedAppointmentVersion: number;
+            /** Format: int64 */
+            expectedLeadVersion: number;
+            note?: string;
         };
         ConsentRequest: {
             /** @example true */
@@ -743,13 +1050,20 @@ export interface components {
             note?: string;
             /** Format: date-time */
             occurredAt?: string;
+            /** @description The survey appointment the entry concerns (survey-schedule); null when none */
+            referenceId?: string | null;
+            /**
+             * Format: int32
+             * @description That appointment's number within the lead; null when none
+             */
+            referenceNo?: number | null;
             toAssigneeId?: string;
             /** @description Full name of the new assignee; null when there is none or the id has no user row */
             toAssigneeName?: string | null;
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
-            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED";
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED";
         };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
@@ -765,6 +1079,39 @@ export interface components {
              * @example 01J9Z3K8M2Q4R5T6V7W8X9Y0ZA
              */
             userId?: string;
+        };
+        /** @description A requirement change of an owner lead */
+        LeadIntentChange: {
+            actorName?: string | null;
+            actorUserId?: string;
+            basis?: components["schemas"]["LeadIntentChangeBasis"];
+            fromAskingPrice?: components["schemas"]["AskingPriceResponse"] | null;
+            /** @enum {string} */
+            fromIntent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /** Format: int32 */
+            newIntentCycle?: number;
+            /** Format: date-time */
+            occurredAt?: string;
+            reason?: string;
+            toAskingPrice?: components["schemas"]["AskingPriceResponse"] | null;
+            /** @enum {string} */
+            toIntent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+        };
+        /** @description The basis of a requirement change */
+        LeadIntentChangeBasis: {
+            /** Format: date */
+            confirmedOn?: string;
+            text?: string;
+        };
+        /** @description How the owner confirmed the new requirement */
+        LeadIntentChangeBasisRequest: {
+            /**
+             * Format: date
+             * @description Vietnam date, from the lead's creation date to today
+             */
+            confirmedOn: string;
+            /** @description No phone number */
+            text: string;
         };
         /** @description The new history entry and the lead after the note */
         LeadNoteResponse: {
@@ -815,6 +1162,25 @@ export interface components {
              * @example 0901234567
              */
             username?: string;
+        };
+        /** @description A meeting place: address, province and ward of the catalog, optional pin */
+        MeetingLocationRequest: {
+            /** @description 1..255 characters, no phone number */
+            addressText: string;
+            /**
+             * @description Optional; with longitude, inside the served area, never for a special-zone ward
+             * @example 16.0678
+             */
+            latitude?: number;
+            /**
+             * @description Optional; with latitude
+             * @example 108.2208
+             */
+            longitude?: number;
+            /** @example 48 */
+            provinceCode: string;
+            /** @example 20242 */
+            wardCode: string;
         };
         /** @description Owner intake form: a property owner asks Sunvibe to call back */
         OwnerIntakeRequest: {
@@ -894,6 +1260,8 @@ export interface components {
             id?: string;
             /** @enum {string} */
             intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
+            /** @description Requirement changes recorded by staff, oldest first (survey-schedule US-5) */
+            intentChanges?: components["schemas"]["LeadIntentChange"][];
             /** @description Null when the owner gave no position */
             latitude?: number;
             /** @description Null when the owner gave no position */
@@ -1091,6 +1459,28 @@ export interface components {
              */
             name?: string;
         };
+        /** @description Reason and basis of a proxy visit record */
+        ProxyRequest: {
+            basis: components["schemas"]["BasisRequest"];
+            reason: string;
+        };
+        /** @description Record a visit of a scheduled survey appointment */
+        RecordVisitRequest: {
+            /**
+             * Format: date-time
+             * @description Whole minute, not in the future, at most 60 minutes before the start in force then
+             */
+            arrivedAt: string;
+            /** Format: int64 */
+            expectedAppointmentVersion: number;
+            /** Format: int64 */
+            expectedLeadVersion: number;
+            note: string;
+            /** @description Who reached the property; must have held the appointment at arrivedAt */
+            performedByUserId: string;
+            /** @description Required for every record that is not the current surveyor's own visit */
+            proxy?: components["schemas"]["ProxyRequest"];
+        };
         RegistrationPhoneSendRequest: {
             phoneNumber: string;
         };
@@ -1102,6 +1492,14 @@ export interface components {
             /** Format: date-time */
             expiresAt?: string;
             registrationToken?: string;
+        };
+        /** @description Resume the survey work of a held owner lead */
+        ResumeSurveyRequest: {
+            /** @description Dated from the day the lead went on hold */
+            basis: components["schemas"]["BasisRequest"];
+            /** Format: int64 */
+            expectedLeadVersion: number;
+            reason: string;
         };
         /** @description Ward and the staff member who looks after it */
         SaleTerritoryResponse: {
@@ -1172,6 +1570,281 @@ export interface components {
              * @example 0901234567
              */
             username?: string;
+        };
+        /** @description A survey appointment of a lead */
+        SurveyAppointmentResponse: {
+            accessNote?: string;
+            /** Format: int32 */
+            appointmentNo?: number;
+            cancellation?: components["schemas"]["SurveyCancellationResponse"];
+            cannotBePerformed?: boolean;
+            confirmation?: components["schemas"]["SurveyConfirmationResponse"];
+            /** Format: date-time */
+            createdAt?: string;
+            createdByName?: string;
+            createdByUserId?: string;
+            /** Format: int32 */
+            durationMinutes?: number;
+            events?: components["schemas"]["SurveyEventResponse"][];
+            holders?: components["schemas"]["SurveyHolderResponse"][];
+            id?: string;
+            inCurrentCycle?: boolean;
+            /** @enum {string} */
+            intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT";
+            /** Format: int32 */
+            intentCycle?: number;
+            /** @enum {string} */
+            kind?: "FIRST" | "RESURVEY";
+            leadId?: string;
+            leadLocation?: components["schemas"]["SurveyLocationResponse"];
+            locationReason?: string;
+            meetingLocation?: components["schemas"]["SurveyLocationResponse"];
+            onSiteContactName?: string;
+            onSiteContactRole?: string;
+            previousVisitId?: string;
+            resurveyReason?: string;
+            revisions?: components["schemas"]["SurveyRevisionResponse"][];
+            /** Format: date-time */
+            startAt?: string;
+            /** @enum {string} */
+            status?: "SCHEDULED" | "VISITED" | "CANCELLED";
+            surveyorName?: string;
+            surveyorUserId?: string;
+            /** Format: int64 */
+            version?: number;
+            visit?: components["schemas"]["SurveyVisitResponse"];
+        };
+        /** @description The basis of a proxy record or a resumption */
+        SurveyBasisResponse: {
+            /** Format: date */
+            confirmedOn?: string;
+            text?: string;
+        };
+        /** @description The survey block of an owner lead */
+        SurveyBlockResponse: {
+            appointments?: components["schemas"]["SurveyAppointmentResponse"][];
+            booking?: components["schemas"]["SurveyBookingResponse"];
+            currentVisitId?: string;
+            /** Format: int32 */
+            intentCycle?: number;
+            leadId?: string;
+            resumeAllowed?: boolean;
+            resumptions?: components["schemas"]["SurveyResumptionResponse"][];
+        };
+        /** @description Whether and how the lead can get a survey booking now */
+        SurveyBookingResponse: {
+            allowed?: boolean;
+            /** @enum {string} */
+            blockedBy?: "ALREADY_SCHEDULED" | "NO_ASSIGNEE" | "LEAD_STATUS" | "INTENT" | "SURVEYOR_INELIGIBLE";
+            /** @enum {string} */
+            kind?: "FIRST" | "RESURVEY";
+            previousVisitId?: string;
+        };
+        /** @description The cancellation of the appointment */
+        SurveyCancellationResponse: {
+            /** @enum {string} */
+            cancelReason?: "OWNER_CANCELLED" | "STAFF_CANCELLED" | "OWNER_ABSENT" | "NO_ACCESS" | "OTHER" | "LEAD_ON_HOLD" | "LEAD_CLOSED" | "INTENT_CHANGED";
+            /** Format: date-time */
+            cancelledAt?: string;
+            cancelledByName?: string;
+            cancelledByUserId?: string;
+            description?: string;
+        };
+        /** @description The answer of a survey command */
+        SurveyCommandResponse: {
+            historyEntry?: components["schemas"]["SurveyHistoryEntryResponse"];
+            lead?: components["schemas"]["SurveyLeadStateResponse"];
+            overlaps?: components["schemas"]["SurveyOverlapResponse"][];
+            survey?: components["schemas"]["SurveyBlockResponse"];
+        };
+        /** @description The owner's confirmation of the appointment */
+        SurveyConfirmationResponse: {
+            /** @enum {string} */
+            cause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER";
+            /** Format: date-time */
+            changedAt?: string;
+            changedByName?: string;
+            changedByUserId?: string;
+            everConfirmed?: boolean;
+            note?: string;
+            /** @enum {string} */
+            state?: "CONFIRMED" | "UNCONFIRMED";
+        };
+        /** @description One event of the appointment */
+        SurveyEventResponse: {
+            actorName?: string;
+            actorUserId?: string;
+            /** @enum {string} */
+            confirmationCause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER";
+            fromSurveyorName?: string;
+            fromSurveyorUserId?: string;
+            note?: string;
+            /** Format: date-time */
+            occurredAt?: string;
+            /** Format: int32 */
+            revisionNo?: number;
+            toSurveyorName?: string;
+            toSurveyorUserId?: string;
+            /** @enum {string} */
+            type?: "BOOKED" | "CHANGED" | "CONFIRMED" | "UNCONFIRMED" | "SURVEYOR_CHANGED" | "CANCELLED" | "VISITED";
+        };
+        /** @description The lead History entry written by a survey command */
+        SurveyHistoryEntryResponse: {
+            actorName?: string;
+            actorUserId?: string;
+            fromAssigneeId?: string;
+            fromAssigneeName?: string;
+            /** @description Null when the lead kept its status */
+            fromStatus?: string;
+            /** Format: date-time */
+            nextActionAt?: string;
+            note?: string;
+            /** Format: date-time */
+            occurredAt?: string;
+            referenceId?: string;
+            /** Format: int32 */
+            referenceNo?: number;
+            toAssigneeId?: string;
+            toAssigneeName?: string;
+            /** @description Null when the lead kept its status */
+            toStatus?: string;
+            /** @enum {string} */
+            type?: "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED";
+        };
+        /** @description A holder of the appointment and the time they held it */
+        SurveyHolderResponse: {
+            /** Format: date-time */
+            from?: string;
+            name?: string;
+            /** Format: date-time */
+            to?: string;
+            userId?: string;
+        };
+        /** @description The owner lead after a survey command */
+        SurveyLeadStateResponse: {
+            id?: string;
+            /** Format: date-time */
+            lastActivityAt?: string;
+            /** @enum {string} */
+            status?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /** Format: int64 */
+            version?: number;
+        };
+        /** @description The owner's confirmation in the survey list */
+        SurveyListConfirmation: {
+            /** @enum {string} */
+            cause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER";
+            everConfirmed?: boolean;
+            /** @enum {string} */
+            state?: "CONFIRMED" | "UNCONFIRMED";
+        };
+        /** @description One scheduled survey appointment in the survey list */
+        SurveyListItemResponse: {
+            cannotBePerformed?: boolean;
+            confirmation?: components["schemas"]["SurveyListConfirmation"];
+            /** Format: int32 */
+            durationMinutes?: number;
+            /** @enum {string} */
+            group?: "OVERDUE" | "TODAY" | "UPCOMING";
+            id?: string;
+            /** @enum {string} */
+            kind?: "FIRST" | "RESURVEY";
+            leadId?: string;
+            ownerContactName?: string;
+            requestCode?: string;
+            /** Format: date-time */
+            startAt?: string;
+            /** @enum {string} */
+            status?: "SCHEDULED" | "VISITED" | "CANCELLED";
+            surveyorName?: string;
+            surveyorUserId?: string;
+            wardName?: string;
+        };
+        /** @description A place: address, province and ward with names, optional pin */
+        SurveyLocationResponse: {
+            addressText?: string;
+            latitude?: number;
+            longitude?: number;
+            provinceCode?: string;
+            provinceName?: string;
+            wardCode?: string;
+            wardName?: string;
+        };
+        /** @description An overlapping scheduled appointment of the same surveyor */
+        SurveyOverlapResponse: {
+            appointmentId?: string;
+            /** Format: int32 */
+            durationMinutes?: number;
+            leadId?: string;
+            requestCode?: string;
+            /** Format: date-time */
+            startAt?: string;
+        };
+        /** @description Scheduled appointments of the lead's surveyor that overlap the planned time */
+        SurveyOverlapsResponse: {
+            overlaps?: components["schemas"]["SurveyOverlapResponse"][];
+        };
+        /** @description One page of the survey list */
+        SurveyPageResponse: {
+            items?: components["schemas"]["SurveyListItemResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
+        /** @description Reason and basis of a proxy visit record */
+        SurveyProxyResponse: {
+            basis?: components["schemas"]["SurveyBasisResponse"];
+            reason?: string;
+        };
+        /** @description A resumption of the lead's survey work */
+        SurveyResumptionResponse: {
+            actorName?: string;
+            actorUserId?: string;
+            basis?: components["schemas"]["SurveyBasisResponse"];
+            /** Format: date-time */
+            occurredAt?: string;
+            reason?: string;
+            visitAppointmentId?: string;
+            /** Format: int32 */
+            visitAppointmentNo?: number;
+        };
+        /** @description One revision of the appointment's values */
+        SurveyRevisionResponse: {
+            accessNote?: string;
+            actorName?: string;
+            actorUserId?: string;
+            /** Format: int32 */
+            durationMinutes?: number;
+            meetingLocation?: components["schemas"]["SurveyLocationResponse"];
+            onSiteContactName?: string;
+            onSiteContactRole?: string;
+            reason?: string;
+            /** Format: int32 */
+            revisionNo?: number;
+            /** Format: date-time */
+            startAt?: string;
+            /** Format: date-time */
+            validFrom?: string;
+        };
+        /** @description The visit recorded for the appointment */
+        SurveyVisitResponse: {
+            /** Format: date-time */
+            arrivedAt?: string;
+            note?: string;
+            performedByName?: string;
+            performedByUserId?: string;
+            proxy?: components["schemas"]["SurveyProxyResponse"];
+            /** @enum {string} */
+            recordKind?: "OWN" | "PROXY";
+            /** Format: date-time */
+            recordedAt?: string;
+            recordedByName?: string;
+            recordedByUserId?: string;
+            /** Format: int32 */
+            revisionNo?: number;
         };
         UserRegisterRequest: {
             confirmPassword: string;
@@ -2769,6 +3442,77 @@ export interface operations {
             };
         };
     };
+    changeIntent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeLeadIntentRequest"];
+            };
+        };
+        responses: {
+            /** @description The lead after the change */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerLeadSummaryResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on expectedVersion, newIntent (not a rental intent or the same as now), askingPrice (missing key), askingPrice.amount, askingPrice.currency, askingPrice.unit, reason, basis.confirmedOn (in the future or before the lead was created) or basis.text; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedVersion) or INVALID_STATE_TRANSITION (field status, allowedValues the statuses that allow the change) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     changeStatus: {
         parameters: {
             query?: never;
@@ -2830,6 +3574,271 @@ export interface operations {
                 };
             };
             /** @description INVALID_STATE_TRANSITION (field toStatus, allowedValues lists the statuses allowed now) or CONCURRENT_MODIFICATION (field expectedVersion) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    block: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The survey block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyBlockResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    book: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BookAppointmentRequest"];
+            };
+        };
+        responses: {
+            /** @description The survey block, the lead and its History entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyCommandResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on a body field (startAt, durationMinutes, meetingLocation.*, locationReason, resurveyReason, accessNote, onSiteContactName, onSiteContactRole, confirmationNote, expectedLeadVersion); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion), SURVEY_ALREADY_SCHEDULED, SURVEY_NOT_ALLOWED (field status or intent, with the allowed values) or INVALID_STATE_TRANSITION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    overlaps: {
+        parameters: {
+            query: {
+                /** @description Planned start, a whole minute */
+                startAt: string;
+                /** @description Planned duration, 15..480 in steps of 15 */
+                durationMinutes: number;
+                /** @description On an edit: the appointment itself */
+                excludeAppointmentId?: string;
+            };
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The overlapping appointments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyOverlapsResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on startAt, durationMinutes or excludeAppointmentId */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    resume: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResumeSurveyRequest"];
+            };
+        };
+        responses: {
+            /** @description The survey block, the lead and its History entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyCommandResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on reason or basis.*; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such lead, or the caller may not see it */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion), INVALID_STATE_TRANSITION (field status, allowed ON_HOLD) or NO_CURRENT_VISIT */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -3020,6 +4029,372 @@ export interface operations {
             };
             /** @description NOT_FOUND: the ward is not in the catalog */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listSurveyAppointments: {
+        parameters: {
+            query?: {
+                scope?: "mine" | "all";
+                /** @description Only with scope=all: the appointments of this surveyor */
+                surveyorUserId?: string;
+                /** @description Zero-based page number */
+                page?: number;
+                /** @description Appointments per page, 1 to 100 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of appointments */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyPageResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on scope, surveyorUserId (only with scope all), page or size */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or a SALE asked for scope all */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+        };
+    };
+    cancel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CancelAppointmentRequest"];
+            };
+        };
+        responses: {
+            /** @description The survey block, the lead and its History entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyCommandResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on cancelReason or description; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION or INVALID_STATE_TRANSITION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    change: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangeAppointmentRequest"];
+            };
+        };
+        responses: {
+            /** @description The survey block, the lead and its History entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyCommandResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on a body field (a missing key is required), or without field: Nothing changed; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion or expectedAppointmentVersion) or INVALID_STATE_TRANSITION (field status): not scheduled */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the surveyor can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    confirmation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmationRequest"];
+            };
+        };
+        responses: {
+            /** @description The survey block, the lead and its History entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyCommandResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on a body field; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION or INVALID_STATE_TRANSITION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the surveyor can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    visit: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appointmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecordVisitRequest"];
+            };
+        };
+        responses: {
+            /** @description The survey block, the lead and its History entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyCommandResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on arrivedAt, note, performedByUserId, proxy or proxy.*; MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or a SALE records a visit for someone else or a proxy record */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SecurityError"];
+                };
+            };
+            /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION or INVALID_STATE_TRANSITION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PERFORMER_MISMATCH (field performedByUserId): that person did not hold the appointment then; SURVEYOR_INELIGIBLE (field performedByUserId): an own record by someone who can no longer take leads */
+            422: {
                 headers: {
                     [name: string]: unknown;
                 };
