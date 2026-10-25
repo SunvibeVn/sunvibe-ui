@@ -1,4 +1,4 @@
-import type { SurveyCommandResult, SurveyHistoryEntry } from "@/features/surveys";
+import type { ChecklistStarted, SurveyCommandResult, SurveyHistoryEntry } from "@/features/surveys";
 
 import { isLeadStatus, type LeadActivity, type LeadDetail, type LeadNoteResult, type LeadSummary } from "../types";
 
@@ -42,8 +42,10 @@ export function mergeNoteResult(detail: LeadDetail, result: LeadNoteResult): Lea
 const statusOf = (value: string | null | undefined): LeadActivity["toStatus"] =>
   isLeadStatus(value) ? value : undefined;
 
-/** The History row of a survey command answer as a lead activity (survey rows carry no note, only the reference). */
-function surveyActivity(entry: NonNullable<SurveyHistoryEntry>): LeadActivity {
+type HistoryRowAnswer = NonNullable<SurveyHistoryEntry> | NonNullable<ChecklistStarted["historyEntry"]>;
+
+/** The History row of a survey or checklist answer as a lead activity (no note, only the reference). */
+function surveyActivity(entry: HistoryRowAnswer): LeadActivity {
   return {
     type: entry.type ?? undefined,
     actorUserId: entry.actorUserId,
@@ -53,6 +55,7 @@ function surveyActivity(entry: NonNullable<SurveyHistoryEntry>): LeadActivity {
     occurredAt: entry.occurredAt ?? undefined,
     referenceId: entry.referenceId,
     referenceNo: entry.referenceNo,
+    ...("referenceDetail" in entry ? { referenceDetail: entry.referenceDetail ?? null } : {}),
   };
 }
 
@@ -62,7 +65,7 @@ function surveyActivity(entry: NonNullable<SurveyHistoryEntry>): LeadActivity {
  */
 export function applySurveyCommandResult(
   detail: LeadDetail,
-  result: Pick<NonNullable<SurveyCommandResult>, "lead" | "historyEntry">,
+  result: Pick<NonNullable<SurveyCommandResult>, "lead"> & { historyEntry?: HistoryRowAnswer | null },
 ): LeadDetail {
   const entry = result.historyEntry;
   if (entry === null || entry === undefined) return detail;
@@ -78,4 +81,12 @@ export function applySurveyCommandResult(
     (row) => row.type === activity.type && row.occurredAt === activity.occurredAt && row.referenceId === activity.referenceId,
   );
   return known ? merged : { ...merged, activities: [...history, activity] };
+}
+
+/**
+ * The page after a checklist start (survey-checklist spec 6.1, 4.9): the History row is appended once, which is what
+ * moves LAST UPDATE; the lead row, its status and version do not change (I-5). No reload.
+ */
+export function applyChecklistStart(detail: LeadDetail, result: Pick<ChecklistStarted, "lead" | "historyEntry">): LeadDetail {
+  return applySurveyCommandResult(detail, { lead: result.lead, historyEntry: result.historyEntry ?? null });
 }

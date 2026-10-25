@@ -6,6 +6,7 @@ import {
   formatLocalInput,
   instantToLocalInput,
   localInputToInstant,
+  todayInVietnam,
   vietnamDate,
 } from "./vietnam-time";
 
@@ -109,6 +110,24 @@ describe("vietnamDate (survey-schedule A-25)", () => {
 
   it("is empty for an unreadable instant", () => {
     expect(vietnamDate("nope")).toBe("");
+  });
+});
+
+describe("todayInVietnam (survey-checklist Review Focus 2)", () => {
+  it("todayInVietnam_anyBrowserZone: 17:05Z is already the next Vietnam day", () => {
+    const saved = process.env.TZ;
+    try {
+      process.env.TZ = "America/New_York";
+      expect(todayInVietnam(new Date("2026-10-23T17:05:00Z"))).toBe("2026-10-24");
+      expect(todayInVietnam(new Date("2026-10-23T16:55:00Z"))).toBe("2026-10-23");
+    } finally {
+      if (saved === undefined) delete process.env.TZ;
+      else process.env.TZ = saved;
+    }
+  });
+
+  it("reads the current time without an argument", () => {
+    expect(todayInVietnam()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
   });
 });
 

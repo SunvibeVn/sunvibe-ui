@@ -1,3 +1,4 @@
+import type { ChecklistGroupName } from "@/features/surveys";
 import type en from "@/i18n/messages/en.json";
 
 import type {
@@ -82,7 +83,29 @@ export const ACTIVITY_LABEL: Record<ActivityType, OwnerLeadsKey> = {
   SURVEY_VISITED: "activity.SURVEY_VISITED",
   SURVEY_RESUMED: "activity.SURVEY_RESUMED",
   INTENT_CHANGED: "activity.INTENT_CHANGED",
+  CHECKLIST_STARTED: "activity.CHECKLIST_STARTED",
+  CHECKLIST_TAKEN_OVER: "activity.CHECKLIST_TAKEN_OVER",
+  CHECKLIST_SAVED: "activity.CHECKLIST_SAVED",
 };
+
+/** The group names of survey-checklist spec 6.4, in the order G1..G8. */
+export const CHECKLIST_GROUP_LABEL: Record<ChecklistGroupName, OwnerLeadsKey> = {
+  IDENTIFICATION: "checklist.groups.IDENTIFICATION",
+  PARTS: "checklist.groups.PARTS",
+  DIMENSIONS: "checklist.groups.DIMENSIONS",
+  CONDITION: "checklist.groups.CONDITION",
+  SAFETY: "checklist.groups.SAFETY",
+  AMENITIES: "checklist.groups.AMENITIES",
+  EVIDENCE: "checklist.groups.EVIDENCE",
+  TERMS: "checklist.groups.TERMS",
+};
+
+/** Label key of a group the API sent, or null for none or a group this UI does not know. */
+export function checklistGroupLabelKey(group: string | null | undefined): OwnerLeadsKey | null {
+  return typeof group === "string" && Object.hasOwn(CHECKLIST_GROUP_LABEL, group)
+    ? CHECKLIST_GROUP_LABEL[group as ChecklistGroupName]
+    : null;
+}
 
 /** Roles an assignee can hold (C-29): SALE and SALE_LEADER. */
 export const ROLE_LABEL: Record<AssigneeRole, OwnerLeadsKey> = {

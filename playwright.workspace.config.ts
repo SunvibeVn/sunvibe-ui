@@ -9,9 +9,9 @@ const BASE_URL = "http://localhost:3000";
  * need the local API on API_URL (dev profile), both E2E seeds loaded again just before the run (the specs change the
  * fixture leads and a territory) and the four E2E passwords exported (see e2e/workspace/support/staff.ts).
  *
- * One project per spec file, in the order the fixtures need: access, sale, leader, admin, survey. Each project depends on the
- * one before it, so Playwright runs them in that order whatever the file names (admin.spec.ts sorts first) and skips
- * the later ones when an earlier one fails (they would start on fixture data the earlier spec did not leave).
+ * One project per spec file, in the order the fixtures need: access, sale, leader, admin, survey, survey-checklist.
+ * Each project depends on the one before it, so Playwright runs them in that order whatever the file names
+ * (admin.spec.ts sorts first) and skips the later ones when an earlier one fails (they would start on fixture data the earlier spec did not leave).
  */
 export default defineConfig({
   testDir: "./e2e/workspace",
@@ -33,6 +33,12 @@ export default defineConfig({
     { name: "leader", testMatch: "leader.spec.ts", dependencies: ["sale"], use: { ...devices["Desktop Chrome"] } },
     { name: "admin", testMatch: "admin.spec.ts", dependencies: ["leader"], use: { ...devices["Desktop Chrome"] } },
     { name: "survey", testMatch: "survey.spec.ts", dependencies: ["admin"], use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "survey-checklist",
+      testMatch: "survey-checklist.spec.ts",
+      dependencies: ["survey"],
+      use: { ...devices["Desktop Chrome"] },
+    },
   ],
   webServer: {
     command: "npm run dev",

@@ -27,13 +27,26 @@ type PlaceFieldsProps = {
   wardProblem?: SurveyProblem;
   /** While the dialog saves: the map is not a form control, so the disabled fieldset does not lock it. */
   readOnly?: boolean;
+  /** The address label; the meeting address of the survey dialogs by default. */
+  addressLabel?: string;
+  /** The "differs from the lead address" notice with "Use the lead address" (the checklist offers its own aid). */
+  leadAction?: boolean;
 };
 
 /**
  * The meeting place of a survey dialog (spec 6.2): address, ward of the catalog, an optional map pin (none for a
  * special-zone ward) and "Use the lead address". The map loads only when the dialog shows it.
  */
-export function PlaceFields({ place, leadPlace, onChange, addressProblem, wardProblem, readOnly = false }: PlaceFieldsProps) {
+export function PlaceFields({
+  place,
+  leadPlace,
+  onChange,
+  addressProblem,
+  wardProblem,
+  readOnly = false,
+  addressLabel,
+  leadAction = true,
+}: PlaceFieldsProps) {
   const t = useTranslations("OwnerLeads");
   const addressId = useId();
   const wardId = useId();
@@ -78,7 +91,7 @@ export function PlaceFields({ place, leadPlace, onChange, addressProblem, wardPr
     <div className="space-y-4">
       <SurveyTextField
         id={addressId}
-        label={t("survey.form.address")}
+        label={addressLabel ?? t("survey.form.address")}
         required
         value={place.addressText}
         onChange={(addressText) => onChange({ ...place, addressText })}
@@ -137,7 +150,7 @@ export function PlaceFields({ place, leadPlace, onChange, addressProblem, wardPr
           onChange({ ...place, latitude: next?.latitude ?? null, longitude: next?.longitude ?? null })
         }
       />
-      {placeDiffersFromLead(place, leadPlace) && (
+      {leadAction && placeDiffersFromLead(place, leadPlace) && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900">
           <span>{t("survey.form.placeDiffers")}</span>
           <Button variant="ghost" className="px-3 py-1" onClick={() => onChange(leadPlace)}>
