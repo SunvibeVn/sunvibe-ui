@@ -5,7 +5,6 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 import { useSession } from "@/features/auth/client";
 import {
-  CHECKLIST_GROUP_PATHS,
   type ChecklistGroupPath,
   type ChecklistSaveBody,
   type ChecklistTakeoverInput,
@@ -17,9 +16,7 @@ import {
   toChecklistUiError,
 } from "@/features/surveys";
 
-import { applyAnswer } from "../../lib/checklist/answer-merge";
-import { checklistDraftKey, readChecklistDraft, rebaseDraft, writeChecklistDraft } from "../../lib/checklist/checklist-draft";
-import { contextOf } from "../../lib/checklist/correction-rule";
+import { checklistDraftKey, rebaseOtherDrafts } from "../../lib/checklist/checklist-draft";
 import { earlierChecklist, type EarlierChecklist } from "../../lib/checklist/page-notices";
 import {
   createAnswerGate,
@@ -30,7 +27,10 @@ import {
   pageFailureStep,
   type PanelLocks,
   unlockAll,
+  readFailureEvent,
   unlockGroup,
+  viewEvent,
+  type ViewEvent,
 } from "../../lib/checklist/page-state";
 import { listFlash, tabDrafts, useDraftSessionSync } from "../../lib/drafts";
 import { getLeadSurvey } from "../../services/owner-leads-api";
@@ -62,12 +62,23 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
   const live = useRef(false);
   /** Closed while Next keeps the route hidden: a late answer never puts the checklist back (W16-32). */
   const [gate] = useState(createAnswerGate);
+  /** Set by a 403 until a successful read says what the viewer may do (spec 6.3). */
+  const lockedRef = useRef(false);
 
-  const showView = useCallback(
-    (view: ChecklistView) => {
-      if (userId === null || !gate.open()) return;
-      viewRef.current = view;
-      setLoaded({ userId, value: { state: "ready", view } });
+  /** Applies a view event (`viewEvent`): the read, a save or takeover answer, a 403. True when the page reads again. */
+  const dispatchView = useCallback(
+    (event: ViewEvent): boolean => {
+      if (userId === null) return false;
+      const next = viewEvent({ view: viewRef.current, locked: lockedRef.current }, event);
+      // A 403 locks editing even while the route is hidden; nothing is shown until it is shown again.
+      lockedRef.current = next.state.locked;
+      if (!gate.open()) return false;
+      const { view } = next.state;
+      if (view !== null && view !== viewRef.current) {
+        viewRef.current = view;
+        setLoaded({ userId, value: { state: "ready", view } });
+      }
+      return next.reload;
     },
     [userId, gate],
   );
@@ -92,15 +103,17 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       if (mine !== newest.current || !live.current) return;
       const error = toChecklistUiError(result);
       if (error === null && result.ok) {
-        showView(result.data);
+        dispatchView({ type: "read", view: result.data });
         return;
       }
       const failure = error ?? { kind: "retry" as const };
+      // A 403 here locks editing as well; the read it asks for is not repeated (it just answered).
+      dispatchView(readFailureEvent(failure));
       const step = pageFailureStep(failure);
       if (step.kind === "leave") leave();
       else if (step.kind !== "session" && viewRef.current === null) setLoaded({ userId, value: { state: "error", error: failure } });
     });
-  }, [userId, checklistId, showView, leave]);
+  }, [userId, checklistId, dispatchView, leave]);
 
   useEffect(() => {
     if (userId === null) return;
@@ -142,36 +155,22 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
     };
   }, [userId, viewLeadId]);
 
+  /** A save or takeover answer: merged, read-only while a 403 lock holds, and read again when needed. */
   const merge = useCallback(
     (answer: ChecklistView) => {
-      const screen = viewRef.current;
-      if (screen === null) {
-        showView(answer);
-        return;
-      }
-      const merged = applyAnswer(screen, answer);
-      showView(merged.view);
-      if (merged.needsReload) void read();
+      if (dispatchView({ type: "answer", view: answer })) void read();
     },
-    [showView, read],
+    [dispatchView, read],
   );
 
-  /** After a G1 save that cascaded: each other group's draft is rebased on the new content (spec 6.2). */
+  /** After a G1 save that cascaded: the other groups' drafts rebased; an unresolved conflict stays (spec 6.2). */
   const rebaseOthers = useCallback(
-    (answer: ChecklistView) => {
+    (answer: ChecklistView, screen: ChecklistView | null) => {
       if (userId === null) return;
-      const ctx = contextOf(answer);
-      const dropped: Partial<Record<ChecklistGroupPath, string[]>> = {};
-      for (const group of CHECKLIST_GROUP_PATHS) {
-        if (group === "identification") continue;
-        const key = checklistDraftKey({ userId, leadId: answer.leadId ?? urlLeadId, checklistId, group });
-        const draft = readChecklistDraft(tabDrafts.get(key) ?? "");
-        if (draft === null) continue;
-        const rebased = rebaseDraft(draft, group, answer.groups?.[group]?.content as never, ctx);
-        const version = answer.groups?.[group]?.version ?? draft.version;
-        tabDrafts.set(key, writeChecklistDraft(version, rebased.edits, draft.created));
-        if (rebased.dropped.length > 0) dropped[group] = rebased.dropped;
-      }
+      const keyOf = (group: ChecklistGroupPath) =>
+        checklistDraftKey({ userId, leadId: answer.leadId ?? urlLeadId, checklistId, group });
+      // The screens when the save was sent and now: a draft older than either is a conflict and keeps its version.
+      const dropped = rebaseOtherDrafts(tabDrafts, keyOf, [screen, viewRef.current], answer);
       setNotKept((prev) => ({ ...prev, ...dropped }));
     },
     [userId, urlLeadId, checklistId],
@@ -186,6 +185,8 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
         return true;
       }
       if (step.kind === "reload") {
+        // 403: no input stays editable while the page reads again, nor after a reload that fails (spec 6.3).
+        if (error.kind === "forbidden") dispatchView({ type: "forbidden" });
         setMessage(step.message);
         await read();
         return true;
@@ -194,18 +195,20 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       if (error.kind === "stale") await read();
       return step.kind === "session";
     },
-    [leave, read],
+    [leave, read, dispatchView],
   );
 
   const save = useCallback(
     async <G extends ChecklistGroupPath>(group: G, body: ChecklistSaveBody[G], cascade: boolean): Promise<CommandOutcome> => {
       setLocks((prev) => (cascade ? lockAll(prev) : lockGroup(prev, group)));
+      // Read before the request: the route may be hidden (and its view forgotten) when the answer arrives.
+      const screen = viewRef.current;
       try {
         const result = await saveChecklistGroup(checklistId, group, body);
         const error = toChecklistUiError(result);
         if (error === null && result.ok) {
           setMessage(null);
-          if (cascade) rebaseOthers(result.data);
+          if (cascade) rebaseOthers(result.data, screen);
           merge(result.data);
           return { kind: "saved" };
         }
@@ -227,7 +230,7 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
         const error = toChecklistUiError(result);
         if (error === null && result.ok && result.data.checklist) {
           setMessage(null);
-          showView(result.data.checklist);
+          merge(result.data.checklist);
           return { kind: "saved" };
         }
         const failure = error ?? { kind: "retry" as const };
@@ -242,7 +245,7 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
         setLocks(unlockAll);
       }
     },
-    [checklistId, showView, read, handlePageFailure],
+    [checklistId, merge, read, handlePageFailure],
   );
 
   const clearNotKept = useCallback((group: ChecklistGroupPath) => {
