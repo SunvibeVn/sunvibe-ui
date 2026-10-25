@@ -146,13 +146,14 @@ export function rebaseAfterCascade<G extends ChecklistGroupPath>(
 
 /**
  * The other groups' drafts after the user's G1 save removed a space or switched the scope (spec 6.2): each rebased on
- * the answer with `rebaseAfterCascade` against the version the screen showed before the answer. Returns the dropped
- * edits per group ("Not kept: ...").
+ * the answer with `rebaseAfterCascade` against the newest version any of `screens` showed (the screen when the save
+ * was sent and when its answer arrived), so a conflict that appeared meanwhile stays. Returns the dropped edits per
+ * group ("Not kept: ...").
  */
 export function rebaseOtherDrafts(
   store: Pick<DraftStore, "get" | "set">,
   keyOf: (group: ChecklistGroupPath) => DraftKey,
-  screen: ChecklistView | null,
+  screens: readonly (ChecklistView | null)[],
   answer: ChecklistView,
 ): Partial<Record<ChecklistGroupPath, string[]>> {
   const ctx = contextOf(answer);
@@ -167,7 +168,7 @@ export function rebaseOtherDrafts(
       group,
       answer.groups?.[group]?.content as never,
       ctx,
-      screen?.groups?.[group]?.version ?? 0,
+      Math.max(0, ...screens.map((screen) => screen?.groups?.[group]?.version ?? 0)),
       answer.groups?.[group]?.version ?? draft.version,
     );
     store.set(key, writeChecklistDraft(rebased.draft.version, rebased.draft.edits, rebased.draft.created));

@@ -167,8 +167,8 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       if (userId === null) return;
       const keyOf = (group: ChecklistGroupPath) =>
         checklistDraftKey({ userId, leadId: answer.leadId ?? urlLeadId, checklistId, group });
-      // The screen as it was when the save was sent: a draft older than it is a conflict and keeps its version.
-      const dropped = rebaseOtherDrafts(tabDrafts, keyOf, screen, answer);
+      // The screens when the save was sent and now: a draft older than either is a conflict and keeps its version.
+      const dropped = rebaseOtherDrafts(tabDrafts, keyOf, [screen, viewRef.current], answer);
       setNotKept((prev) => ({ ...prev, ...dropped }));
     },
     [userId, urlLeadId, checklistId],

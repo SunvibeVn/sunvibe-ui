@@ -55,7 +55,7 @@ describe("1. a G1 removal or scope switch keeps an unresolved conflict in the ot
     memory.drafts.set(keyOf("terms"), writeChecklistDraft(2, g8, []));
     const screen = viewOf(emptyContent("PARTS"), 2);
     const answer = viewOf(emptyContent("WHOLE"), 3);
-    const dropped = rebaseOtherDrafts(memory.drafts, keyOf, screen, answer);
+    const dropped = rebaseOtherDrafts(memory.drafts, keyOf, [screen], answer);
     expect(readChecklistDraft(memory.drafts.get(keyOf("dimensions")) ?? "")?.version).toBe(1);
     expect(readChecklistDraft(memory.drafts.get(keyOf("terms")) ?? "")?.version).toBe(3);
     expect(dropped).toEqual({});
@@ -67,8 +67,19 @@ describe("1. a G1 removal or scope switch keeps an unresolved conflict in the ot
     memory.drafts.set(key, writeChecklistDraft(1, { [area]: sourced("VALUE", 30, "MEASURED") }, []));
     const keyOf = (group: Parameters<typeof checklistDraftKey>[0]["group"]) =>
       checklistDraftKey({ userId: "u1", leadId: "L1", checklistId: "C1", group });
-    rebaseOtherDrafts(memory.drafts, keyOf, null, viewOf(emptyContent("WHOLE"), 3));
+    rebaseOtherDrafts(memory.drafts, keyOf, [null, null], viewOf(emptyContent("WHOLE"), 3));
     expect(readChecklistDraft(memory.drafts.get(key) ?? "")?.version).toBe(1);
+  });
+
+  it("a conflict that appeared on screen while the G1 save was in flight stays (sent at v2, screen now v3)", () => {
+    const memory = createTabMemory();
+    const keyOf = (group: Parameters<typeof checklistDraftKey>[0]["group"]) =>
+      checklistDraftKey({ userId: "u1", leadId: "L1", checklistId: "C1", group });
+    memory.drafts.set(keyOf("dimensions"), writeChecklistDraft(2, { [area]: sourced("VALUE", 30, "MEASURED") }, []));
+    const sent = viewOf(emptyContent("PARTS"), 2);
+    const now = viewOf(emptyContent("PARTS"), 3);
+    rebaseOtherDrafts(memory.drafts, keyOf, [sent, now], viewOf(emptyContent("WHOLE"), 3));
+    expect(readChecklistDraft(memory.drafts.get(keyOf("dimensions")) ?? "")?.version).toBe(2);
   });
 
   it("still drops and lists the edits of the removed space in a conflicted draft", () => {
