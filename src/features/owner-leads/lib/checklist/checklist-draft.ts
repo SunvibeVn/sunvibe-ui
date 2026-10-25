@@ -68,6 +68,13 @@ function scopeRefuses(key: string, value: unknown, ctx: GroupContext): boolean {
 
 const ENTRY_KINDS = new Set(["space", "hazard", "sharedItem", "spaceItem", "otherItem"]);
 
+/** The edit of a saved hazard whose space G1 removed, at asset level as the server keeps it (A-12). */
+function detachSavedHazard(parsed: ReturnType<typeof parseUnitKey>, value: unknown, saved: boolean, ctx: GroupContext): unknown {
+  if (parsed?.kind !== "hazard" || !saved || value === null || typeof value !== "object") return value;
+  const spaceId = (value as { spaceId?: unknown }).spaceId;
+  return typeof spaceId === "string" && !ctx.spaces.includes(spaceId) ? { ...value, spaceId: null } : value;
+}
+
 /**
  * The draft over newer content (after a 409, a G1 removal or a scope switch): edits of units that no longer exist, of
  * a space G1 no longer has, or that the scope no longer allows are dropped and named in `dropped` ("Not kept: ...");
@@ -83,9 +90,11 @@ export function rebaseDraft<G extends ChecklistGroupPath>(
   const created = new Set(draft.created);
   const edits: GroupEdits = {};
   const dropped: string[] = [];
-  for (const [key, value] of Object.entries(draft.edits)) {
+  for (const [key, typed] of Object.entries(draft.edits)) {
     if (!key.startsWith(`${group}/`)) continue;
     const parsed = parseUnitKey(key);
+    // A saved hazard of a space G1 no longer has stays, detached at asset level (A-12): its edits follow it there.
+    const value = detachSavedHazard(parsed, typed, stored.has(key), ctx);
     const spaceId = spaceIdOfKey(key);
     const isEntry = parsed !== null && ENTRY_KINDS.has(parsed.kind);
     const exists = stored.has(key);
@@ -93,6 +102,8 @@ export function rebaseDraft<G extends ChecklistGroupPath>(
     const goneSpace = spaceId !== null && !(parsed?.kind === "space" ? exists || created.has(key) : ctx.spaces.includes(spaceId));
     const goneEntry = isEntry && !exists && !created.has(key);
     const itemSpace = (value as { spaceId?: unknown } | null)?.spaceId;
+    // An other item goes with its space (A-12); a never-saved hazard of a removed space is not kept (the server
+    // never saw it, so nothing detached it).
     const goneItemSpace =
       (parsed?.kind === "otherItem" || parsed?.kind === "hazard") &&
       typeof itemSpace === "string" &&
@@ -105,4 +116,23 @@ export function rebaseDraft<G extends ChecklistGroupPath>(
     edits[key] = value;
   }
   return { edits, dropped };
+}
+
+/**
+ * A draft of another group after the user's G1 removal or scope switch (spec 6.2): rebased on the answer's content.
+ * A draft typed on the version the screen showed moves to the answer's version; a draft already older than the screen
+ * (an unresolved conflict) keeps its version, so its compare view stays until the user chooses "Save mine on top" or
+ * "Discard mine".
+ */
+export function rebaseAfterCascade<G extends ChecklistGroupPath>(
+  draft: ChecklistDraft,
+  group: G,
+  content: ChecklistContent[G] | undefined,
+  ctx: GroupContext,
+  screenVersion: number,
+  answerVersion: number,
+): { draft: ChecklistDraft; dropped: string[] } {
+  const rebased = rebaseDraft(draft, group, content, ctx);
+  const version = draft.version === screenVersion ? answerVersion : draft.version;
+  return { draft: { version, edits: rebased.edits, created: draft.created }, dropped: rebased.dropped };
 }

@@ -18,11 +18,12 @@ import {
 } from "@/features/surveys";
 
 import { applyAnswer } from "../../lib/checklist/answer-merge";
-import { checklistDraftKey, readChecklistDraft, rebaseDraft, writeChecklistDraft } from "../../lib/checklist/checklist-draft";
+import { checklistDraftKey, readChecklistDraft, rebaseAfterCascade, writeChecklistDraft } from "../../lib/checklist/checklist-draft";
 import { contextOf } from "../../lib/checklist/correction-rule";
 import { earlierChecklist, type EarlierChecklist } from "../../lib/checklist/page-notices";
 import {
   createAnswerGate,
+  createEditLock,
   forgetChecklist,
   lockAll,
   lockGroup,
@@ -62,14 +63,17 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
   const live = useRef(false);
   /** Closed while Next keeps the route hidden: a late answer never puts the checklist back (W16-32). */
   const [gate] = useState(createAnswerGate);
+  /** Locked by a 403 until a successful read says the viewer may edit (spec 6.3). */
+  const [editLock] = useState(createEditLock);
 
   const showView = useCallback(
-    (view: ChecklistView) => {
+    (answer: ChecklistView) => {
       if (userId === null || !gate.open()) return;
+      const view = editLock.apply(answer);
       viewRef.current = view;
       setLoaded({ userId, value: { state: "ready", view } });
     },
-    [userId, gate],
+    [userId, gate, editLock],
   );
 
   const leave = useCallback(() => {
@@ -92,15 +96,17 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       if (mine !== newest.current || !live.current) return;
       const error = toChecklistUiError(result);
       if (error === null && result.ok) {
+        editLock.readSucceeded();
         showView(result.data);
         return;
       }
+      editLock.readFailed();
       const failure = error ?? { kind: "retry" as const };
       const step = pageFailureStep(failure);
       if (step.kind === "leave") leave();
       else if (step.kind !== "session" && viewRef.current === null) setLoaded({ userId, value: { state: "error", error: failure } });
     });
-  }, [userId, checklistId, showView, leave]);
+  }, [userId, checklistId, showView, leave, editLock]);
 
   useEffect(() => {
     if (userId === null) return;
@@ -161,15 +167,23 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
     (answer: ChecklistView) => {
       if (userId === null) return;
       const ctx = contextOf(answer);
+      const screen = viewRef.current;
       const dropped: Partial<Record<ChecklistGroupPath, string[]>> = {};
       for (const group of CHECKLIST_GROUP_PATHS) {
         if (group === "identification") continue;
         const key = checklistDraftKey({ userId, leadId: answer.leadId ?? urlLeadId, checklistId, group });
         const draft = readChecklistDraft(tabDrafts.get(key) ?? "");
         if (draft === null) continue;
-        const rebased = rebaseDraft(draft, group, answer.groups?.[group]?.content as never, ctx);
-        const version = answer.groups?.[group]?.version ?? draft.version;
-        tabDrafts.set(key, writeChecklistDraft(version, rebased.edits, draft.created));
+        // A draft already in conflict keeps its version: only the user's choice resolves it (spec 6.2).
+        const rebased = rebaseAfterCascade(
+          draft,
+          group,
+          answer.groups?.[group]?.content as never,
+          ctx,
+          screen?.groups?.[group]?.version ?? draft.version,
+          answer.groups?.[group]?.version ?? draft.version,
+        );
+        tabDrafts.set(key, writeChecklistDraft(rebased.draft.version, rebased.draft.edits, rebased.draft.created));
         if (rebased.dropped.length > 0) dropped[group] = rebased.dropped;
       }
       setNotKept((prev) => ({ ...prev, ...dropped }));
@@ -186,6 +200,11 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
         return true;
       }
       if (step.kind === "reload") {
+        if (error.kind === "forbidden") {
+          // 403: no input stays editable while the page reads again, nor after a reload that fails (spec 6.3).
+          editLock.forbidden();
+          if (viewRef.current !== null) showView(viewRef.current);
+        }
         setMessage(step.message);
         await read();
         return true;
@@ -194,7 +213,7 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       if (error.kind === "stale") await read();
       return step.kind === "session";
     },
-    [leave, read],
+    [leave, read, editLock, showView],
   );
 
   const save = useCallback(

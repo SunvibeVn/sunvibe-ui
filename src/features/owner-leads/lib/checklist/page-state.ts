@@ -101,3 +101,25 @@ export function pageFailureStep(error: ChecklistUiError): PageFailureStep {
       return { kind: "panel" };
   }
 }
+
+/**
+ * Editing after a 403 (spec 6.3: "switch to read-only"): locked at once, kept locked through any answer and a failed
+ * reload, and unlocked only by a successful read, whose own `editable` and reason then apply.
+ */
+export function createEditLock() {
+  let locked = false;
+  return {
+    forbidden(): void {
+      locked = true;
+    },
+    readSucceeded(): void {
+      locked = false;
+    },
+    readFailed(): void {},
+    isLocked: (): boolean => locked,
+    apply(view: ChecklistView): ChecklistView {
+      if (!locked || view.editable !== true) return view;
+      return { ...view, editable: false, readOnlyReason: view.readOnlyReason ?? "NOT_ASSIGNEE" };
+    },
+  };
+}
