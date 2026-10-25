@@ -1,7 +1,8 @@
-import { CHECKLIST_GROUP_PATHS, type ChecklistContent, type ChecklistGroupPath } from "@/features/surveys";
+import { CHECKLIST_GROUP_PATHS, type ChecklistContent, type ChecklistGroupPath, type ChecklistView } from "@/features/surveys";
 
 import type { DraftKey, DraftStore } from "../drafts";
 
+import { contextOf } from "./correction-rule";
 import { inputOfContent, type GroupContext, type GroupEdits, unitsOfInput } from "./group-input";
 import { sameUnit } from "./unit-equality";
 import { parseUnitKey, spaceIdOfKey } from "./units";
@@ -68,11 +69,17 @@ function scopeRefuses(key: string, value: unknown, ctx: GroupContext): boolean {
 
 const ENTRY_KINDS = new Set(["space", "hazard", "sharedItem", "spaceItem", "otherItem"]);
 
-/** The edit of a saved hazard whose space G1 removed, at asset level as the server keeps it (A-12). */
-function detachSavedHazard(parsed: ReturnType<typeof parseUnitKey>, value: unknown, saved: boolean, ctx: GroupContext): unknown {
-  if (parsed?.kind !== "hazard" || !saved || value === null || typeof value !== "object") return value;
+/**
+ * The edit of a saved hazard whose draft space G1 removed: placed where the server keeps the hazard now (at asset level
+ * when its stored space was removed, A-12; its own space when that space stays).
+ */
+function detachSavedHazard(parsed: ReturnType<typeof parseUnitKey>, value: unknown, saved: unknown, ctx: GroupContext): unknown {
+  if (parsed?.kind !== "hazard" || saved === undefined || saved === null || value === null || typeof value !== "object") {
+    return value;
+  }
   const spaceId = (value as { spaceId?: unknown }).spaceId;
-  return typeof spaceId === "string" && !ctx.spaces.includes(spaceId) ? { ...value, spaceId: null } : value;
+  if (typeof spaceId !== "string" || ctx.spaces.includes(spaceId)) return value;
+  return { ...value, spaceId: (saved as { spaceId?: string | null }).spaceId ?? null };
 }
 
 /**
@@ -94,7 +101,7 @@ export function rebaseDraft<G extends ChecklistGroupPath>(
     if (!key.startsWith(`${group}/`)) continue;
     const parsed = parseUnitKey(key);
     // A saved hazard of a space G1 no longer has stays, detached at asset level (A-12): its edits follow it there.
-    const value = detachSavedHazard(parsed, typed, stored.has(key), ctx);
+    const value = detachSavedHazard(parsed, typed, stored.get(key), ctx);
     const spaceId = spaceIdOfKey(key);
     const isEntry = parsed !== null && ENTRY_KINDS.has(parsed.kind);
     const exists = stored.has(key);
@@ -135,4 +142,36 @@ export function rebaseAfterCascade<G extends ChecklistGroupPath>(
   const rebased = rebaseDraft(draft, group, content, ctx);
   const version = draft.version === screenVersion ? answerVersion : draft.version;
   return { draft: { version, edits: rebased.edits, created: draft.created }, dropped: rebased.dropped };
+}
+
+/**
+ * The other groups' drafts after the user's G1 save removed a space or switched the scope (spec 6.2): each rebased on
+ * the answer with `rebaseAfterCascade` against the version the screen showed before the answer. Returns the dropped
+ * edits per group ("Not kept: ...").
+ */
+export function rebaseOtherDrafts(
+  store: Pick<DraftStore, "get" | "set">,
+  keyOf: (group: ChecklistGroupPath) => DraftKey,
+  screen: ChecklistView | null,
+  answer: ChecklistView,
+): Partial<Record<ChecklistGroupPath, string[]>> {
+  const ctx = contextOf(answer);
+  const dropped: Partial<Record<ChecklistGroupPath, string[]>> = {};
+  for (const group of CHECKLIST_GROUP_PATHS) {
+    if (group === "identification") continue;
+    const key = keyOf(group);
+    const draft = readChecklistDraft(store.get(key) ?? "");
+    if (draft === null) continue;
+    const rebased = rebaseAfterCascade(
+      draft,
+      group,
+      answer.groups?.[group]?.content as never,
+      ctx,
+      screen?.groups?.[group]?.version ?? 0,
+      answer.groups?.[group]?.version ?? draft.version,
+    );
+    store.set(key, writeChecklistDraft(rebased.draft.version, rebased.draft.edits, rebased.draft.created));
+    if (rebased.dropped.length > 0) dropped[group] = rebased.dropped;
+  }
+  return dropped;
 }
