@@ -184,4 +184,18 @@ describe("3. a 403 locks editing at once; only a successful read that says edita
     expect(readFailureEvent({ kind: "retry" })).toEqual({ type: "readFailed" });
     expect(readFailureEvent({ kind: "not-found" })).toEqual({ type: "readFailed" });
   });
+
+  it("an answer with no view on screen (sent before the route was hidden) is not shown: the page reads instead", () => {
+    // PUT B answered 403 while hidden (the lock is still recorded); on return PUT A answers 200 editable before the read.
+    const hiddenForbidden = viewEvent({ view: null, locked: false }, { type: "forbidden" });
+    expect(hiddenForbidden.state).toEqual({ view: null, locked: true });
+    const lateAnswer = viewEvent(hiddenForbidden.state, { type: "answer", view: editable });
+    expect(lateAnswer.state.view).toBeNull();
+    expect(lateAnswer.reload).toBe(true);
+    // Even without a 403, an answer never shows a checklist before the read that follows a re-show (W16-32).
+    expect(viewEvent({ view: null, locked: false }, { type: "answer", view: editable })).toEqual({
+      state: { view: null, locked: false },
+      reload: true,
+    });
+  });
 });

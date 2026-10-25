@@ -129,7 +129,9 @@ export function viewEvent(state: PageView, event: ViewEvent): { state: PageView;
     case "forbidden":
       return { state: { view: lockView(state.view), locked: true }, reload: true };
     case "answer": {
-      const merged = state.view === null ? { view: event.view, needsReload: false } : applyAnswer(state.view, event.view);
+      // No view on screen: the answer was sent before the route was hidden; only a read shows the checklist again.
+      if (state.view === null) return { state, reload: true };
+      const merged = applyAnswer(state.view, event.view);
       if (!state.locked) return { state: { view: merged.view, locked: false }, reload: merged.needsReload };
       return { state: { view: lockView(merged.view), locked: true }, reload: true };
     }

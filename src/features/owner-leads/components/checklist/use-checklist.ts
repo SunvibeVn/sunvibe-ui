@@ -68,9 +68,11 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
   /** Applies a view event (`viewEvent`): the read, a save or takeover answer, a 403. True when the page reads again. */
   const dispatchView = useCallback(
     (event: ViewEvent): boolean => {
-      if (userId === null || !gate.open()) return false;
+      if (userId === null) return false;
       const next = viewEvent({ view: viewRef.current, locked: lockedRef.current }, event);
+      // A 403 locks editing even while the route is hidden; nothing is shown until it is shown again.
       lockedRef.current = next.state.locked;
+      if (!gate.open()) return false;
       const { view } = next.state;
       if (view !== null && view !== viewRef.current) {
         viewRef.current = view;
