@@ -15,6 +15,8 @@ export function applyAnswer(screen: ChecklistView, answer: ChecklistView): Answe
   const applied = CHECKLIST_GROUP_PATHS.filter((group) => versionOf(answer, group) >= versionOf(screen, group));
   if (applied.length === CHECKLIST_GROUP_PATHS.length) {
     const taken = applied.filter((group) => versionOf(answer, group) > versionOf(screen, group));
+    // Nothing newer (a late or repeated answer; a takeover raises the checklist version): the screen stays.
+    if (taken.length === 0 && (answer.version ?? 0) <= (screen.version ?? 0)) return { view: screen, applied: [], needsReload: false };
     return { view: answer, applied: taken, needsReload: false };
   }
   const groups = { ...screen.groups };
