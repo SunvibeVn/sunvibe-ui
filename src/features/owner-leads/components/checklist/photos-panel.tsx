@@ -6,7 +6,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { type CoverageRow, isEditingHolder, type MediaPanelModel } from "../../lib/checklist/media-panel-model";
-import { mediaErrorText } from "../../lib/checklist/media-messages";
+import { coverageStateText, mediaErrorText } from "../../lib/checklist/media-messages";
 
 import { useChecklistPage } from "./checklist-context";
 import { type MediaController, useChecklistMedia } from "./media-context";
@@ -39,19 +39,7 @@ function CoverageList({ title, rows, optional }: { title: string; rows: readonly
   const t = useTranslations("OwnerLeads");
   const pair = usePairText();
   if (rows.length === 0 && optional) return null;
-  const stateText = (row: CoverageRow): string => {
-    if (optional) return t("checklist.media.optional.count", { count: row.readyCount });
-    switch (row.state) {
-      case "COVERED":
-        return t("checklist.media.required.COVERED", { count: row.readyCount });
-      case "NOT_REQUIRED":
-        return t("checklist.media.required.NOT_REQUIRED", { reason: row.notRequiredReason ?? "" });
-      case "PROCESSING":
-        return t("checklist.media.required.PROCESSING");
-      default:
-        return t("checklist.media.required.MISSING");
-    }
-  };
+  const stateText = (row: CoverageRow): string => coverageStateText(row, optional === true, t);
   const tone = (row: CoverageRow) =>
     optional || row.state === "NOT_REQUIRED"
       ? "text-slate-600"

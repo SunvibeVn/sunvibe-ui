@@ -20,13 +20,33 @@ import {
 // Who may open the staff workspace: W11-21 (signed-out deep link, SALE), W11-22 (CUSTOMER gets 403), the CUSTOMER
 // part of W11-20 (no link, no card), W14-22 (public link stays "Khu làm việc", /login unchanged) and W14-23 (the 403
 // screen inside the workspace is English in a lang="en" subtree, <html lang> stays vi). Spec 5.8 budget: 2 sign-ins
-// (SALE through the redirect, CUSTOMER), full loads of protected pages: 3 (deep link, /account, /workspace) of 4;
-// intake POSTs: 0.
+// (SALE through the redirect, CUSTOMER), full loads of protected pages: 4 (deep link, the workspace loading itself
+// again after the login redirect (SM-FE-06), /account, /workspace) of 4; intake POSTs: 0.
 //
 // Fixtures: this file changes none. Run BOTH seeds again before every `npm run e2e:workspace` (the other files change
 // leads and a territory); this file runs first, then sale, leader and admin (playwright.workspace.config.ts).
 
 test.describe.configure({ mode: "serial", timeout: 120_000 });
+
+/**
+ * True when the page's CSP refuses an image of another origin (a port nothing listens on, so nothing is fetched): the
+ * workspace's `img-src` (survey-media spec 6.2, SV-023). A page without that policy only gets a network error.
+ */
+async function imageOfAnotherOriginRefused(page: Page): Promise<boolean> {
+  return page.evaluate(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const src = "http://127.0.0.1:9/sm-fe-06.png";
+        document.addEventListener("securitypolicyviolation", (event) => {
+          if (event.blockedURI.startsWith("http://127.0.0.1:9")) resolve(true);
+        });
+        const image = new Image();
+        // The violation event may come after the error event; give it a moment before answering "not refused".
+        image.onerror = () => setTimeout(() => resolve(false), 500);
+        image.src = src;
+      }),
+  );
+}
 
 test.describe("who may open the workspace", () => {
   let context: BrowserContext;
@@ -58,6 +78,8 @@ test.describe("who may open the workspace", () => {
     // A SALE cannot open "all": the same page, normalized to the SALE's own tab, and no call asked for "all".
     await expect(page).toHaveURL(/scope=mine/);
     expect(calls.filter((call) => call.url.searchParams.get("scope") === "all"), "calls with scope=all").toHaveLength(0);
+    // SM-FE-06 (SV-071): the login page sent the SALE into the workspace inside the app, and the workspace's CSP holds.
+    expect(await imageOfAnotherOriginRefused(page), "an image of another origin is refused").toBe(true);
 
     await signOutFromWorkspace(page);
     await expect.poll(() => hasSignInHint(page), { message: "the sign-in hint is gone after the sign-out" }).toBe(false);

@@ -30,6 +30,7 @@ export function PhotoRemovedList({ model }: { model: MediaPanelModel }) {
           </li>
         ))}
       </ul>
+      {model.moreRemoved > 0 && <p className="text-xs text-slate-500">{t("checklist.media.removed.more", { count: model.moreRemoved })}</p>}
     </section>
   );
 }

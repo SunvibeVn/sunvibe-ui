@@ -39,7 +39,10 @@ export type MediaController = {
   /** Grows when image reads may start again (after a 403, 404 or pagehide, once a list read confirmed access). */
   imageEpoch: number;
   /** Stable across renders. */
-  requestImage(mediaId: string, variant: MediaVariant): void;
+  /** `otherVisit`: the matching photo of another visit, which this checklist's list does not hold (SM-FE-04). */
+  requestImage(mediaId: string, variant: MediaVariant, options?: { otherVisit?: boolean }): void;
+  /** The part showing another visit's matching photo went: its image goes too. */
+  releaseImage(mediaId: string): void;
   /** Reads the full file for a download; `releaseDownload` revokes its URL once the browser took it. */
   download(mediaId: string): Promise<DownloadResult>;
   releaseDownload(url: string): void;

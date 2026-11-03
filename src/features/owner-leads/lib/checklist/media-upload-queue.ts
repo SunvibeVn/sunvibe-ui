@@ -95,9 +95,13 @@ type Row = UploadRow & {
   unknownAttempts: number;
   /** Cancelled by the user: a create answering later gives its record back. */
   cancelled: boolean;
+  /**
+   * "Upload again" of a row that had a record: that record. When the list lagged, it may still await these very bytes,
+   * and the server then refuses the new photo as its duplicate; the row sends the bytes to it instead (SM-FE-01).
+   */
+  replaces: string | null;
 };
 
-const ACTIVE: ReadonlySet<UploadRowState> = new Set(["hashing", "creating", "uploading", "checking"]);
 const RUNNING: ReadonlySet<UploadRowState> = new Set(["waiting", "hashing", "creating", "uploading", "checking", "retrying", "queued"]);
 /** Refusals that stop the whole queue and go to the page. */
 const STOPS: ReadonlySet<MediaUiError["kind"]> = new Set([
@@ -121,6 +125,11 @@ export function createUploadQueue(deps: UploadQueueDeps) {
   let isStopped = false;
   let disposed = false;
   let nextId = 0;
+  /**
+   * The runs on their way, cancelled rows' included: a hash or a create cannot be stopped, so a row taken off still
+   * holds its place until its work ends (at most 3 files read or sent at a time, SM-FE-02).
+   */
+  let inFlight = 0;
 
   const publish = () => {
     snapshot = rows.map(({ id, placement, sizeBytes, uploadKey, mediaId, state, progress, error, giveUp }) => ({
@@ -313,6 +322,13 @@ export function createUploadQueue(deps: UploadQueueDeps) {
       if (!result.ok) {
         const error = toMediaUiError(result, "create") ?? { kind: "retry" as const };
         if (common(row, error)) return;
+        if (error.kind === "duplicate" && row.replaces !== null && error.matchingMediaId === row.replaces) {
+          // The duplicate is the row's own earlier record, still waiting for these bytes: send them to it.
+          row.mediaId = row.replaces;
+          row.replaces = null;
+          await send(row);
+          return;
+        }
         if (error.kind === "limit-pending") wait(row, "queued", PENDING_RETRY_MS, error);
         else fail(row, error);
         return;
@@ -335,12 +351,14 @@ export function createUploadQueue(deps: UploadQueueDeps) {
 
   function pump() {
     if (disposed || isStopped || holdState !== null) return;
-    let active = rows.filter((row) => ACTIVE.has(row.state)).length;
     for (const row of rows) {
-      if (active >= MAX_PARALLEL_UPLOADS) break;
+      if (inFlight >= MAX_PARALLEL_UPLOADS) break;
       if (row.state !== "waiting") continue;
-      active += 1;
-      void run(row).finally(pump);
+      inFlight += 1;
+      void run(row).finally(() => {
+        inFlight -= 1;
+        pump();
+      });
     }
   }
 
@@ -362,6 +380,7 @@ export function createUploadQueue(deps: UploadQueueDeps) {
       timer: undefined,
       unknownAttempts: 0,
       cancelled: false,
+      replaces: null,
     };
   }
 
@@ -391,7 +410,9 @@ export function createUploadQueue(deps: UploadQueueDeps) {
       if (row === undefined || disposed) return;
       const index = rows.indexOf(row);
       drop(row);
-      rows.splice(index, 0, newRow(row.file, row.placement));
+      const next = newRow(row.file, row.placement);
+      next.replaces = row.mediaId;
+      rows.splice(index, 0, next);
       isStopped = false;
       publish();
       pump();
@@ -432,10 +453,6 @@ export function createUploadQueue(deps: UploadQueueDeps) {
         if (RUNNING.has(row.state)) Object.assign(row, { state: "stopped", controller: null });
       }
       publish();
-    },
-    /** Takes files again after `dispose` (React runs an effect's cleanup and the effect again in development). */
-    reopen(): void {
-      disposed = false;
     },
   };
 }

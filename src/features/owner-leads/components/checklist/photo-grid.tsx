@@ -7,7 +7,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format/vietnam-time";
 
-import type { MediaPanelModel, PhotoBadge, PhotoCard } from "../../lib/checklist/media-panel-model";
+import { type MediaPanelModel, type PhotoBadge, type PhotoCard, viewedCard } from "../../lib/checklist/media-panel-model";
 
 import { PhotoHoldControls } from "./photo-hold-controls";
 import { PhotoRemoveDialog } from "./photo-remove-dialog";
@@ -97,11 +97,15 @@ export function PhotoGrid({ model, mode }: { model: MediaPanelModel; mode: Photo
   const t = useTranslations("OwnerLeads");
   const pair = usePairText();
   const [removing, setRemoving] = useState<PhotoCard | null>(null);
-  const [viewing, setViewing] = useState<{ photo: PhotoCard; spaceCode: string | null } | null>(null);
+  // Only which photo is open: the viewer shows its card as the list on screen says (SM-FE-07).
+  const [viewing, setViewing] = useState<{ id: string; spaceCode: string | null } | null>(null);
+  const viewingCard = viewing === null ? null : viewedCard(model, viewing.id);
+  // The photo was held for this viewer, removed or is no longer servable: the viewer closes for good.
+  if (viewing !== null && viewingCard === null) setViewing(null);
   const cards = (photos: readonly PhotoCard[], spaceCode: string | null) => (
     <ul className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 lg:grid-cols-3">
       {photos.map((photo) => (
-        <Card key={photo.id} photo={photo} mode={mode} onRemove={setRemoving} onOpen={(open) => setViewing({ photo: open, spaceCode })} />
+        <Card key={photo.id} photo={photo} mode={mode} onRemove={setRemoving} onOpen={(open) => setViewing({ id: open.id, spaceCode })} />
       ))}
     </ul>
   );
@@ -124,11 +128,14 @@ export function PhotoGrid({ model, mode }: { model: MediaPanelModel; mode: Photo
         <div className="space-y-2">
           <h4 className="text-sm font-medium text-slate-700">{t("checklist.media.notAccepted.title")}</h4>
           {cards(model.notAccepted, null)}
+          {model.moreNotAccepted > 0 && (
+            <p className="text-xs text-slate-500">{t("checklist.media.notAccepted.more", { count: model.moreNotAccepted })}</p>
+          )}
         </div>
       )}
-      {viewing !== null && (
+      {viewing !== null && viewingCard !== null && (
         <PhotoViewer
-          photo={viewing.photo}
+          photo={viewingCard}
           spaceCode={viewing.spaceCode}
           holdControls={mode !== "preview"}
           onRemove={

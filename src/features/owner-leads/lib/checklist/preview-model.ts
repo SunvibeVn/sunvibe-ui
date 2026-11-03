@@ -118,6 +118,20 @@ function rowOf(
   return { key, field, label, text, provenance };
 }
 
+/**
+ * The space a row goes under, or null for asset level. A hazard or other item is keyed by its own id, so its space is
+ * the entry's `spaceId` (SV-005); a G1 space is listed in G1 itself; every other unit carries its space in the key.
+ */
+function spaceOfUnit(key: string, unit: unknown): string | null {
+  const kind = parseUnitKey(key)?.kind;
+  if (kind === "space") return null;
+  if (kind === "hazard" || kind === "otherItem") {
+    const spaceId = (unit as Json | null)?.spaceId;
+    return typeof spaceId === "string" && spaceId !== "" ? spaceId : null;
+  }
+  return spaceIdOfKey(key);
+}
+
 function sectionOf<G extends ChecklistGroupPath>(
   group: G,
   content: ChecklistContent[G] | undefined,
@@ -139,7 +153,7 @@ function sectionOf<G extends ChecklistGroupPath>(
   for (const [key, unit] of units) {
     const row = rowOf(key, unit, metas.get(key), context, t, names);
     if (row === null) continue;
-    const spaceId = parseUnitKey(key)?.kind === "space" ? null : spaceIdOfKey(key);
+    const spaceId = spaceOfUnit(key, unit);
     if (spaceId !== null && spaces.has(spaceId)) spaces.get(spaceId)?.push(row);
     else asset.push(row);
   }

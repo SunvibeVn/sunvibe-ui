@@ -15,6 +15,8 @@ type PhotoThumbProps = {
   variant?: Exclude<MediaVariant, "full">;
   /** The image's text alternative; "Photo #<mediaNo>" by default. */
   alt?: string;
+  /** The matching photo of another visit (a duplicate's answer): a list of this checklist never drops it. */
+  otherVisit?: boolean;
   className?: string;
 };
 
@@ -22,17 +24,23 @@ type PhotoThumbProps = {
  * One image of a photo from page memory (survey-media spec 6.2 images): an object URL made from the API's JPEG, never a
  * URL of the API itself and never `next/image`; the placeholder while it loads, waits for Retry-After or is not shown.
  */
-export function PhotoThumb({ mediaId, mediaNo, show, variant = "thumbnail", alt, className = "" }: PhotoThumbProps) {
+export function PhotoThumb({ mediaId, mediaNo, show, variant = "thumbnail", alt, otherVisit = false, className = "" }: PhotoThumbProps) {
   const t = useTranslations("OwnerLeads");
   const media = useChecklistMedia();
   const requestImage = media?.requestImage;
+  const releaseImage = media?.releaseImage;
   const epoch = media?.imageEpoch ?? 0;
   const entry = show ? media?.image(mediaId, variant) : undefined;
   const missing = entry === undefined;
   // Asks once per photo and variant, and again only when reads may start again (`epoch`, review M-1).
   useEffect(() => {
-    if (show && missing) requestImage?.(mediaId, variant);
-  }, [show, missing, requestImage, mediaId, variant, epoch]);
+    if (show && missing) requestImage?.(mediaId, variant, { otherVisit });
+  }, [show, missing, requestImage, mediaId, variant, epoch, otherVisit]);
+  // Another visit's photo lives only while it is shown (SM-FE-04).
+  useEffect(() => {
+    if (!otherVisit) return;
+    return () => releaseImage?.(mediaId);
+  }, [otherVisit, releaseImage, mediaId]);
   if (entry?.state === "ready") {
     return (
       // eslint-disable-next-line @next/next/no-img-element -- a blob: object URL from memory; next/image is not allowed here (spec 6.2)

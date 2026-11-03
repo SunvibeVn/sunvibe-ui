@@ -31,7 +31,7 @@ const accepted = (id: string): UploadResult => ({
 });
 
 /** A scripted server: answers each create and upload in turn from the queues the test fills, else waits. */
-function setup() {
+function setup(overrides: Partial<UploadQueueDeps> = {}) {
   const creates: MediaCreateInput[] = [];
   const uploads: UploadInput[] = [];
   const createReplies: Array<Reply<MediaCreated> | Promise<Reply<MediaCreated>>> = [];
@@ -72,7 +72,7 @@ function setup() {
     now: () => Date.now(),
     onChange: () => undefined,
   };
-  const queue = createUploadQueue(deps);
+  const queue = createUploadQueue({ ...deps, ...overrides });
   return {
     queue,
     creates,
@@ -104,6 +104,96 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.useRealTimers();
+});
+
+describe("upload queue: SM-FE-01 and SM-FE-02 (SV-071)", () => {
+  it("SM-FE-01: Upload again while the list lags sends the bytes to the row's own record named as the duplicate", async () => {
+    const { queue, uploads, uploadReplies, createReplies, lists, states } = setup();
+    uploadReplies.push({ ok: false, kind: "network" });
+    // The list read after the lost PUT is older than the create: it has no M1 yet.
+    lists.push({ checklistId: "C1", setVersion: 0, items: [], notAcceptedItems: [], removedItems: [] });
+    queue.add([file()], placement);
+    await settle();
+    expect(queue.rows()[0]).toMatchObject({ state: "failed", mediaId: "M1", error: { kind: "upload-again" } });
+
+    // The server still has M1 awaiting these bytes: a new photo of the same bytes is refused as its duplicate.
+    createReplies.push({ ...http(409, "MEDIA_DUPLICATE_CONTENT"), fieldErrors: [{ field: "contentSha256", message: "x", allowedValues: ["M1"] }] });
+    queue.againAsNew(queue.rows()[0].id);
+    await settle();
+
+    expect(uploads.map((input) => input.mediaId)).toEqual(["M1", "M1"]);
+    expect(states()).toEqual(["uploading"]);
+    expect(queue.rows()[0]).toMatchObject({ mediaId: "M1", error: null });
+  });
+
+  it("SM-FE-01: a duplicate of another photo still fails as a duplicate", async () => {
+    const { queue, createReplies, uploads } = setup();
+    createReplies.push({ ...http(409, "MEDIA_DUPLICATE_CONTENT"), fieldErrors: [{ field: "contentSha256", message: "x", allowedValues: ["M9"] }] });
+    queue.add([file()], placement);
+    await settle();
+    expect(queue.rows()[0]).toMatchObject({ state: "failed", error: { kind: "duplicate", matchingMediaId: "M9" } });
+    // Upload again of that row makes a new photo; the same duplicate is refused again, it is not adopted.
+    createReplies.push({ ...http(409, "MEDIA_DUPLICATE_CONTENT"), fieldErrors: [{ field: "contentSha256", message: "x", allowedValues: ["M9"] }] });
+    queue.againAsNew(queue.rows()[0].id);
+    await settle();
+    expect(queue.rows()[0]).toMatchObject({ state: "failed", error: { kind: "duplicate" } });
+    expect(uploads).toHaveLength(0);
+  });
+
+  it("SM-FE-02: hashing or creating still running after a cancel counts toward the 3 at a time", async () => {
+    const pending: Array<() => void> = [];
+    let hashing = 0;
+    let most = 0;
+    const { queue, states } = setup({
+      hash: () =>
+        new Promise((resolve) => {
+          hashing += 1;
+          most = Math.max(most, hashing);
+          pending.push(() => {
+            hashing -= 1;
+            resolve({ hex: "a".repeat(64), base64: "qq==" });
+          });
+        }),
+    });
+    queue.add([file(), file(), file()], placement);
+    await settle();
+    for (const row of queue.rows()) queue.cancel(row.id);
+    queue.add([file(), file(), file()], placement);
+    await settle();
+
+    expect(hashing).toBe(3);
+    expect(states()).toEqual(["waiting", "waiting", "waiting"]);
+
+    pending.shift()?.();
+    await settle();
+    expect(states()).toEqual(["hashing", "waiting", "waiting"]);
+    expect(most).toBe(3);
+  });
+
+  it("SM-FE-02: a create answering after its cancel holds its place until then, then gives the record back", async () => {
+    let answerFirst: (() => void) | null = null;
+    let calls = 0;
+    const { queue, discarded, states } = setup({
+      create: () => {
+        calls += 1;
+        if (calls === 1) return new Promise((resolve) => (answerFirst = () => resolve(created("M1"))));
+        return Promise.resolve(created(`M${calls}`));
+      },
+    });
+    queue.add([file(), file(), file(), file()], placement);
+    await settle();
+    expect(states()).toEqual(["creating", "uploading", "uploading", "waiting"]);
+
+    queue.cancel(queue.rows()[0].id);
+    await settle();
+    // The cancelled create is still on its way: the fourth file keeps waiting.
+    expect(states()).toEqual(["uploading", "uploading", "waiting"]);
+
+    (answerFirst as (() => void) | null)?.();
+    await settle();
+    expect(discarded).toEqual(["M1"]);
+    expect(states()).toEqual(["uploading", "uploading", "uploading"]);
+  });
 });
 
 describe("upload queue (survey-media spec 6.2 Uploader; SM-27)", () => {
@@ -320,16 +410,12 @@ describe("upload queue (survey-media spec 6.2 Uploader; SM-27)", () => {
     expect(queue.running()).toBe(false);
   });
 
-  it("reopen after dispose takes new files again (a remount in development)", async () => {
+  it("a disposed queue takes no files (the page makes a new queue when it mounts again)", async () => {
     const { queue, creates } = setup();
     queue.dispose();
     queue.add([file()], placement);
     await settle();
     expect(creates).toHaveLength(0);
-    queue.reopen();
-    queue.add([file()], placement);
-    await settle();
-    expect(creates).toHaveLength(1);
   });
 
   it("reports progress on its row", async () => {

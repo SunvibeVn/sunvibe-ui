@@ -5,13 +5,15 @@ import { useEffect, useSyncExternalStore } from "react";
 import { CHECKLIST_GROUP_PATHS } from "@/features/surveys";
 
 import { checklistDraftKey } from "../../lib/checklist/checklist-draft";
+import { type GuardNavigation, installHistoryGuard } from "../../lib/checklist/history-guard";
 import { hasUnsavedChanges } from "../../lib/checklist/unsaved";
 import { tabDrafts } from "../../lib/drafts";
 
 /**
  * Asks before leaving the page or the tab while a group has unsaved changes (survey-checklist spec 6.2) or photos are
  * still uploading (survey-media spec 6.2: files not sent are lost): the browser's own prompt on unload, a confirm on a
- * link inside the app. The drafts stay in tab memory either way. Back and Forward are not guarded (SV-010).
+ * link inside the app and on Back or Forward to another page (SV-010, `installHistoryGuard`). The drafts stay in tab
+ * memory either way.
  */
 export function useLeaveGuard(
   key: { userId: string; leadId: string; checklistId: string },
@@ -48,9 +50,18 @@ export function useLeaveGuard(
     };
     window.addEventListener("beforeunload", onUnload);
     document.addEventListener("click", onClick, true);
+    const uninstallHistoryGuard = installHistoryGuard(
+      {
+        navigation: (window as Window & { navigation?: GuardNavigation }).navigation,
+        pathname: () => window.location.pathname,
+        confirm: (message) => window.confirm(message),
+      },
+      text,
+    );
     return () => {
       window.removeEventListener("beforeunload", onUnload);
       document.removeEventListener("click", onClick, true);
+      uninstallHistoryGuard();
     };
   }, [dirty, uploading, text]);
 

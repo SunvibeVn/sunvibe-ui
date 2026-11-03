@@ -23,6 +23,7 @@ import {
 } from "@/features/surveys";
 
 import { newClientId } from "../../lib/checklist/client-id";
+import { heldDetailsLost, heldMediaIds, withoutHeldDetails } from "../../lib/checklist/media-held-details";
 import { attachPageEvents, createObjectUrlStore, type ObjectUrlStore } from "../../lib/checklist/media-object-urls";
 import { listDecision } from "../../lib/checklist/media-ordering";
 import { mediaPanelModel } from "../../lib/checklist/media-panel-model";
@@ -100,6 +101,15 @@ export function useMedia(page: ChecklistController): MediaController {
     return true;
   }, []);
 
+  /** `canHold` is gone: no caption, actor, reason or image of a held photo stays in memory (SM-FE-07). */
+  const dropHeldDetails = useCallback(() => {
+    const shown = listRef.current;
+    if (shown === null) return;
+    for (const mediaId of heldMediaIds(shown)) imagesRef.current?.revokeMedia(mediaId);
+    listRef.current = withoutHeldDetails(shown);
+    setList(listRef.current);
+  }, []);
+
   const readList = useCallback(async (): Promise<PollResult> => {
     const known = listRef.current === null ? null : knownVersionOf(listRef.current);
     const result = await listMedia(checklistId, known);
@@ -117,6 +127,9 @@ export function useMedia(page: ChecklistController): MediaController {
         imagesRef.current?.applyList(result.data);
         setList(result.data);
         setLoadError(null);
+      } else if (heldDetailsLost(listRef.current, result.data)) {
+        // An older list, but `canHold` is a right of the viewer, not a version: the newest answer about it counts.
+        dropHeldDetails();
       }
       if (decision.rereadChecklist) void pageRef.current.reload();
       return { kind: decision.apply ? "applied" : "unchanged" };
@@ -128,7 +141,7 @@ export function useMedia(page: ChecklistController): MediaController {
     if (failPage(error)) return { kind: "failed" };
     if (listRef.current === null) setLoadError(error);
     return { kind: "failed" };
-  }, [checklistId, failPage]);
+  }, [checklistId, failPage, dropHeldDetails]);
 
   const queueRef = useRef<UploadQueue | null>(null);
   const [rows, setRows] = useState<readonly UploadRow[]>([]);
@@ -168,7 +181,7 @@ export function useMedia(page: ChecklistController): MediaController {
     });
     queueRef.current = queue;
     const images = createObjectUrlStore({
-      read: (mediaId, variant, download) => getMediaImage(mediaId, variant, { download }),
+      read: (mediaId, variant, download, signal) => getMediaImage(mediaId, variant, { download, signal }),
       createObjectURL: (blob) => URL.createObjectURL(blob),
       revokeObjectURL: (url) => URL.revokeObjectURL(url),
       onPageFailure: (error) => {
@@ -260,13 +273,22 @@ export function useMedia(page: ChecklistController): MediaController {
         return { kind: "done" };
       }
       const error = toMediaUiError(result, "hold") ?? { kind: "retry" as const };
+      // A 403 on Hold or Release: the viewer no longer has `canHold`; the list read again says what stays.
+      if (error.kind === "forbidden") {
+        dropHeldDetails();
+        pollerRef.current?.readNow();
+      }
       failPage(error);
       return { kind: "failed", error };
     },
-    [failPage],
+    [failPage, dropHeldDetails],
   );
 
-  const requestImage = useCallback((mediaId: string, variant: MediaVariant) => imagesRef.current?.request(mediaId, variant), []);
+  const requestImage = useCallback(
+    (mediaId: string, variant: MediaVariant, options?: { otherVisit?: boolean }) => imagesRef.current?.request(mediaId, variant, options),
+    [],
+  );
+  const releaseImage = useCallback((mediaId: string) => imagesRef.current?.release(mediaId), []);
 
   const model = useMemo(() => (list === null ? null : mediaPanelModel(view, list, userId)), [list, view, userId]);
 
@@ -290,6 +312,7 @@ export function useMedia(page: ChecklistController): MediaController {
     image: (mediaId: string, variant: MediaVariant) => (imagesVersion >= 0 ? imagesRef.current?.get(mediaId, variant) : undefined),
     imageEpoch,
     requestImage,
+    releaseImage,
     download: (mediaId: string) =>
       imagesRef.current?.download(mediaId) ?? Promise.resolve({ ok: false as const, error: { kind: "aborted" as const } }),
     releaseDownload: (url: string) => imagesRef.current?.releaseDownload(url),

@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ImageResult, MediaItem, MediaList, MediaUiError, MediaVariant } from "@/features/surveys";
 
-import { attachPageEvents, createObjectUrlStore } from "./media-object-urls";
+import { attachPageEvents, createObjectUrlStore, type ObjectUrlDeps } from "./media-object-urls";
 
 const JPEG = new Blob([new Uint8Array([0xff, 0xd8])], { type: "image/jpeg" });
 const ok = (): ImageResult => ({ ok: true, status: 200, replayed: false, data: JPEG });
@@ -15,16 +15,16 @@ const http = (status: number, code: string, retryAfterSeconds?: number): ImageRe
   ...(retryAfterSeconds === undefined ? {} : { retryAfterSeconds }),
 });
 
-function setup() {
-  const reads: Array<{ mediaId: string; variant: MediaVariant; resolve(result: ImageResult): void }> = [];
+function setup(extra: Partial<ObjectUrlDeps> = {}) {
+  const reads: Array<{ mediaId: string; variant: MediaVariant; signal: AbortSignal; resolve(result: ImageResult): void }> = [];
   const created: string[] = [];
   const revoked: string[] = [];
   const pageFailures: MediaUiError["kind"][] = [];
   let next = 0;
   const store = createObjectUrlStore({
-    read: (mediaId, variant) =>
+    read: (mediaId, variant, _download, signal) =>
       new Promise<ImageResult>((resolve) => {
-        reads.push({ mediaId, variant, resolve });
+        reads.push({ mediaId, variant, signal, resolve });
       }),
     createObjectURL: () => {
       next += 1;
@@ -36,6 +36,7 @@ function setup() {
     onPageFailure: (error) => pageFailures.push(error.kind),
     now: () => Date.now(),
     onChange: () => undefined,
+    ...extra,
   });
   /** Answers the read of `mediaId` (first one waiting). */
   const answer = async (mediaId: string, result: ImageResult = ok()) => {
@@ -57,6 +58,236 @@ beforeEach(() => {
 afterEach(() => {
   vi.useRealTimers();
   vi.unstubAllGlobals();
+});
+
+describe("object URL store: reads stop with the page (SM-FE-08)", () => {
+  it("revokeAll_abortsEveryReadOnItsWay", () => {
+    const { store, reads } = setup();
+    store.request("M1", "thumbnail");
+    store.request("M2", "preview");
+    expect(reads.map((read) => read.signal.aborted)).toEqual([false, false]);
+
+    store.revokeAll({ block: true });
+
+    expect(reads.map((read) => read.signal.aborted)).toEqual([true, true]);
+  });
+
+  it("dispose_routeLeave_abortsTheReads", () => {
+    const { store, reads } = setup();
+    store.request("M1", "thumbnail");
+    store.dispose();
+    expect(reads[0].signal.aborted).toBe(true);
+  });
+
+  it("revokeMedia_abortsOnlyThatPhotosReads", () => {
+    const { store, reads } = setup();
+    store.request("M1", "thumbnail");
+    store.request("M2", "thumbnail");
+    store.revokeMedia("M1");
+    expect(reads.map((read) => [read.mediaId, read.signal.aborted])).toEqual([
+      ["M1", true],
+      ["M2", false],
+    ]);
+  });
+
+  it("anAbortedReadThatAnswersAsANetworkError_leavesNoUnavailableMark", async () => {
+    const { store, answer } = setup();
+    store.request("M1", "thumbnail");
+    store.revokeMedia("M1");
+    await answer("M1", { ok: false, kind: "network" });
+    expect(store.get("M1", "thumbnail")).toBeUndefined();
+    // Asked again later (a new list), it reads again.
+    store.request("M1", "thumbnail");
+    expect(store.get("M1", "thumbnail")).toEqual({ state: "loading" });
+  });
+});
+
+describe("object URL store: SM-FE-03, SM-FE-04, SM-FE-05 (SV-071)", () => {
+  const NETWORK: ImageResult = { ok: false, kind: "network" };
+
+  it("SM-FE-03: a one-off network error reads again after 5 s instead of keeping no image", async () => {
+    const { store, reads, answer } = setup();
+    store.request("M1", "thumbnail");
+    await answer("M1", NETWORK);
+    // The placeholder says loading, not "No image", while it waits.
+    expect(store.get("M1", "thumbnail")).toEqual({ state: "waiting", retryAt: 5_000 });
+    expect(reads).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(5_000);
+    expect(reads).toHaveLength(1);
+    await answer("M1");
+    expect(store.get("M1", "thumbnail")).toMatchObject({ state: "ready" });
+  });
+
+  it("SM-FE-03: bounded: after 5, 15 and 45 s of failed reads (a 5xx too) the photo shows no image", async () => {
+    const { store, reads, answer } = setup();
+    store.request("M1", "thumbnail");
+    for (const wait of [5_000, 15_000, 45_000]) {
+      await answer("M1", wait === 15_000 ? http(502, "BAD_GATEWAY") : NETWORK);
+      expect(store.get("M1", "thumbnail")).toMatchObject({ state: "waiting" });
+      await vi.advanceTimersByTimeAsync(wait);
+      expect(reads).toHaveLength(1);
+    }
+    await answer("M1", NETWORK);
+    expect(store.get("M1", "thumbnail")).toEqual({ state: "unavailable" });
+    await vi.advanceTimersByTimeAsync(600_000);
+    expect(reads).toHaveLength(0);
+  });
+
+  it("SM-FE-03: a read that succeeds starts the waits again from 5 s", async () => {
+    const { store, answer } = setup();
+    store.request("M1", "thumbnail");
+    await answer("M1", NETWORK);
+    await vi.advanceTimersByTimeAsync(5_000);
+    await answer("M1");
+    store.request("M1", "preview");
+    await answer("M1", NETWORK);
+    expect(store.get("M1", "preview")).toEqual({ state: "waiting", retryAt: 5_000 + 5_000 });
+  });
+
+  it("SM-FE-04: another visit's matching photo is read once and stays through list updates", async () => {
+    const { store, reads, answer, revoked } = setup();
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    await answer("OTHER");
+    store.applyList(list([item("M1")]));
+    store.applyList(list([item("M1"), item("M2")]));
+    expect(store.get("OTHER", "thumbnail")).toMatchObject({ state: "ready" });
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    expect(reads).toHaveLength(0);
+    expect(revoked).toEqual([]);
+  });
+
+  it("SM-FE-04: it still goes with every image on a revoke-all and with serving off", async () => {
+    const { store, answer, revoked } = setup();
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    await answer("OTHER");
+    store.applyList(list([item("M1")], false));
+    expect(revoked).toEqual(["blob:test/1"]);
+    expect(store.get("OTHER", "thumbnail")).toBeUndefined();
+  });
+
+  it("SM-FE-04: released when its upload row goes (dismissed, replaced, cancelled)", async () => {
+    const { store, answer, revoked } = setup();
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    await answer("OTHER");
+    store.release("OTHER");
+    expect(revoked).toEqual(["blob:test/1"]);
+    expect(store.get("OTHER", "thumbnail")).toBeUndefined();
+  });
+
+  it("SM-FE-04: release leaves the photos of this checklist alone", async () => {
+    const { store, answer, revoked } = setup();
+    store.applyList(list([item("M1")]));
+    store.request("M1", "thumbnail");
+    await answer("M1");
+    store.release("M1");
+    expect(revoked).toEqual([]);
+    expect(store.get("M1", "thumbnail")).toMatchObject({ state: "ready" });
+  });
+
+  it("SM-FE-04: checked again at most once a minute, so a hold or removal of that photo shows", async () => {
+    const { store, reads, answer, revoked } = setup();
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    await answer("OTHER");
+    await vi.advanceTimersByTimeAsync(59_000);
+    store.applyList(list([item("M1")]));
+    expect(revoked).toEqual([]);
+    await vi.advanceTimersByTimeAsync(1_000);
+    store.applyList(list([item("M1")]));
+    expect(revoked).toEqual(["blob:test/1"]);
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    expect(reads).toHaveLength(1);
+    // Held or removed meanwhile: the server refuses it, and the page shows no image.
+    await answer("OTHER", http(409, "MEDIA_NOT_AVAILABLE"));
+    expect(store.get("OTHER", "thumbnail")).toEqual({ state: "unavailable" });
+  });
+
+  it("SM-FE-04: an idle page (the list answers 204) checks it again after a minute too", async () => {
+    const { store, reads, answer, revoked } = setup();
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    await answer("OTHER");
+    await vi.advanceTimersByTimeAsync(59_000);
+    store.confirmAccess();
+    expect(revoked).toEqual([]);
+    await vi.advanceTimersByTimeAsync(1_000);
+    store.confirmAccess();
+    expect(revoked).toEqual(["blob:test/1"]);
+    store.request("OTHER", "thumbnail", { otherVisit: true });
+    expect(reads).toHaveLength(1);
+  });
+
+  it("SM-FE-04: a photo of this checklist gone from the list is still revoked", async () => {
+    const { store, answer, revoked } = setup();
+    store.request("M4", "thumbnail");
+    await answer("M4");
+    store.applyList(list([item("M1")]));
+    expect(revoked).toEqual(["blob:test/1"]);
+  });
+
+  it("SM-FE-05: serving off on an image while a list says on: reads wait 15 s, then 30 s, not a tight loop", async () => {
+    const servingOff: number[] = [];
+    const { store, reads, answer } = setup({ onServingOff: () => servingOff.push(1) });
+    store.applyList(list([item("M1")]));
+    store.request("M1", "thumbnail");
+    await answer("M1", http(503, "MEDIA_SERVING_DISABLED"));
+    expect(servingOff).toHaveLength(1);
+    const epoch = store.epoch();
+
+    // The list read it asks for reaches an instance that still serves.
+    store.applyList(list([item("M1")]));
+    store.request("M1", "thumbnail");
+    expect(reads).toHaveLength(0);
+    expect(store.epoch()).toBe(epoch);
+    await vi.advanceTimersByTimeAsync(15_000);
+    expect(store.epoch()).toBeGreaterThan(epoch);
+    store.request("M1", "thumbnail");
+    expect(reads).toHaveLength(1);
+
+    // Off again on the next image: the second wait is 30 s.
+    await answer("M1", http(503, "MEDIA_SERVING_DISABLED"));
+    expect(servingOff).toHaveLength(2);
+    store.applyList(list([item("M1")]));
+    await vi.advanceTimersByTimeAsync(15_000);
+    store.request("M1", "thumbnail");
+    expect(reads).toHaveLength(0);
+    await vi.advanceTimersByTimeAsync(15_000);
+    store.request("M1", "thumbnail");
+    expect(reads).toHaveLength(1);
+  });
+
+  it("SM-FE-05: a list saying off during the wait keeps images off when the wait ends", async () => {
+    const { store, reads, answer } = setup();
+    store.request("M1", "thumbnail");
+    await answer("M1", http(503, "MEDIA_SERVING_DISABLED"));
+    store.applyList(list([item("M1")]));
+    store.applyList(list([item("M1")], false));
+    await vi.advanceTimersByTimeAsync(60_000);
+    store.request("M1", "thumbnail");
+    expect(reads).toHaveLength(0);
+  });
+
+  it("SM-FE-05: a list off and then on (a restart seen by the lists) turns images back on at once", async () => {
+    const { store, reads } = setup();
+    store.applyList(list([item("M1")], false));
+    store.applyList(list([item("M1")]));
+    store.request("M1", "thumbnail");
+    expect(reads).toHaveLength(1);
+  });
+
+  it("SM-FE-05: an image that loads resets the waits", async () => {
+    const { store, reads, answer } = setup();
+    store.request("M1", "thumbnail");
+    await answer("M1", http(503, "MEDIA_SERVING_DISABLED"));
+    store.applyList(list([item("M1")]));
+    await vi.advanceTimersByTimeAsync(15_000);
+    store.request("M1", "thumbnail");
+    await answer("M1");
+    store.request("M1", "preview");
+    await answer("M1", http(503, "MEDIA_SERVING_DISABLED"));
+    store.applyList(list([item("M1")]));
+    await vi.advanceTimersByTimeAsync(15_000);
+    store.request("M1", "preview");
+    expect(reads).toHaveLength(1);
+  });
 });
 
 describe("object URL store (survey-media spec 6.2 images, A-24, A-25; SM-28)", () => {
