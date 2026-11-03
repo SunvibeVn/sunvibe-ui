@@ -12,11 +12,13 @@ const JPEG = new Uint8Array([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 
 function fakeServer(reply: () => Response) {
   const urls: URL[] = [];
+  const requests: Request[] = [];
   const options: Array<CallOptions | undefined> = [];
   const client = createClient<paths>({
     baseUrl: "http://api.test",
     fetch: async (request) => {
       urls.push(new URL(request.url));
+      requests.push(request);
       return reply();
     },
   });
@@ -26,7 +28,7 @@ function fakeServer(reply: () => Response) {
       return toPublicResult(run(client));
     },
   };
-  return { urls, options, deps };
+  return { urls, requests, options, deps };
 }
 
 const jpeg = (type = "image/jpeg") => new Response(JPEG, { status: 200, headers: { "Content-Type": type } });
@@ -41,6 +43,25 @@ describe("media image client (survey-media spec 6.2 images, A-25)", () => {
     expect(new Uint8Array(await result.data.arrayBuffer())).toEqual(JPEG);
     expect(urls[0].pathname).toBe("/api/v1/staff/survey-media/M1/content/preview");
     expect(urls[0].search).toBe("");
+  });
+
+  it("SM-FE-08: asks no cache and carries the caller's signal", async () => {
+    const { requests, deps } = fakeServer(() => jpeg());
+    const controller = new AbortController();
+    await getMediaImage("M1", "thumbnail", { signal: controller.signal }, deps);
+    expect(requests[0].cache).toBe("no-store");
+    expect(requests[0].signal.aborted).toBe(false);
+    controller.abort();
+    expect(requests[0].signal.aborted).toBe(true);
+  });
+
+  it("SM-FE-08: a read already aborted sends nothing", async () => {
+    const { urls, deps } = fakeServer(() => jpeg());
+    const controller = new AbortController();
+    controller.abort();
+    const result = await getMediaImage("M1", "preview", { signal: controller.signal }, deps);
+    expect(result.ok).toBe(false);
+    expect(urls).toHaveLength(0);
   });
 
   it("asks a download only of the full variant", async () => {

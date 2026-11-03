@@ -1,4 +1,4 @@
-import { type BrowserContext, expect, type Locator, type Page, test } from "@playwright/test";
+import { type BrowserContext, type Dialog, expect, type Locator, type Page, test } from "@playwright/test";
 
 import { expectSignedInAccount } from "../support/auth";
 import {
@@ -55,6 +55,7 @@ const C = {
   kitchenGap: "Condition and availability · P1 · Kitchen: Not entered or only partly entered: Kitchen",
   photos: "Photo missing: Asset (whole property) · Exterior and access",
   submission: "Submission is not available yet.",
+  leaveConfirm: "You have unsaved changes. Leave this page?",
 } as const;
 
 /** Vietnam is UTC+7 all year. */
@@ -204,6 +205,41 @@ test.describe("Survey checklists (survey-checklist W16b)", () => {
     await group(g6, "Shared amenities").getByRole("checkbox", { name: "Air conditioner" }).check();
     await save(g6);
     await expectSaved(g6, fixture.sale.name);
+
+    // SV-010 (spec 6.2): with a group unsaved, the browser's Back asks first. "Stay" cancels it and keeps the page and
+    // the draft; "leave" goes to the lead and the draft stays in tab memory; once the draft is clean, Back asks nothing.
+    // The browser lets a page cancel Back again only after a user action, so the "leave" round types first.
+    const asked: string[] = [];
+    let answer: "dismiss" | "accept" = "dismiss";
+    const onDialog = (prompt: Dialog) => {
+      asked.push(prompt.message());
+      void (answer === "dismiss" ? prompt.dismiss() : prompt.accept());
+    };
+    sale.on("dialog", onDialog);
+    await note.fill("Blue gate, ring three times");
+    await expect(g1.getByRole("status")).toContainText("Unsaved changes");
+    // A cancelled traversal never commits, so this Back has nothing to wait for.
+    await sale.goBack({ waitUntil: "commit", timeout: 5_000 }).catch(() => null);
+    await expect.poll(() => asked).toEqual([C.leaveConfirm]);
+    await expect(sale).toHaveURL(new RegExp(`${checklistPath(checklistId)}$`));
+    await expect(note).toHaveValue("Blue gate, ring three times");
+    await expect(g1.getByRole("status")).toContainText("Unsaved changes");
+
+    answer = "accept";
+    await note.fill("Blue gate, ring four times");
+    await sale.goBack({ waitUntil: "commit" });
+    await expect.poll(() => asked).toEqual([C.leaveConfirm, C.leaveConfirm]);
+    await expectLeadDetail(sale, L13);
+    await sale.goForward({ waitUntil: "commit" });
+    await expect(note).toHaveValue("Blue gate, ring four times", { timeout: 20_000 });
+    await note.fill("Blue gate, ring twice");
+    await expectSaved(g1, fixture.sale.name);
+    await sale.goBack({ waitUntil: "commit" });
+    await expectLeadDetail(sale, L13);
+    await sale.goForward({ waitUntil: "commit" });
+    await expect(sale.getByRole("heading", { level: 1, name: "Checklist #1" })).toBeVisible({ timeout: 20_000 });
+    sale.off("dialog", onDialog);
+    expect(asked).toHaveLength(2);
   });
 
   test("W16-31, W16-26: the preview lists the gaps with no submit control; History collapses the saves", async () => {

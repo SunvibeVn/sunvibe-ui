@@ -3,6 +3,7 @@ import path from "node:path";
 
 import { type BrowserContext, expect, type Locator, type Page, test } from "@playwright/test";
 
+import { API_URL } from "../support/api";
 import { expectSignedInAccount } from "../support/auth";
 import {
   assigneeOption,
@@ -23,8 +24,9 @@ import {
 
 // Survey photos on a checklist draft (survey-media spec 6.4; SM-27, SM-28, SM-29), the scenarios in the spec's order.
 // Budget: 3 sign-ins (SALE, SALE_LEADER, ADMIN); full loads: the checklist URL twice for the leader and once for the
-// admin, one reload of the SALE's page. No trace, video or screenshot in this project (playwright.workspace.config.ts): no photo may land
-// in a file of the run.
+// admin, one reload of the SALE's page. SM-FE-09 answers one G1 save with a 403 inside the test; the last test checks
+// that no photo request of the run sent a cookie (SM-FE-10). No trace, video or screenshot in this project
+// (playwright.workspace.config.ts): no photo may land in a file of the run.
 //
 // Needs the API of sunvibe-server scripts/dev/run-e2e-media-api.sh (uploads and processing on, the local store, the
 // stub scanner, the dev processing container) and both seeds run again just before. Fixture L14 (SURVEY_SCHEDULED,
@@ -132,6 +134,23 @@ function jpegHasMetadata(bytes: Buffer): boolean {
   return false;
 }
 
+type MediaRequest = { method: string; path: string; cookie: boolean };
+
+/**
+ * Records every request of a page to the photo endpoints of the API (list, create, content PUT by XMLHttpRequest,
+ * images, removal, hold): its method, path and whether the browser sent a Cookie header (SM-FE-10).
+ */
+function watchMediaRequests(page: Page): () => Promise<MediaRequest[]> {
+  const seen: Promise<MediaRequest>[] = [];
+  page.on("request", (request) => {
+    const url = new URL(request.url());
+    if (url.origin !== new URL(API_URL).origin) return;
+    if (!/^\/api\/v1\/staff\/(survey-media\/|survey-checklists\/[^/]+\/media)/.test(url.pathname)) return;
+    seen.push(request.allHeaders().then((headers) => ({ method: request.method(), path: url.pathname, cookie: "cookie" in headers })));
+  });
+  return () => Promise.all(seen);
+}
+
 async function correct(scope: Locator, reason: string): Promise<void> {
   const box = scope.getByRole("group", { name: "Correction", exact: true });
   await expect(box).toBeVisible({ timeout: 20_000 });
@@ -149,6 +168,7 @@ test.describe("Survey photos (survey-media media-b)", () => {
   let adminContext: BrowserContext;
   let admin: Page;
   let checklistId = "";
+  const mediaRequests: Array<() => Promise<MediaRequest[]>> = [];
 
   test.beforeAll(async ({ browser }) => {
     test.skip(!(await workspaceE2eReady()), WORKSPACE_E2E_SKIP_REASON);
@@ -159,6 +179,7 @@ test.describe("Survey photos (survey-media media-b)", () => {
     leader = await leaderContext.newPage();
     adminContext = await newStaffContext(browser);
     admin = await adminContext.newPage();
+    mediaRequests.push(watchMediaRequests(sale), watchMediaRequests(leader), watchMediaRequests(admin));
   });
 
   test.afterAll(async () => {
@@ -320,11 +341,39 @@ test.describe("Survey photos (survey-media media-b)", () => {
     await adminCard.getByRole("button", { name: "Release the hold", exact: true }).click();
     await expect(adminCard).not.toContainText("Held by", { timeout: 20_000 });
     await expect(adminCard.getByText("Ready", { exact: true })).toBeVisible();
+
   });
 
   test("SM-28: after the reassignment the old Sale's page drops every image on its next answer (404)", async () => {
     const g7 = photos(sale, true);
     // The page reads the list again when it becomes visible (spec 6.2): the released photo shows again.
+    await sale.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
+    await expect(card(g7, 1).getByAltText("Photo #1", { exact: true })).toBeVisible({ timeout: 90_000 });
+
+    // SM-FE-09: a 403 of a W16 command (a G1 save, answered 403 here by the test) drops every image at once, with no
+    // list poll in between (the idle poll is 60 s away); the next list read brings them back.
+    const g1Save = `**/api/v1/staff/survey-checklists/${checklistId}/identification`;
+    await sale.route(g1Save, (route) =>
+      route.request().method() === "PUT"
+        ? route.fulfill({
+            status: 403,
+            contentType: "application/json",
+            body: JSON.stringify({ code: "FORBIDDEN", message: "Forbidden", errors: [], correlationId: "e2e-sm-fe-09" }),
+          })
+        : route.continue(),
+    );
+    const shownUrl = (await card(g7, 1).getByAltText("Photo #1", { exact: true }).getAttribute("src")) ?? "";
+    expect(shownUrl.startsWith("blob:")).toBe(true);
+    const g1 = panel(sale, "G1 Identification");
+    const note = g1.getByRole("textbox", { name: /^General note/ });
+    await note.fill("Side door");
+    await g1.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(sale.locator('img[src^="blob:"]')).toHaveCount(0, { timeout: 3_000 });
+    // The object URL itself is revoked, not only taken off the page.
+    expect(await sale.evaluate((url) => fetch(url).then(() => true, () => false), shownUrl)).toBe(false);
+    await sale.unroute(g1Save);
+    await note.fill("");
+    await expect(g1.getByRole("status")).not.toContainText("Unsaved changes");
     await sale.evaluate(() => document.dispatchEvent(new Event("visibilitychange")));
     await expect(card(g7, 1).getByAltText("Photo #1", { exact: true })).toBeVisible({ timeout: 90_000 });
 
@@ -417,5 +466,27 @@ test.describe("Survey photos (survey-media media-b)", () => {
     const viewer = leader.getByRole("dialog");
     await expect(viewer.getByRole("button", { name: "Download", exact: true })).toBeEnabled();
     await expect(viewer.getByRole("button", { name: "Remove", exact: true })).toHaveCount(0);
+  });
+
+  test("SM-FE-10: no photo request of the run sent a cookie (credentials omitted)", async () => {
+    // Every photo request of the three pages, the content PUT by XMLHttpRequest included, went without a Cookie header,
+    // although the browser holds cookies it would send to the API's host if a request included them.
+    const requests = (await Promise.all(mediaRequests.map((all) => all()))).flat();
+    const kinds = new Set(requests.map((request) => `${request.method} ${request.path.replace(/[0-9A-Z]{26}/g, "{id}")}`));
+    for (const kind of [
+      "GET /api/v1/staff/survey-checklists/{id}/media",
+      "POST /api/v1/staff/survey-checklists/{id}/media",
+      "PUT /api/v1/staff/survey-media/{id}/content",
+      "GET /api/v1/staff/survey-media/{id}/content/thumbnail",
+      "GET /api/v1/staff/survey-media/{id}/content/preview",
+      "GET /api/v1/staff/survey-media/{id}/content/full",
+      "POST /api/v1/staff/survey-media/{id}/hold",
+      "POST /api/v1/staff/survey-media/{id}/hold-release",
+      "POST /api/v1/staff/survey-media/{id}/removal",
+    ]) {
+      expect([...kinds], `a ${kind} request was seen`).toContain(kind);
+    }
+    expect(requests.filter((request) => request.cookie && request.method !== "OPTIONS")).toEqual([]);
+    expect((await saleContext.cookies(API_URL)).length, "cookies the browser holds for the API's host").toBeGreaterThan(0);
   });
 });

@@ -1057,7 +1057,7 @@
           "rateExpensive": "Too many files could not be processed. Try again later.",
           "rateBudget": "Too many photo views. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
           "servingDisabled": "Photos are temporarily unavailable.",
-          "tooLarge": "This file is larger than 20 MB.",
+          "tooLarge": "This file is larger than {size} MB.",
           "duplicate": "This photo is already in the checklist.",
           "otherVisit": "This photo belongs to another visit of this lead.",
           "referenced": "This photo cannot be removed.",
@@ -1098,7 +1098,8 @@
           "COVERED": "Ready ({count})",
           "PROCESSING": "Processing",
           "MISSING": "Missing",
-          "NOT_REQUIRED": "Not required: {reason}"
+          "NOT_REQUIRED": "Not required: {reason}",
+          "NOT_REQUIRED_NO_REASON": "Not required"
         },
         "optional": {
           "title": "Optional photos",
@@ -1117,7 +1118,7 @@
         },
         "rows": {
           "title": "Uploads",
-          "label": "{pair} · {size}",
+          "label": "{pair} · {size} MB",
           "waiting": "Waiting",
           "hashing": "Preparing…",
           "creating": "Starting…",

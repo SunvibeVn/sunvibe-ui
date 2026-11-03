@@ -67,6 +67,60 @@ describe("previewSections (spec 6.2 Preview, W16-31; the read-only Edit and the 
     expect(terms.spaces[0].rows.some((row) => row.key.includes("chargeOverrides"))).toBe(false);
   });
 
+  it("SV-005: places each hazard and other item under the space of its spaceId, at asset level when it has none", () => {
+    const content = emptyContent();
+    const hazard = (hazardId: string, spaceId: string | null, description: string) => ({
+      hazardId,
+      spaceId,
+      previous: null,
+      description,
+      severity: "MINOR",
+      status: "OPEN",
+      statusNote: null,
+      ownerReportedOn: null,
+      receivedByUserId: null,
+      receivedByName: null,
+      relayBasis: null,
+      meta: siteMeta(),
+    });
+    content.safety.hazards = {
+      state: "VALUE",
+      naReason: null,
+      meta: siteMeta(),
+      value: [hazard("H1", P1, "Loose railing"), hazard("H2", P2, "Bare wire"), hazard("H3", null, "Broken gate")],
+    } as never;
+    const other = (itemId: string, spaceId: string | null, label: string) => ({
+      itemId,
+      label,
+      spaceId,
+      presence: "YES",
+      source: "OBSERVED_ON_SITE",
+      confirmedOn: null,
+      receivedByUserId: null,
+      relayBasis: null,
+      meta: siteMeta(),
+    });
+    content.amenities.otherItems = [other("X1", P1, "Fan"), other("X2", P2, "Heater"), other("X3", null, "Shoe rack")] as never;
+    const view = viewOf(content);
+    const sections = previewSections(view.groups!, view, t);
+
+    const placed = (group: string, field: string) => {
+      const section = sections.find((entry) => entry.group === group)!;
+      const keys = (rows: { key: string; field: string }[]) => rows.filter((row) => row.field === field).map((row) => row.key);
+      return { asset: keys(section.asset), ...Object.fromEntries(section.spaces.map((space) => [space.code, keys(space.rows)])) };
+    };
+    expect(placed("safety", "hazards")).toEqual({
+      asset: ["safety/hazards", "safety/hazards/H3"],
+      P1: ["safety/hazards/H1"],
+      P2: ["safety/hazards/H2"],
+    });
+    expect(placed("amenities", "items")).toEqual({
+      asset: ["amenities/otherItems/X3"],
+      P1: ["amenities/otherItems/X1"],
+      P2: ["amenities/otherItems/X2"],
+    });
+  });
+
   it("builds the same sections from a checkpoint's groups", () => {
     const view = viewOf(filled());
     const snapshot = { identification: view.groups!.identification, dimensions: view.groups!.dimensions };

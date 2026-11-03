@@ -2,8 +2,8 @@ import { readdirSync } from "node:fs";
 import { NextIntlClientProvider } from "next-intl";
 import { isValidElement, type ReactElement, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { englishSessionTexts } from "@/features/auth/client";
-import { WorkspaceShell } from "@/features/workspace";
+import { englishSessionTexts, RequireSession } from "@/features/auth/client";
+import { WorkspaceDocument, WorkspaceShell } from "@/features/workspace";
 import en from "@/i18n/messages/en.json";
 import WorkspaceLayout, { metadata } from "./layout";
 import * as leadDetailPage from "./owner-leads/[leadId]/page";
@@ -70,8 +70,11 @@ describe("workspace pages opt out of instant-navigation validation", () => {
 });
 
 describe("WorkspaceShell session screens (W14-20, Review Focus 4)", () => {
-  it("gives RequireSession the English session texts", () => {
-    const session = element(WorkspaceShell({ children: "page" }));
+  it("gives RequireSession the English session texts, inside the document check of SM-FE-06", () => {
+    const document = element(WorkspaceShell({ children: "page" }));
+    expect(document.type).toBe(WorkspaceDocument);
+    const session = element(document.props.children);
+    expect(session.type).toBe(RequireSession);
     expect(session.props.texts).toBe(englishSessionTexts);
   });
 });

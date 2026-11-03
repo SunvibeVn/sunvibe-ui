@@ -6,11 +6,43 @@ import en from "@/i18n/messages/en.json";
 
 import type { OwnerLeadsKey } from "../labels";
 
-import { mediaErrorText } from "./media-messages";
+import { coverageStateText, mediaErrorText } from "./media-messages";
 
 const translator = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });
 const t = (key: OwnerLeadsKey, values?: Record<string, string | number>) => translator(key, values);
 const text = (kind: MediaUiErrorKind, extra: Partial<MediaUiError> = {}) => mediaErrorText({ kind, ...extra }, t);
+
+describe("SV-072, SM-FE-11: the size message and the coverage words", () => {
+  it("tooLarge_namesTheLimitOfTheLatestList (spec 6.2 as amended by C-15)", () => {
+    expect(mediaErrorText({ kind: "too-large" }, t, { maxFileBytes: 10_485_760 })).toBe("This file is larger than 10 MB.");
+    expect(mediaErrorText({ kind: "too-large" }, t, { maxFileBytes: 2_411_724 })).toBe("This file is larger than 2.3 MB.");
+  });
+
+  it("tooLarge_withoutALimitFromAList_keepsTheSpec63Text", () => {
+    expect(mediaErrorText({ kind: "too-large" }, t, { maxFileBytes: null })).toBe("This file is larger than 20 MB.");
+    expect(mediaErrorText({ kind: "too-large" }, t)).toBe("This file is larger than 20 MB.");
+  });
+
+  it("notRequired_withoutAReason_saysNotRequiredAlone", () => {
+    const row = { state: "NOT_REQUIRED" as const, readyCount: 0, notRequiredReason: null };
+    expect(coverageStateText(row, false, t)).toBe("Not required");
+    expect(coverageStateText({ ...row, notRequiredReason: "  " }, false, t)).toBe("Not required");
+    expect(coverageStateText({ ...row, notRequiredReason: "No kitchen" }, false, t)).toBe("Not required: No kitchen");
+  });
+
+  it("coverage_otherStates", () => {
+    expect(coverageStateText({ state: "COVERED", readyCount: 2, notRequiredReason: null }, false, t)).toBe("Ready (2)");
+    expect(coverageStateText({ state: "PROCESSING", readyCount: 0, notRequiredReason: null }, false, t)).toBe("Processing");
+    expect(coverageStateText({ state: "MISSING", readyCount: 0, notRequiredReason: null }, false, t)).toBe("Missing");
+    expect(coverageStateText({ state: "OPTIONAL", readyCount: 1, notRequiredReason: null }, true, t)).toBe("1 ready");
+  });
+
+  it("theUploadRowLabel_carriesTheSizeUnit", () => {
+    expect(t("checklist.media.rows.label", { pair: "Asset (whole property) · Detail", size: "2.3" })).toBe(
+      "Asset (whole property) · Detail · 2.3 MB",
+    );
+  });
+});
 
 describe("mediaErrorText (survey-media spec 6.3 texts)", () => {
   it("uses the spec 6.3 wording", () => {

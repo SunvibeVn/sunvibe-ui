@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { ChecklistView, MediaItem, MediaList } from "@/features/surveys";
 
 import { A, B, emptyContent, P1, P2, viewOf } from "./fixtures.test-support";
-import { mediaPanelModel, PANEL_ACTIONS, removalNeedsCorrection, uploadRowStatus } from "./media-panel-model";
+import { withoutHeldDetails } from "./media-held-details";
+import { mediaPanelModel, PANEL_ACTIONS, removalNeedsCorrection, uploadRowStatus, viewedCard } from "./media-panel-model";
 
 /** A PARTS checklist with spaces P101 (P1) and P102 (P2), held by A and editable for A. */
 function viewFor(overrides: Partial<ChecklistView> = {}): ChecklistView {
@@ -73,6 +74,58 @@ function listOf(items: MediaItem[], overrides: Partial<MediaList> = {}): MediaLi
 }
 
 const modelFor = (view: ChecklistView, list: MediaList, viewerUserId = A) => mediaPanelModel(view, list, viewerUserId);
+
+describe("viewedCard (SM-FE-07, SM-29: the open viewer shows the photo as the list on screen says)", () => {
+  const heldItem = (overrides: Partial<MediaItem> = {}) =>
+    item("M1", {
+      caption: "Front gate",
+      held: { at: "2026-11-03T02:00:00Z", byName: "Ann Admin", byUserId: "U-ADMIN", reason: "SECURITY_INCIDENT" },
+      ...overrides,
+    });
+
+  it("followsTheCurrentList_notTheCardItOpenedWith", () => {
+    const opened = mediaPanelModel(viewFor(), listOf([item("M1", { caption: "Front gate" })]), A);
+    expect(viewedCard(opened, "M1")?.caption).toBe("Front gate");
+    const renamed = mediaPanelModel(viewFor(), listOf([item("M1", { caption: "Side gate" })]), A);
+    expect(viewedCard(renamed, "M1")?.caption).toBe("Side gate");
+  });
+
+  it("anAdminKeepsTheViewerOfAHeldPhoto_untilCanHoldIsGone", () => {
+    const admin = listOf([heldItem()], { canHold: true });
+    expect(viewedCard(mediaPanelModel(viewFor(), admin, A), "M1")).toMatchObject({ caption: "Front gate", canRelease: true });
+    expect(viewedCard(mediaPanelModel(viewFor(), withoutHeldDetails(admin), A), "M1")).toBeNull();
+  });
+
+  it("aPhotoHeldMeanwhile_closesTheViewerOfAViewerWithoutCanHold", () => {
+    const held = listOf([heldItem({ caption: null, captionHidden: true, contentAvailable: false, unavailableReason: "HELD" })]);
+    expect(viewedCard(mediaPanelModel(viewFor(), held, A), "M1")).toBeNull();
+  });
+
+  it("aPhotoGoneFromTheGrid_closesTheViewer", () => {
+    expect(viewedCard(mediaPanelModel(viewFor(), listOf([]), A), "M1")).toBeNull();
+  });
+});
+
+describe("SM-FE-11: the photos the list leaves out (newest 100 only, spec 7.2 totals)", () => {
+  it("moreNotAcceptedAndMoreRemoved_comeFromTheTotals", () => {
+    const view = viewFor();
+    const shownNotAccepted = Array.from({ length: 3 }, (_, index) => item(`N${index}`, { status: "REJECTED", contentAvailable: false }));
+    const shownRemoved = [item("R1", { removed: { at: "2026-11-03T03:00:00Z", byName: "Sam Sale", kind: "HOLDER" }, contentAvailable: false })];
+    const model = mediaPanelModel(
+      view,
+      listOf([], { notAcceptedItems: shownNotAccepted, removedItems: shownRemoved, totals: { notAccepted: 8, removed: 1 } }),
+      A,
+    );
+    expect(model.moreNotAccepted).toBe(5);
+    expect(model.moreRemoved).toBe(0);
+  });
+
+  it("noTotals_nothingMore", () => {
+    const model = mediaPanelModel(viewFor(), listOf([], { totals: undefined }), A);
+    expect(model.moreNotAccepted).toBe(0);
+    expect(model.moreRemoved).toBe(0);
+  });
+});
 
 describe("media panel model (survey-media spec 6.2, 4.6; SM-29)", () => {
   it("lists required rows with their state and the optional pairs apart, asset first then spaces", () => {

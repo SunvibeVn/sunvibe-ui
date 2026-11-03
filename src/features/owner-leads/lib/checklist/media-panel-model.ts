@@ -92,6 +92,9 @@ export type MediaPanelModel = {
   groups: GridGroup[];
   notAccepted: PhotoCard[];
   removed: RemovedCard[];
+  /** Not accepted and removed photos the list leaves out (it holds the newest 100 of each, spec 7.2 `totals`). */
+  moreNotAccepted: number;
+  moreRemoved: number;
   canUpload: boolean;
   canHold: boolean;
   servingEnabled: boolean;
@@ -253,6 +256,8 @@ export function mediaPanelModel(view: ChecklistView, list: MediaList, viewerUser
       byName: item.removed?.byName ?? null,
       kind: item.removed?.kind ?? "HOLDER",
     })),
+    moreNotAccepted: Math.max(0, (list.totals?.notAccepted ?? 0) - (list.notAcceptedItems ?? []).length),
+    moreRemoved: Math.max(0, (list.totals?.removed ?? 0) - (list.removedItems ?? []).length),
     canUpload: holder && list.uploadEnabled === true,
     canHold,
     servingEnabled,
@@ -265,4 +270,14 @@ export function mediaPanelModel(view: ChecklistView, list: MediaList, viewerUser
       pendingCount: limits.pendingCount ?? 0,
     },
   };
+}
+
+/**
+ * The card the open viewer shows, looked up in the model on screen at every render (SM-FE-07, SM-29): its caption,
+ * Download and hold controls follow the latest list, never the copy it opened with. Null closes the viewer: the photo
+ * left the grid, or this viewer may no longer view it (held for a viewer without `canHold`, serving off).
+ */
+export function viewedCard(model: MediaPanelModel, mediaId: string): PhotoCard | null {
+  const card = [...model.groups.flatMap((group) => group.photos), ...model.notAccepted].find((photo) => photo.id === mediaId);
+  return card !== undefined && card.canView ? card : null;
 }

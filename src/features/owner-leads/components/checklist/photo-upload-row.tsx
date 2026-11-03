@@ -32,7 +32,7 @@ function Row({ row }: { row: UploadRow }) {
   const awaiting = item?.status === "AWAITING_CONTENT" || item?.status === "RECEIVING";
   const percent = row.progress && row.progress.total > 0 ? Math.min(100, Math.round((row.progress.sent / row.progress.total) * 100)) : 0;
   const finished = ["ready", "notAccepted", "removed", "failed", "stopped"].includes(shown.state);
-  const errorText = row.error === null ? null : mediaErrorText(row.error, t);
+  const errorText = row.error === null ? null : mediaErrorText(row.error, t, { maxFileBytes: media.list?.limits?.maxFileBytes ?? null });
   const tone =
     shown.state === "ready"
       ? "text-emerald-700"
@@ -46,7 +46,7 @@ function Row({ row }: { row: UploadRow }) {
     <li className="space-y-1.5 px-3 py-2 text-sm">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <span className="min-w-0 break-words text-slate-800">
-          {t("checklist.media.rows.label", { pair: pair(spaceCode, row.placement.category), size: `${megabytes(row.sizeBytes)} MB` })}
+          {t("checklist.media.rows.label", { pair: pair(spaceCode, row.placement.category), size: megabytes(row.sizeBytes) })}
         </span>
         <span aria-hidden className={`font-medium ${tone}`}>
           {stateWord}
@@ -74,7 +74,7 @@ function Row({ row }: { row: UploadRow }) {
       {match !== null && row.error?.kind === "other-visit" && (
         // The matching photo of the other visit: its thumbnail only, no link to the other checklist (spec 6.2).
         <div className="h-24 w-32 overflow-hidden rounded-md bg-slate-100">
-          <PhotoThumb mediaId={match} mediaNo={0} show alt={t("checklist.media.rows.matchThumb")} />
+          <PhotoThumb mediaId={match} mediaNo={0} show otherVisit alt={t("checklist.media.rows.matchThumb")} />
         </div>
       )}
       <div className="flex flex-wrap gap-2">

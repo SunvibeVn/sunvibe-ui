@@ -7,20 +7,24 @@ import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, us
 import { Logo } from "@/components/brand/logo";
 import { RequireRole, RequireSession, englishSessionTexts, useSession, useSignOutHere } from "@/features/auth/client";
 import { STAFF_WORKSPACE_ROLES, workspaceNav } from "../lib/nav";
+import { WorkspaceDocument } from "./workspace-document";
 import { WorkspaceNav } from "./workspace-nav";
 
 /**
  * Client shell of every workspace page: session → staff role → header, menu and the page. The workspace is English
  * (C-41), so `RequireSession` gets the English session texts. The server layout renders it, and the pages load their data in the
  * browser after hydration (spec 5.2). The drafts follow the session through `DraftSessionSync` in the root layout.
+ * `WorkspaceDocument` first loads the page again when the document came from outside the workspace (SM-FE-06).
  */
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   return (
-    <RequireSession texts={englishSessionTexts}>
-      <RequireRole anyOf={STAFF_WORKSPACE_ROLES}>
-        <WorkspaceFrame>{children}</WorkspaceFrame>
-      </RequireRole>
-    </RequireSession>
+    <WorkspaceDocument>
+      <RequireSession texts={englishSessionTexts}>
+        <RequireRole anyOf={STAFF_WORKSPACE_ROLES}>
+          <WorkspaceFrame>{children}</WorkspaceFrame>
+        </RequireRole>
+      </RequireSession>
+    </WorkspaceDocument>
   );
 }
 
