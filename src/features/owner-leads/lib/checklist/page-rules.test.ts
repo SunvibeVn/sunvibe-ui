@@ -108,12 +108,17 @@ describe("scopeSwitchWarning (spec 6.4)", () => {
 
 describe("pageNotices and showsUnsourcedReminder (BR-23, US-2 AC-4, W16-31, W16-45)", () => {
   it("shows the legal and media banners on every view and the starts-empty banner on a later visit", () => {
-    expect(pageNotices({ earlier: null })).toEqual({ legal: true, media: true, laterVisit: null });
-    expect(pageNotices({ earlier: { appointmentNo: 1, checklistNo: 1 } })).toEqual({
+    expect(pageNotices({ earlier: null, photosAvailable: false })).toEqual({ legal: true, media: "waiting", laterVisit: null });
+    expect(pageNotices({ earlier: { appointmentNo: 1, checklistNo: 1 }, photosAvailable: false })).toEqual({
       legal: true,
-      media: true,
+      media: "waiting",
       laterVisit: { surveyNo: 1, checklistNo: 1 },
     });
+  });
+
+  it("says submission and review come later once photos are available (survey-media spec 6.2), the W16 banner otherwise", () => {
+    expect(pageNotices({ earlier: null, photosAvailable: true }).media).toBe("laterRelease");
+    expect(pageNotices({ earlier: null, photosAvailable: false }).media).toBe("waiting");
   });
 
   it("reminds beside the unsourced inputs other than notes", () => {

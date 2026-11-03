@@ -298,6 +298,8 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       CHECKLIST_STARTED: "Checklist started",
       CHECKLIST_TAKEN_OVER: "Checklist taken over",
       CHECKLIST_SAVED: "Checklist saved",
+      CHECKLIST_MEDIA_ADDED: "Photo added",
+      CHECKLIST_MEDIA_REMOVED: "Photo removed",
     });
   });
 

@@ -9,7 +9,8 @@ const BASE_URL = "http://localhost:3000";
  * need the local API on API_URL (dev profile), both E2E seeds loaded again just before the run (the specs change the
  * fixture leads and a territory) and the four E2E passwords exported (see e2e/workspace/support/staff.ts).
  *
- * One project per spec file, in the order the fixtures need: access, sale, leader, admin, survey, survey-checklist.
+ * One project per spec file, in the order the fixtures need: access, sale, leader, admin, survey, survey-checklist,
+ * survey-media.
  * Each project depends on the one before it, so Playwright runs them in that order whatever the file names
  * (admin.spec.ts sorts first) and skips the later ones when an earlier one fails (they would start on fixture data the earlier spec did not leave).
  */
@@ -38,6 +39,13 @@ export default defineConfig({
       testMatch: "survey-checklist.spec.ts",
       dependencies: ["survey"],
       use: { ...devices["Desktop Chrome"] },
+    },
+    {
+      // survey-media spec 6.4: no photo may land in a trace, video, screenshot or report.
+      name: "survey-media",
+      testMatch: "survey-media.spec.ts",
+      dependencies: ["survey-checklist"],
+      use: { ...devices["Desktop Chrome"], trace: "off", video: "off", screenshot: "off" },
     },
   ],
   webServer: {

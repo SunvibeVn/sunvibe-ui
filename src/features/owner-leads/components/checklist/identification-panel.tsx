@@ -9,6 +9,7 @@ import type { ChecklistInput, ChecklistObservedLocation } from "@/features/surve
 
 import { newClientId } from "../../lib/checklist/client-id";
 import { leadAddressOffer, ownerFormOffer } from "../../lib/checklist/field-offers";
+import { photosRemovedByG1Save } from "../../lib/checklist/media-g1-hint";
 import { fieldAnchor } from "../../lib/checklist/readiness-view";
 import { scopeSwitchWarning } from "../../lib/checklist/scope-switch";
 import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
@@ -23,6 +24,7 @@ import { useChecklistPage } from "./checklist-context";
 import { checklistProblemText } from "./checklist-copy";
 import { FieldControl } from "./field-control";
 import { GroupPanel } from "./group-panel";
+import { useChecklistMedia } from "./media-context";
 import { NoteField } from "./note-field";
 import { Provenance } from "./provenance";
 import { UnsourcedReminder } from "./unsourced-reminder";
@@ -60,6 +62,9 @@ export function IdentificationPanel() {
   const form = ownerFormOffer("address", input.rentalScope, page.view.ownerForm);
   const warning = scopeSwitchWarning(stored.rentalScope, input.rentalScope);
   const removed = stored.spaces.filter((space) => !input.spaces.some((entry) => entry.spaceId === space.spaceId));
+  // survey-media A-9: the photos on the placements this save ends go with it; say how many before Save.
+  const media = useChecklistMedia();
+  const photosRemoved = media === null ? 0 : photosRemovedByG1Save(stored, input, media.list?.items ?? []);
   const fill = (value: ChecklistObservedLocation, source: string | null) =>
     panel.setUnit(unitKey.field("identification", "observedAddress"), {
       state: "VALUE",
@@ -199,6 +204,10 @@ export function IdentificationPanel() {
 
           <NoteField panel={panel} unitKey={unitKey.field("identification", "otherPartsNote")} field="otherPartsNote" max={1000} problems={problems} />
           <NoteField panel={panel} unitKey={unitKey.field("identification", "generalNote")} field="generalNote" max={2000} problems={problems} />
+          {/* A note, not a status: the panel's own status line is its save state (one per panel). */}
+          <p aria-live="polite" className="rounded-xl border border-violet-200 bg-violet-50 px-4 py-3 text-sm text-violet-900 empty:hidden">
+            {photosRemoved > 0 ? t("checklist.media.g1Hint", { count: photosRemoved }) : ""}
+          </p>
         </div>
       )}
     </GroupPanel>

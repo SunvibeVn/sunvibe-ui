@@ -44,7 +44,8 @@ const C = {
   start: "Start checklist (survey #1)",
   open: "Open checklist #1",
   legal: "Site survey record. It is not a legal or safety check.",
-  media: "Photos and submission open once survey photos are available. You can save and preview this draft now.",
+  // survey-media spec 6.4, section 8: the E2E API has uploads on, so the photos-available texts show.
+  media: "Submission and review open in a later release.",
   notAssignee: "Only the lead's assignee edits the checklist.",
   leadStatus: "The lead is not in Survey Scheduled.",
   takeoverPrompt: "You are the new assignee. Take over this draft before editing.",
@@ -52,8 +53,8 @@ const C = {
   seenBySale: `Recorded as seen by ${fixture.sale.name} at survey #1.`,
   phone: "Remove the phone number: it must not be stored here.",
   kitchenGap: "Condition and availability · P1 · Kitchen: Not entered or only partly entered: Kitchen",
-  photos: "Photos: waiting for survey photos",
-  submission: "Submission is not available until survey photos are built.",
+  photos: "Photo missing: Asset (whole property) · Exterior and access",
+  submission: "Submission is not available yet.",
 } as const;
 
 /** Vietnam is UTC+7 all year. */

@@ -17,6 +17,7 @@ import {
   readOnlyNotice,
   unlockAll,
   unlockGroup,
+  viewEvent,
 } from "./page-state";
 
 describe("readOnlyNotice (spec 6.2, 6.4, W16-32)", () => {
@@ -111,5 +112,83 @@ describe("forgetLeadChecklists (security M3: a 404 on a start drops the intake a
     for (const key of [intake, group, note, otherLead]) memory.drafts.set(key, "x");
     forgetLeadChecklists(memory.drafts, { userId: "u1", leadId: "L1" });
     expect([intake, group, note, otherLead].map((key) => memory.drafts.get(key))).toEqual([undefined, undefined, "x", "x"]);
+  });
+});
+
+describe("viewEvent read ordering (SV-004, survey-media spec 6.1: a read older than the screen is ignored)", () => {
+  const content = emptyContent();
+  /** A read at checklist version `version`, every group at `groups` except the overrides, media set version `set`. */
+  const read = (
+    version: number,
+    groups: number,
+    set: number,
+    overrides: Partial<Record<"dimensions" | "terms", number>> = {},
+    extra: Parameters<typeof viewOf>[2] = {},
+  ) => {
+    const view = viewOf(content, groups, { version, media: { available: true, uploadEnabled: true, setVersion: set }, ...extra });
+    const groupsOf = { ...view.groups };
+    for (const [group, value] of Object.entries(overrides) as Array<["dimensions" | "terms", number]>) {
+      groupsOf[group] = { ...groupsOf[group], version: value };
+    }
+    return { ...view, groups: groupsOf };
+  };
+
+  it("olderReadAfterNewerGroupSave_isIgnored: the save answer raises only its group's version", () => {
+    const screen = read(1, 1, 3);
+    // A group save never touches the checklist row: version stays 1, only G3 moves to 2.
+    const answer = read(1, 1, 3, { dimensions: 2 });
+    const afterSave = viewEvent({ view: screen, locked: false }, { type: "answer", view: answer }).state;
+    expect(afterSave.view?.groups?.dimensions?.version).toBe(2);
+    const late = viewEvent(afterSave, { type: "read", view: read(1, 1, 3) });
+    expect(late.state.view).toBe(afterSave.view);
+    expect(late.reload).toBe(false);
+  });
+
+  it("readWithLowerSetVersion_isIgnored", () => {
+    const shown = read(1, 1, 5);
+    const late = viewEvent({ view: shown, locked: false }, { type: "read", view: read(1, 1, 4) });
+    expect(late.state.view).toBe(shown);
+    expect(late.reload).toBe(false);
+  });
+
+  it("mixedVersions_triggerReread: higher in one version and lower in another keeps the screen and reads again", () => {
+    const shown = read(1, 1, 3, { dimensions: 2 });
+    const mixed = viewEvent({ view: shown, locked: false }, { type: "read", view: read(1, 1, 3, { terms: 2 }) });
+    expect(mixed.state.view).toBe(shown);
+    expect(mixed.reload).toBe(true);
+    const mixedSet = viewEvent({ view: shown, locked: false }, { type: "read", view: read(2, 1, 2, { dimensions: 2 }) });
+    expect(mixedSet.state.view).toBe(shown);
+    expect(mixedSet.reload).toBe(true);
+  });
+
+  it("olderReadAfterTakeoverAnswer_isIgnored: a takeover raises the checklist version", () => {
+    const before = read(1, 1, 3);
+    const takenOver = read(2, 1, 3, {}, { holderUserId: "B", holderName: "Binh Leader" });
+    const afterTakeover = viewEvent({ view: before, locked: false }, { type: "answer", view: takenOver }).state;
+    expect(afterTakeover.view?.holderUserId).toBe("B");
+    const late = viewEvent(afterTakeover, { type: "read", view: before });
+    expect(late.state.view?.holderUserId).toBe("B");
+    expect(late.reload).toBe(false);
+  });
+
+  it("a read of the same versions applies (editability may change without a version, W16)", () => {
+    const shown = read(1, 1, 3);
+    const readOnly = read(1, 1, 3, {}, { editable: false, readOnlyReason: "NOT_ASSIGNEE" });
+    expect(viewEvent({ view: shown, locked: false }, { type: "read", view: readOnly }).state.view).toBe(readOnly);
+  });
+
+  it("a newer read applies; an ignored read while a 403 lock holds asks for a read again", () => {
+    const shown = read(1, 1, 3);
+    const newer = read(2, 2, 4);
+    expect(viewEvent({ view: shown, locked: false }, { type: "read", view: newer }).state).toEqual({ view: newer, locked: false });
+    const lockedLate = viewEvent({ view: read(1, 1, 5), locked: true }, { type: "read", view: read(1, 1, 4) });
+    expect(lockedLate.state.locked).toBe(true);
+    expect(lockedLate.reload).toBe(true);
+  });
+
+  it("a read without media (photos not available) compares the other versions only", () => {
+    const shown = viewOf(content, 1);
+    const same = viewOf(content, 1, { editable: false, readOnlyReason: "LEAD_STATUS" });
+    expect(viewEvent({ view: shown, locked: false }, { type: "read", view: same }).state.view).toBe(same);
   });
 });

@@ -40,9 +40,37 @@ export type PublicClientOptions = {
   timeoutMs?: number;
 };
 
+/** Statuses whose response never has a body (Fetch standard "null body status"). */
+const NULL_BODY_STATUSES: ReadonlySet<number> = new Set([101, 103, 204, 205, 304]);
+
+const abortError = (): DOMException => new DOMException("The request timed out or was aborted.", "AbortError");
+
+/** One read of `reader` that rejects as soon as `signal` aborts, even when the underlying stream ignores the abort. */
+function readUntilAborted(
+  reader: ReadableStreamDefaultReader<Uint8Array>,
+  signal: AbortSignal,
+): Promise<ReadableStreamReadResult<Uint8Array>> {
+  if (signal.aborted) return Promise.reject(abortError());
+  return new Promise((resolve, reject) => {
+    const onAbort = () => reject(abortError());
+    signal.addEventListener("abort", onAbort, { once: true });
+    reader.read().then(
+      (result) => {
+        signal.removeEventListener("abort", onAbort);
+        resolve(result);
+      },
+      (error: unknown) => {
+        signal.removeEventListener("abort", onAbort);
+        reject(error);
+      },
+    );
+  });
+}
+
 /**
  * Wraps a fetch function so each request is aborted after `timeoutMs` (and still follows the caller's own signal).
- * An aborted request rejects, which `toPublicResult` maps to `kind: "network"`.
+ * The deadline covers reading the body too: a body still streaming at the deadline fails like the request. An aborted
+ * request rejects, which `toPublicResult` maps to `kind: "network"`.
  */
 export function withTimeout(
   baseFetch: (request: Request) => Promise<Response>,
@@ -55,12 +83,50 @@ export function withTimeout(
     if (request.signal.aborted) abort();
     else request.signal.addEventListener("abort", abort, { once: true });
     const timer = setTimeout(abort, timeoutMs);
-    try {
-      return await baseFetch(new Request(request, { signal: controller.signal }));
-    } finally {
+    let released = false;
+    const release = () => {
+      if (released) return;
+      released = true;
       clearTimeout(timer);
       request.signal.removeEventListener("abort", abort);
+    };
+    let response: Response;
+    try {
+      response = await baseFetch(new Request(request, { signal: controller.signal }));
+    } catch (error) {
+      release();
+      throw error;
     }
+    // No body to wait for: none at all, or a null body status (101, 103, 204, 205, 304), which Chromium still gives an
+    // empty stream that a new Response may not carry.
+    if (response.body === null || NULL_BODY_STATUSES.has(response.status)) {
+      release();
+      return response;
+    }
+    // The timer is released when the body ends, fails or is cancelled; until then the deadline still applies.
+    const reader = response.body.getReader();
+    const body = new ReadableStream<Uint8Array>({
+      async pull(stream) {
+        try {
+          const { done, value } = await readUntilAborted(reader, controller.signal);
+          if (done) {
+            release();
+            stream.close();
+          } else {
+            stream.enqueue(value);
+          }
+        } catch (error) {
+          release();
+          reader.cancel().catch(() => undefined);
+          stream.error(error);
+        }
+      },
+      cancel(reason) {
+        release();
+        return reader.cancel(reason);
+      },
+    });
+    return new Response(body, { status: response.status, statusText: response.statusText, headers: response.headers });
   };
 }
 

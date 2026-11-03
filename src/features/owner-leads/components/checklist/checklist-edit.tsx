@@ -10,9 +10,11 @@ import { ChecklistSections } from "./checklist-sections";
 import { ConditionPanel } from "./condition-panel";
 import { DimensionsPanel } from "./dimensions-panel";
 import { EvidencePlaceholder } from "./evidence-placeholder";
+import { useChecklistMedia } from "./media-context";
 import { GroupNav } from "./group-nav";
 import { IdentificationPanel } from "./identification-panel";
 import { PartsPanel } from "./parts-panel";
+import { PhotosPanel } from "./photos-panel";
 import { SafetyPanel } from "./safety-panel";
 import { TermsPanel } from "./terms-panel";
 
@@ -27,7 +29,7 @@ export function ChecklistEdit() {
     return (
       <div className="space-y-4">
         <GroupNav idPrefix="ro" />
-        <ChecklistSections sections={previewSections(view.groups ?? {}, view, t)} idPrefix="ro" />
+        <ChecklistSections sections={previewSections(view.groups ?? {}, view, t)} idPrefix="ro" evidence="readOnly" />
       </div>
     );
   }
@@ -39,8 +41,9 @@ export function ChecklistEdit() {
   );
 }
 
-/** The editable panels in the order G1..G8. */
+/** The editable panels in the order G1..G8; G7 is the Photos panel once photos are available (survey-media A-1). */
 function EditPanels() {
+  const media = useChecklistMedia();
   return (
     <>
       <IdentificationPanel />
@@ -49,7 +52,7 @@ function EditPanels() {
       <ConditionPanel />
       <SafetyPanel />
       <AmenitiesPanel />
-      <EvidencePlaceholder />
+      {media === null ? <EvidencePlaceholder /> : <PhotosPanel />}
       <TermsPanel />
     </>
   );

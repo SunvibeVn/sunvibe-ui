@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createPublicClient, toPublicResult } from "./public-client";
+import { createPublicClient, toPublicResult, withTimeout } from "./public-client";
 
 function json(status: number, body: unknown, headers: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
@@ -114,6 +114,41 @@ describe("public client", () => {
       20,
     );
     expect(await submit(client)).toEqual({ ok: false, kind: "network" });
+  });
+
+  it("timeout_coversBodyRead: headers in time, a body that never ends is network at the deadline", async () => {
+    const { client } = setup(
+      () => new Response(new ReadableStream<Uint8Array>(), { status: 202, headers: { "Content-Type": "application/json" } }),
+      20,
+    );
+    expect(await submit(client)).toEqual({ ok: false, kind: "network" });
+  });
+
+  it("timeout_coversBodyRead: a body read within the deadline is kept", async () => {
+    const { client } = setup(() => json(202, { requestCode: "SV-1" }), 1000);
+    expect(await submit(client)).toMatchObject({ ok: true, data: { requestCode: "SV-1" } });
+  });
+
+  it("timeout_nullBodyStatus_passesThrough: a 204 whose body is an empty stream (Chromium) is not rebuilt", async () => {
+    // Chromium hands fetch a 204 with a body stream; `new Response(stream, { status: 204 })` would throw.
+    const answer = (status: number) =>
+      ({
+        status,
+        statusText: "",
+        ok: status < 300,
+        headers: new Headers(),
+        body: new ReadableStream<Uint8Array>({ start: (controller) => controller.close() }),
+        bodyUsed: false,
+        text: async () => "",
+        clone() {
+          return this;
+        },
+      }) as unknown as Response;
+    for (const status of [204, 205, 304]) {
+      const fetched = withTimeout(async () => answer(status), 1000);
+      const response = await fetched(new Request("http://api.test/x"));
+      expect(response.status).toBe(status);
+    }
   });
 
   describe("without AbortSignal.any and AbortSignal.timeout (older browsers)", () => {

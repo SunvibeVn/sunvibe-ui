@@ -5,6 +5,26 @@ import { activityLabelKey, checklistGroupLabelKey, type OwnerLeadsKey } from "./
 /** Translator of the `OwnerLeads` namespace, with the values of an ICU message. */
 export type OwnerLeadsTranslate = (key: OwnerLeadsKey, values?: Record<string, string | number>) => string;
 
+const PHOTO_CATEGORIES = new Set([
+  "EXTERIOR_ACCESS",
+  "MAIN_SPACE",
+  "KITCHEN",
+  "BATHROOM",
+  "SHARED_KITCHEN",
+  "SHARED_BATHROOM",
+  "SHARED_AMENITY",
+  "DETAIL",
+]);
+
+/** "Photo added: <category>" and "Photo removed: <category>", the category in words (survey-media A-10); null otherwise. */
+function photoText(activity: Pick<LeadActivity, "type" | "referenceDetail">, t: OwnerLeadsTranslate): string | null {
+  if (activity.type !== "CHECKLIST_MEDIA_ADDED" && activity.type !== "CHECKLIST_MEDIA_REMOVED") return null;
+  const category = activity.referenceDetail ?? "";
+  if (!PHOTO_CATEGORIES.has(category)) return null;
+  const words = t(`checklist.media.categories.${category as "DETAIL"}`);
+  return t(activity.type === "CHECKLIST_MEDIA_ADDED" ? "history.photoAdded" : "history.photoRemoved", { category: words });
+}
+
 /** The checklist rows' own wording (survey-checklist spec 6.4): "Checklist #m started", "Checklist #m: <group> saved". */
 function checklistText(
   activity: Pick<LeadActivity, "type" | "referenceNo" | "referenceDetail">,
@@ -32,7 +52,7 @@ export function historyActivityText(
 ): string {
   const note = activity.note?.trim();
   if (note) return activity.note ?? "";
-  const checklist = checklistText(activity, t);
+  const checklist = checklistText(activity, t) ?? photoText(activity, t);
   if (checklist !== null) return checklist;
   const label = t(activityLabelKey(activity.type));
   return typeof activity.referenceNo === "number" ? `${label} · #${activity.referenceNo}` : label;

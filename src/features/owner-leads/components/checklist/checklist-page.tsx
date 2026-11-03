@@ -20,6 +20,8 @@ import { ChecklistHeader } from "./checklist-header";
 import { ChecklistPreview } from "./checklist-preview";
 import { CheckpointView } from "./checkpoint-view";
 import { PageBanners } from "./page-banners";
+import { useChecklistMedia } from "./media-context";
+import { ChecklistMediaScope } from "./media-scope";
 import { ReadOnlyNotice } from "./read-only-notice";
 import { TakeoversList } from "./takeovers-list";
 import { useChecklist } from "./use-checklist";
@@ -30,7 +32,11 @@ const BACK =
 
 function LeaveGuard({ userId, leadId, checklistId }: { userId: string; leadId: string; checklistId: string }) {
   const t = useTranslations("OwnerLeads");
-  useLeaveGuard({ userId, leadId, checklistId }, t("checklist.page.leaveConfirm"));
+  const media = useChecklistMedia();
+  useLeaveGuard({ userId, leadId, checklistId }, t("checklist.page.leaveConfirm"), {
+    running: media?.uploading === true,
+    confirmText: t("checklist.media.leaveUploading"),
+  });
   return null;
 }
 
@@ -114,41 +120,44 @@ export function ChecklistPage({ leadId, checklistId }: { leadId: string; checkli
     takeOver: page.takeOver,
     fail: page.fail,
     reload: page.reload,
+    accessLost: page.accessLost,
   };
 
   return (
     <ChecklistProvider value={controller}>
-      <LeaveGuard userId={controller.userId} leadId={controller.leadId} checklistId={checklistId} />
-      <div className="space-y-4">
-        {back}
-        <ChecklistHeader />
-        {snapshot !== null ? (
-          <CheckpointView takeoverNo={snapshot} onClose={() => setSnapshot(null)} />
-        ) : (
-          <>
-            <PageBanners earlier={page.earlier} />
-            {page.message !== null && (
-              <div aria-live="polite">
-                <Alert tone="error">{t(`checklist.errors.${page.message}`)}</Alert>
-              </div>
-            )}
-            <ReadOnlyNotice />
-            <Tabs
-              label={t("checklist.page.tabs.label")}
-              items={[
-                { href: checklistHref(controller.leadId, checklistId, "edit"), label: t("checklist.page.tabs.edit"), current: tab === "edit" },
-                {
-                  href: checklistHref(controller.leadId, checklistId, "preview"),
-                  label: t("checklist.page.tabs.preview"),
-                  current: tab === "preview",
-                },
-              ]}
-            />
-            {tab === "edit" ? <ChecklistEdit /> : <ChecklistPreview />}
-            <TakeoversList onViewSnapshot={setSnapshot} />
-          </>
-        )}
-      </div>
+      <ChecklistMediaScope>
+        <LeaveGuard userId={controller.userId} leadId={controller.leadId} checklistId={checklistId} />
+        <div className="space-y-4">
+          {back}
+          <ChecklistHeader />
+          {snapshot !== null ? (
+            <CheckpointView takeoverNo={snapshot} onClose={() => setSnapshot(null)} />
+          ) : (
+            <>
+              <PageBanners earlier={page.earlier} photosAvailable={loaded.media?.available === true} />
+              {page.message !== null && (
+                <div aria-live="polite">
+                  <Alert tone="error">{t(`checklist.errors.${page.message}`)}</Alert>
+                </div>
+              )}
+              <ReadOnlyNotice />
+              <Tabs
+                label={t("checklist.page.tabs.label")}
+                items={[
+                  { href: checklistHref(controller.leadId, checklistId, "edit"), label: t("checklist.page.tabs.edit"), current: tab === "edit" },
+                  {
+                    href: checklistHref(controller.leadId, checklistId, "preview"),
+                    label: t("checklist.page.tabs.preview"),
+                    current: tab === "preview",
+                  },
+                ]}
+              />
+              {tab === "edit" ? <ChecklistEdit /> : <ChecklistPreview />}
+              <TakeoversList onViewSnapshot={setSnapshot} />
+            </>
+          )}
+        </div>
+      </ChecklistMediaScope>
     </ChecklistProvider>
   );
 }
