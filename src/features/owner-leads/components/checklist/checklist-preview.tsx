@@ -41,10 +41,10 @@ export function ChecklistPreview() {
             </ul>
           )}
         </section>
-        <p className="text-sm text-slate-700">{t("checklist.preview.submission")}</p>
+        <p className="text-sm text-slate-700">{model.submission}</p>
       </section>
 
-      <ChecklistSections sections={model.sections} idPrefix="pv" />
+      <ChecklistSections sections={model.sections} idPrefix="pv" evidence="preview" />
 
       {model.effective.length > 0 && (
         <section aria-labelledby="effective-title" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">

@@ -43,6 +43,8 @@ export type ChecklistController = {
   /** A refusal the page answers itself (404: drafts and data dropped, back to the list); true when it did. */
   fail(error: ChecklistUiError): Promise<boolean>;
   reload(): Promise<void>;
+  /** Grows with every 403 or 404 of a checklist call: the photos' object URLs are revoked (survey-media spec 6.2). */
+  accessLost: number;
 };
 
 const ChecklistContext = createContext<ChecklistController | null>(null);

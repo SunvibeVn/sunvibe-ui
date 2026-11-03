@@ -7,8 +7,11 @@ export type EarlierChecklist = { appointmentNo: number; checklistNo: number };
 export type PageNotices = {
   /** "Site survey record. It is not a legal or safety check." on every view. */
   legal: true;
-  /** "Photos and submission open once survey photos are available. ..." on every view. */
-  media: true;
+  /**
+   * On every view: "Photos and submission open once survey photos are available. ..." while photos are not available
+   * (`waiting`), "Submission and review open in a later release." once they are (`laterRelease`, survey-media 6.2).
+   */
+  media: "waiting" | "laterRelease";
   /** The starts-empty banner of a draft on a later visit; there is no copy control (A-22). */
   laterVisit: { surveyNo: number; checklistNo: number } | null;
 };
@@ -44,10 +47,10 @@ export function earlierChecklist(
   return found;
 }
 
-export function pageNotices({ earlier }: { earlier: EarlierChecklist | null }): PageNotices {
+export function pageNotices({ earlier, photosAvailable }: { earlier: EarlierChecklist | null; photosAvailable: boolean }): PageNotices {
   return {
     legal: true,
-    media: true,
+    media: photosAvailable ? "laterRelease" : "waiting",
     laterVisit: earlier === null ? null : { surveyNo: earlier.appointmentNo, checklistNo: earlier.checklistNo },
   };
 }

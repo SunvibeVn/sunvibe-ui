@@ -1,4 +1,4 @@
-import type { ChecklistGroupPath, ChecklistUiError, ChecklistView } from "@/features/surveys";
+import { CHECKLIST_GROUP_PATHS, type ChecklistGroupPath, type ChecklistUiError, type ChecklistView } from "@/features/surveys";
 
 import type { DraftStore } from "../drafts";
 import type { OwnerLeadsKey } from "../labels";
@@ -112,18 +112,46 @@ export type ViewEvent =
   | { type: "forbidden" }
   | { type: "answer"; view: ChecklistView };
 
+/** The versions a read is ordered by: the checklist row, each saved group and the media set (SV-004, spec 6.1). */
+function versionsOf(view: ChecklistView): number[] {
+  return [
+    view.version ?? 0,
+    ...CHECKLIST_GROUP_PATHS.map((group) => view.groups?.[group]?.version ?? -1),
+    view.media?.setVersion ?? 0,
+  ];
+}
+
+/**
+ * How a read compares with the screen: "older" when some version is lower and none higher (a read sent before a save
+ * or takeover answered), "mixed" when some are lower and others higher (the page reads again), else "current".
+ */
+export function readOrder(screen: ChecklistView, read: ChecklistView): "current" | "older" | "mixed" {
+  const shown = versionsOf(screen);
+  const incoming = versionsOf(read);
+  const lower = incoming.some((value, index) => value < shown[index]);
+  if (!lower) return "current";
+  return incoming.some((value, index) => value > shown[index]) ? "mixed" : "older";
+}
+
 const lockView = (view: ChecklistView | null): ChecklistView | null =>
   view === null || view.editable !== true ? view : { ...view, editable: false, readOnlyReason: view.readOnlyReason ?? "NOT_ASSIGNEE" };
 
 /**
  * The page's view after an event (spec 6.2, 6.3): a 403 locks editing at once and asks for a read; a save or takeover
  * answer is merged (`applyAnswer`) and stays read-only while locked, asking for a read; a failed read keeps what is on
- * screen; only a successful read unlocks, its own `editable` and reason applying. `reload`: read the checklist again.
+ * screen; only a successful read unlocks, its own `editable` and reason applying. A read older than the screen (a
+ * lower checklist, group or media set version, SV-004) is ignored; one that is newer in some versions and older in
+ * others keeps the screen and reads again. `reload`: read the checklist again.
  */
 export function viewEvent(state: PageView, event: ViewEvent): { state: PageView; reload: boolean } {
   switch (event.type) {
-    case "read":
+    case "read": {
+      const order = state.view === null ? "current" : readOrder(state.view, event.view);
+      // An ignored read cannot lift a 403 lock: only a read at least as new as the screen does, so read again.
+      if (order === "older") return { state, reload: state.locked };
+      if (order === "mixed") return { state, reload: true };
       return { state: { view: event.view, locked: false }, reload: false };
+    }
     case "readFailed":
       return { state, reload: false };
     case "forbidden":

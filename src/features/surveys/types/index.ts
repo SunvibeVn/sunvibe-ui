@@ -78,3 +78,4 @@ export type SurveyListQuery = {
 export type OverlapQuery = { startAt: string; durationMinutes: number; excludeAppointmentId?: string };
 
 export * from "./checklist";
+export * from "./media";

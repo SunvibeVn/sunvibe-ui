@@ -43,6 +43,24 @@ describe("historyActivityText (survey-schedule spec 6.3, A-12)", () => {
     );
   });
 
+  it("labels the photo rows 'Photo added: <category>' and 'Photo removed: <category>' (survey-media A-10)", () => {
+    expect(historyActivityText({ type: "CHECKLIST_MEDIA_ADDED", referenceNo: 1, referenceDetail: "KITCHEN" }, t)).toBe(
+      "Photo added: Kitchen",
+    );
+    expect(historyActivityText({ type: "CHECKLIST_MEDIA_REMOVED", referenceNo: 2, referenceDetail: "EXTERIOR_ACCESS" }, t)).toBe(
+      "Photo removed: Exterior and access",
+    );
+    expect(historyActivityText({ type: "CHECKLIST_MEDIA_ADDED", referenceNo: 1, referenceDetail: "SHARED_BATHROOM" }, t)).toBe(
+      "Photo added: Shared bathroom",
+    );
+  });
+
+  it("falls back to the plain label for a photo row of a category this UI does not know", () => {
+    expect(historyActivityText({ type: "CHECKLIST_MEDIA_ADDED", referenceNo: 2, referenceDetail: "NEW_CATEGORY" }, t)).toBe(
+      "Photo added · #2",
+    );
+  });
+
   it("falls back to the plain label for a checklist save of a group this UI does not know", () => {
     expect(historyActivityText({ type: "CHECKLIST_SAVED", referenceNo: 2, referenceDetail: "NEW_GROUP" }, t)).toBe(
       "Checklist saved · #2",

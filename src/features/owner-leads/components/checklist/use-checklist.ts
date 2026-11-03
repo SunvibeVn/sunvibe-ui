@@ -64,6 +64,10 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
   const [gate] = useState(createAnswerGate);
   /** Set by a 403 until a successful read says what the viewer may do (spec 6.3). */
   const lockedRef = useRef(false);
+  /** Counts the 403 and 404 answers of checklist calls: the photos' object URLs are revoked on each (survey-media 6.2). */
+  const [accessLost, setAccessLost] = useState(0);
+  /** `read` itself, for a read that asks for another one (SV-004: newer in some versions, older in others). */
+  const rereadRef = useRef<() => void>(() => undefined);
 
   /** Applies a view event (`viewEvent`): the read, a save or takeover answer, a 403. True when the page reads again. */
   const dispatchView = useCallback(
@@ -103,10 +107,11 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       if (mine !== newest.current || !live.current) return;
       const error = toChecklistUiError(result);
       if (error === null && result.ok) {
-        dispatchView({ type: "read", view: result.data });
+        if (dispatchView({ type: "read", view: result.data })) rereadRef.current();
         return;
       }
       const failure = error ?? { kind: "retry" as const };
+      if (failure.kind === "forbidden" || failure.kind === "not-found") setAccessLost((count) => count + 1);
       // A 403 here locks editing as well; the read it asks for is not repeated (it just answered).
       dispatchView(readFailureEvent(failure));
       const step = pageFailureStep(failure);
@@ -114,6 +119,10 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       else if (step.kind !== "session" && viewRef.current === null) setLoaded({ userId, value: { state: "error", error: failure } });
     });
   }, [userId, checklistId, dispatchView, leave]);
+
+  useEffect(() => {
+    rereadRef.current = () => void read();
+  }, [read]);
 
   useEffect(() => {
     if (userId === null) return;
@@ -179,6 +188,7 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
   /** A refusal the page answers itself; true when it was one (the caller only reports failure). */
   const handlePageFailure = useCallback(
     async (error: ChecklistUiError): Promise<boolean> => {
+      if (error.kind === "forbidden" || error.kind === "not-found") setAccessLost((count) => count + 1);
       const step = pageFailureStep(error);
       if (step.kind === "leave") {
         leave();
@@ -258,5 +268,18 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
   }, []);
 
   const load: ChecklistLoad = loaded !== null && loaded.userId === userId ? loaded.value : { state: "loading" };
-  return { userId, load, earlier, locks, message, notKept, clearNotKept, save, takeOver, fail: handlePageFailure, reload: read };
+  return {
+    userId,
+    load,
+    earlier,
+    locks,
+    message,
+    notKept,
+    clearNotKept,
+    save,
+    takeOver,
+    fail: handlePageFailure,
+    reload: read,
+    accessLost,
+  };
 }

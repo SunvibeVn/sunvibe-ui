@@ -1,7 +1,15 @@
 // Public entry point for Client Components (error boundaries, signed-in calls); no server-only code.
 export { AuthError } from "./components/auth-error";
-export { apiClient, callApi } from "./session/api-client";
-export type { ApiCall, ApiResult, CallApi } from "./session/api-client";
+export { apiClient, callApi, uploadWithBearer } from "./session/api-client";
+export type {
+  ApiCall,
+  ApiResult,
+  BearerUploadInput,
+  BearerUploadResult,
+  CallApi,
+  CallOptions,
+  UploadWithBearer,
+} from "./session/api-client";
 export { RequireRole } from "./components/require-role";
 export { RequireSession } from "./components/require-session";
 export { useSessionTexts } from "./components/session-screens";

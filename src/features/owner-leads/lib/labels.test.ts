@@ -88,6 +88,8 @@ describe("label maps (W11-40)", () => {
       "CHECKLIST_STARTED",
       "CHECKLIST_TAKEN_OVER",
       "CHECKLIST_SAVED",
+      "CHECKLIST_MEDIA_ADDED",
+      "CHECKLIST_MEDIA_REMOVED",
     ].sort());
     expect(Object.keys(ROLE_LABEL).sort()).toEqual(["SALE", "SALE_LEADER"]);
     expect(Object.keys(PRICE_UNIT_LABEL).sort()).toEqual(["MONTH", "NIGHT", "TOTAL"]);
@@ -138,6 +140,11 @@ describe("checklist activity labels and groups (survey-checklist spec 6.4)", () 
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_STARTED)).toBe("Checklist started");
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_TAKEN_OVER)).toBe("Checklist taken over");
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_SAVED)).toBe("Checklist saved");
+  });
+
+  it("labels the two survey photo types (survey-media spec 5.3, A-10)", () => {
+    expect(resolve(ACTIVITY_LABEL.CHECKLIST_MEDIA_ADDED)).toBe("Photo added");
+    expect(resolve(ACTIVITY_LABEL.CHECKLIST_MEDIA_REMOVED)).toBe("Photo removed");
   });
 
   it("names every group with the spec 6.4 wording", () => {

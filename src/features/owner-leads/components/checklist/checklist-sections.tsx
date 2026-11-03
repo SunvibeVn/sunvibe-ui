@@ -4,6 +4,9 @@ import { useTranslations } from "next-intl";
 
 import type { PreviewRow, PreviewSection } from "../../lib/checklist/preview-model";
 
+import type { PhotoGridMode } from "./photo-grid";
+import { PhotosBody } from "./photos-panel";
+
 function Rows({ rows }: { rows: readonly PreviewRow[] }) {
   return (
     <dl className="divide-y divide-slate-100">
@@ -26,9 +29,19 @@ function Rows({ rows }: { rows: readonly PreviewRow[] }) {
 
 /**
  * Every group of a checklist read-only, each value or state with its provenance (survey-checklist spec 6.2): the
- * read-only Edit, the preview and a takeover's snapshot view. G7 shows the photo placeholder.
+ * read-only Edit, the preview and a takeover's snapshot view. G7 shows the photos of the checklist on screen
+ * (`evidence`; survey-media spec 6.2) or, in a snapshot and while photos are not available, the placeholder.
  */
-export function ChecklistSections({ sections, idPrefix }: { sections: readonly PreviewSection[]; idPrefix: string }) {
+export function ChecklistSections({
+  sections,
+  idPrefix,
+  evidence,
+}: {
+  sections: readonly PreviewSection[];
+  idPrefix: string;
+  /** How G7 shows the current photos; left out for a takeover's snapshot (photos are not part of it). */
+  evidence?: Exclude<PhotoGridMode, "edit">;
+}) {
   const t = useTranslations("OwnerLeads");
   return (
     <div className="space-y-4">
@@ -43,7 +56,13 @@ export function ChecklistSections({ sections, idPrefix }: { sections: readonly P
             {t(`checklist.groups.${section.group.toUpperCase() as "TERMS"}`)}
           </h2>
           {section.group === "evidence" ? (
-            <p className="mt-2 text-sm text-slate-600">{t("checklist.evidence.text")}</p>
+            evidence === undefined ? (
+              <p className="mt-2 text-sm text-slate-600">{t("checklist.evidence.text")}</p>
+            ) : (
+              <div id={idPrefix === "ro" ? "cl-evidence" : undefined} className="mt-2">
+                <PhotosBody mode={evidence} />
+              </div>
+            )
           ) : (
             <div className="mt-2 space-y-3">
               {section.asset.length > 0 && <Rows rows={section.asset} />}

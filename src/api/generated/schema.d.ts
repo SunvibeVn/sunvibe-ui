@@ -876,6 +876,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/survey-checklists/{checklistId}/media": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read the photos of a survey checklist (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Selected photos by number, the newest 100 not accepted and removed ones, totals, limits, coverage and the switches as they apply to the viewer. Send the version of the last answer as knownVersion to get 204 while nothing changed.
+         */
+        get: operations["listSurveyMedia"];
+        put?: never;
+        /**
+         * Create a survey photo record before sending its bytes (the checklist holder only)
+         * @description Declares the file (size and SHA-256) with its placement, category and an optional caption. The photo then waits up to 60 minutes for its bytes. The same uploadKey and body again answers the same photo (200). Unknown keys are refused; the body is at most 16 KiB.
+         */
+        post: operations["createSurveyMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/survey-checklists/{checklistId}/parts": {
         parameters: {
             query?: never;
@@ -970,6 +994,106 @@ export interface paths {
          */
         put: operations["saveSurveyChecklistTerms"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-media/{mediaId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Send the bytes of a survey photo record (its creator, the checklist holder)
+         * @description The raw file, exactly the declared size and SHA-256. Errors decided from the headers, 401, 403, 404 and the slot refusals answer at once and close the connection; every later answer comes after the server read the rest of the body. A network error means the state is unknown: read the photos before sending again.
+         */
+        put: operations["uploadSurveyMediaContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-media/{mediaId}/content/{variant}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Read one image of a survey photo (anyone who can see the lead)
+         * @description The whole JPEG variant (Range is ignored). Serving off answers 503 at once. Each read is access-logged (a thumbnail is covered by the list's row) and counted in the hourly budget of its variant.
+         */
+        get: operations["getSurveyMediaContent"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head: operations["head"];
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-media/{mediaId}/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hold a survey photo (ADMIN)
+         * @description Puts a security hold on a processing or ready photo: only an ADMIN can then read it, its caption is hidden from others and its content is kept until the release. A photo already held answers unchanged, keeping the first reason.
+         */
+        post: operations["holdSurveyMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-media/{mediaId}/hold-release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Release the hold of a survey photo (ADMIN)
+         * @description Ends the hold: the photo is served again unless it was removed, in which case its content deletion is requested now. A photo not held answers unchanged.
+         */
+        post: operations["releaseSurveyMediaHold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-media/{mediaId}/removal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Remove a survey photo
+         * @description The checklist holder removes a photo. A photo whose bytes were received and that another person uploaded needs a correction. The removed photo is no longer served; its record stays in the removed list. Removing it again answers it as it is.
+         */
+        post: operations["removeSurveyMedia"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2028,7 +2152,7 @@ export interface components {
             note?: string | null;
             /** Format: date-time */
             occurredAt?: string;
-            /** @description The group of a CHECKLIST_SAVED entry; null otherwise */
+            /** @description The group of a CHECKLIST_SAVED entry, or the evidence category of a CHECKLIST_MEDIA_ADDED or CHECKLIST_MEDIA_REMOVED entry; null otherwise */
             referenceDetail?: string | null;
             /** @description The checklist */
             referenceId?: string;
@@ -2044,7 +2168,7 @@ export interface components {
             /** @description Always null: a checklist command keeps the lead's status */
             toStatus?: string | null;
             /** @enum {string} */
-            type?: "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED";
+            type?: "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED";
         };
         /** @description G1 identification, as read */
         ChecklistIdentificationContent: {
@@ -2156,13 +2280,99 @@ export interface components {
             /** @description Present exactly when state is VALUE */
             value: components["schemas"]["ChecklistObservedLocation"] | null;
         };
+        /** @description Whether the checklist's photos are available and this viewer could upload now */
+        ChecklistMedia: {
+            /** @description Uploads are on or the checklist already has photos; readiness then lists evidence per required pair */
+            available?: boolean;
+            /**
+             * Format: int64
+             * @description The set version the evidence items of readiness were computed from; 0 without photos
+             */
+            setVersion?: number;
+            /** @description Uploads on, intake not paused and the viewer could create a photo now; the same value as uploadEnabled of the media list */
+            uploadEnabled?: boolean;
+        };
+        ChecklistMediaBasis: {
+            /** Format: int64 */
+            checklistVersion?: number;
+            /** Format: int64 */
+            conditionVersion?: number;
+            /** Format: int64 */
+            identificationVersion?: number;
+            /** Format: int64 */
+            stateEpoch?: number;
+            /** @description 8 hex characters over this viewer's editability and switches */
+            viewDigest?: string;
+        };
+        ChecklistMediaCoverage: {
+            /** @enum {string} */
+            category?: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL";
+            /** @description The G4 reason that exempts a required category */
+            notRequiredReason?: string | null;
+            /**
+             * Format: int32
+             * @description Selected, not held PROCESSING photos of the pair
+             */
+            processingCount?: number;
+            /**
+             * Format: int32
+             * @description Usable photos of the pair
+             */
+            readyCount?: number;
+            required?: boolean;
+            /** @description Null for the whole asset */
+            spaceId?: string | null;
+            /** @enum {string} */
+            state?: "COVERED" | "PROCESSING" | "MISSING" | "NOT_REQUIRED" | "OPTIONAL";
+        };
+        ChecklistMediaLimits: {
+            /** Format: int64 */
+            maxFileBytes?: number;
+            /** Format: int32 */
+            maxPending?: number;
+            /** Format: int32 */
+            maxSelected?: number;
+            /** Format: int32 */
+            pendingCount?: number;
+            /** Format: int32 */
+            selectedCount?: number;
+        };
+        /** @description The photos of a survey checklist */
+        ChecklistMediaResponse: {
+            basis?: components["schemas"]["ChecklistMediaBasis"];
+            /** @description The viewer may hold photos (ADMIN) */
+            canHold?: boolean;
+            checklistId?: string;
+            /** @description Every allowed placement and category pair */
+            coverage?: components["schemas"]["ChecklistMediaCoverage"][];
+            intakePaused?: boolean;
+            /** @description Every selected photo, by number */
+            items?: components["schemas"]["SurveyMediaItem"][];
+            limits?: components["schemas"]["ChecklistMediaLimits"];
+            /** @description REJECTED, FAILED, CANCELLED and UPLOAD_EXPIRED photos that are not removed; newest 100 */
+            notAcceptedItems?: components["schemas"]["SurveyMediaItem"][];
+            /** @description Removed photos; newest 100 */
+            removedItems?: components["schemas"]["SurveyMediaItem"][];
+            servingEnabled?: boolean;
+            /** Format: int64 */
+            setVersion?: number;
+            totals?: components["schemas"]["ChecklistMediaTotals"];
+            /** @description Uploads on, intake not paused and the viewer could create a photo now */
+            uploadEnabled?: boolean;
+        };
+        ChecklistMediaTotals: {
+            /** Format: int32 */
+            notAccepted?: number;
+            /** Format: int32 */
+            removed?: number;
+        };
         /** @description A known gap before a full-assessment submission */
         ChecklistMissingItem: {
             field?: string | null;
             /** @enum {string} */
             group?: "IDENTIFICATION" | "PARTS" | "DIMENSIONS" | "CONDITION" | "SAFETY" | "AMENITIES" | "EVIDENCE" | "TERMS";
             /** @enum {string} */
-            problem?: "NOT_CHECKED" | "REQUIRED_AREA_NOT_ENTERED" | "SCOPE_MISSING" | "NO_SPACES" | "NOT_IN_SCOPE" | "DIFFERENCE_NOTE_MISSING" | "EVIDENCE_PENDING";
+            problem?: "NOT_CHECKED" | "REQUIRED_AREA_NOT_ENTERED" | "SCOPE_MISSING" | "NO_SPACES" | "NOT_IN_SCOPE" | "DIFFERENCE_NOTE_MISSING" | "EVIDENCE_PENDING" | "EVIDENCE_MISSING" | "EVIDENCE_PROCESSING";
             spaceId?: string | null;
         };
         /** @description An amount in whole VND that is not a price per period */
@@ -2504,7 +2714,11 @@ export interface components {
         ChecklistReadiness: {
             missing?: components["schemas"]["ChecklistMissingItem"][];
             submissionAvailable?: boolean;
-            submissionUnavailableReason?: string;
+            /**
+             * @description EVIDENCE_NOT_AVAILABLE while the checklist's photos are not available, else SUBMISSION_NOT_AVAILABLE
+             * @enum {string}
+             */
+            submissionUnavailableReason?: "EVIDENCE_NOT_AVAILABLE" | "SUBMISSION_NOT_AVAILABLE";
             unconfirmedTerms?: components["schemas"]["ChecklistUnconfirmedTerm"][];
             warnings?: components["schemas"]["ChecklistWarning"][];
         };
@@ -2591,6 +2805,7 @@ export interface components {
             leadId?: string;
             /** @description Empty unless the viewer can edit */
             leadStaff?: components["schemas"]["ChecklistStaffMember"][];
+            media?: components["schemas"]["ChecklistMedia"];
             ownerForm?: components["schemas"]["ChecklistOwnerForm"] | null;
             /** @enum {string|null} */
             readOnlyReason?: "INTENT_CHANGED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
@@ -3133,7 +3348,7 @@ export interface components {
             note?: string;
             /** Format: date-time */
             occurredAt?: string;
-            /** @description The checklist group a CHECKLIST_SAVED entry concerns; null otherwise */
+            /** @description The checklist group of a CHECKLIST_SAVED entry, or the evidence category of a CHECKLIST_MEDIA_ADDED or CHECKLIST_MEDIA_REMOVED entry; null otherwise */
             referenceDetail?: string | null;
             /** @description The survey appointment (survey types) or survey checklist (checklist types) the entry concerns; null when none */
             referenceId?: string | null;
@@ -3148,7 +3363,7 @@ export interface components {
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
-            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED";
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED";
         };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
@@ -3247,6 +3462,58 @@ export interface components {
              * @example 0901234567
              */
             username?: string;
+        };
+        /** @description Create a survey photo record before sending its bytes */
+        MediaCreateRequest: {
+            /** @description Optional, 1..200 characters, no phone number */
+            caption: string | null;
+            /**
+             * @description The evidence category; allowed at the placement's level and, for SHARED_*, only while the rental scope is PARTS
+             * @enum {string|null}
+             */
+            category: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL" | null;
+            /** @description The SHA-256 of the file, 64 hexadecimal characters */
+            contentSha256: string | null;
+            /**
+             * Format: int64
+             * @description The file size in bytes, 1..20971520 (20 MiB)
+             */
+            sizeBytes: number | null;
+            /** @description A space of the checklist's current G1, or null for the whole asset */
+            spaceId: string | null;
+            /** @description A ULID the client generates once per file: the same key and body again answers the same photo (200) */
+            uploadKey: string | null;
+        };
+        /** @description Release the hold of a survey photo: an empty object */
+        MediaHoldReleaseRequest: unknown;
+        /** @description Hold a survey photo for a security reason */
+        MediaHoldRequest: {
+            /**
+             * @description SECURITY_INCIDENT: a malicious or exploit-suspected file, or one produced under a decoder CVE; CREDENTIAL_EXPOSURE: a Sunvibe system secret in the photo or caption
+             * @enum {string|null}
+             */
+            reason: "SECURITY_INCIDENT" | "CREDENTIAL_EXPOSURE" | null;
+        };
+        /** @description The basis of a removal correction */
+        MediaRemovalBasisRequest: {
+            /**
+             * Format: date
+             * @description Vietnam date, from the visit's arrival date to today
+             */
+            confirmedOn: string | null;
+            /** @description 1..500 characters, no phone number */
+            text: string | null;
+        };
+        /** @description Why a photo another person uploaded is removed, and on what basis */
+        MediaRemovalCorrectionRequest: {
+            basis: components["schemas"]["MediaRemovalBasisRequest"] | null;
+            /** @description 1..500 characters, no phone number */
+            reason: string | null;
+        };
+        /** @description Remove a survey photo from the checklist */
+        MediaRemovalRequest: {
+            /** @description Needed when the photo's content was received and another person uploaded it; otherwise null */
+            correction: components["schemas"]["MediaRemovalCorrectionRequest"] | null;
         };
         /** @description A meeting place: address, province and ward of the catalog, optional pin */
         MeetingLocationRequest: {
@@ -3606,15 +3873,6 @@ export interface components {
              */
             wardType?: "WARD" | "COMMUNE" | "SPECIAL_ZONE";
         };
-        /** @description 401/403 body written by Spring Security */
-        SecurityError: {
-            /** @example Forbidden */
-            error?: string;
-            /** @example You do not have permission to access this resource. */
-            message?: string;
-            /** @example /api/v1/staff/owner-leads */
-            path?: string;
-        };
         /** @description A started or refreshed session: the access token and the account */
         SessionResponse: {
             /** @description The JWT to send as Authorization: Bearer ... */
@@ -3858,6 +4116,111 @@ export interface components {
             provinceName?: string;
             wardCode?: string;
             wardName?: string;
+        };
+        /** @description The photo after a change: its bytes received or its removal */
+        SurveyMediaContentResponse: {
+            /** @description CHECKLIST_MEDIA_ADDED for received bytes, CHECKLIST_MEDIA_REMOVED for the removal of a processing or ready photo; null for a replay, a repeated removal or a removal that only tidies the list */
+            historyEntry?: components["schemas"]["ChecklistHistoryEntryResponse"] | null;
+            media?: components["schemas"]["SurveyMediaItem"];
+            /** Format: int64 */
+            setVersion?: number;
+        };
+        /** @description The correction of a photo removal */
+        SurveyMediaCorrection: {
+            basis?: components["schemas"]["SurveyMediaCorrectionBasis"];
+            reason?: string;
+        };
+        /** @description The basis of a photo removal's correction */
+        SurveyMediaCorrectionBasis: {
+            /** Format: date */
+            confirmedOn?: string;
+            text?: string;
+        };
+        /** @description The created survey photo record (201) or its replay (200) */
+        SurveyMediaCreateResponse: {
+            media?: components["schemas"]["SurveyMediaItem"];
+            /** Format: int64 */
+            setVersion?: number;
+        };
+        /** @description The current hold of a survey photo; who and why only for a viewer who may hold photos */
+        SurveyMediaHold: {
+            /** Format: date-time */
+            at?: string;
+            byName?: string | null;
+            byUserId?: string | null;
+            /** @enum {string|null} */
+            reason?: "SECURITY_INCIDENT" | "CREDENTIAL_EXPOSURE" | null;
+        };
+        /** @description A survey photo as the viewer may see it */
+        SurveyMediaItem: {
+            /** @description Null when absent or hidden from this viewer (captionHidden) */
+            caption?: string | null;
+            captionHidden?: boolean;
+            /** @enum {string} */
+            category?: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL";
+            contentAvailable?: boolean;
+            /** Format: date-time */
+            contentReceivedAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            /**
+             * Format: int32
+             * @description Of the FULL image, once READY
+             */
+            height?: number | null;
+            /** @description While an ADMIN holds the photo; only `at` for a viewer who may not hold photos */
+            held?: components["schemas"]["SurveyMediaHold"] | null;
+            id?: string;
+            /** Format: int32 */
+            mediaNo?: number;
+            /** Format: date-time */
+            readyAt?: string | null;
+            removed?: components["schemas"]["SurveyMediaRemoval"] | null;
+            /** @description The space's code when the photo was created */
+            spaceCodeAtUpload?: string | null;
+            /** @description The G1 space of the photo; null for the whole asset */
+            spaceId?: string | null;
+            /** @enum {string} */
+            status?: "AWAITING_CONTENT" | "RECEIVING" | "PROCESSING" | "READY" | "REJECTED" | "FAILED" | "CANCELLED" | "UPLOAD_EXPIRED";
+            /**
+             * @description The reason of a final status other than READY
+             * @enum {string|null}
+             */
+            statusReason?: "UNSUPPORTED_FORMAT" | "UNREADABLE" | "ANIMATED" | "MOTION_PHOTO" | "COMPOSITE_FILE" | "TOO_MANY_PIXELS" | "MALWARE_DETECTED" | "SCAN_LIMIT_EXCEEDED" | "PROCESSING_UNAVAILABLE" | "REMOVED" | "CONTENT_NOT_RECEIVED" | null;
+            /**
+             * @description Why the content cannot be read now; null when contentAvailable
+             * @enum {string|null}
+             */
+            unavailableReason?: "REMOVED" | "HELD" | "NOT_READY" | "CONTENT_DELETED" | "CONTENT_MISSING" | null;
+            uploadedByName?: string | null;
+            uploadedByUserId?: string;
+            /**
+             * Format: int32
+             * @description Of the FULL image, once READY
+             */
+            width?: number | null;
+        };
+        /** @description The removal of a survey photo */
+        SurveyMediaRemoval: {
+            /** Format: date-time */
+            at?: string;
+            byName?: string | null;
+            /**
+             * Format: int64
+             * @description The G1 save of a CASCADE removal
+             */
+            bySaveId?: number | null;
+            byUserId?: string;
+            /** @description The correction BR-12 asked for when another uploader's photo was removed */
+            correction?: components["schemas"]["SurveyMediaCorrection"] | null;
+            /** @enum {string} */
+            kind?: "HOLDER" | "CASCADE";
+        };
+        /** @description The photo after a hold or a release; a no-op answers it unchanged with the same setVersion */
+        SurveyMediaStateResponse: {
+            media?: components["schemas"]["SurveyMediaItem"];
+            /** Format: int64 */
+            setVersion?: number;
         };
         /** @description An overlapping scheduled appointment of the same surveyor */
         SurveyOverlapResponse: {
@@ -4572,7 +4935,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4581,7 +4944,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: the account no longer exists */
@@ -4643,7 +5006,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4652,7 +5015,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description MALFORMED_REQUEST: the body is not JSON */
@@ -4710,7 +5073,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4719,7 +5082,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTERNAL_ERROR */
@@ -4768,7 +5131,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4777,7 +5140,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description MALFORMED_REQUEST: the body is not JSON */
@@ -4844,7 +5207,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4853,7 +5216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description CODE_RESEND_TOO_SOON or CODE_DAILY_LIMIT (the code limits), or RATE_LIMITED (too many requests from this IP address); Retry-After gives the seconds to wait */
@@ -4913,7 +5276,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4922,7 +5285,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description MALFORMED_REQUEST: the body is not JSON */
@@ -4989,7 +5352,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Access denied (security chain) */
@@ -4998,7 +5361,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description CODE_RESEND_TOO_SOON or CODE_DAILY_LIMIT (the code limits), or RATE_LIMITED (too many requests from this IP address); Retry-After gives the seconds to wait */
@@ -5250,7 +5613,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not SALE_LEADER, SALES_MANAGER or ADMIN */
@@ -5259,7 +5622,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -5317,7 +5680,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or a SALE asked for scope unassigned or all */
@@ -5326,7 +5689,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -5357,7 +5720,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5366,7 +5729,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5419,7 +5782,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5428,7 +5791,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5490,7 +5853,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not SALE_LEADER, SALES_MANAGER or ADMIN */
@@ -5499,7 +5862,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead */
@@ -5570,7 +5933,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5579,7 +5942,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5641,7 +6004,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5650,7 +6013,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5699,7 +6062,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5708,7 +6071,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5761,7 +6124,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5770,7 +6133,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5844,7 +6207,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5853,7 +6216,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5906,7 +6269,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -5915,7 +6278,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such lead, or the caller may not see it */
@@ -5977,7 +6340,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not ADMIN */
@@ -5986,7 +6349,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: the province is not in the catalog */
@@ -6039,7 +6402,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not ADMIN */
@@ -6048,7 +6411,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: the ward is not in the catalog */
@@ -6104,7 +6467,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not ADMIN */
@@ -6113,7 +6476,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: the ward is not in the catalog */
@@ -6168,7 +6531,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or a SALE asked for scope all */
@@ -6177,7 +6540,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -6221,7 +6584,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -6230,7 +6593,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
@@ -6292,7 +6655,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -6301,7 +6664,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
@@ -6372,7 +6735,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -6381,7 +6744,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
@@ -6452,7 +6815,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -6461,7 +6824,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
@@ -6532,7 +6895,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or a SALE records a visit for someone else or a proxy record */
@@ -6541,7 +6904,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such appointment, or the caller may not see its lead */
@@ -6599,7 +6962,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -6608,7 +6971,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -6661,7 +7024,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -6670,7 +7033,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -6741,7 +7104,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -6750,7 +7113,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -6821,7 +7184,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -6830,7 +7193,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -6901,7 +7264,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -6910,7 +7273,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -6933,6 +7296,203 @@ export interface operations {
             };
             /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    listSurveyMedia: {
+        parameters: {
+            query?: {
+                /** @description setVersion.identificationVersion.conditionVersion.checklistVersion.stateEpoch.viewDigest of the last answer */
+                knownVersion?: string;
+            };
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The photos */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistMediaResponse"];
+                };
+            };
+            /** @description Nothing changed since knownVersion */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED on knownVersion (malformed) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED (field budget): the hourly list budget */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createSurveyMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Replay: the photo this uploadKey created with the same body */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyMediaCreateResponse"];
+                };
+            };
+            /** @description The photo record, awaiting its content */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyMediaCreateResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on uploadKey, spaceId (also not a space of the checklist's G1), category (also not allowed at the placement), caption, sizeBytes or contentSha256; a missing or unknown key too */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY; CHECKLIST_TAKEOVER_REQUIRED; IDEMPOTENCY_KEY_REUSED (field uploadKey); MEDIA_UPLOAD_DISABLED; MEDIA_DUPLICATE_CONTENT or MEDIA_FROM_OTHER_VISIT (field contentSha256, allowedValues = the matching photo id); MEDIA_LIMIT_REACHED (field selected or pending) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: the body is above 16 KiB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: field records or bytes (the caller's rolling hour) or expensive (processing outcomes of the hour) */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MEDIA_INTAKE_PAUSED: uploads are paused for a moment; send the same request again later */
+            503: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -6981,7 +7541,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -6990,7 +7550,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -7061,7 +7621,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -7070,7 +7630,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -7141,7 +7701,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -7150,7 +7710,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -7218,7 +7778,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN */
@@ -7227,7 +7787,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist or checkpoint, or the caller may not see its lead */
@@ -7280,7 +7840,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
@@ -7289,7 +7849,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["SecurityError"];
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
@@ -7311,6 +7871,491 @@ export interface operations {
                 };
             };
             /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    uploadSurveyMediaContent: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Equal to the declared sizeBytes, at most 20971520 */
+                "Content-Length": number;
+                /** @description RFC 9530: sha-256=:<base64>:, equal to the declared contentSha256 */
+                "Content-Digest": string;
+            };
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description The bytes are received; the photo is PROCESSING */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyMediaContentResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST: field Content-Length (missing or not the declared size), Content-Digest (missing, malformed, not the declared hash or not matching the body) or body (ended early); VALIDATION_FAILED on spaceId when the space left G1 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such photo, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY; CHECKLIST_TAKEOVER_REQUIRED; MEDIA_NOT_AVAILABLE (field uploadedBy or status); MEDIA_CONTENT_ALREADY_RECEIVED; MEDIA_UPLOAD_IN_PROGRESS; MEDIA_UPLOAD_EXPIRED; MEDIA_UPLOAD_DISABLED; MEDIA_DUPLICATE_CONTENT or MEDIA_FROM_OTHER_VISIT (field contentSha256, allowedValues = the matching photo id) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: Content-Length above 20 MiB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST (field Content-Type): only application/octet-stream */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: field expensive (processing outcomes of the hour) or bodies (3 uploads at once per user); at once, the connection closes */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MEDIA_SERVER_BUSY (at once, with Retry-After); MEDIA_INTAKE_PAUSED or MEDIA_STORE_UNAVAILABLE: send the same request again later */
+            503: {
+                headers: {
+                    /** @description Seconds to wait, on MEDIA_SERVER_BUSY */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getSurveyMediaContent: {
+        parameters: {
+            query?: {
+                /** @description true for an attachment; only on full */
+                download?: string;
+            };
+            header?: never;
+            path: {
+                mediaId: string;
+                variant: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/jpeg": string;
+                };
+            };
+            /** @description VALIDATION_FAILED: field variant (not thumbnail, preview or full) or download (not true or false, or not on full) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such photo, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description METHOD_NOT_ALLOWED: HEAD; GET only */
+            405: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MEDIA_NOT_AVAILABLE (field status): not ready, removed, held, deleted or missing */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: field concurrency (6 reads at once) or budget (the hourly budget of the variant) */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MEDIA_SERVING_DISABLED or MEDIA_SERVER_BUSY (with Retry-After); MEDIA_STORE_UNAVAILABLE: try again later */
+            503: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    head: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    holdSurveyMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaHoldRequest"];
+            };
+        };
+        responses: {
+            /** @description The held photo (unchanged when already held) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyMediaStateResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on reason; MALFORMED_REQUEST for another reason value or an unknown or missing key */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not an ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such photo */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description MEDIA_NOT_AVAILABLE (field status): the photo is removed, or not processing or ready */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: the body is above 16 KiB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    releaseSurveyMediaHold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaHoldReleaseRequest"];
+            };
+        };
+        responses: {
+            /** @description The photo after the release (unchanged when not held) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyMediaStateResponse"];
+                };
+            };
+            /** @description MALFORMED_REQUEST for an unknown key */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not an ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such photo */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: the body is above 16 KiB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    removeSurveyMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaRemovalRequest"];
+            };
+        };
+        responses: {
+            /** @description The removed photo */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["SurveyMediaContentResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on correction (missing where needed), correction.reason, correction.basis.confirmedOn (not from the visit's arrival date to today) or correction.basis.text; MALFORMED_REQUEST for an unknown or missing key */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such photo, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY; CHECKLIST_TAKEOVER_REQUIRED; MEDIA_REFERENCED: a submission uses the photo */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: the body is above 16 KiB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take the lead */
             422: {
                 headers: {
                     [name: string]: unknown;

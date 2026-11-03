@@ -9,10 +9,15 @@ import { hasUnsavedChanges } from "../../lib/checklist/unsaved";
 import { tabDrafts } from "../../lib/drafts";
 
 /**
- * Asks before leaving the page or the tab while a group has unsaved changes (survey-checklist spec 6.2): the browser's
- * own prompt on unload, a confirm on a link inside the app. The drafts stay in tab memory either way.
+ * Asks before leaving the page or the tab while a group has unsaved changes (survey-checklist spec 6.2) or photos are
+ * still uploading (survey-media spec 6.2: files not sent are lost): the browser's own prompt on unload, a confirm on a
+ * link inside the app. The drafts stay in tab memory either way. Back and Forward are not guarded (SV-010).
  */
-export function useLeaveGuard(key: { userId: string; leadId: string; checklistId: string }, confirmText: string): boolean {
+export function useLeaveGuard(
+  key: { userId: string; leadId: string; checklistId: string },
+  confirmText: string,
+  uploads: { running: boolean; confirmText: string } = { running: false, confirmText: "" },
+): boolean {
   const { userId, leadId, checklistId } = key;
   const dirty = useSyncExternalStore(
     tabDrafts.subscribe,
@@ -23,8 +28,10 @@ export function useLeaveGuard(key: { userId: string; leadId: string; checklistId
     () => false,
   );
 
+  const uploading = uploads.running;
+  const text = uploading ? uploads.confirmText : confirmText;
   useEffect(() => {
-    if (!dirty) return;
+    if (!dirty && !uploading) return;
     const onUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
     };
@@ -34,7 +41,7 @@ export function useLeaveGuard(key: { userId: string; leadId: string; checklistId
       if (!(anchor instanceof HTMLAnchorElement) || anchor.target === "_blank") return;
       const url = new URL(anchor.href, window.location.href);
       if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
-      if (!window.confirm(confirmText)) {
+      if (!window.confirm(text)) {
         event.preventDefault();
         event.stopPropagation();
       }
@@ -45,7 +52,7 @@ export function useLeaveGuard(key: { userId: string; leadId: string; checklistId
       window.removeEventListener("beforeunload", onUnload);
       document.removeEventListener("click", onClick, true);
     };
-  }, [dirty, confirmText]);
+  }, [dirty, uploading, text]);
 
   return dirty;
 }

@@ -86,6 +86,8 @@ export const ACTIVITY_LABEL: Record<ActivityType, OwnerLeadsKey> = {
   CHECKLIST_STARTED: "activity.CHECKLIST_STARTED",
   CHECKLIST_TAKEN_OVER: "activity.CHECKLIST_TAKEN_OVER",
   CHECKLIST_SAVED: "activity.CHECKLIST_SAVED",
+  CHECKLIST_MEDIA_ADDED: "activity.CHECKLIST_MEDIA_ADDED",
+  CHECKLIST_MEDIA_REMOVED: "activity.CHECKLIST_MEDIA_REMOVED",
 };
 
 /** The group names of survey-checklist spec 6.4, in the order G1..G8. */

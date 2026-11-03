@@ -92,7 +92,9 @@
       "INTENT_CHANGED": "Requirement changed",
       "CHECKLIST_STARTED": "Checklist started",
       "CHECKLIST_TAKEN_OVER": "Checklist taken over",
-      "CHECKLIST_SAVED": "Checklist saved"
+      "CHECKLIST_SAVED": "Checklist saved",
+      "CHECKLIST_MEDIA_ADDED": "Photo added",
+      "CHECKLIST_MEDIA_REMOVED": "Photo removed"
     },
     "role": {
       "SALE": "Sale",
@@ -254,7 +256,9 @@
       "checklistSaved": "Checklist #{no}: {group} saved",
       "checklistSaves": "Checklist #{no}: {count} saves by {name} ({from}–{to})",
       "showSaves": "Show the {count} saves",
-      "hideSaves": "Hide the saves"
+      "hideSaves": "Hide the saves",
+      "photoAdded": "Photo added: {category}",
+      "photoRemoved": "Photo removed: {category}"
     },
     "statusDialog": {
       "reason": "Reason",
@@ -666,7 +670,8 @@
         "groupNav": "Groups",
         "readOnlyTitle": "Read only",
         "leaveConfirm": "You have unsaved changes. Leave this page?",
-        "reloading": "Reloading the checklist…"
+        "reloading": "Reloading the checklist…",
+        "laterRelease": "Submission and review open in a later release."
       },
       "errors": {
         "forbidden": "Only the lead's assignee edits the checklist.",
@@ -1025,13 +1030,16 @@
           "NO_SPACES": "Add at least one space",
           "NOT_IN_SCOPE": "A full assessment needs \"In scope\"",
           "DIFFERENCE_NOTE_MISSING": "Explain how the address differs from the lead",
-          "EVIDENCE_PENDING": "Photos: waiting for survey photos"
+          "EVIDENCE_PENDING": "Photos: waiting for survey photos",
+          "EVIDENCE_MISSING": "Photo missing: {pair}",
+          "EVIDENCE_PROCESSING": "Photo still processing: {pair}"
         },
         "warning": {
           "OPEN_IMPORTANT_HAZARD": "Important or unclassified risk not seen resolved",
           "EARLIER_HAZARD_OPEN": "Open risk from checklist #{no}",
           "PARTIAL_ACCESS": "Partly entered: {space}"
-        }
+        },
+        "submissionLater": "Submission is not available yet. These lists may grow when submission and review are added."
       },
       "problems": {
         "codeChars": "Use only letters A-Z, digits, space, dot, dash, slash or underscore.",
@@ -1039,6 +1047,174 @@
         "tooMany": "There are too many entries here.",
         "notAllowed": "Leave this empty: it is only for someone else's statement.",
         "server": "The server did not accept this value."
+      },
+      "media": {
+        "errors": {
+          "uploadDisabled": "Photo upload is not available yet.",
+          "intakePaused": "Photo upload is paused. Try again later.",
+          "limitSelected": "This checklist already has 100 photos. Remove some first.",
+          "rateUploads": "Too many uploads. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+          "rateExpensive": "Too many files could not be processed. Try again later.",
+          "rateBudget": "Too many photo views. Try again in {minutes, plural, one {# minute} other {# minutes}}.",
+          "servingDisabled": "Photos are temporarily unavailable.",
+          "tooLarge": "This file is larger than 20 MB.",
+          "duplicate": "This photo is already in the checklist.",
+          "otherVisit": "This photo belongs to another visit of this lead.",
+          "referenced": "This photo cannot be removed.",
+          "notAvailable": "This photo cannot be shown.",
+          "busy": "The photo service is busy. The upload will be tried again later.",
+          "uploadAgain": "This upload can no longer be finished. Upload the photo again.",
+          "inProgress": "This photo is still being uploaded. Please wait.",
+          "malformed": "The file could not be sent as it was chosen. Upload it again.",
+          "stateUnknown": "The connection was lost. Checking whether the photo arrived…",
+          "stale": "The photos changed meanwhile. They have been reloaded."
+        },
+        "loading": "Loading the photos…",
+        "loadFailed": "The photos could not be loaded.",
+        "retry": "Try again",
+        "notices": {
+          "internalOnly": "Internal survey evidence. Not approved for listings.",
+          "noPeople": "Do not photograph people, ID cards, ownership papers, contracts or screens.",
+          "thisVisitOnly": "Upload only photos taken at this visit. No photos from the owner, the Internet or another visit."
+        },
+        "categories": {
+          "EXTERIOR_ACCESS": "Exterior and access",
+          "MAIN_SPACE": "Main space",
+          "KITCHEN": "Kitchen",
+          "BATHROOM": "Bathroom",
+          "SHARED_KITCHEN": "Shared kitchen",
+          "SHARED_BATHROOM": "Shared bathroom",
+          "SHARED_AMENITY": "Shared amenity",
+          "DETAIL": "Detail"
+        },
+        "placement": {
+          "asset": "Asset (whole property)",
+          "space": "Space {code}"
+        },
+        "pair": "{placement} · {category}",
+        "required": {
+          "title": "Required photos",
+          "none": "No required photos yet. Fill in the identification first.",
+          "COVERED": "Ready ({count})",
+          "PROCESSING": "Processing",
+          "MISSING": "Missing",
+          "NOT_REQUIRED": "Not required: {reason}"
+        },
+        "optional": {
+          "title": "Optional photos",
+          "count": "{count, plural, =0 {None yet} one {# ready} other {# ready}}"
+        },
+        "upload": {
+          "title": "Add photos",
+          "placement": "Placement",
+          "category": "Evidence category",
+          "caption": "Caption",
+          "captionHint": "Optional, up to 200 characters. No phone numbers.",
+          "choose": "Choose photos",
+          "take": "Take photo",
+          "hint": "JPEG, PNG, WebP or HEIC, up to {maxMb} MB each. {remaining, plural, =0 {This checklist has no place for more photos.} one {# more photo fits in this checklist.} other {# more photos fit in this checklist.}}",
+          "pickCategory": "Choose a category first."
+        },
+        "rows": {
+          "title": "Uploads",
+          "label": "{pair} · {size}",
+          "waiting": "Waiting",
+          "hashing": "Preparing…",
+          "creating": "Starting…",
+          "uploading": "Uploading {percent}%",
+          "checking": "Checking whether the photo arrived…",
+          "retrying": "Connection lost. Trying again soon.",
+          "queued": "Waiting for the server…",
+          "processing": "Processing",
+          "ready": "Ready",
+          "stopped": "Stopped",
+          "failed": "Not uploaded",
+          "removed": "Removed",
+          "notAccepted": "Not accepted",
+          "tryLater": "Try again later.",
+          "uploadAgain": "Upload again",
+          "cancel": "Cancel",
+          "dismiss": "Dismiss",
+          "showMatch": "Show the matching photo",
+          "tryAgain": "Try again",
+          "uploadingState": "Uploading",
+          "matchThumb": "The matching photo of the other visit"
+        },
+        "badge": {
+          "uploading": "Uploading",
+          "processing": "Processing",
+          "ready": "Ready",
+          "held": "Held",
+          "notAccepted": "Not accepted",
+          "notProcessed": "Not processed",
+          "removedWhileProcessing": "Removed while processing",
+          "notUploaded": "Not uploaded"
+        },
+        "reasons": {
+          "UNSUPPORTED_FORMAT": "This file type is not supported. Use JPEG, PNG, WebP or HEIC.",
+          "UNREADABLE": "The file could not be read as a photo.",
+          "ANIMATED": "Turn off Motion or Live Photo, or export a still image, then upload it again.",
+          "MOTION_PHOTO": "Turn off Motion or Live Photo, or export a still image, then upload it again.",
+          "COMPOSITE_FILE": "This file contains more than a photo.",
+          "TOO_MANY_PIXELS": "Use the camera's normal resolution, not a 200 MP mode.",
+          "MALWARE_DETECTED": "The file did not pass the security check.",
+          "SCAN_LIMIT_EXCEEDED": "The file is too complex to check. Export it again as a plain photo.",
+          "PROCESSING_UNAVAILABLE": "The photo could not be processed. Upload it again.",
+          "REMOVED": "Removed while it was being processed.",
+          "CONTENT_NOT_RECEIVED": "The photo was not uploaded in time."
+        },
+        "grid": {
+          "title": "All photos",
+          "empty": "No photos yet.",
+          "photoNo": "Photo #{no}",
+          "open": "Open photo #{no}",
+          "uploadedAs": "uploaded as {code}",
+          "uploadedBy": "Uploaded by {name}",
+          "unknownName": "a former staff member",
+          "held": "Held by an administrator since {when}",
+          "heldBy": "Held by {name} since {when}: {reason}",
+          "noImage": "No image",
+          "remove": "Remove"
+        },
+        "holdReason": {
+          "SECURITY_INCIDENT": "Security incident",
+          "CREDENTIAL_EXPOSURE": "Credential exposure"
+        },
+        "notAccepted": {
+          "title": "Not accepted",
+          "more": "{count, plural, one {# more not shown} other {# more not shown}}"
+        },
+        "removed": {
+          "title": "Removed photos",
+          "line": "Photo #{no} · {pair}: removed by {name}, {when}",
+          "cascade": "Photo #{no} · {pair}: removed with an identification save by {name}, {when}",
+          "more": "{count, plural, one {# more not shown} other {# more not shown}}"
+        },
+        "remove": {
+          "title": "Remove photo #{no}?",
+          "text": "The photo leaves this checklist and its file is deleted. A replacement is a new photo.",
+          "heldText": "The photo is held by an administrator: it is removed now and its file is deleted after the hold ends.",
+          "correction": "Someone else uploaded this photo. Removing it needs a correction.",
+          "confirm": "Remove",
+          "cancel": "Cancel",
+          "close": "Close"
+        },
+        "g1Hint": "Saving removes {count, plural, one {# photo} other {# photos}} on the spaces or shared rooms this change ends.",
+        "leaveUploading": "Photos are still uploading. Files not sent yet are lost if you leave. Leave this page?",
+        "viewer": {
+          "title": "Photo #{no} · {pair}",
+          "download": "Download",
+          "downloading": "Downloading…",
+          "close": "Close",
+          "loading": "Loading the photo…"
+        },
+        "hold": {
+          "hold": "Hold",
+          "reason": "Reason for the hold",
+          "confirm": "Hold the photo",
+          "cancel": "Cancel",
+          "release": "Release the hold"
+        }
       }
     }
   },

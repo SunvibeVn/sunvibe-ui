@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createApiClient } from "./api-client";
+import { createApiClient, type UploadXhr } from "./api-client";
 import type { SessionApi, SessionResponse } from "./session-api";
 import { createSessionStore, type SessionStore } from "./session-store";
 
@@ -49,7 +49,9 @@ function json(status: number, body: unknown) {
 }
 
 const me = { userId: "u1", fullName: "Nguyen Van A" };
-const chain401 = () => json(401, { error: "Unauthorized", message: "x", path: "/api/v1/me" });
+// The ADR-010 envelope of the security chain's 401 (survey-media A-13, SV-030): no path, a code and a correlation id.
+const chain401 = () =>
+  json(401, { code: "UNAUTHORIZED", message: "Authentication is required.", errors: [], correlationId: "c-401" });
 
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -57,6 +59,63 @@ function deferred<T>() {
     resolve = done;
   });
   return { promise, resolve };
+}
+
+type Progress = { loaded: number; total: number; lengthComputable: boolean };
+
+/** A scripted XMLHttpRequest: records what the upload sets and lets the test answer, fail or report progress. */
+class FakeXhr implements UploadXhr {
+  method = "";
+  url = "";
+  headers: Record<string, string> = {};
+  body: Blob | null = null;
+  withCredentials = true;
+  status = 0;
+  responseText = "";
+  aborted = false;
+  private responseHeaders: Record<string, string> = {};
+  private listeners: Record<string, Array<() => void>> = {};
+  private uploadListeners: Array<(event: Progress) => void> = [];
+  readonly upload = {
+    addEventListener: (_type: "progress", listener: (event: Progress) => void) => {
+      this.uploadListeners.push(listener);
+    },
+  };
+  open(method: string, url: string): void {
+    this.method = method;
+    this.url = url;
+  }
+  setRequestHeader(name: string, value: string): void {
+    this.headers[name] = value;
+  }
+  send(body: Blob): void {
+    this.body = body;
+  }
+  abort(): void {
+    this.aborted = true;
+    this.emit("abort");
+  }
+  getResponseHeader(name: string): string | null {
+    return this.responseHeaders[name.toLowerCase()] ?? null;
+  }
+  addEventListener(type: "load" | "error" | "abort" | "progress" | "timeout", listener: () => void): void {
+    (this.listeners[type] ??= []).push(listener);
+  }
+  emit(type: string): void {
+    for (const listener of this.listeners[type] ?? []) listener();
+  }
+  progress(loaded: number, total: number): void {
+    for (const listener of this.uploadListeners) listener({ loaded, total, lengthComputable: true });
+  }
+  answer(status: number, body: unknown, headers: Record<string, string> = {}): void {
+    this.status = status;
+    this.responseText = body === undefined ? "" : JSON.stringify(body);
+    this.responseHeaders = Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]));
+    this.emit("load");
+  }
+  fail(): void {
+    this.emit("error");
+  }
 }
 
 type SetupOptions = { signedIn?: boolean; hint?: boolean };
@@ -87,6 +146,7 @@ function setup(
   if (signedIn) store.adopt(session("at-1"), { newSignIn: false });
 
   const requests: Request[] = [];
+  const xhrs: FakeXhr[] = [];
   const api = createApiClient({
     store,
     baseUrl: "http://api.test",
@@ -94,8 +154,14 @@ function setup(
       requests.push(request);
       return respond(request);
     },
+    createXhr: () => {
+      const xhr = new FakeXhr();
+      xhrs.push(xhr);
+      return xhr;
+    },
   });
   return {
+    xhrs,
     store,
     jar,
     api,
@@ -242,7 +308,7 @@ describe("api client and the 401 rule (W10-24, W10-31, W10-32, W10-34)", () => {
 
   it("call_403_passesThroughAndKeepsTheSession", async () => {
     const { api, refreshUnlocked, store } = setup(() =>
-      json(403, { error: "Forbidden", message: "x", path: "/api/v1/staff/owner-leads" }),
+      json(403, { code: "FORBIDDEN", message: "You do not have permission to access this resource.", errors: [], correlationId: "c-403" }),
     );
     const result = await api.callApi((client) => client.GET("/api/v1/staff/owner-leads"));
     expect(result).toMatchObject({ ok: false, kind: "http", status: 403 });
@@ -286,6 +352,54 @@ describe("api client and the 401 rule (W10-24, W10-31, W10-32, W10-34)", () => {
     await vi.advanceTimersByTimeAsync(1);
     expect(await pending).toEqual({ ok: false, kind: "network" });
     expect(store.getSnapshot().status).toBe("signed-in");
+  });
+
+  it("defaultTimeout_stays15Seconds", async () => {
+    vi.useFakeTimers();
+    // Headers arrive at once, the body never ends: the 15 seconds also cover reading it.
+    const { api } = setup(() => new Response(new ReadableStream<Uint8Array>(), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const pending = getMe(api);
+    let settled = false;
+    void pending.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(14_999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toEqual({ ok: false, kind: "network" });
+  });
+
+  it("perCallTimeout_coversBodyRead", async () => {
+    vi.useFakeTimers();
+    const { api, store } = setup(() => new Response(new ReadableStream<Uint8Array>(), { status: 200, headers: { "Content-Type": "application/json" } }));
+    const pending = api.callApi((client) => client.GET("/api/v1/me"), { timeoutMs: 60_000 });
+    let settled = false;
+    void pending.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await pending).toEqual({ ok: false, kind: "network" });
+    expect(store.getSnapshot().status).toBe("signed-in");
+  });
+
+  it("perCallTimeout_aSlowBodyWithinTheDeadlineIsRead", async () => {
+    vi.useFakeTimers();
+    const { api } = setup(() => {
+      const body = new ReadableStream<Uint8Array>({
+        start(controller) {
+          setTimeout(() => {
+            controller.enqueue(new TextEncoder().encode(JSON.stringify(me)));
+            controller.close();
+          }, 30_000);
+        },
+      });
+      return new Response(body, { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    const pending = api.callApi((client) => client.GET("/api/v1/me"), { timeoutMs: 60_000 });
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(await pending).toMatchObject({ ok: true, data: me });
   });
 
   it("call_noHint_returnsSignedOutWithoutRequest", async () => {
@@ -477,5 +591,143 @@ describe("api client and the 401 rule (W10-24, W10-31, W10-32, W10-34)", () => {
     const { callApi } = await import("./api-client");
     await expect(callApi((client) => client.GET("/api/v1/me"))).resolves.toEqual({ ok: false, kind: "signed-out" });
     expect(fetchSpy).not.toHaveBeenCalled();
+  });
+});
+
+// A body upload openapi-fetch cannot serve (the survey photo content, survey-media PD-11): the auth client sends it
+// itself through XMLHttpRequest, so the token never leaves this module (security review m-1).
+describe("uploadWithBearer (survey-media PD-11: the photo upload with the tab's token)", () => {
+  const FILE = new Blob([new Uint8Array([1, 2, 3, 4])]);
+  const input = (overrides: Partial<Parameters<ReturnType<typeof createApiClient>["uploadWithBearer"]>[0]> = {}) => ({
+    path: "/api/v1/staff/survey-media/M1/content",
+    body: FILE,
+    headers: { "Content-Type": "application/octet-stream", "Content-Digest": "sha-256=:qq==:" },
+    stallMs: 60_000,
+    ...overrides,
+  });
+  /** Lets the upload reach `send` (it awaits the token first). */
+  const flush = async () => {
+    for (let index = 0; index < 8; index += 1) await Promise.resolve();
+  };
+
+  it("uploadWithBearer_onlyApiOriginBearerNoCredentials: a PUT to the API origin with the token and the given headers", async () => {
+    const { api, xhrs } = setup();
+    const pending = api.uploadWithBearer(input());
+    await flush();
+    const [xhr] = xhrs;
+    expect(xhr.method).toBe("PUT");
+    expect(xhr.url).toBe("http://api.test/api/v1/staff/survey-media/M1/content");
+    expect(xhr.withCredentials).toBe(false);
+    expect(xhr.headers).toEqual({
+      Authorization: "Bearer at-1",
+      "Content-Type": "application/octet-stream",
+      "Content-Digest": "sha-256=:qq==:",
+    });
+    expect(xhr.body).toBe(FILE);
+    xhr.answer(202, { setVersion: 5 });
+    expect(await pending).toMatchObject({ ok: true, status: 202, data: { setVersion: 5 } });
+  });
+
+  it("uploadWithBearer_refusesAnotherOriginOrItsOwnAuthorization: nothing is sent", async () => {
+    const { api, xhrs } = setup();
+    expect(await api.uploadWithBearer(input({ path: "https://evil.test/x" }))).toEqual({ ok: false, kind: "network" });
+    expect(await api.uploadWithBearer(input({ path: "//evil.test/x" }))).toEqual({ ok: false, kind: "network" });
+    expect(await api.uploadWithBearer(input({ headers: { Authorization: "Bearer other" } }))).toEqual({ ok: false, kind: "network" });
+    expect(xhrs).toHaveLength(0);
+  });
+
+  it("uploadWithBearer_401_refreshesOnceAndRetries", async () => {
+    const { api, xhrs, refreshUnlocked, refreshWith } = setup();
+    refreshWith(ok(session("at-2")));
+    const pending = api.uploadWithBearer(input());
+    await flush();
+    xhrs[0].answer(401, { code: "UNAUTHORIZED", message: "x", errors: [], correlationId: "c" });
+    await vi.waitFor(() => expect(xhrs).toHaveLength(2));
+    expect(xhrs[1].headers.Authorization).toBe("Bearer at-2");
+    expect(xhrs[1].body).toBe(FILE);
+    xhrs[1].answer(202, {});
+    expect(await pending).toMatchObject({ ok: true, status: 202 });
+    expect(refreshUnlocked).toHaveBeenCalledTimes(1);
+  });
+
+  it("uploadWithBearer_second401_marksUnavailable: no third request", async () => {
+    const { api, xhrs, refreshWith, store } = setup();
+    refreshWith(ok(session("at-2")));
+    const pending = api.uploadWithBearer(input());
+    await flush();
+    xhrs[0].answer(401, {});
+    await vi.waitFor(() => expect(xhrs).toHaveLength(2));
+    xhrs[1].answer(401, {});
+    expect(await pending).toEqual({ ok: false, kind: "unavailable" });
+    expect(xhrs).toHaveLength(2);
+    expect(store.getSnapshot().status).toBe("unavailable");
+  });
+
+  it("uploadWithBearer_abortOnSignOut and on another sign-in", async () => {
+    const first = setup();
+    const pending = first.api.uploadWithBearer(input());
+    await flush();
+    first.store.endLocally("signed-out");
+    expect(await pending).toEqual({ ok: false, kind: "signed-out" });
+    expect(first.xhrs[0].aborted).toBe(true);
+
+    const second = setup();
+    const other = second.api.uploadWithBearer(input());
+    await flush();
+    signInElsewhere(second.jar, second.store);
+    expect(await other).toEqual({ ok: false, kind: "signed-out" });
+    expect(second.xhrs[0].aborted).toBe(true);
+  });
+
+  it("uploadWithBearer_noSession_sendsNothing", async () => {
+    const { api, xhrs } = setup(undefined, { signedIn: false, hint: false });
+    expect(await api.uploadWithBearer(input())).toEqual({ ok: false, kind: "signed-out" });
+    expect(xhrs).toHaveLength(0);
+  });
+
+  it("uploadWithBearer_callerAbort_isAborted", async () => {
+    const { api, xhrs } = setup();
+    const controller = new AbortController();
+    const pending = api.uploadWithBearer(input({ signal: controller.signal }));
+    await flush();
+    controller.abort();
+    expect(await pending).toEqual({ ok: false, kind: "aborted" });
+    expect(xhrs[0].aborted).toBe(true);
+  });
+
+  it("uploadWithBearer_stall_isNetwork and progress is reported", async () => {
+    vi.useFakeTimers();
+    const { api, xhrs } = setup();
+    const seen: Array<[number, number]> = [];
+    const pending = api.uploadWithBearer(input({ onProgress: (sent, total) => seen.push([sent, total]) }));
+    await vi.advanceTimersByTimeAsync(0);
+    await vi.advanceTimersByTimeAsync(50_000);
+    xhrs[0].progress(1, 4);
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(xhrs[0].aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(xhrs[0].aborted).toBe(true);
+    expect(await pending).toEqual({ ok: false, kind: "network" });
+    expect(seen).toEqual([[1, 4]]);
+  });
+
+  it("uploadWithBearer maps an error answer by code, field and Retry-After; a network error is network", async () => {
+    const { api, xhrs } = setup();
+    const pending = api.uploadWithBearer(input());
+    await flush();
+    xhrs[0].answer(429, { code: "RATE_LIMITED", message: "x", errors: [{ field: "bodies", message: "x" }], correlationId: "c-9" }, { "Retry-After": "30" });
+    expect(await pending).toEqual({
+      ok: false,
+      kind: "http",
+      status: 429,
+      code: "RATE_LIMITED",
+      fieldErrors: [{ field: "bodies", message: "x" }],
+      correlationId: "c-9",
+      retryAfterSeconds: 30,
+    });
+    const failed = api.uploadWithBearer(input());
+    await flush();
+    xhrs[1].fail();
+    expect(await failed).toEqual({ ok: false, kind: "network" });
   });
 });

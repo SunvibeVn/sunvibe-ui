@@ -11,13 +11,22 @@ import { pageNotices } from "../../lib/checklist/page-notices";
  * The banners of every checklist view (survey-checklist spec 6.2, section 8, US-2 AC-4) and, on a draft of a later
  * visit, the starts-empty banner (BR-23); there is no control that copies earlier values (A-22).
  */
-export function PageBanners({ earlier, withLaterVisit = true }: { earlier: EarlierChecklist | null; withLaterVisit?: boolean }) {
+export function PageBanners({
+  earlier,
+  photosAvailable,
+  withLaterVisit = true,
+}: {
+  earlier: EarlierChecklist | null;
+  /** `media.available` of the read (survey-media A-1): which photo and submission banner shows. */
+  photosAvailable: boolean;
+  withLaterVisit?: boolean;
+}) {
   const t = useTranslations("OwnerLeads");
-  const notices = pageNotices({ earlier });
+  const notices = pageNotices({ earlier, photosAvailable });
   return (
     <div className="space-y-2">
       <Alert tone="info">{t("checklist.page.legal")}</Alert>
-      <Alert tone="info">{t("checklist.page.media")}</Alert>
+      <Alert tone="info">{t(notices.media === "laterRelease" ? "checklist.page.laterRelease" : "checklist.page.media")}</Alert>
       {withLaterVisit && notices.laterVisit !== null && (
         <Alert tone="info">
           {t("checklist.page.laterVisit", { surveyNo: notices.laterVisit.surveyNo, checklistNo: notices.laterVisit.checklistNo })}
