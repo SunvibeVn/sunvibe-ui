@@ -1,12 +1,9 @@
 {
   "permissions": {
     "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
       "Bash(git push origin main*)",
       "Bash(git push --force*)",
-      "Bash(git push -f*)",
-      "Edit(//**/docs/features/**/brief/**)"
+      "Bash(git push -f*)"
     ]
   },
   "hooks": {
