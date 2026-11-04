@@ -8,10 +8,11 @@ export type PageNotices = {
   /** "Site survey record. It is not a legal or safety check." on every view. */
   legal: true;
   /**
-   * On every view: "Photos and submission open once survey photos are available. ..." while photos are not available
-   * (`waiting`), "Submission and review open in a later release." once they are (`laterRelease`, survey-media 6.2).
+   * On a draft: "Photos and submission open once survey photos are available. ..." while photos are not available
+   * (`waiting`), "Submission and review open in a later release." while the switch keeps submission closed
+   * (`laterRelease`); none once it is open, where the submit panel names the first failing gate, or past the draft.
    */
-  media: "waiting" | "laterRelease";
+  media: "waiting" | "laterRelease" | null;
   /** The starts-empty banner of a draft on a later visit; there is no copy control (A-22). */
   laterVisit: { surveyNo: number; checklistNo: number } | null;
 };
@@ -47,10 +48,27 @@ export function earlierChecklist(
   return found;
 }
 
-export function pageNotices({ earlier, photosAvailable }: { earlier: EarlierChecklist | null; photosAvailable: boolean }): PageNotices {
+function mediaNotice(status: string | undefined, photosAvailable: boolean, unavailableReason: string | null | undefined): PageNotices["media"] {
+  if (status !== "DRAFT") return null;
+  if (!photosAvailable || unavailableReason === "EVIDENCE_NOT_AVAILABLE") return "waiting";
+  return unavailableReason === "SUBMISSION_NOT_AVAILABLE" ? "laterRelease" : null;
+}
+
+export function pageNotices({
+  earlier,
+  photosAvailable,
+  status,
+  unavailableReason,
+}: {
+  earlier: EarlierChecklist | null;
+  photosAvailable: boolean;
+  /** The revision's status and `readiness.submissionUnavailableReason`. */
+  status: string | undefined;
+  unavailableReason?: string | null;
+}): PageNotices {
   return {
     legal: true,
-    media: photosAvailable ? "laterRelease" : "waiting",
+    media: mediaNotice(status, photosAvailable, unavailableReason),
     laterVisit: earlier === null ? null : { surveyNo: earlier.appointmentNo, checklistNo: earlier.checklistNo },
   };
 }

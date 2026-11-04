@@ -184,20 +184,28 @@ export type PreviewModel = {
   gaps: PreviewLine[];
   unconfirmed: PreviewLine[];
   warnings: string[];
-  /** Why submission is not available (survey-media 4.6): photos not built yet, or submission comes later. */
-  submission: string;
+  /** Why a switch keeps submission closed (survey-media 4.6): photos not built yet, or submission comes later; else none. */
+  submission: string | null;
 };
 
 const PHOTO_CATEGORIES = new Set(["EXTERIOR_ACCESS", "MAIN_SPACE", "KITCHEN", "BATHROOM", "SHARED_KITCHEN", "SHARED_BATHROOM", "SHARED_AMENITY", "DETAIL"]);
 
 /** "<placement> · <category>" of an evidence item (`field` is the category, survey-media 4.6). */
-function photoPair(spaceCode: string | null, category: string | null, t: OwnerLeadsTranslate): string {
+export function photoPair(spaceCode: string | null, category: string | null, t: OwnerLeadsTranslate): string {
   const placement = spaceCode ? t("checklist.media.placement.space", { code: spaceCode }) : t("checklist.media.placement.asset");
   if (category === null || !PHOTO_CATEGORIES.has(category)) return placement;
   return t("checklist.media.pair", { placement, category: t(`checklist.media.categories.${category as "DETAIL"}`) });
 }
 
 const GROUP_TITLE = (group: string): OwnerLeadsKey => `checklist.groups.${group.toUpperCase() as "TERMS"}`;
+
+/** The line of a draft while a switch keeps submission closed; the submit panel speaks once it is open. */
+function submissionLine(view: ChecklistView, t: OwnerLeadsTranslate): string | null {
+  if (view.status !== "DRAFT") return null;
+  const reason: string | undefined = view.readiness?.submissionUnavailableReason;
+  if (reason === "SUBMISSION_NOT_AVAILABLE") return t("checklist.preview.submissionLater");
+  return reason === "EVIDENCE_NOT_AVAILABLE" ? t("checklist.preview.submission") : null;
+}
 
 /** The whole preview of a read (W16-31). */
 export function previewModel(view: ChecklistView, t: OwnerLeadsTranslate): PreviewModel {
@@ -225,7 +233,7 @@ export function previewModel(view: ChecklistView, t: OwnerLeadsTranslate): Previ
       const problem =
         item.problem === "REQUIRED_AREA_NOT_ENTERED"
           ? t("checklist.preview.problem.REQUIRED_AREA_NOT_ENTERED", { area: field(item.field) })
-          : item.problem === "EVIDENCE_MISSING" || item.problem === "EVIDENCE_PROCESSING"
+          : item.problem === "EVIDENCE_MISSING" || item.problem === "EVIDENCE_PROCESSING" || item.problem === "EVIDENCE_UNAVAILABLE"
             ? t(`checklist.preview.problem.${item.problem}`, { pair: photoPair(item.spaceCode, item.field, t) })
             : t(`checklist.preview.problem.${item.problem as "NOT_CHECKED"}`);
       const prefix = item.group === "evidence" || item.problem === "SCOPE_MISSING" || item.problem === "NO_SPACES" ? null : where(item.group, item.spaceCode, item.field);
@@ -239,11 +247,7 @@ export function previewModel(view: ChecklistView, t: OwnerLeadsTranslate): Previ
           ? t("checklist.preview.warning.PARTIAL_ACCESS", { space: item.spaceCode ?? "" })
           : t("checklist.preview.warning.OPEN_IMPORTANT_HAZARD"),
     ),
-    submission: t(
-      view.readiness?.submissionUnavailableReason === "SUBMISSION_NOT_AVAILABLE"
-        ? "checklist.preview.submissionLater"
-        : "checklist.preview.submission",
-    ),
+    submission: submissionLine(view, t),
   };
 }
 

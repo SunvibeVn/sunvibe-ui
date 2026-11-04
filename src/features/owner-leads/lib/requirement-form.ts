@@ -13,6 +13,8 @@ import {
 } from "../schemas/survey/survey-text";
 import type { ChangeIntentInput } from "../services/owner-leads-api";
 
+import type { SurveyRecordFacts } from "./transitions";
+
 /** The intents a requirement change may move to (US-5 AC-1): rentals only, never sale. */
 export const RENTAL_INTENTS = ["SHORT_TERM_RENT", "LONG_TERM_RENT"] as const;
 export type RentalIntent = (typeof RENTAL_INTENTS)[number];
@@ -44,8 +46,9 @@ const FROM_STATUSES: readonly string[] = ["ASSIGNED", "CONTACTED", "ON_HOLD", "S
 /** Most digits of an amount (the intake rule: 1..15 digits, whole VND). */
 const AMOUNT_DIGITS = 15;
 
-export function canChangeRequirement(status: string | undefined): boolean {
-  return status !== undefined && FROM_STATUSES.includes(status);
+/** A PASSED of the cycle refuses the change in any status; a SUBMITTED revision does not (survey-checklist D3-7, D3-13). */
+export function canChangeRequirement(status: string | undefined, survey?: SurveyRecordFacts | null): boolean {
+  return status !== undefined && FROM_STATUSES.includes(status) && survey?.hasPassed !== true;
 }
 
 /** The rental intents other than the current one; a sale lead (or one without an intent) gets both. */

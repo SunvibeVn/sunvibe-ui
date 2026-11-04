@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   type ChecklistUiError,
   createMedia,
+  deselectMedia,
   getMediaImage,
   holdMedia,
   type MediaHoldReason,
@@ -264,6 +265,29 @@ export function useMedia(page: ChecklistController): MediaController {
     [failPage],
   );
 
+  const { reload: reloadChecklist } = page;
+  const deselect = useCallback(
+    async (mediaId: string, correction: MediaRemovalInput["correction"]): Promise<MediaCommandOutcome> => {
+      const result = await deselectMedia(checklistId, mediaId, { correction });
+      if (result.ok) {
+        pollerRef.current?.readNow();
+        return { kind: "done" };
+      }
+      const error = toMediaUiError(result, "remove") ?? { kind: "retry" as const };
+      // A 404 may only say the photo is not carried into this revision: the reads say what is true, and a 404 on the
+      // checklist itself leaves the page from there.
+      if (error.kind === "not-found") {
+        pollerRef.current?.readNow();
+        await reloadChecklist();
+        return { kind: "failed", error };
+      }
+      failPage(error);
+      if (error.kind === "stale") pollerRef.current?.readNow();
+      return { kind: "failed", error };
+    },
+    [checklistId, failPage, reloadChecklist],
+  );
+
   /** A hold or release answer: the list is read again; a refusal is the page's or the caller's (A-23). */
   const holdCommand = useCallback(
     async (send: () => ReturnType<typeof holdMedia>): Promise<MediaCommandOutcome> => {
@@ -305,6 +329,7 @@ export function useMedia(page: ChecklistController): MediaController {
     cancelRow: (rowId: string) => queueRef.current?.cancel(rowId),
     itemOf,
     remove,
+    deselect,
     reloadList: () => pollerRef.current?.readNow(),
     holdPhoto: (mediaId: string, reason: MediaHoldReason) => holdCommand(() => holdMedia(mediaId, reason)),
     releasePhoto: (mediaId: string) => holdCommand(() => releaseMediaHold(mediaId)),

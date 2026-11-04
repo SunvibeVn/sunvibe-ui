@@ -26,13 +26,19 @@ const FIELDS: Readonly<Record<string, ResumeField>> = {
 };
 const DEFAULTS: ResumeForm = { reason: "", basisDate: "", basisText: "" };
 
-type ResumeDialogProps = { onClose(): void; onSaved(): void };
+type ResumeDialogProps = {
+  /** The lead returns to Qualified, not to Survey Scheduled (survey-checklist submission 4.8). */
+  toQualified: boolean;
+  onClose(): void;
+  onSaved(): void;
+};
 
 /**
- * "Resume survey" (spec 6.2, BR-11): back from On Hold to Survey Scheduled for the current visit, with a reason and
- * the owner's confirmation (date and text) that requirement and scope have not changed.
+ * "Resume survey" (spec 6.2, BR-11): back from On Hold to Survey Scheduled for the current visit, or "Resume to
+ * Qualified" with a usable pass, with a reason and the owner's confirmation (date and text) that requirement and scope
+ * have not changed.
  */
-export function ResumeDialog({ onClose, onSaved }: ResumeDialogProps) {
+export function ResumeDialog({ toQualified, onClose, onSaved }: ResumeDialogProps) {
   const t = useTranslations("OwnerLeads");
   const { userId, leadId, version } = useLeadDetail();
   const [form, setForm, clearForm] = useFormDraft({ userId, leadId, form: "surveyResume" }, DEFAULTS);
@@ -56,7 +62,7 @@ export function ResumeDialog({ onClose, onSaved }: ResumeDialogProps) {
     <Dialog
       open
       onClose={pending ? () => undefined : onClose}
-      title={t("survey.resumeDialog.title")}
+      title={t(toQualified ? "survey.resumeQualified" : "survey.resumeDialog.title")}
       closeLabel={pending ? undefined : t("survey.form.close")}
       footer={
         <>

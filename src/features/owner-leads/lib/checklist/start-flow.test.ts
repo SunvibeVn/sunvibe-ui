@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { SurveyBlock } from "@/features/surveys";
 
-import { checklistAction, checklistStartFailure } from "./start-flow";
+import { checklistAction, checklistStartFailure, revisionAction } from "./start-flow";
 
 const visited = {
   id: "AP2",
@@ -27,7 +27,7 @@ describe("checklistAction (survey-checklist spec 6.1, W16-25)", () => {
 
   it("opens the current visit's checklist when there is one, whatever blocks a start", () => {
     const withChecklist = { ...visited, checklists: [{ id: "C3", checklistNo: 3 }, { id: "C1", checklistNo: 1 }] };
-    for (const blockedBy of ["ALREADY_STARTED", "NOT_ASSIGNEE", "LEAD_STATUS"] as const) {
+    for (const blockedBy of ["CHECKLIST_EXISTS", "NOT_ASSIGNEE", "LEAD_STATUS"] as const) {
       expect(
         checklistAction(
           block({
@@ -56,6 +56,64 @@ describe("checklistAction (survey-checklist spec 6.1, W16-25)", () => {
 
   it("shows nothing for a block without checklistStart", () => {
     expect(checklistAction(block({ checklistStart: undefined }))).toBeNull();
+  });
+});
+
+describe("revisionAction (survey-checklist submission spec 6.1, A-7)", () => {
+  const returned = {
+    ...visited,
+    checklists: [{ id: "C2", checklistNo: 2, status: "NEEDS_CHANGES" as const, outcome: "NEEDS_CHANGES" as const }],
+  };
+  const earlierVisit = { id: "AP1", appointmentNo: 1, status: "VISITED" as const, checklists: [{ id: "C1", checklistNo: 1 }] };
+
+  it("offers the next revision on the revision the block names, without intake for the previous holder", () => {
+    expect(
+      revisionAction(
+        block({
+          appointments: [returned, earlierVisit],
+          revisionStart: { allowed: true, checklistId: "C2", intakeRequired: false, blockedBy: null },
+        }),
+      ),
+    ).toEqual({
+      kind: "start",
+      checklistId: "C2",
+      revisionNo: 3,
+      intake: false,
+      performerName: "Anh Sale",
+      arrivedAt: "2026-10-23T02:00:00Z",
+    });
+  });
+
+  it("asks for the intake declaration when the viewer did not hold the previous revision", () => {
+    const action = revisionAction(
+      block({ appointments: [returned], revisionStart: { allowed: true, checklistId: "C2", intakeRequired: true, blockedBy: null } }),
+    );
+    expect(action).toMatchObject({ kind: "start", intake: true, revisionNo: 3 });
+  });
+
+  it("numbers the revision after the highest checklist of the lead, on any visit", () => {
+    const later = { id: "AP3", appointmentNo: 3, status: "VISITED" as const, checklists: [{ id: "C5", checklistNo: 5 }] };
+    const action = revisionAction(
+      block({ appointments: [returned, later], revisionStart: { allowed: true, checklistId: "C2", intakeRequired: false, blockedBy: null } }),
+    );
+    expect(action).toMatchObject({ revisionNo: 6 });
+  });
+
+  it("says why when the revision waits for someone else", () => {
+    for (const blockedBy of ["NOT_ASSIGNEE", "ASSIGNEE_INELIGIBLE"] as const) {
+      expect(revisionAction(block({ revisionStart: { allowed: false, checklistId: null, intakeRequired: false, blockedBy } }))).toEqual({
+        kind: "blocked",
+        reason: blockedBy,
+      });
+    }
+  });
+
+  it("shows nothing while no revision is due", () => {
+    for (const blockedBy of ["NO_CURRENT_VISIT", "LEAD_STATUS", "NOT_RETURNED_FOR_DOCUMENTS"] as const) {
+      expect(revisionAction(block({ revisionStart: { allowed: false, checklistId: null, intakeRequired: false, blockedBy } }))).toBeNull();
+    }
+    expect(revisionAction(block({}))).toBeNull();
+    expect(revisionAction(block({ revisionStart: { allowed: true, checklistId: null, intakeRequired: false, blockedBy: null } }))).toBeNull();
   });
 });
 

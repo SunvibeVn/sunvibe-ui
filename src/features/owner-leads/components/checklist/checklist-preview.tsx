@@ -41,7 +41,7 @@ export function ChecklistPreview() {
             </ul>
           )}
         </section>
-        <p className="text-sm text-slate-700">{model.submission}</p>
+        {model.submission !== null && <p className="text-sm text-slate-700">{model.submission}</p>}
       </section>
 
       <ChecklistSections sections={model.sections} idPrefix="pv" evidence="preview" />

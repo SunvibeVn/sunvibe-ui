@@ -55,6 +55,33 @@ describe("historyActivityText (survey-schedule spec 6.3, A-12)", () => {
     );
   });
 
+  it("labels the submission, revision and review rows with the checklist number (survey-checklist 6.2)", () => {
+    expect(historyActivityText({ type: "CHECKLIST_SUBMITTED", referenceNo: 1 }, t)).toBe("Checklist #1 submitted");
+    expect(historyActivityText({ type: "CHECKLIST_REVISION_STARTED", referenceNo: 2 }, t)).toBe("Revision #2 started");
+  });
+
+  it("labels_reviewed_namesOutcomeOnly: the row names the outcome, never the kind (survey BR-4)", () => {
+    const row = (referenceDetail: string) => historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2, referenceDetail }, t);
+    expect(row("PASSED")).toBe("Checklist #2 reviewed: Passed");
+    expect(row("NEEDS_CHANGES:DOCUMENTS_ONLY")).toBe("Checklist #2 reviewed: Needs changes");
+    expect(row("NEEDS_CHANGES:RESURVEY_REQUIRED")).toBe("Checklist #2 reviewed: Needs changes");
+    expect(row("FAILED:OUT_OF_SCOPE")).toBe("Checklist #2 reviewed: Failed");
+  });
+
+  it("never shows a note on a review row (survey BR-4)", () => {
+    expect(historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2, referenceDetail: "PASSED", note: "PRIVATE" }, t)).toBe(
+      "Checklist #2 reviewed: Passed",
+    );
+    expect(historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2, note: "PRIVATE" }, t)).toBe("Checklist reviewed · #2");
+  });
+
+  it("falls back to the plain label for a review row of an outcome this UI does not know", () => {
+    expect(historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2, referenceDetail: "OTHER" }, t)).toBe(
+      "Checklist reviewed · #2",
+    );
+    expect(historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2 }, t)).toBe("Checklist reviewed · #2");
+  });
+
   it("falls back to the plain label for a photo row of a category this UI does not know", () => {
     expect(historyActivityText({ type: "CHECKLIST_MEDIA_ADDED", referenceNo: 2, referenceDetail: "NEW_CATEGORY" }, t)).toBe(
       "Photo added · #2",

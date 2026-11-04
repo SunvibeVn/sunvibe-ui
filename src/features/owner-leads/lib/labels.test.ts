@@ -63,6 +63,7 @@ describe("label maps (W11-40)", () => {
       "DUPLICATE",
       "NEW",
       "ON_HOLD",
+      "QUALIFIED",
       "REJECTED",
       "SURVEY_SCHEDULED",
       "WITHDRAWN",
@@ -90,6 +91,9 @@ describe("label maps (W11-40)", () => {
       "CHECKLIST_SAVED",
       "CHECKLIST_MEDIA_ADDED",
       "CHECKLIST_MEDIA_REMOVED",
+      "CHECKLIST_SUBMITTED",
+      "CHECKLIST_REVISION_STARTED",
+      "CHECKLIST_REVIEWED",
     ].sort());
     expect(Object.keys(ROLE_LABEL).sort()).toEqual(["SALE", "SALE_LEADER"]);
     expect(Object.keys(PRICE_UNIT_LABEL).sort()).toEqual(["MONTH", "NIGHT", "TOTAL"]);
@@ -168,30 +172,31 @@ describe("checklist activity labels and groups (survey-checklist spec 6.4)", () 
 });
 
 describe("status groups", () => {
-  it("splits the eight workspace statuses into open and closed (A-21)", () => {
+  it("splits the nine workspace statuses into open and closed (A-21)", () => {
     expect([...LEAD_STATUSES]).toEqual([
       "NEW",
       "ASSIGNED",
       "CONTACTED",
       "SURVEY_SCHEDULED",
+      "QUALIFIED",
       "ON_HOLD",
       "DUPLICATE",
       "REJECTED",
       "WITHDRAWN",
     ]);
-    expect([...OPEN_STATUSES]).toEqual(["NEW", "ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
+    expect([...OPEN_STATUSES]).toEqual(["NEW", "ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "QUALIFIED", "ON_HOLD"]);
     expect([...CLOSED_STATUSES]).toEqual(["DUPLICATE", "REJECTED", "WITHDRAWN"]);
     expect([...OPEN_STATUSES, ...CLOSED_STATUSES].sort()).toEqual([...LEAD_STATUSES].sort());
   });
 });
 
 describe("statusLabelKey", () => {
-  it("returns the label for the eight workspace statuses", () => {
+  it("returns the label for the nine workspace statuses", () => {
     for (const status of LEAD_STATUSES) expect(statusLabelKey(status)).toBe(STATUS_LABEL[status]);
   });
 
   it("falls back to a generic label for the other API statuses and for no status", () => {
-    for (const status of ["VALIDATING", "QUALIFIED", "AGREEMENT_PENDING", "ONBOARDED", "", "x"]) {
+    for (const status of ["VALIDATING", "AGREEMENT_PENDING", "ONBOARDED", "", "x"]) {
       const key = statusLabelKey(status);
       expect(key).toBe("statusUnknown");
       expect(typeof resolve(key)).toBe("string");

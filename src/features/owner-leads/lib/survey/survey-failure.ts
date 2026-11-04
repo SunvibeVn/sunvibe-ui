@@ -7,6 +7,7 @@ export type SurveyErrorMessage =
   | "stale"
   | "alreadyScheduled"
   | "notAllowed"
+  | "checklistRefused"
   | "noCurrentVisit"
   | "invalidTransition"
   | "surveyorIneligible"
@@ -31,6 +32,7 @@ const MESSAGES: Partial<Record<SurveyUiError["kind"], { message: SurveyErrorMess
   stale: { message: "stale", reload: true },
   "already-scheduled": { message: "alreadyScheduled", reload: true },
   "not-allowed": { message: "notAllowed", reload: true },
+  "checklist-refused": { message: "checklistRefused", reload: true },
   "no-current-visit": { message: "noCurrentVisit", reload: true },
   "invalid-transition": { message: "invalidTransition", reload: true },
   "surveyor-ineligible": { message: "surveyorIneligible", reload: true },

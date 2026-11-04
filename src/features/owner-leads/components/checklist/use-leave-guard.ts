@@ -9,6 +9,18 @@ import { type GuardNavigation, installHistoryGuard } from "../../lib/checklist/h
 import { hasUnsavedChanges } from "../../lib/checklist/unsaved";
 import { tabDrafts } from "../../lib/drafts";
 
+/** True while a group of the checklist holds edits that were not saved. */
+export function useUnsavedChanges({ userId, leadId, checklistId }: { userId: string; leadId: string; checklistId: string }): boolean {
+  return useSyncExternalStore(
+    tabDrafts.subscribe,
+    () =>
+      hasUnsavedChanges(
+        CHECKLIST_GROUP_PATHS.map((group) => tabDrafts.get(checklistDraftKey({ userId, leadId, checklistId, group })) ?? ""),
+      ),
+    () => false,
+  );
+}
+
 /**
  * Asks before leaving the page or the tab while a group has unsaved changes (survey-checklist spec 6.2) or photos are
  * still uploading (survey-media spec 6.2: files not sent are lost): the browser's own prompt on unload, a confirm on a
@@ -20,15 +32,7 @@ export function useLeaveGuard(
   confirmText: string,
   uploads: { running: boolean; confirmText: string } = { running: false, confirmText: "" },
 ): boolean {
-  const { userId, leadId, checklistId } = key;
-  const dirty = useSyncExternalStore(
-    tabDrafts.subscribe,
-    () =>
-      hasUnsavedChanges(
-        CHECKLIST_GROUP_PATHS.map((group) => tabDrafts.get(checklistDraftKey({ userId, leadId, checklistId, group })) ?? ""),
-      ),
-    () => false,
-  );
+  const dirty = useUnsavedChanges(key);
 
   const uploading = uploads.running;
   const text = uploading ? uploads.confirmText : confirmText;

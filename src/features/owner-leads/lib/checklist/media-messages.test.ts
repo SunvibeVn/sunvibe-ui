@@ -6,11 +6,32 @@ import en from "@/i18n/messages/en.json";
 
 import type { OwnerLeadsKey } from "../labels";
 
-import { coverageStateText, mediaErrorText } from "./media-messages";
+import { coverageStateText, deselectErrorText, mediaErrorText } from "./media-messages";
 
 const translator = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });
 const t = (key: OwnerLeadsKey, values?: Record<string, string | number>) => translator(key, values);
 const text = (kind: MediaUiErrorKind, extra: Partial<MediaUiError> = {}) => mediaErrorText({ kind, ...extra }, t);
+
+describe("deselectErrorText (survey-checklist submission handoff 2: 429 only on a repeat that changed nothing)", () => {
+  it("does not speak of photo views for the budget of a deselection", () => {
+    expect(deselectErrorText({ kind: "rate-budget", minutes: 3 }, t)).toBe("Too many tries on this photo. Try again in 3 minutes.");
+  });
+
+  it("uses the photo texts for everything else", () => {
+    expect(deselectErrorText({ kind: "stale" }, t)).toBe(mediaErrorText({ kind: "stale" }, t));
+    expect(deselectErrorText({ kind: "retry" }, t)).toBe(mediaErrorText({ kind: "retry" }, t));
+  });
+});
+
+describe("the words of a carried photo (spec 6.1)", () => {
+  it("names the revision and the action", () => {
+    expect(t("checklist.media.carried.from", { no: 1 })).toBe("From revision #1");
+    expect(t("checklist.media.carried.remove")).toBe("Remove from this revision");
+    expect(t("checklist.media.carried.text", { from: 1 })).toBe(
+      "The photo leaves this revision only. It stays in revision #1 and its file is kept.",
+    );
+  });
+});
 
 describe("SV-072, SM-FE-11: the size message and the coverage words", () => {
   it("tooLarge_namesTheLimitOfTheLatestList (spec 6.2 as amended by C-15)", () => {

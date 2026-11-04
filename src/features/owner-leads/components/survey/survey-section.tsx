@@ -11,7 +11,9 @@ import {
   bookingBlockKey,
   dialogAppointment,
   earlierAppointments,
+  passedNoteKey,
   type Place,
+  resumesToQualified,
   scheduledAppointment,
 } from "../../lib/survey/appointment-view";
 import { isClosedLeadStatus } from "../../types";
@@ -27,6 +29,7 @@ import { ConfirmationDialog } from "./confirmation-dialog";
 import { OverlapList } from "./overlap-list";
 import { RequirementChanges } from "./requirement-changes";
 import { ResumeDialog } from "./resume-dialog";
+import { RevisionAction } from "./revision-action";
 import { VisitDialog } from "./visit-dialog";
 
 /** The open dialog; an appointment's dialog names the appointment it was opened for. */
@@ -116,6 +119,8 @@ export function SurveySection() {
     const target = opened === null ? null : dialogAppointment(block, opened.appointmentId);
     // A closed lead offers nothing; ALREADY_SCHEDULED is shown by the appointment itself.
     const showBlocked = blockedBy !== null && blockedBy !== "ALREADY_SCHEDULED" && !isClosedLeadStatus(lead.status);
+    const toQualified = resumesToQualified(block);
+    const passedNote = passedNoteKey(block);
 
     body = (
       <div className="space-y-4">
@@ -127,13 +132,15 @@ export function SurveySection() {
           )}
           {block.resumeAllowed === true && (
             <Button variant="secondary" disabled={busy} onClick={() => start({ dialog: "resume" })}>
-              {t("survey.resume")}
+              {t(toQualified ? "survey.resumeQualified" : "survey.resume")}
             </Button>
           )}
           {showBlocked && <p className="text-sm text-slate-600">{t(`survey.blocked.${blockedBy}`)}</p>}
           <ChecklistAction block={block} />
+          <RevisionAction block={block} />
         </div>
 
+        {passedNote !== null && <Alert>{t(passedNote)}</Alert>}
         {gone && <Alert>{t("survey.appointmentChanged")}</Alert>}
         {saved !== null && (
           <div className="space-y-2">
@@ -157,7 +164,7 @@ export function SurveySection() {
         <RequirementChanges changes={changes} />
 
         {open?.dialog === "book" && <BookDialog kind={kind} leadPlace={leadPlace} onClose={close} onSaved={done} />}
-        {open?.dialog === "resume" && <ResumeDialog onClose={close} onSaved={() => done()} />}
+        {open?.dialog === "resume" && <ResumeDialog toQualified={toQualified} onClose={close} onSaved={() => done()} />}
         {target !== null && opened?.dialog === "edit" && (
           <ChangeDialog appointment={target} onClose={close} onSaved={() => done()} />
         )}

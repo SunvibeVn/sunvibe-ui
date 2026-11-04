@@ -5,7 +5,7 @@ import type { paths } from "@/api/generated/schema";
 import type { ApiCall, CallOptions } from "@/features/auth/client";
 import { toPublicResult } from "@/lib/api";
 
-import { createMedia, holdMedia, knownVersionOf, listMedia, releaseMediaHold, removeMedia } from "./media-api";
+import { createMedia, deselectMedia, holdMedia, knownVersionOf, listMedia, releaseMediaHold, removeMedia } from "./media-api";
 import type { SurveysDeps } from "./surveys-api";
 
 type Sent = { method: string; url: URL; body: unknown; options?: CallOptions };
@@ -84,6 +84,18 @@ describe("media API (survey-media spec 7.1)", () => {
       ["POST", "/api/v1/staff/survey-media/M1/removal", { correction: null }],
       ["POST", "/api/v1/staff/survey-media/M1/hold", { reason: "CREDENTIAL_EXPOSURE" }],
       ["POST", "/api/v1/staff/survey-media/M1/hold-release", {}],
+    ]);
+  });
+
+  it("deselects a carried photo with the key `correction` always present (survey-checklist submission 4.6)", async () => {
+    const { sent, deps } = fakeServer(() => json(LIST));
+    const correction = { reason: "Wrong room", basis: { confirmedOn: "2026-11-04", text: "Seen on site" } };
+    const result = await deselectMedia("C2", "M1", { correction: null }, deps);
+    expect(result.ok && result.data.setVersion).toBe(LIST.setVersion);
+    await deselectMedia("C2", "M1", { correction }, deps);
+    expect(sent.map((entry) => [entry.method, entry.url.pathname, entry.body])).toEqual([
+      ["POST", "/api/v1/staff/survey-checklists/C2/media/M1/deselection", { correction: null }],
+      ["POST", "/api/v1/staff/survey-checklists/C2/media/M1/deselection", { correction }],
     ]);
   });
 

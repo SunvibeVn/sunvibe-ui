@@ -121,11 +121,21 @@ function versionsOf(view: ChecklistView): number[] {
   ];
 }
 
+/** How far a revision came: DRAFT, SUBMITTED, then decided; nothing goes back (survey-checklist submission 4.1). */
+function stageOf(view: ChecklistView): number {
+  if (view.status === undefined || view.status === "DRAFT") return 0;
+  return view.status === "SUBMITTED" ? 1 : 2;
+}
+
 /**
- * How a read compares with the screen: "older" when some version is lower and none higher (a read sent before a save
- * or takeover answered), "mixed" when some are lower and others higher (the page reads again), else "current".
+ * How a read compares with the screen: a newer status wins and an earlier one is "older", whatever the versions say
+ * (a revision never goes back, survey-checklist submission 4.1); within one status "older" when some version is lower
+ * and none higher (a read sent before a save or takeover answered), "mixed" when some are lower and others higher (the
+ * page reads again), else "current".
  */
 export function readOrder(screen: ChecklistView, read: ChecklistView): "current" | "older" | "mixed" {
+  const stage = stageOf(read) - stageOf(screen);
+  if (stage !== 0) return stage > 0 ? "current" : "older";
   const shown = versionsOf(screen);
   const incoming = versionsOf(read);
   const lower = incoming.some((value, index) => value < shown[index]);
@@ -133,8 +143,18 @@ export function readOrder(screen: ChecklistView, read: ChecklistView): "current"
   return incoming.some((value, index) => value > shown[index]) ? "mixed" : "older";
 }
 
-const lockView = (view: ChecklistView | null): ChecklistView | null =>
-  view === null || view.editable !== true ? view : { ...view, editable: false, readOnlyReason: view.readOnlyReason ?? "NOT_ASSIGNEE" };
+/** After a 403 nothing stays live on a stale hint: no input to edit, no review to send (survey-checklist submission 6.3). */
+function lockView(view: ChecklistView | null): ChecklistView | null {
+  if (view === null) return view;
+  const editing = view.editable === true;
+  const reviewing = view.review?.canReview === true;
+  if (!editing && !reviewing) return view;
+  return {
+    ...view,
+    ...(editing ? { editable: false, readOnlyReason: view.readOnlyReason ?? "NOT_ASSIGNEE" } : {}),
+    ...(reviewing ? { review: { ...view.review, canReview: false } } : {}),
+  };
+}
 
 /**
  * The page's view after an event (spec 6.2, 6.3): a 403 locks editing at once and asks for a read; a save or takeover

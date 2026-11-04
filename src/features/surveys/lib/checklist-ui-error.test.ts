@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { ApiResult } from "@/features/auth/client";
 import type { FieldError } from "@/lib/api";
 
-import { toChecklistUiError } from "./checklist-ui-error";
+import { decisionRules, submitGates, toChecklistUiError } from "./checklist-ui-error";
 
 const http = (
   status: number,
@@ -19,6 +19,97 @@ const http = (
 
 const field = (name: string, message = "server text", allowedValues?: string[]): FieldError =>
   allowedValues === undefined ? { field: name, message } : { field: name, message, allowedValues };
+
+describe("submission and review codes (survey-checklist submission spec 7.3)", () => {
+  it("error_notReady_mapsEachField: one gate per failing field, in the order of the answer", () => {
+    expect(
+      toChecklistUiError(
+        http(409, {
+          code: "CHECKLIST_NOT_READY",
+          fieldErrors: [
+            field("appointment"),
+            field("readiness.missing"),
+            field("media.pending"),
+            field("media.limit"),
+            field("media.unavailable"),
+          ],
+          correlationId: "c-g",
+        }),
+      ),
+    ).toEqual({
+      kind: "not-ready",
+      gates: ["APPOINTMENT_SCHEDULED", "MISSING_ITEMS", "PHOTOS_NOT_FINISHED", "PHOTO_LIMIT", "PHOTO_UNAVAILABLE"],
+      correlationId: "c-g",
+    });
+  });
+
+  it("drops a field of CHECKLIST_NOT_READY this UI does not know", () => {
+    expect(toChecklistUiError(http(409, { code: "CHECKLIST_NOT_READY", fieldErrors: [field("other")] }))).toEqual({
+      kind: "not-ready",
+      gates: [],
+    });
+  });
+
+  it("maps 409 CHECKLIST_SUBMISSION_NOT_AVAILABLE", () => {
+    expect(
+      toChecklistUiError(http(409, { code: "CHECKLIST_SUBMISSION_NOT_AVAILABLE", fieldErrors: [field("submission")] })),
+    ).toEqual({ kind: "submission-not-available" });
+  });
+
+  it("error_decisionNotAllowed_mapsHazards: the rules that refused, by field", () => {
+    expect(
+      toChecklistUiError(
+        http(409, {
+          code: "CHECKLIST_DECISION_NOT_ALLOWED",
+          fieldErrors: [field("hazards"), field("evidence.rejected")],
+          correlationId: "c-d",
+        }),
+      ),
+    ).toEqual({ kind: "decision-not-allowed", rules: ["HAZARDS", "EVIDENCE_REJECTED"], correlationId: "c-d" });
+  });
+
+  it("names every field of CHECKLIST_DECISION_NOT_ALLOWED", () => {
+    expect(
+      decisionRules([
+        "status",
+        "lead.status",
+        "lead.intentCycle",
+        "visit",
+        "media.serving",
+        "hazards",
+        "evidence.rejected",
+        "evidence.unavailable",
+        "appointment",
+        "evidence.coverage",
+      ]),
+    ).toEqual([
+      "STATUS",
+      "LEAD_STATUS",
+      "LEAD_INTENT_CYCLE",
+      "VISIT",
+      "MEDIA_SERVING",
+      "HAZARDS",
+      "EVIDENCE_REJECTED",
+      "EVIDENCE_UNAVAILABLE",
+      "APPOINTMENT",
+      "EVIDENCE_COVERAGE",
+    ]);
+  });
+
+  it("leaves out a rule field this UI does not know, and never reads an inherited key", () => {
+    expect(decisionRules(["hazards", "other", "toString"])).toEqual(["HAZARDS"]);
+    expect(submitGates(["toString", "media.limit"])).toEqual(["PHOTO_LIMIT"]);
+  });
+
+  it("error_reviewNotAllowed: 403 CHECKLIST_REVIEW_NOT_ALLOWED says why, another 403 stays forbidden", () => {
+    expect(
+      toChecklistUiError(
+        http(403, { code: "CHECKLIST_REVIEW_NOT_ALLOWED", fieldErrors: [field("reviewer")], correlationId: "c-r" }),
+      ),
+    ).toEqual({ kind: "review-not-allowed", correlationId: "c-r" });
+    expect(toChecklistUiError(http(403, { code: "ACCESS_DENIED" }))).toEqual({ kind: "forbidden" });
+  });
+});
 
 describe("toChecklistUiError (survey-checklist spec 6.3, 7.3: by code and field, never by message)", () => {
   it("returns null for a success", () => {

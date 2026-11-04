@@ -56,7 +56,7 @@ export function CheckpointView({ takeoverNo, onClose }: { takeoverNo: number; on
           {t("checklist.takeover.closeSnapshot")}
         </Button>
       </div>
-      <PageBanners earlier={earlier} photosAvailable={view.media?.available === true} withLaterVisit={false} />
+      <PageBanners earlier={earlier} view={view} withLaterVisit={false} />
       {load.state === "loading" && (
         <div role="status" aria-busy="true">
           <span className="sr-only">{t("checklist.takeover.snapshotLoading")}</span>

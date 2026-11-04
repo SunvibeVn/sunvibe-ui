@@ -157,7 +157,7 @@ test.describe("ADMIN in the workspace", () => {
     await page.getByRole("link", { name: `View the leads of ${fixture.sale.name} to reassign them` }).click();
     await expectListPage(page);
     await expect(page).toHaveURL((url) => url.search === `?scope=all&assignee=${fixture.sale.id}`);
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.QUALIFIED, T.status.ON_HOLD]);
     for (const lead of [L7, L9]) await expect(leadLink(page, lead)).toBeVisible({ timeout: 20_000 });
     await expect(leadLink(page, L10)).toHaveCount(0);
 

@@ -51,6 +51,7 @@
       "ASSIGNED": "Assigned",
       "CONTACTED": "Contacted",
       "SURVEY_SCHEDULED": "Survey Scheduled",
+      "QUALIFIED": "Qualified",
       "ON_HOLD": "On Hold",
       "DUPLICATE": "Duplicate",
       "REJECTED": "Declined",
@@ -94,7 +95,10 @@
       "CHECKLIST_TAKEN_OVER": "Checklist taken over",
       "CHECKLIST_SAVED": "Checklist saved",
       "CHECKLIST_MEDIA_ADDED": "Photo added",
-      "CHECKLIST_MEDIA_REMOVED": "Photo removed"
+      "CHECKLIST_MEDIA_REMOVED": "Photo removed",
+      "CHECKLIST_SUBMITTED": "Checklist submitted",
+      "CHECKLIST_REVISION_STARTED": "Revision started",
+      "CHECKLIST_REVIEWED": "Checklist reviewed"
     },
     "role": {
       "SALE": "Sale",
@@ -253,6 +257,9 @@
       "noEditRule": "Earlier entries cannot be edited or deleted.",
       "checklistStarted": "Checklist #{no} started",
       "checklistTakenOver": "Checklist #{no} taken over",
+      "checklistSubmitted": "Checklist #{no} submitted",
+      "checklistReviewed": "Checklist #{no} reviewed: {outcome}",
+      "revisionStarted": "Revision #{no} started",
       "checklistSaved": "Checklist #{no}: {group} saved",
       "checklistSaves": "Checklist #{no}: {count} saves by {name} ({from}–{to})",
       "showSaves": "Show the {count} saves",
@@ -340,11 +347,14 @@
       "book": "Book survey",
       "bookResurvey": "Book re-survey",
       "resume": "Resume survey",
+      "resumeQualified": "Resume to Qualified",
       "blocked": {
         "NO_ASSIGNEE": "Assign the lead first",
         "LEAD_STATUS": "A survey cannot be booked for this lead now.",
         "INTENT": "Change the requirement to a rental before booking",
         "SURVEYOR_INELIGIBLE": "The assignee can no longer take leads. Reassign the lead first.",
+        "CHECKLIST_SUBMITTED": "A submitted checklist is waiting for review, so no survey can be booked.",
+        "CHECKLIST_PASSED": "A checklist of this requirement passed review, so no survey can be booked.",
         "UNKNOWN": "A survey cannot be booked for this lead now."
       },
       "kind": {
@@ -550,6 +560,7 @@
       "errors": {
         "stale": "Someone else just updated this lead. The lead has been reloaded. Your text is kept.",
         "alreadyScheduled": "This lead already has a scheduled survey.",
+        "checklistRefused": "The survey record of this lead does not allow this now. The section has been reloaded.",
         "notAllowed": "A survey cannot be booked for this lead now.",
         "noCurrentVisit": "There is no visit to resume.",
         "invalidTransition": "This action is not allowed in the lead's current status.",
@@ -579,6 +590,155 @@
       "saved": "Requirement changed."
     },
     "checklist": {
+      "banner": {
+        "submitted": "Submitted by {name} on {when}. Waiting for review.",
+        "decided": "{outcome} · reviewed by {name} on {when}"
+      },
+      "decision": {
+        "title": "Review decision",
+        "outcome": "Outcome",
+        "reviewer": "Reviewer",
+        "date": "Date",
+        "reason": "Reason",
+        "notes": "Notes",
+        "limitations": "Limitations",
+        "marks": "Photos not accepted",
+        "mark": "{photo}: {reason}",
+        "photoNo": "Photo #{no} · {pair}",
+        "photoNoFrom": "Photo #{no} (from revision #{from}) · {pair}",
+        "passedScope": "Internal site record only. It is not a legal, ownership, photo-permission or advertising approval.",
+        "passedReason": {
+          "INTENT_CHANGED": "This pass no longer counts: the requirement changed.",
+          "LEAD_CLOSED": "This pass no longer counts: the lead is closed.",
+          "EVIDENCE_HELD": "A frozen photo is on hold. This pass counts again once the hold is released.",
+          "EVIDENCE_GONE": "A frozen photo lost its content. This pass can no longer be used."
+        }
+      },
+      "review": {
+        "outcome": {
+          "PASSED": "Passed",
+          "NEEDS_CHANGES": "Needs changes",
+          "FAILED": "Failed"
+        },
+        "outcomeKind": "{outcome} ({kind})",
+        "outcomeUnknown": "Decided",
+        "kind": {
+          "DOCUMENTS_ONLY": "documents",
+          "RESURVEY_REQUIRED": "re-survey",
+          "OUT_OF_SCOPE": "out of scope",
+          "NOT_ACCEPTED": "not accepted",
+          "TEMPORARY": "temporary"
+        },
+        "mediaBanner": "Media v1: photo permission was not recorded. These photos are internal survey evidence, not approved for any other use.",
+        "keptText": "What you typed is kept here, read-only.",
+        "leaveConfirm": "Your review is not sent yet and leaving drops it. Leave this page?",
+        "open": {
+          "warnings": "Open warnings",
+          "unconfirmed": "Terms not confirmed"
+        },
+        "earlier": {
+          "title": "Earlier decisions",
+          "none": "No earlier decision on this requirement.",
+          "loading": "Loading the earlier decisions…",
+          "failed": "Some earlier decisions could not be loaded.",
+          "retry": "Try again",
+          "line": "Checklist #{no}: {outcome} · {name}, {when}",
+          "reason": "Reason: {text}",
+          "notes": "Notes: {text}",
+          "limitations": "Limitations: {text}"
+        },
+        "evidence": {
+          "title": "Submitted photos",
+          "empty": "This submission has no photos.",
+          "loadFailed": "The photos could not be loaded.",
+          "held": "On hold: no image for now.",
+          "notAccepted": "Not accepted",
+          "reason": "Why it is not accepted"
+        },
+        "form": {
+          "title": "Decision",
+          "outcome": "Outcome",
+          "needsChangesKind": "What is needed",
+          "failedKind": "Why it failed",
+          "kindLabel": {
+            "DOCUMENTS_ONLY": "Documents only",
+            "RESURVEY_REQUIRED": "Re-survey required",
+            "OUT_OF_SCOPE": "Out of scope",
+            "NOT_ACCEPTED": "Not accepted",
+            "TEMPORARY": "Temporary"
+          },
+          "reason": "Reason",
+          "notes": "Notes",
+          "limitations": "Limitations",
+          "passedBlocked": "Passed is not available now:",
+          "outcomeRequired": "Choose an outcome.",
+          "outcomeBlocked": "Passed is not available now. Choose another outcome.",
+          "fixProblems": "Check the marked fields, including the reason of each photo marked Not accepted.",
+          "kindRequired": "Choose one.",
+          "send": "Send decision"
+        },
+        "confirm": {
+          "title": "Send this decision?",
+          "text": "A decision cannot be changed.",
+          "send": "Confirm decision",
+          "sending": "Sending…",
+          "cancel": "Back to the review",
+          "consequence": {
+            "qualified": "The lead moves to Qualified.",
+            "revision": "The lead stays in Survey Scheduled and the assignee can start a new revision on this visit.",
+            "contacted": "The lead returns to Contacted and needs a new visit.",
+            "closed": "The lead closes as Declined. A closed lead cannot be reopened."
+          }
+        },
+        "rule": {
+          "STATUS": "This revision is no longer waiting for a decision.",
+          "LEAD_STATUS": "The lead is not in Survey Scheduled.",
+          "LEAD_INTENT_CYCLE": "The requirement changed after this visit.",
+          "VISIT": "A newer site visit exists.",
+          "MEDIA_SERVING": "Photo viewing is off, so no decision can be made now.",
+          "HAZARDS": "A risk warning is still open.",
+          "EVIDENCE_REJECTED": "A photo is marked Not accepted.",
+          "EVIDENCE_UNAVAILABLE": "A frozen photo is held or has lost its content.",
+          "APPOINTMENT": "A survey is still scheduled on this lead.",
+          "EVIDENCE_COVERAGE": "A required photo pair is not covered by an accepted photo."
+        },
+        "errors": {
+          "notAllowed": "This decision is not allowed now.",
+          "notReviewer": "You cannot review this revision: you took part in it, you hold the lead, or your account cannot sign in.",
+          "unknown": "The answer was lost and the checklist could not be read. The decision may stand. Send it again: a second decision is refused, nothing changes.",
+          "stale": "The revision changed meanwhile. It has been reloaded; check it and send again.",
+          "failed": "The decision could not be sent. Please try again."
+        }
+      },
+      "submit": {
+        "title": "Submit for review",
+        "button": "Submit for review",
+        "submitting": "Submitting…",
+        "dialog": {
+          "title": "Submit this checklist for review?",
+          "unconfirmed": "Terms not confirmed",
+          "warnings": "Open warnings",
+          "frozen": "The submitted record and its photos can no longer be changed.",
+          "site": "A site record, not a legal, safety or photo-permission check.",
+          "unsaved": "You have unsaved changes. They will not be part of the submitted record.",
+          "confirm": "Submit",
+          "cancel": "Keep editing"
+        },
+        "gate": {
+          "SUBMISSION_NOT_AVAILABLE": "Submission is not open yet.",
+          "EVIDENCE_NOT_AVAILABLE": "Survey photos are not available, so this checklist cannot be submitted yet.",
+          "APPOINTMENT_SCHEDULED": "A survey is still scheduled on this lead. Record or cancel it first.",
+          "MISSING_ITEMS": "Some required items are missing. See the list above.",
+          "PHOTOS_NOT_FINISHED": "Some photos are still uploading or processing.",
+          "PHOTO_LIMIT": "Too many photos are selected. Remove some first.",
+          "PHOTO_UNAVAILABLE": "A selected photo is held or has lost its content.",
+          "UNKNOWN": "This checklist cannot be submitted now."
+        },
+        "errors": {
+          "stale": "The checklist changed meanwhile. It has been reloaded; check it and submit again.",
+          "failed": "The checklist could not be submitted. Please try again."
+        }
+      },
       "groups": {
         "IDENTIFICATION": "Identification",
         "PARTS": "Private and shared parts",
@@ -612,12 +772,14 @@
         "NO_CURRENT_VISIT": "No site visit to record yet.",
         "INTENT": "Checklists are for long-term rental leads.",
         "LEAD_STATUS": "The lead is not in Survey Scheduled.",
-        "ALREADY_STARTED": "A checklist for this visit already exists.",
+        "CHECKLIST_EXISTS": "A checklist for this visit already exists.",
         "NOT_ASSIGNEE": "Only the lead's assignee starts the checklist.",
         "ASSIGNEE_INELIGIBLE": "The assignee can no longer take leads. Reassign the lead first."
       },
       "readOnly": {
         "INTENT_CHANGED": "The requirement changed after this visit, so this checklist no longer counts.",
+        "SUBMITTED": "This revision was submitted and can no longer be changed.",
+        "DECIDED": "This revision was reviewed and can no longer be changed.",
         "NEWER_VISIT": "A newer site visit exists.",
         "LEAD_STATUS": "The lead is not in Survey Scheduled.",
         "NOT_ASSIGNEE": "Only the lead's assignee edits the checklist.",
@@ -635,6 +797,15 @@
         "starting": "Starting…",
         "close": "Close"
       },
+      "revision": {
+        "start": "Start revision #{no}",
+        "starting": "Starting the revision…",
+        "intro": "You did not hold the previous revision. Before you start, say where your information comes from.",
+        "blockedBy": {
+          "NOT_ASSIGNEE": "Only the lead's assignee starts the next revision.",
+          "ASSIGNEE_INELIGIBLE": "The assignee can no longer take leads. Reassign the lead first."
+        }
+      },
       "startErrors": {
         "notAllowed": "The checklist cannot be started now. The section has been reloaded.",
         "alreadyStarted": "A checklist for this visit already exists. The section has been reloaded.",
@@ -646,6 +817,8 @@
       "lines": {
         "title": "Checklists",
         "line": "Checklist #{no} · Draft · {missing, plural, =0 {no items missing} one {# item missing} other {# items missing}} · held by {holder}",
+        "frozen": "Checklist #{no} · held by {holder}",
+        "submitted": "Submitted",
         "saved": "saved {when} by {name}",
         "open": "Open checklist #{no}"
       },
@@ -665,7 +838,8 @@
         "tabs": {
           "label": "Checklist views",
           "edit": "Edit",
-          "preview": "Preview"
+          "preview": "Preview",
+          "review": "Review"
         },
         "groupNav": "Groups",
         "readOnlyTitle": "Read only",
@@ -680,6 +854,7 @@
         "surveyorIneligible": "The assignee can no longer take leads. Reassign the lead first.",
         "takeoverStale": "The checklist changed meanwhile. It has been reloaded; take over again.",
         "takeoverNotAllowed": "You cannot take over this draft now. The checklist has been reloaded.",
+        "alreadyDecided": "This revision has a decision now. It is shown above.",
         "badRequest": "Some details are not valid. Please check them.",
         "failed": "Something went wrong. Please try again."
       },
@@ -697,7 +872,8 @@
         "listTitle": "Takeovers",
         "kind": {
           "START_BY_OTHER": "Started by someone else",
-          "TAKEOVER": "Takeover"
+          "TAKEOVER": "Takeover",
+          "REVISION_BY_OTHER": "Revision started by someone else"
         },
         "item": "{kind} #{no} · {when}",
         "fromTo": "From {from} to {to}",
@@ -1032,7 +1208,8 @@
           "DIFFERENCE_NOTE_MISSING": "Explain how the address differs from the lead",
           "EVIDENCE_PENDING": "Photos: waiting for survey photos",
           "EVIDENCE_MISSING": "Photo missing: {pair}",
-          "EVIDENCE_PROCESSING": "Photo still processing: {pair}"
+          "EVIDENCE_PROCESSING": "Photo still processing: {pair}",
+          "EVIDENCE_UNAVAILABLE": "Photo on hold or lost: {pair}"
         },
         "warning": {
           "OPEN_IMPORTANT_HAZARD": "Important or unclassified risk not seen resolved",
@@ -1191,6 +1368,14 @@
           "cascade": "Photo #{no} · {pair}: removed with an identification save by {name}, {when}",
           "more": "{count, plural, one {# more not shown} other {# more not shown}}"
         },
+        "carried": {
+          "from": "From revision #{no}",
+          "remove": "Remove from this revision",
+          "title": "Remove photo #{no} from this revision?",
+          "text": "The photo leaves this revision only. It stays in revision #{from} and its file is kept.",
+          "correction": "Someone else uploaded this photo. Removing it from this revision needs a correction.",
+          "rateLimited": "Too many tries on this photo. Try again in {minutes, plural, one {# minute} other {# minutes}}."
+        },
         "remove": {
           "title": "Remove photo #{no}?",
           "text": "The photo leaves this checklist and its file is deleted. A replacement is a new photo.",
@@ -1292,7 +1477,27 @@
     "tabs": {
       "label": "Survey lists",
       "mine": "My Surveys",
-      "all": "All Surveys"
+      "all": "All Surveys",
+      "reviews": "Reviews"
+    },
+    "reviews": {
+      "empty": "No revision is waiting for review.",
+      "total": "{count, plural, one {# revision} other {# revisions}} waiting for review",
+      "checklist": "Checklist #{no}",
+      "submitted": "Submitted by {name} on {when}",
+      "unknownPerson": "Unknown",
+      "canReview": "You can review this",
+      "open": "Review checklist #{no}",
+      "view": "Open checklist #{no}",
+      "reason": {
+        "NOT_REVIEWER_ROLE": "Only a sale leader, a sales manager or an admin reviews.",
+        "NOT_SUBMITTED": "This revision is not waiting for a decision.",
+        "LEAD_STATUS": "The lead is not in Survey Scheduled.",
+        "INTENT_CHANGED": "The requirement changed after this visit.",
+        "SERVING_DISABLED": "Photo viewing is off.",
+        "NOT_INDEPENDENT": "You took part in this visit or hold the lead, so someone else reviews it.",
+        "UNKNOWN": "You cannot review this revision now."
+      }
     },
     "filters": {
       "surveyor": "Surveyor",

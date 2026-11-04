@@ -1,14 +1,17 @@
 import { type Scope, SURVEYS_PATH, type Viewer } from "@/features/workspace";
 
-import type { SurveyListQuery } from "../types";
+import type { ChecklistReviewQueueQuery, SurveyListQuery } from "../types";
 
 export { SURVEYS_PATH };
 
 /** Appointments per page of the list (spec 7.1 default). */
 export const SURVEY_PAGE_SIZE = 20;
 
-/** The survey list as the URL describes it: the tab, the surveyor filter (All Surveys only) and a 1-based page. */
-export type SurveyListState = { scope: Scope; surveyor?: string; page: number };
+/**
+ * The survey list as the URL describes it: the tab, the surveyor filter (All Surveys only) and a 1-based page. `tab`
+ * opens the review queue (survey-checklist submission A-9), which has no surveyor; `scope` stays for the way back.
+ */
+export type SurveyListState = { scope: Scope; surveyor?: string; tab?: "reviews"; page: number };
 
 const USER_ID = /^[A-Za-z0-9]{1,26}$/;
 const PAGE = /^[1-9][0-9]{0,5}$/;
@@ -26,6 +29,7 @@ export function parseSurveyListState(params: URLSearchParams, viewer: Viewer): S
   const scope: Scope = (raw === "mine" || raw === "all") && viewer.tabs.includes(raw) ? raw : viewer.defaultScope;
   const page = params.get("page");
   const state: SurveyListState = { scope, page: page !== null && PAGE.test(page) ? Number(page) : 1 };
+  if (params.get("tab") === "reviews") return { ...state, tab: "reviews" };
   const surveyor = scope === "all" ? validSurveyor(params.get("surveyor")) : undefined;
   if (surveyor !== undefined) state.surveyor = surveyor;
   return state;
@@ -34,7 +38,8 @@ export function parseSurveyListState(params: URLSearchParams, viewer: Viewer): S
 /** The query string (without `?`): the scope always, the surveyor and a page above 1 when set. */
 export function serializeSurveyListState(state: SurveyListState): string {
   const params = new URLSearchParams({ scope: state.scope });
-  if (state.scope === "all" && state.surveyor !== undefined) params.set("surveyor", state.surveyor);
+  if (state.tab === "reviews") params.set("tab", "reviews");
+  else if (state.scope === "all" && state.surveyor !== undefined) params.set("surveyor", state.surveyor);
   if (state.page > 1) params.set("page", String(state.page));
   return params.toString();
 }
@@ -46,7 +51,17 @@ export function toSurveyApiQuery(state: SurveyListState): SurveyListQuery {
   return query;
 }
 
-/** A change of tab or surveyor; page 1. A tab switch drops the surveyor; `null` clears it. */
+/** The review queue query of the state: a zero-based page, size 20. */
+export function toReviewQueueQuery(state: SurveyListState): ChecklistReviewQueueQuery {
+  return { page: state.page - 1, size: SURVEY_PAGE_SIZE };
+}
+
+/** The Reviews tab on its first page. */
+export function withReviewsTab(state: SurveyListState): SurveyListState {
+  return { scope: state.scope, tab: "reviews", page: 1 };
+}
+
+/** A change of tab or surveyor; page 1. A tab switch drops the surveyor; `null` clears it; the list leaves Reviews. */
 export function withSurveyFilter(
   state: SurveyListState,
   change: { scope?: Scope; surveyor?: string | null },

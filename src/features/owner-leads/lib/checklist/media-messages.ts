@@ -55,6 +55,12 @@ export function mediaErrorText(
   return key === undefined ? null : t(key);
 }
 
+/** The message of a failed deselection: its 429 budget is about repeats, not about photo views (handoff 2). */
+export function deselectErrorText(error: MediaUiError, t: OwnerLeadsTranslate): string | null {
+  if (error.kind === "rate-budget") return t("checklist.media.carried.rateLimited", { minutes: error.minutes ?? 1 });
+  return mediaErrorText(error, t);
+}
+
 /** The state of a coverage row in words (spec 6.2 Required photos): "Not required" alone when the server names no reason. */
 export function coverageStateText(
   row: Pick<CoverageRow, "state" | "readyCount" | "notRequiredReason">,

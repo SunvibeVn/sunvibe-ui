@@ -253,6 +253,7 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       ASSIGNED: "Assigned",
       CONTACTED: "Contacted",
       SURVEY_SCHEDULED: "Survey Scheduled",
+      QUALIFIED: "Qualified",
       ON_HOLD: "On Hold",
       DUPLICATE: "Duplicate",
       REJECTED: "Declined",
@@ -300,6 +301,9 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       CHECKLIST_SAVED: "Checklist saved",
       CHECKLIST_MEDIA_ADDED: "Photo added",
       CHECKLIST_MEDIA_REMOVED: "Photo removed",
+      CHECKLIST_SUBMITTED: "Checklist submitted",
+      CHECKLIST_REVISION_STARTED: "Revision started",
+      CHECKLIST_REVIEWED: "Checklist reviewed",
     });
   });
 

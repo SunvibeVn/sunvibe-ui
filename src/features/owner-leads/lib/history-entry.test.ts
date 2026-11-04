@@ -27,6 +27,20 @@ describe("entryTargets", () => {
     }
   });
 
+  it("offers On Hold and the closing statuses from Qualified (survey-checklist 4.8)", () => {
+    expect(entryTargets("QUALIFIED")).toEqual([KEEP_STATUS, "ON_HOLD", "DUPLICATE", "REJECTED", "WITHDRAWN"]);
+  });
+
+  it("takes the survey record for a held lead (survey-checklist D3-13)", () => {
+    expect(entryTargets("ON_HOLD", { hasPassed: true, hasSubmitted: false })).toEqual([
+      KEEP_STATUS,
+      "DUPLICATE",
+      "REJECTED",
+      "WITHDRAWN",
+    ]);
+    expect(entryTargets("ON_HOLD", { hasPassed: false, hasSubmitted: true })).not.toContain("CONTACTED");
+  });
+
   it("offers nothing on a closed lead or an unknown status", () => {
     expect(entryTargets("REJECTED")).toEqual([]);
     expect(entryTargets(undefined)).toEqual([]);

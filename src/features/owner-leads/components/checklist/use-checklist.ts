@@ -5,13 +5,16 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 
 import { useSession } from "@/features/auth/client";
 import {
+  type ChecklistDecisionInput,
   type ChecklistGroupPath,
   type ChecklistSaveBody,
   type ChecklistTakeoverInput,
   type ChecklistUiError,
   type ChecklistView,
+  decideChecklist,
   getChecklist,
   saveChecklistGroup,
+  submitChecklist,
   takeOverChecklist,
   toChecklistUiError,
 } from "@/features/surveys";
@@ -32,6 +35,8 @@ import {
   viewEvent,
   type ViewEvent,
 } from "../../lib/checklist/page-state";
+import { runDecision, runSubmit } from "../../lib/checklist/review-flow";
+import type { DecisionResult } from "../../lib/checklist/review-model";
 import { listFlash, tabDrafts, useDraftSessionSync } from "../../lib/drafts";
 import { getLeadSurvey } from "../../services/owner-leads-api";
 import { LIST_PATH } from "../list-href";
@@ -100,15 +105,17 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
     router.replace(LIST_PATH);
   }, [userId, urlLeadId, checklistId, router]);
 
-  const read = useCallback((): Promise<void> => {
-    if (userId === null) return Promise.resolve();
+  /** Reads the checklist onto the screen; answers what the server said, also when a newer read takes the screen. */
+  const read = useCallback((): Promise<ChecklistView | null> => {
+    if (userId === null) return Promise.resolve(null);
     const mine = ++newest.current;
     return getChecklist(checklistId).then((result) => {
-      if (mine !== newest.current || !live.current) return;
+      const answer = result.ok ? result.data : null;
+      if (mine !== newest.current || !live.current) return answer;
       const error = toChecklistUiError(result);
       if (error === null && result.ok) {
         if (dispatchView({ type: "read", view: result.data })) rereadRef.current();
-        return;
+        return answer;
       }
       const failure = error ?? { kind: "retry" as const };
       if (failure.kind === "forbidden" || failure.kind === "not-found") setAccessLost((count) => count + 1);
@@ -117,6 +124,7 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
       const step = pageFailureStep(failure);
       if (step.kind === "leave") leave();
       else if (step.kind !== "session" && viewRef.current === null) setLoaded({ userId, value: { state: "error", error: failure } });
+      return answer;
     });
   }, [userId, checklistId, dispatchView, leave]);
 
@@ -258,6 +266,52 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
     [checklistId, merge, read, handlePageFailure],
   );
 
+  /**
+   * Submits the revision on screen (survey-checklist submission 6.1). Drafts of a frozen revision can never be saved, so
+   * they go with the submit.
+   */
+  const submit = useCallback(async (): Promise<CommandOutcome> => {
+    setLocks(lockAll);
+    try {
+      return await runSubmit({
+        send: () => submitChecklist(checklistId, { expectedVersion: viewRef.current?.version ?? 0 }),
+        apply: (answer) => {
+          setMessage(null);
+          if (userId !== null) forgetChecklist(tabDrafts, { userId, leadId: answer.leadId ?? urlLeadId, checklistId });
+          merge(answer);
+        },
+        read,
+        pageFailure: handlePageFailure,
+      });
+    } finally {
+      setLocks(unlockAll);
+    }
+  }, [checklistId, userId, urlLeadId, merge, read, handlePageFailure]);
+
+  /** Sends a decision (survey-checklist submission 6.1); the sequence after a refusal is `runDecision`'s. */
+  const decide = useCallback(
+    async (input: ChecklistDecisionInput): Promise<DecisionResult> => {
+      setLocks(lockAll);
+      try {
+        const result = await runDecision({
+          send: () => decideChecklist(checklistId, input),
+          apply: (answer) => {
+            setMessage(null);
+            merge(answer);
+          },
+          read,
+          // The read says the review ended; the tab keeps the form and says why.
+          pageFailure: (error) => (error.kind === "review-not-allowed" ? read() : handlePageFailure(error)),
+        });
+        if (result.kind === "already-decided") setMessage("alreadyDecided");
+        return result;
+      } finally {
+        setLocks(unlockAll);
+      }
+    },
+    [checklistId, merge, read, handlePageFailure],
+  );
+
   const clearNotKept = useCallback((group: ChecklistGroupPath) => {
     setNotKept((prev) => {
       if (prev[group] === undefined) return prev;
@@ -278,6 +332,8 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
     clearNotKept,
     save,
     takeOver,
+    submit,
+    decide,
     fail: handlePageFailure,
     reload: read,
     accessLost,

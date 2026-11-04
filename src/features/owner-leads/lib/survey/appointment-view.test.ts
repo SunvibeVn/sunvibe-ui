@@ -4,11 +4,15 @@ import type { SurveyAppointment, SurveyBlock } from "@/features/surveys";
 
 import {
   bookingBlockKey,
+  checklistLineReason,
   dialogAppointment,
   earlierAppointments,
   holderOptions,
+  passedNoteKey,
   placeDiffersFromLead,
   placeOf,
+  resumesToQualified,
+  revisionChip,
   scheduledAppointment,
   visitMode,
 } from "./appointment-view";
@@ -121,6 +125,52 @@ describe("visitMode (A-8)", () => {
     expect(visitMode("U9", appointment(), "U1")).toBe("proxy");
     expect(visitMode("U1", appointment(), "U2")).toBe("proxy");
     expect(visitMode("U1", appointment({ surveyorUserId: "U2" }), "U1")).toBe("proxy");
+  });
+});
+
+describe("the survey record in the Survey section (survey-checklist submission 6.2)", () => {
+  it("names a booking refused by a submitted or a passed checklist", () => {
+    expect(bookingBlockKey({ booking: { allowed: false, blockedBy: "CHECKLIST_SUBMITTED" } })).toBe("CHECKLIST_SUBMITTED");
+    expect(bookingBlockKey({ booking: { allowed: false, blockedBy: "CHECKLIST_PASSED" } })).toBe("CHECKLIST_PASSED");
+  });
+
+  it("resumes to Qualified only when the block says so", () => {
+    expect(resumesToQualified({ resume: { target: "QUALIFIED" } })).toBe(true);
+    expect(resumesToQualified({ resume: { target: "SURVEY_SCHEDULED" } })).toBe(false);
+    expect(resumesToQualified({ resume: { target: null } })).toBe(false);
+    expect(resumesToQualified({})).toBe(false);
+  });
+
+  it("says why a pass of the cycle stopped being usable", () => {
+    expect(passedNoteKey({ survey: { hasPassed: true, passed: { usable: false, reason: "EVIDENCE_HELD" } } })).toBe(
+      "checklist.decision.passedReason.EVIDENCE_HELD",
+    );
+    expect(passedNoteKey({ survey: { hasPassed: true, passed: { usable: true, reason: null } } })).toBeNull();
+    expect(passedNoteKey({ survey: { hasPassed: false, passed: null } })).toBeNull();
+    expect(passedNoteKey({})).toBeNull();
+  });
+
+  it("gives a revision past the draft its chip", () => {
+    expect(revisionChip({ status: "SUBMITTED" })).toEqual({ label: "checklist.lines.submitted", tone: "info" });
+    expect(revisionChip({ status: "PASSED", outcome: "PASSED" })).toEqual({ label: "checklist.review.outcome.PASSED", tone: "success" });
+    expect(revisionChip({ status: "NEEDS_CHANGES", outcome: "NEEDS_CHANGES" })).toEqual({
+      label: "checklist.review.outcome.NEEDS_CHANGES",
+      tone: "warning",
+    });
+    expect(revisionChip({ status: "FAILED", outcome: "FAILED" })).toEqual({ label: "checklist.review.outcome.FAILED", tone: "danger" });
+  });
+
+  it("gives a draft no chip: its line says Draft", () => {
+    expect(revisionChip({ status: "DRAFT" })).toBeNull();
+    expect(revisionChip({})).toBeNull();
+  });
+
+  it("shows the read-only reason of a draft only: the chip speaks for a frozen revision", () => {
+    expect(checklistLineReason({ readOnlyReason: "NEWER_VISIT", editable: false })).toBe("checklist.readOnly.NEWER_VISIT");
+    expect(checklistLineReason({ readOnlyReason: "SUBMITTED", editable: false })).toBeNull();
+    expect(checklistLineReason({ readOnlyReason: "DECIDED", editable: false })).toBeNull();
+    expect(checklistLineReason({ readOnlyReason: null, editable: true })).toBeNull();
+    expect(checklistLineReason({ readOnlyReason: "NOT_ASSIGNEE", editable: true })).toBeNull();
   });
 });
 

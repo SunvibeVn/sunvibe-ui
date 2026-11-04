@@ -76,6 +76,7 @@ const ALL_BOXES = [
   T.status.ASSIGNED,
   T.status.CONTACTED,
   T.status.SURVEY_SCHEDULED,
+  T.status.QUALIFIED,
   T.status.ON_HOLD,
   T.status.DUPLICATE,
   T.status.REJECTED,
@@ -83,7 +84,7 @@ const ALL_BOXES = [
   T.showClosed,
 ];
 const NO_NEW_BOXES = ALL_BOXES.slice(1);
-const OPEN_DEFAULT = [T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD];
+const OPEN_DEFAULT = [T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.QUALIFIED, T.status.ON_HOLD];
 
 /** The options of the new history row's STATUS select (D-4). */
 const statusOptions = (page: Page): Locator => entryStatus(page).locator("option");

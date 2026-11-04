@@ -46,8 +46,7 @@ const M = {
   start: "Start checklist (survey #1)",
   open: "Open checklist #1",
   internalOnly: "Internal survey evidence. Not approved for listings.",
-  laterRelease: "Submission and review open in a later release.",
-  submission: "Submission is not available yet.",
+  firstGate: "Some required items are missing. See the list above.",
   asset: "Asset (whole property)",
   motion: "Turn off Motion or Live Photo, or export a still image, then upload it again.",
   duplicate: "This photo is already in the checklist.",
@@ -197,7 +196,7 @@ test.describe("Survey photos (survey-media media-b)", () => {
     await surveySection(sale).getByRole("button", { name: M.start, exact: true }).click();
     await expect(sale).toHaveURL(/\/survey-checklists\/[0-9A-Z]{26}$/, { timeout: 20_000 });
     checklistId = new URL(sale.url()).pathname.split("/").at(-1) ?? "";
-    await expect(byText(sale, M.laterRelease)).toBeVisible({ timeout: 20_000 });
+    await expect(byText(sale, M.firstGate)).toBeVisible({ timeout: 20_000 });
 
     const g7 = photos(sale, true);
     await expect(g7.getByText(M.internalOnly, { exact: true })).toBeVisible();
@@ -242,12 +241,13 @@ test.describe("Survey photos (survey-media media-b)", () => {
     await expect(g7.getByText("Missing", { exact: true })).toHaveCount(0);
     await expect(card(g7, 1).getByAltText("Photo #1", { exact: true })).toBeVisible({ timeout: 30_000 });
 
-    // Coverage complete is a readiness fact only: submission stays unavailable, no photo gap is left.
+    // Coverage complete is a readiness fact only: the submit panel still names its first failing gate, no photo gap is left.
     await mainArea(sale).getByRole("navigation", { name: "Checklist views" }).getByRole("link", { name: "Preview" }).click();
-    await expect(byText(sale, M.submission)).toBeVisible();
     await expect(mainArea(sale).getByRole("link", { name: /^Photo missing/ })).toHaveCount(0);
     await expect(mainArea(sale).getByRole("button", { name: /submit|listing/i })).toHaveCount(0);
     await mainArea(sale).getByRole("navigation", { name: "Checklist views" }).getByRole("link", { name: "Edit" }).click();
+    await expect(byText(sale, M.firstGate)).toBeVisible();
+    await expect(mainArea(sale).getByRole("button", { name: /submit|listing/i })).toHaveCount(0);
   });
 
   test("SM-27: files that are not accepted fail alone, each with its reason (motion photo guidance)", async () => {

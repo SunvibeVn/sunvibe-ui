@@ -92,6 +92,7 @@ const S = {
   tabsLabel: "Survey lists",
   mySurveys: "My Surveys",
   allSurveys: "All Surveys",
+  reviews: "Reviews",
   surveyor: "Surveyor",
   emptyFiltered: "No scheduled surveys for this surveyor.",
 } as const;
@@ -306,7 +307,7 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
     await sale.getByRole("navigation", { name: T.menuLabel }).getByRole("link", { name: T.menuSurveys }).click();
     await expect(sale.getByRole("heading", { level: 1, name: S.surveysTitle })).toBeAttached({ timeout: 20_000 });
     await expect(sale).toHaveURL((url) => url.pathname === "/workspace/surveys" && url.search === "?scope=mine");
-    await expect(sale.getByRole("navigation", { name: S.tabsLabel }).getByRole("link")).toHaveText([S.mySurveys]);
+    await expect(sale.getByRole("navigation", { name: S.tabsLabel }).getByRole("link")).toHaveText([S.mySurveys, S.reviews]);
     await expect(mainArea(sale).locator("thead").getByRole("columnheader")).toHaveText([
       "WHEN",
       "DURATION",
@@ -417,7 +418,7 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
   test("W15-37: the leader's All Surveys with the Surveyor filter", async () => {
     await leader.getByRole("navigation", { name: T.menuLabel }).getByRole("link", { name: T.menuSurveys }).click();
     await expect(leader).toHaveURL((url) => url.pathname === "/workspace/surveys" && url.search === "?scope=all");
-    await expect(leader.getByRole("navigation", { name: S.tabsLabel }).getByRole("link")).toHaveText([S.mySurveys, S.allSurveys]);
+    await expect(leader.getByRole("navigation", { name: S.tabsLabel }).getByRole("link")).toHaveText([S.mySurveys, S.allSurveys, S.reviews]);
     const surveyor = leader.getByLabel(S.surveyor, { exact: true });
     await surveyor.selectOption(fixture.sale.id);
     await expect(leader).toHaveURL(new RegExp(`surveyor=${fixture.sale.id}`));

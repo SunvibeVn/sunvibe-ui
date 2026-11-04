@@ -151,20 +151,21 @@ test.describe("SALE in the workspace", () => {
       T.status.ASSIGNED,
       T.status.CONTACTED,
       T.status.SURVEY_SCHEDULED,
+      T.status.QUALIFIED,
       T.status.ON_HOLD,
       T.status.DUPLICATE,
       T.status.REJECTED,
       T.status.WITHDRAWN,
       T.showClosed,
     ]);
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.QUALIFIED, T.status.ON_HOLD]);
 
     const sent = calls.slice(from);
     const listCalls = sent.filter(isListCall);
     expect(listCalls.length, "list calls").toBeGreaterThan(0);
     for (const call of listCalls) {
       expect(call.url.searchParams.get("scope"), "scope of a list call").toBe("mine");
-      expect(call.url.searchParams.getAll("status"), "status of a list call").toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"]);
+      expect(call.url.searchParams.getAll("status"), "status of a list call").toEqual(["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "QUALIFIED", "ON_HOLD"]);
       expect(call.url.searchParams.has("assigneeUserId"), "assigneeUserId on a list call").toBe(false);
     }
     expect(sent.filter((call) => call.url.searchParams.get("scope") !== null && call.url.searchParams.get("scope") !== "mine")).toHaveLength(0);
@@ -278,7 +279,7 @@ test.describe("SALE in the workspace", () => {
 
     await clear.click();
     await expect(statusBox(page, T.status.WITHDRAWN)).not.toBeChecked();
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.QUALIFIED, T.status.ON_HOLD]);
   });
 
   test("W11-42: hovering the rows sends no detail request; opening a lead sends one", async () => {
@@ -499,12 +500,12 @@ test.describe("SALE in the workspace", () => {
 
     // Empty state: no lead of the SALE is "Owner Withdrawn" (the open boxes are cleared one by one after it is ticked).
     await clickStatusBox(page, T.status.WITHDRAWN);
-    for (const status of [T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]) await clickStatusBox(page, status);
+    for (const status of [T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.QUALIFIED, T.status.ON_HOLD]) await clickStatusBox(page, status);
     await expect(statusBox(page, T.status.WITHDRAWN)).toBeChecked();
     await expect(byText(page, T.emptyFiltered)).toBeVisible();
     await page.getByRole("link", { name: T.clearFilters }).click();
     await expect(leadLink(page, L2)).toBeVisible();
-    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.ON_HOLD]);
+    expect(await tickedStatusLabels(page)).toEqual([T.status.ASSIGNED, T.status.CONTACTED, T.status.SURVEY_SCHEDULED, T.status.QUALIFIED, T.status.ON_HOLD]);
 
     // The menu drawer (phone only): focus goes to the first link, Esc closes it, focus returns to the menu button.
     const menuButton = header(page).locator('button[aria-controls="workspace-drawer"]');

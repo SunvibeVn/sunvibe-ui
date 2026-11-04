@@ -2,10 +2,18 @@ import { callApi, type ApiResult } from "@/features/auth/client";
 
 import type {
   ChecklistCheckpoint,
+  ChecklistDecided,
+  ChecklistDecisionInput,
   ChecklistGroupPath,
+  ChecklistReviewQueue,
+  ChecklistReviewQueueQuery,
+  ChecklistRevisionInput,
+  ChecklistRevisionStarted,
   ChecklistSaveBody,
   ChecklistStarted,
   ChecklistStartInput,
+  ChecklistSubmitInput,
+  ChecklistSubmitted,
   ChecklistTakenOver,
   ChecklistTakeoverInput,
   ChecklistView,
@@ -64,6 +72,65 @@ export function getCheckpoint(
       params: { path: { checklistId, takeoverNo } },
     }),
   );
+}
+
+/**
+ * POST /api/v1/staff/survey-checklists/{checklistId}/submission. A repeat by the same caller answers 200 with
+ * `historyEntry: null` (A-4): that is a success too.
+ */
+export function submitChecklist(
+  checklistId: string,
+  input: ChecklistSubmitInput,
+  deps: SurveysDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ChecklistSubmitted>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/survey-checklists/{checklistId}/submission", {
+      params: { path: { checklistId } },
+      body: input,
+    }),
+  );
+}
+
+/**
+ * POST /api/v1/staff/survey-checklists/{checklistId}/decision. The decision commits before its answer is built (spec
+ * 9.5): after a 5xx or 409 read the checklist again before showing an error.
+ */
+export function decideChecklist(
+  checklistId: string,
+  input: ChecklistDecisionInput,
+  deps: SurveysDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ChecklistDecided>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/survey-checklists/{checklistId}/decision", {
+      params: { path: { checklistId } },
+      body: input,
+    }),
+  );
+}
+
+/**
+ * POST /api/v1/staff/survey-checklists/{checklistId}/revisions (201), on the revision the survey block's `revisionStart`
+ * names. `intake` is always sent: null for the previous holder, the declaration for anyone else (A-7).
+ */
+export function startRevision(
+  checklistId: string,
+  input: ChecklistRevisionInput,
+  deps: SurveysDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ChecklistRevisionStarted>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/survey-checklists/{checklistId}/revisions", {
+      params: { path: { checklistId } },
+      body: input,
+    }),
+  );
+}
+
+/** GET /api/v1/staff/survey-checklists/review-queue: read fresh per call and without a read budget, so never polled. */
+export function getReviewQueue(
+  query: ChecklistReviewQueueQuery,
+  deps: SurveysDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ChecklistReviewQueue>> {
+  return deps.callApi((client) => client.GET("/api/v1/staff/survey-checklists/review-queue", { params: { query } }));
 }
 
 /**

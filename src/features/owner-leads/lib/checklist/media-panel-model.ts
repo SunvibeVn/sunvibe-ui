@@ -53,6 +53,8 @@ export type PhotoCard = {
   /** The space code at upload when the space was renamed since ("uploaded as P101", A-9). */
   uploadedAs: string | null;
   uploadedByName: string | null;
+  /** The revision a carried photo came from; null for a photo uploaded into this revision (survey-checklist submission 4.6). */
+  carriedFromChecklistNo: number | null;
   /** While held: the time for everyone, actor and reason only for a viewer with `canHold`. */
   held: { at: string; byName: string | null; reason: string | null } | null;
   /** A thumbnail is read for it: READY, content available to this viewer, serving on. */
@@ -136,6 +138,11 @@ export function removalNeedsCorrection(item: MediaItem, viewerUserId: string): b
   return (item.status === "PROCESSING" || item.status === "READY") && item.uploadedByUserId !== viewerUserId;
 }
 
+/** A carried photo leaves this revision by deselection, never by removal: the earlier revision keeps it (A-12). */
+export function removalAction(photo: Pick<PhotoCard, "carriedFromChecklistNo">): "deselect" | "remove" {
+  return photo.carriedFromChecklistNo === null ? "remove" : "deselect";
+}
+
 export type UploadRowShown =
   | "waiting"
   | "hashing"
@@ -206,6 +213,7 @@ export function mediaPanelModel(view: ChecklistView, list: MediaList, viewerUser
       caption: item.captionHidden === true ? null : (item.caption ?? null),
       uploadedAs: item.spaceId && atUpload !== null && atUpload !== current ? atUpload : null,
       uploadedByName: item.uploadedByName ?? null,
+      carriedFromChecklistNo: item.carriedFromChecklistNo ?? null,
       held,
       showImage,
       canView: showImage,

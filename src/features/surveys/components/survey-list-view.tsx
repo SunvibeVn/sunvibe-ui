@@ -21,12 +21,15 @@ import {
   SURVEYS_PATH,
   type SurveyListState,
   toSurveyApiQuery,
+  withReviewsTab,
   withSurveyFilter,
 } from "../lib/survey-list-url-state";
 import { type SurveyUiError, toSurveyUiError } from "../lib/survey-ui-error";
 import { listSurveys } from "../services/surveys-api";
 import type { SurveyListItem, SurveyPage } from "../types";
 
+import { ListSkeleton } from "./list-skeleton";
+import { ReviewQueue } from "./review-queue";
 import { SurveyCards } from "./survey-cards";
 import { SurveyFilters } from "./survey-filters";
 import { SurveyTable } from "./survey-table";
@@ -38,18 +41,6 @@ type Loaded = {
 };
 
 const hrefOf = (state: SurveyListState): string => `${SURVEYS_PATH}?${serializeSurveyListState(state)}`;
-
-function ListSkeleton() {
-  const t = useTranslations("Surveys");
-  return (
-    <div role="status" aria-busy="true" className="space-y-3">
-      <span className="sr-only">{t("loading")}</span>
-      {[0, 1, 2].map((row) => (
-        <div key={row} aria-hidden className="h-16 animate-pulse rounded-xl border border-slate-200 bg-slate-100" />
-      ))}
-    </div>
-  );
-}
 
 function SurveyListContent() {
   const t = useTranslations("Surveys");
@@ -66,6 +57,7 @@ function SurveyListContent() {
   const state = useMemo(() => parseSurveyListState(new URLSearchParams(query), viewer), [query, viewer]);
   const canonical = serializeSurveyListState(state);
   const normalized = query === canonical;
+  const reviews = state.tab === "reviews";
 
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [reloads, setReloads] = useState(0);
@@ -86,7 +78,7 @@ function SurveyListContent() {
 
   // 2. One call per user and normalized URL; an answer for another URL or user is dropped.
   useEffect(() => {
-    if (userId === null || !normalized || pathname !== SURVEYS_PATH) return;
+    if (userId === null || !normalized || pathname !== SURVEYS_PATH || reviews) return;
     let cancelled = false;
     const startedFor = userId;
     void listSurveys(toSurveyApiQuery(state)).then((result) => {
@@ -104,16 +96,19 @@ function SurveyListContent() {
     return () => {
       cancelled = true;
     };
-  }, [userId, normalized, pathname, canonical, state, reloads]);
+  }, [userId, normalized, pathname, canonical, state, reviews, reloads]);
 
   if (userId === null) return null;
 
   const current = loaded !== null && loaded.userId === userId && loaded.key === canonical ? loaded : null;
-  const tabs = viewer.tabs.map((tab) => ({
-    href: hrefOf(withSurveyFilter(state, { scope: tab })),
-    label: t(`tabs.${tab}`),
-    current: state.scope === tab,
-  }));
+  const tabs = [
+    ...viewer.tabs.map((tab) => ({
+      href: hrefOf(withSurveyFilter(state, { scope: tab })),
+      label: t(`tabs.${tab}`),
+      current: !reviews && state.scope === tab,
+    })),
+    { href: hrefOf(withReviewsTab(state)), label: t("tabs.reviews"), current: reviews },
+  ];
   const total = current?.outcome.kind === "page" ? (current.outcome.page.totalElements ?? 0) : 0;
   const totalLine = normalized && current?.outcome.kind === "page" && total > 0 ? t("total", { count: total }) : "";
 
@@ -122,15 +117,21 @@ function SurveyListContent() {
       {/* No visible title, as the lead list; the page keeps its one h1 for screen readers. */}
       <h1 className="sr-only">{t("title")}</h1>
       <Tabs items={tabs} label={t("tabs.label")} />
-      <SurveyFilters
-        state={state}
-        onSurveyor={(surveyor) => router.replace(hrefOf(withSurveyFilter(state, { surveyor })), { scroll: false })}
-      />
-      <p aria-live="polite" className={totalLine === "" ? "sr-only" : "text-sm text-slate-600"}>
-        {totalLine}
-      </p>
+      {!reviews && (
+        <>
+          <SurveyFilters
+            state={state}
+            onSurveyor={(surveyor) => router.replace(hrefOf(withSurveyFilter(state, { surveyor })), { scroll: false })}
+          />
+          <p aria-live="polite" className={totalLine === "" ? "sr-only" : "text-sm text-slate-600"}>
+            {totalLine}
+          </p>
+        </>
+      )}
       <div>
-        {!normalized || current === null ? (
+        {reviews && normalized ? (
+          <ReviewQueue state={state} />
+        ) : !normalized || current === null ? (
           <ListSkeleton />
         ) : current.outcome.kind === "error" ? (
           current.outcome.error.kind === "signed-out" || current.outcome.error.kind === "unavailable" ? null : (
@@ -207,8 +208,9 @@ function SurveyResults({ page, state }: { page: NonNullable<SurveyPage>; state: 
 
 /**
  * The survey list `/workspace/surveys` (spec 6.5): SCHEDULED appointments in groups Overdue, Today, Upcoming, the
- * tabs of the lead list, the Surveyor filter on "All Surveys". Read in the browser only: the URL is normalized for the
- * viewer first, then one `GET` per user and URL. `useSearchParams` needs the Suspense boundary.
+ * tabs of the lead list, the Surveyor filter on "All Surveys", and the Reviews tab (survey-checklist submission A-9). Read
+ * in the browser only: the URL is normalized for the viewer first, then one `GET` per user and URL. `useSearchParams`
+ * needs the Suspense boundary.
  */
 export function SurveyListView() {
   return (

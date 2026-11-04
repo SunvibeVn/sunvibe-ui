@@ -30,6 +30,8 @@ export type MediaController = {
   /** The list's photo with this id, in any of its three lists. */
   itemOf(mediaId: string): MediaItem | null;
   remove(mediaId: string, correction: MediaRemovalInput["correction"]): Promise<MediaCommandOutcome>;
+  /** A carried photo leaves this revision and stays in the earlier one (survey-checklist submission 4.6). */
+  deselect(mediaId: string, correction: MediaRemovalInput["correction"]): Promise<MediaCommandOutcome>;
   /** ADMIN security hold and its release (A-23), on any checklist state. */
   holdPhoto(mediaId: string, reason: MediaHoldReason): Promise<MediaCommandOutcome>;
   releasePhoto(mediaId: string): Promise<MediaCommandOutcome>;

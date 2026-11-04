@@ -33,6 +33,35 @@ export type ChecklistSummary = Schemas["ChecklistSummaryResponse"];
 /** `checklistStart` of the survey block: start allowed, the visit, intake needed, or the first block. */
 export type ChecklistStartState = Schemas["ChecklistStartStateResponse"];
 
+/** Answer of a submit: the frozen revision and its History row, null on a replay (A-4). */
+export type ChecklistSubmitted = Schemas["ChecklistSubmittedResponse"];
+/** Answer of a decision: the revision, the lead state and the History row. */
+export type ChecklistDecided = Schemas["ChecklistDecidedResponse"];
+/** Answer of a new revision: its first read and the History row. */
+export type ChecklistRevisionStarted = Schemas["ChecklistRevisionStartedResponse"];
+export type ChecklistSubmission = Schemas["ChecklistSubmissionResponse"];
+export type ChecklistSubmittedEvidence = Schemas["ChecklistSubmittedEvidence"];
+export type ChecklistDecision = Schemas["ChecklistDecisionResponse"];
+export type ChecklistReview = Schemas["ChecklistReviewResponse"];
+export type ChecklistPassed = Schemas["ChecklistPassedResponse"];
+export type ChecklistReviewQueue = Schemas["ChecklistReviewQueueResponse"];
+export type ChecklistReviewQueueItem = Schemas["ChecklistReviewQueueItemResponse"];
+/** `revisionStart` of the survey block: whether the viewer can open the next revision of the current visit. */
+export type ChecklistRevisionStart = Schemas["ChecklistRevisionStartResponse"];
+
+export type ChecklistStatus = NonNullable<ChecklistView["status"]>;
+export type ChecklistOutcome = NonNullable<ChecklistDecision["outcome"]>;
+export type ChecklistNeedsChangesKind = NonNullable<ChecklistDecision["needsChangesKind"]>;
+export type ChecklistFailedKind = NonNullable<ChecklistDecision["failedKind"]>;
+export type ChecklistReviewReason = NonNullable<ChecklistReview["reason"]>;
+export type ChecklistPassedReason = NonNullable<ChecklistPassed["reason"]>;
+
+export type ChecklistSubmitInput = Schemas["ChecklistSubmitRequest"];
+export type ChecklistDecisionInput = Schemas["ChecklistDecisionRequest"];
+export type ChecklistRejectedEvidenceInput = Schemas["ChecklistRejectedEvidenceRequest"];
+export type ChecklistRevisionInput = Schemas["ChecklistRevisionRequest"];
+export type ChecklistReviewQueueQuery = { page: number; size: number };
+
 export type ChecklistStartInput = Schemas["ChecklistStartRequest"];
 export type ChecklistTakeoverInput = Schemas["ChecklistTakeoverRequest"];
 export type ChecklistCorrectionInput = Schemas["ChecklistCorrectionRequest"];

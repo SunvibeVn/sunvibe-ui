@@ -129,6 +129,54 @@ describe("previewSections (spec 6.2 Preview, W16-31; the read-only Edit and the 
   });
 });
 
+describe("previewModel EVIDENCE_UNAVAILABLE (survey-checklist submission 4.4)", () => {
+  it("names the pair of a selected photo that is held or lost its content", () => {
+    const view = viewOf(emptyContent(), 1, {
+      readiness: {
+        submissionAvailable: false,
+        missing: [{ group: "EVIDENCE", spaceId: null, field: "EXTERIOR_ACCESS", problem: "EVIDENCE_UNAVAILABLE" }],
+        unconfirmedTerms: [],
+        warnings: [],
+      },
+    });
+    expect(previewModel(view, t).gaps.map((line) => line.text)).toEqual([
+      "Photo on hold or lost: Asset (whole property) · Exterior and access",
+    ]);
+  });
+});
+
+describe("previewModel submission line (survey-checklist submission B4)", () => {
+  const line = (reason: string | undefined, status: "DRAFT" | "SUBMITTED" = "DRAFT") =>
+    previewModel(
+      viewOf(emptyContent(), 1, {
+        status,
+        readiness: {
+          submissionAvailable: false,
+          submissionUnavailableReason: reason as "SUBMISSION_NOT_AVAILABLE",
+          missing: [],
+          unconfirmedTerms: [],
+          warnings: [],
+        },
+      }),
+      t,
+    ).submission;
+
+  it("appears only while a switch keeps submission closed", () => {
+    expect(line("SUBMISSION_NOT_AVAILABLE")).toBe(
+      "Submission is not available yet. These lists may grow when submission and review are added.",
+    );
+    expect(line("EVIDENCE_NOT_AVAILABLE")).toBe(
+      "Submission is not available until survey photos are built. These lists may grow when submission and review are added.",
+    );
+  });
+
+  it("is gone once submission is open, and on a revision that left DRAFT", () => {
+    expect(line("MISSING_ITEMS")).toBeNull();
+    expect(line(undefined)).toBeNull();
+    expect(line("SUBMISSION_NOT_AVAILABLE", "SUBMITTED")).toBeNull();
+  });
+});
+
 describe("previewModel", () => {
   it("adds the effective terms with their origin and the gap links", () => {
     const view = viewOf(filled(), 1, {
