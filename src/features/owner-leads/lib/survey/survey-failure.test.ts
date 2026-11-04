@@ -10,6 +10,17 @@ const BOOK_FIELDS = {
   accessNote: "accessNote",
 } as const;
 
+describe("surveyFailure, a refusal by the survey record (survey-checklist submission 6.2)", () => {
+  it("says so and reloads the section", () => {
+    expect(surveyFailure({ kind: "checklist-refused", correlationId: "c" }, {})).toEqual({
+      kind: "message",
+      message: "checklistRefused",
+      reload: true,
+      correlationId: "c",
+    });
+  });
+});
+
 describe("surveyFailure (spec 6.7)", () => {
   it("puts a 400 on the dialog's fields", () => {
     expect(

@@ -49,6 +49,18 @@ describe("canChangeRequirement (spec 4.6)", () => {
     for (const status of ["ASSIGNED", "CONTACTED", "ON_HOLD", "SURVEY_SCHEDULED"]) expect(canChangeRequirement(status)).toBe(true);
     for (const status of ["NEW", "DUPLICATE", "REJECTED", "WITHDRAWN", undefined]) expect(canChangeRequirement(status)).toBe(false);
   });
+
+  it("requirementChange_hiddenWithPassed_anyStatus: a PASSED of the cycle refuses the change (survey-checklist D3-13)", () => {
+    const passed = { hasPassed: true, hasSubmitted: false };
+    for (const status of ["ASSIGNED", "CONTACTED", "ON_HOLD", "SURVEY_SCHEDULED", "QUALIFIED"]) {
+      expect(canChangeRequirement(status, passed)).toBe(false);
+    }
+  });
+
+  it("requirementChange_shownWithSubmitted: it stays allowed and ends the cycle of that revision (D3-7)", () => {
+    const submitted = { hasPassed: false, hasSubmitted: true };
+    for (const status of ["ON_HOLD", "SURVEY_SCHEDULED"]) expect(canChangeRequirement(status, submitted)).toBe(true);
+  });
 });
 
 describe("toIntentBody (A-17)", () => {

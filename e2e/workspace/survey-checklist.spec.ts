@@ -44,8 +44,8 @@ const C = {
   start: "Start checklist (survey #1)",
   open: "Open checklist #1",
   legal: "Site survey record. It is not a legal or safety check.",
-  // survey-media spec 6.4, section 8: the E2E API has uploads on, so the photos-available texts show.
-  media: "Submission and review open in a later release.",
+  // Submission spec 6.1: the E2E API has uploads and submission on, so the submit panel names its first failing gate.
+  firstGate: "Some required items are missing. See the list above.",
   notAssignee: "Only the lead's assignee edits the checklist.",
   leadStatus: "The lead is not in Survey Scheduled.",
   takeoverPrompt: "You are the new assignee. Take over this draft before editing.",
@@ -54,7 +54,6 @@ const C = {
   phone: "Remove the phone number: it must not be stored here.",
   kitchenGap: "Condition and availability · P1 · Kitchen: Not entered or only partly entered: Kitchen",
   photos: "Photo missing: Asset (whole property) · Exterior and access",
-  submission: "Submission is not available yet.",
   leaveConfirm: "You have unsaved changes. Leave this page?",
 } as const;
 
@@ -127,7 +126,7 @@ test.describe("Survey checklists (survey-checklist W16b)", () => {
     checklistId = new URL(sale.url()).pathname.split("/").at(-1) ?? "";
     await expect(sale.getByRole("heading", { level: 1, name: "Checklist #1" })).toBeVisible({ timeout: 20_000 });
     await expect(byText(sale, C.legal)).toBeVisible();
-    await expect(byText(sale, C.media)).toBeVisible();
+    await expect(byText(sale, C.firstGate)).toBeVisible();
     // W16-33: arrival yesterday 09:00 Vietnam time, read in Vietnam time in a New York browser.
     await expect(mainArea(sale)).toContainText(`visited ${shown(vietnamIso(Date.now() - 24 * 3600_000))} 09:00 by ${fixture.sale.name}`);
 
@@ -242,12 +241,11 @@ test.describe("Survey checklists (survey-checklist W16b)", () => {
     expect(asked).toHaveLength(2);
   });
 
-  test("W16-31, W16-26: the preview lists the gaps with no submit control; History collapses the saves", async () => {
+  test("W16-31, W16-26: the preview lists the gaps; the submit panel names the first gate; History collapses the saves", async () => {
     await mainArea(sale).getByRole("navigation", { name: "Checklist views" }).getByRole("link", { name: "Preview" }).click();
     await expect(sale).toHaveURL(/\?tab=preview$/);
     await expect(mainArea(sale).getByRole("link", { name: C.kitchenGap })).toBeVisible();
     await expect(mainArea(sale).getByRole("link", { name: C.photos })).toBeVisible();
-    await expect(byText(sale, C.submission)).toBeVisible();
     await expect(byText(sale, C.legal)).toBeVisible();
     await expect(mainArea(sale).getByRole("button", { name: /submit/i })).toHaveCount(0);
     await expect(mainArea(sale)).toContainText("Terms as offered or seen; not agreed lease terms.");

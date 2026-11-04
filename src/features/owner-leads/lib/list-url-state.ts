@@ -56,9 +56,9 @@ const USER_ID = /^[A-Za-z0-9]{1,26}$/;
 const PAGE = /^[1-9][0-9]*$/;
 /**
  * "My Leads", and "All Leads" with an assignee, start on these: the open set without the hidden Unassigned (A-6),
- * Survey Scheduled included (survey-schedule C-3d).
+ * Survey Scheduled (survey-schedule C-3d) and Qualified (survey-checklist 6.2) included.
  */
-const OPEN_WITHOUT_NEW: readonly LeadStatus[] = ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "ON_HOLD"];
+const OPEN_WITHOUT_NEW: readonly LeadStatus[] = ["ASSIGNED", "CONTACTED", "SURVEY_SCHEDULED", "QUALIFIED", "ON_HOLD"];
 
 function isScope(value: unknown): value is Scope {
   return typeof value === "string" && (SCOPES as readonly string[]).includes(value);
@@ -76,7 +76,7 @@ export function statusBoxes(scope: Scope, assignee?: string): LeadStatus[] {
 
 /**
  * The statuses a tab starts on (spec 5.3 table): Unassigned on "All Leads", else Assigned, Contacted, Survey Scheduled,
- * On Hold.
+ * Qualified, On Hold.
  */
 export function defaultStatuses(scope: Scope, assignee?: string): LeadStatus[] {
   return showsNew(scope, assignee) ? ["NEW"] : [...OPEN_WITHOUT_NEW];

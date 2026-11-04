@@ -41,6 +41,43 @@ export function checklistAction(block: NonNullable<SurveyBlock>): ChecklistActio
   return start.blockedBy ? { kind: "blocked", reason: start.blockedBy } : null;
 }
 
+export type RevisionAction =
+  | {
+      kind: "start";
+      /** The revision the new one follows: the path of the start. */
+      checklistId: string;
+      revisionNo: number;
+      /** The viewer did not hold that revision: the intake dialog asks where the information comes from (A-7). */
+      intake: boolean;
+      performerName: string | null;
+      arrivedAt: string | null;
+    }
+  | { kind: "blocked"; reason: "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" };
+
+/**
+ * "Start revision #n" after a return for documents (survey-checklist submission spec 6.1, 4.6), or why it waits for
+ * someone else. Null while no revision is due. Checklists are numbered per lead, so #n follows the highest of any visit.
+ */
+export function revisionAction(block: NonNullable<SurveyBlock>): RevisionAction | null {
+  const start = block.revisionStart;
+  if (!start) return null;
+  if (start.allowed && start.checklistId) {
+    const { checklistId } = start;
+    const appointments = (block.appointments ?? []).filter((entry) => entry !== null);
+    const visit = appointments.find((entry) => (entry?.checklists ?? []).some((checklist) => checklist?.id === checklistId));
+    const numbers = appointments.flatMap((entry) => (entry?.checklists ?? []).map((checklist) => checklist?.checklistNo ?? 0));
+    return {
+      kind: "start",
+      checklistId,
+      revisionNo: Math.max(0, ...numbers) + 1,
+      intake: start.intakeRequired === true,
+      performerName: visit?.visit?.performedByName ?? null,
+      arrivedAt: visit?.visit?.arrivedAt ?? null,
+    };
+  }
+  return start.blockedBy === "NOT_ASSIGNEE" || start.blockedBy === "ASSIGNEE_INELIGIBLE" ? { kind: "blocked", reason: start.blockedBy } : null;
+}
+
 /** A message key of `OwnerLeads.checklist.startErrors`. */
 export type ChecklistStartMessage = "notAllowed" | "alreadyStarted" | "surveyorIneligible" | "forbidden" | "badRequest" | "failed";
 

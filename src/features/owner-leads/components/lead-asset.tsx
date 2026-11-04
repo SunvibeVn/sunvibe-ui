@@ -12,7 +12,7 @@ import { canChangeRequirement } from "../lib/requirement-form";
 import type { LeadDetail } from "../types";
 
 import { DetailCell, DetailGrid, DetailSection } from "./detail-layout";
-import { useLeadDetail } from "./lead-detail-context";
+import { surveyRecordOf, useLeadDetail } from "./lead-detail-context";
 import { RequirementDialog } from "./requirement-dialog";
 
 /** The map link in the primary button style of Save (owner 2026-10-23, D-8); 44px high on a phone (touch target). */
@@ -29,7 +29,7 @@ const isCoordinate = (value: unknown): value is number => typeof value === "numb
  */
 export function LeadAsset({ lead }: { lead: LeadDetail }) {
   const t = useTranslations("OwnerLeads");
-  const { busy } = useLeadDetail();
+  const { busy, survey } = useLeadDetail();
   const [changing, setChanging] = useState(false);
   const [changed, setChanged] = useState(false);
   const none = <span className="text-slate-500">{t("detail.asset.none")}</span>;
@@ -72,7 +72,7 @@ export function LeadAsset({ lead }: { lead: LeadDetail }) {
           <Alert tone="success">{t("requirement.saved")}</Alert>
         </div>
       )}
-      {canChangeRequirement(lead.status) && (
+      {canChangeRequirement(lead.status, surveyRecordOf(survey)) && (
         <div className="mt-3">
           <Button
             variant="secondary"

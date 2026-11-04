@@ -55,6 +55,9 @@ function Card({ photo, mode, onRemove, onOpen }: CardProps) {
         <span className="font-semibold text-slate-900">{t("checklist.media.grid.photoNo", { no: photo.mediaNo })}</span>
         <Badge tone={BADGE_TONE[photo.badge]}>{t(`checklist.media.badge.${photo.badge}`)}</Badge>
       </div>
+      {photo.carriedFromChecklistNo !== null && (
+        <p className="text-xs font-medium text-violet-700">{t("checklist.media.carried.from", { no: photo.carriedFromChecklistNo })}</p>
+      )}
       {photo.statusReason !== null && photo.badge !== "held" && (
         <p className="break-words text-xs text-rose-700">{t(`checklist.media.reasons.${photo.statusReason}`)}</p>
       )}
@@ -78,7 +81,7 @@ function Card({ photo, mode, onRemove, onOpen }: CardProps) {
         <div className="flex flex-wrap items-start gap-2">
           {photo.canRemove && (
             <Button variant="ghost" className="px-3 py-1" onClick={() => onRemove(photo)}>
-              {t("checklist.media.grid.remove")}
+              {t(photo.carriedFromChecklistNo === null ? "checklist.media.grid.remove" : "checklist.media.carried.remove")}
             </Button>
           )}
           <PhotoHoldControls photo={photo} />

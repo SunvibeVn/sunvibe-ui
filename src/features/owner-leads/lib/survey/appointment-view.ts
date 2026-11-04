@@ -1,4 +1,15 @@
-import type { BookingBlock, SurveyAppointment, SurveyBlock, SurveyLocation } from "@/features/surveys";
+import type { BadgeTone } from "@/components/ui/badge";
+import type {
+  ApiShape,
+  BookingBlock,
+  ChecklistOutcome,
+  ChecklistSummary,
+  SurveyAppointment,
+  SurveyBlock,
+  SurveyLocation,
+} from "@/features/surveys";
+
+import type { OwnerLeadsKey } from "../labels";
 
 /** A place as the forms edit it: address, ward and an optional pin (both coordinates or none). */
 export type Place = { addressText: string; wardCode: string; latitude: number | null; longitude: number | null };
@@ -96,11 +107,50 @@ export function visitMode(userId: string, appointment: SurveyAppointment, perfor
 /** Why the lead cannot get a booking now ("UNKNOWN" when the API named no reason); null when it can (spec 6.1). */
 export type BookingBlockKey = BookingBlock | "UNKNOWN";
 
-const BLOCKS: readonly BookingBlock[] = ["ALREADY_SCHEDULED", "NO_ASSIGNEE", "LEAD_STATUS", "INTENT", "SURVEYOR_INELIGIBLE"];
+const BLOCKS: readonly BookingBlock[] = [
+  "ALREADY_SCHEDULED",
+  "NO_ASSIGNEE",
+  "CHECKLIST_SUBMITTED",
+  "CHECKLIST_PASSED",
+  "LEAD_STATUS",
+  "INTENT",
+  "SURVEYOR_INELIGIBLE",
+];
 
 export function bookingBlockKey(block: SurveyBlock | null | undefined): BookingBlockKey | null {
   const booking = block?.booking;
   if (booking?.allowed === true) return null;
   const reason = booking?.blockedBy;
   return reason !== null && reason !== undefined && (BLOCKS as readonly string[]).includes(reason) ? reason : "UNKNOWN";
+}
+
+/** The resume of a held lead leads back to Qualified (survey-checklist submission 4.8): the block says where it goes. */
+export function resumesToQualified(block: Pick<NonNullable<SurveyBlock>, "resume">): boolean {
+  return block.resume?.target === "QUALIFIED";
+}
+
+/** Why a pass of the current cycle stopped being usable: held evidence can come back, lost evidence cannot (4.7). */
+export function passedNoteKey(block: Pick<NonNullable<SurveyBlock>, "survey">): OwnerLeadsKey | null {
+  const passed = block.survey?.passed;
+  return passed?.usable === false && passed.reason ? `checklist.decision.passedReason.${passed.reason}` : null;
+}
+
+/** A checklist line of the survey block, which may leave any field out or send `null`. */
+type ChecklistLine = ApiShape<Pick<ChecklistSummary, "status" | "outcome" | "readOnlyReason" | "editable">>;
+
+const CHIP_TONE: Record<ChecklistOutcome, BadgeTone> = { PASSED: "success", NEEDS_CHANGES: "warning", FAILED: "danger" };
+
+/** The chip of a revision past the draft (spec 6.2); a draft says so in its line. */
+export function revisionChip(line: Pick<ChecklistLine, "status" | "outcome">): { label: OwnerLeadsKey; tone: BadgeTone } | null {
+  if (!line.status || line.status === "DRAFT") return null;
+  if (line.status === "SUBMITTED") return { label: "checklist.lines.submitted", tone: "info" };
+  const outcome = line.outcome ?? line.status;
+  return { label: `checklist.review.outcome.${outcome}`, tone: CHIP_TONE[outcome] };
+}
+
+/** The read-only reason of a line; for a frozen revision its chip says it all. */
+export function checklistLineReason(line: Pick<ChecklistLine, "readOnlyReason" | "editable">): OwnerLeadsKey | null {
+  const reason = line.readOnlyReason;
+  if (!reason || line.editable === true || reason === "SUBMITTED" || reason === "DECIDED") return null;
+  return `checklist.readOnly.${reason}`;
 }

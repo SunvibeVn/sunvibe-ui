@@ -22,6 +22,15 @@ export { type ContentHash, contentDigestHeader, sha256OfBlob } from "./lib/conte
 export { type MediaCallContext, type MediaUiError, type MediaUiErrorKind, toMediaUiError } from "./lib/media-ui-error";
 export * from "./types";
 export { type SurveyUiError, type SurveyUiErrorKind, toSurveyUiError } from "./lib/survey-ui-error";
-export { type ChecklistUiError, type ChecklistUiErrorKind, toChecklistUiError } from "./lib/checklist-ui-error";
+export {
+  type ChecklistDecisionRule,
+  type ChecklistSubmitGate,
+  type ChecklistUiError,
+  type ChecklistUiErrorKind,
+  decisionRules,
+  submitGates,
+  toChecklistUiError,
+} from "./lib/checklist-ui-error";
 export { type ConfirmationLabel, confirmationLabel, type ReconfirmationCause } from "./lib/confirmation-label";
+export { reviewReasonKey } from "./lib/review-queue";
 export { SurveyListView } from "./components/survey-list-view";

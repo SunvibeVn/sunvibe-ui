@@ -74,7 +74,7 @@ export function PhotoViewer({ photo, spaceCode, holdControls = false, onRemove, 
         <>
           {onRemove !== undefined && photo.canRemove && (
             <Button variant="ghost" onClick={() => onRemove(photo)}>
-              {t("checklist.media.grid.remove")}
+              {t(photo.carriedFromChecklistNo === null ? "checklist.media.grid.remove" : "checklist.media.carried.remove")}
             </Button>
           )}
           <Button variant="secondary" onClick={onClose}>

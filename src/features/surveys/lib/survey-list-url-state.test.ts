@@ -6,7 +6,9 @@ import {
   parseSurveyListState,
   serializeSurveyListState,
   SURVEY_PAGE_SIZE,
+  toReviewQueueQuery,
   toSurveyApiQuery,
+  withReviewsTab,
   withSurveyFilter,
 } from "./survey-list-url-state";
 
@@ -32,6 +34,36 @@ describe("parseSurveyListState (spec 6.5: tabs as the lead tabs)", () => {
     expect(parseSurveyListState(q("scope=all&surveyor=U1&page=3"), leader)).toEqual({ scope: "all", surveyor: "U1", page: 3 });
     expect(parseSurveyListState(q("scope=mine&surveyor=U1"), leader)).toEqual({ scope: "mine", page: 1 });
     expect(parseSurveyListState(q("scope=all&surveyor=a%20b&page=0"), leader)).toEqual({ scope: "all", page: 1 });
+  });
+});
+
+describe("the Reviews tab in the URL (survey-checklist submission A-9)", () => {
+  it("reads tab=reviews and drops the surveyor there", () => {
+    expect(parseSurveyListState(q("scope=all&tab=reviews&surveyor=U1&page=2"), leader)).toEqual({ scope: "all", tab: "reviews", page: 2 });
+    expect(parseSurveyListState(q("tab=reviews"), sale)).toEqual({ scope: "mine", tab: "reviews", page: 1 });
+  });
+
+  it("ignores any other tab", () => {
+    expect(parseSurveyListState(q("scope=mine&tab=other"), sale)).toEqual({ scope: "mine", page: 1 });
+  });
+
+  it("writes the tab and round-trips", () => {
+    const state = parseSurveyListState(q("scope=all&tab=reviews&page=3"), leader);
+    expect(serializeSurveyListState(state)).toBe("scope=all&tab=reviews&page=3");
+    expect(parseSurveyListState(q(serializeSurveyListState(state)), leader)).toEqual(state);
+  });
+
+  it("opens the tab on its first page, without the surveyor", () => {
+    expect(withReviewsTab({ scope: "all", surveyor: "U1", page: 4 })).toEqual({ scope: "all", tab: "reviews", page: 1 });
+  });
+
+  it("leaves the tab for a list tab", () => {
+    expect(withSurveyFilter({ scope: "all", tab: "reviews", page: 2 }, { scope: "mine" })).toEqual({ scope: "mine", page: 1 });
+    expect(withSurveyFilter({ scope: "all", tab: "reviews", page: 2 }, { scope: "all" })).toEqual({ scope: "all", page: 1 });
+  });
+
+  it("asks the queue for a zero-based page of 20", () => {
+    expect(toReviewQueueQuery({ scope: "mine", tab: "reviews", page: 3 })).toEqual({ page: 2, size: SURVEY_PAGE_SIZE });
   });
 });
 

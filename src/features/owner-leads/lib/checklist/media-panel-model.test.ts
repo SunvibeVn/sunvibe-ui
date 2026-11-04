@@ -4,7 +4,7 @@ import type { ChecklistView, MediaItem, MediaList } from "@/features/surveys";
 
 import { A, B, emptyContent, P1, P2, viewOf } from "./fixtures.test-support";
 import { withoutHeldDetails } from "./media-held-details";
-import { mediaPanelModel, PANEL_ACTIONS, removalNeedsCorrection, uploadRowStatus, viewedCard } from "./media-panel-model";
+import { mediaPanelModel, PANEL_ACTIONS, removalAction, removalNeedsCorrection, uploadRowStatus, viewedCard } from "./media-panel-model";
 
 /** A PARTS checklist with spaces P101 (P1) and P102 (P2), held by A and editable for A. */
 function viewFor(overrides: Partial<ChecklistView> = {}): ChecklistView {
@@ -232,6 +232,26 @@ describe("media panel model (survey-media spec 6.2, 4.6; SM-29)", () => {
     const model = modelFor(viewFor(), listOf([], { removedItems: [removed], notAcceptedItems: [rejected] }));
     expect(model.removed).toEqual([{ id: "M5", mediaNo: 5, category: "EXTERIOR_ACCESS", spaceCode: null, at: "2026-11-02T05:00:00Z", byName: "Anh Sale", kind: "HOLDER" }]);
     expect(model.notAccepted.map((photo) => [photo.id, photo.badge, photo.statusReason])).toEqual([["M6", "notAccepted", "MOTION_PHOTO"]]);
+  });
+});
+
+describe("carried photos (survey-checklist submission spec 6.1, 4.6, U-5)", () => {
+  it("names the revision a carried photo came from; an own photo has none", () => {
+    const model = modelFor(viewFor(), listOf([item("M1", { carriedFromChecklistNo: 1 }), item("M2", { carriedFromChecklistNo: null }), item("M3")]));
+    const photos = model.groups.flatMap((group) => group.photos);
+    expect(photos.map((photo) => photo.carriedFromChecklistNo)).toEqual([1, null, null]);
+  });
+
+  it("offers the holder the removal of a carried photo too", () => {
+    const model = modelFor(viewFor(), listOf([item("M1", { carriedFromChecklistNo: 1 })]));
+    expect(model.groups[0].photos[0].canRemove).toBe(true);
+  });
+});
+
+describe("removalAction (spec 4.6, A-12: a carried photo leaves by deselection, never by removal)", () => {
+  it("deselects a carried photo and removes an own one", () => {
+    expect(removalAction({ carriedFromChecklistNo: 1 })).toBe("deselect");
+    expect(removalAction({ carriedFromChecklistNo: null })).toBe("remove");
   });
 });
 

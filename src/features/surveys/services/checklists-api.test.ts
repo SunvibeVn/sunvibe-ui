@@ -8,10 +8,14 @@ import { toPublicResult } from "@/lib/api";
 import { CHECKLIST_GROUP_PATHS } from "../types";
 
 import {
+  decideChecklist,
   getCheckpoint,
   getChecklist,
+  getReviewQueue,
   saveChecklistGroup,
   startChecklist,
+  startRevision,
+  submitChecklist,
   takeOverChecklist,
 } from "./checklists-api";
 import type { SurveysDeps } from "./surveys-api";
@@ -50,6 +54,51 @@ describe("startChecklist (spec 7.1)", () => {
       ["POST", "/api/v1/staff/survey-appointments/A1/checklists", { intake: null }],
       ["POST", "/api/v1/staff/survey-appointments/A1/checklists", { intake: { reason: "Took the lead over", basis: BASIS } }],
     ]);
+  });
+});
+
+describe("submission, review and revisions (survey-checklist submission spec 7.1)", () => {
+  it("submits with the version the caller read", async () => {
+    const { sent, deps } = fakeServer(() => json({ checklist: { id: "C1", status: "SUBMITTED" }, historyEntry: null }));
+    const result = await submitChecklist("C1", { expectedVersion: 7 }, deps);
+    expect(result.ok && result.data.historyEntry).toBeNull();
+    expect(sent.map((entry) => [entry.method, entry.url.pathname, entry.body])).toEqual([
+      ["POST", "/api/v1/staff/survey-checklists/C1/submission", { expectedVersion: 7 }],
+    ]);
+  });
+
+  it("posts a decision as built, the marks always present", async () => {
+    const { sent, deps } = fakeServer(() => json({ checklist: { id: "C1" }, lead: { status: "SURVEY_SCHEDULED" } }));
+    const input = {
+      expectedVersion: 3,
+      outcome: "NEEDS_CHANGES" as const,
+      needsChangesKind: "DOCUMENTS_ONLY" as const,
+      reason: "Bring the land paper",
+      rejectedEvidence: [{ mediaId: "M1", reason: "Blurred" }],
+    };
+    await decideChecklist("C1", input, deps);
+    expect(sent[0].method).toBe("POST");
+    expect(sent[0].url.pathname).toBe("/api/v1/staff/survey-checklists/C1/decision");
+    expect(sent[0].body).toEqual(input);
+  });
+
+  it("starts a revision with the key `intake` always present (W16 strict body)", async () => {
+    const { sent, deps } = fakeServer(() => json({ checklist: { id: "C2" } }, 201));
+    const result = await startRevision("C1", { intake: null }, deps);
+    expect(result.ok && result.status).toBe(201);
+    await startRevision("C1", { intake: { reason: "Took the lead over", basis: BASIS } }, deps);
+    expect(sent.map((entry) => [entry.method, entry.url.pathname, entry.body])).toEqual([
+      ["POST", "/api/v1/staff/survey-checklists/C1/revisions", { intake: null }],
+      ["POST", "/api/v1/staff/survey-checklists/C1/revisions", { intake: { reason: "Took the lead over", basis: BASIS } }],
+    ]);
+  });
+
+  it("reads one page of the review queue", async () => {
+    const { sent, deps } = fakeServer(() => json({ items: [], page: 0, size: 20, totalElements: 0 }));
+    await getReviewQueue({ page: 2, size: 20 }, deps);
+    expect(sent[0].method).toBe("GET");
+    expect(sent[0].url.pathname).toBe("/api/v1/staff/survey-checklists/review-queue");
+    expect(Object.fromEntries(sent[0].url.searchParams)).toEqual({ page: "2", size: "20" });
   });
 });
 

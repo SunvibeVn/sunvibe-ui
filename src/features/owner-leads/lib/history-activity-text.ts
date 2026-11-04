@@ -25,6 +25,8 @@ function photoText(activity: Pick<LeadActivity, "type" | "referenceDetail">, t: 
   return t(activity.type === "CHECKLIST_MEDIA_ADDED" ? "history.photoAdded" : "history.photoRemoved", { category: words });
 }
 
+const REVIEW_OUTCOMES = new Set(["PASSED", "NEEDS_CHANGES", "FAILED"]);
+
 /** The checklist rows' own wording (survey-checklist spec 6.4): "Checklist #m started", "Checklist #m: <group> saved". */
 function checklistText(
   activity: Pick<LeadActivity, "type" | "referenceNo" | "referenceDetail">,
@@ -34,6 +36,14 @@ function checklistText(
   if (typeof no !== "number") return null;
   if (activity.type === "CHECKLIST_STARTED") return t("history.checklistStarted", { no });
   if (activity.type === "CHECKLIST_TAKEN_OVER") return t("history.checklistTakenOver", { no });
+  if (activity.type === "CHECKLIST_SUBMITTED") return t("history.checklistSubmitted", { no });
+  if (activity.type === "CHECKLIST_REVISION_STARTED") return t("history.revisionStarted", { no });
+  if (activity.type === "CHECKLIST_REVIEWED") {
+    // `<OUTCOME>[:<KIND>]`: the row names the outcome only (survey-checklist 6.2).
+    const outcome = (activity.referenceDetail ?? "").split(":")[0];
+    if (!REVIEW_OUTCOMES.has(outcome)) return null;
+    return t("history.checklistReviewed", { no, outcome: t(`checklist.review.outcome.${outcome as "PASSED"}`) });
+  }
   if (activity.type === "CHECKLIST_SAVED") {
     const group = checklistGroupLabelKey(activity.referenceDetail);
     return group === null ? null : t("history.checklistSaved", { no, group: t(group) });
@@ -50,7 +60,8 @@ export function historyActivityText(
   activity: Pick<LeadActivity, "type" | "note" | "referenceNo" | "referenceDetail">,
   t: OwnerLeadsTranslate,
 ): string {
-  const note = activity.note?.trim();
+  // A review row says only the outcome, whatever else it carries (`survey BR-4`).
+  const note = activity.type === "CHECKLIST_REVIEWED" ? "" : activity.note?.trim();
   if (note) return activity.note ?? "";
   const checklist = checklistText(activity, t) ?? photoText(activity, t);
   if (checklist !== null) return checklist;

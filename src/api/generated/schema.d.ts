@@ -506,7 +506,7 @@ export interface paths {
         put?: never;
         /**
          * Change the requirement (rental intent and price) of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
-         * @description Allowed in ASSIGNED, CONTACTED, ON_HOLD and SURVEY_SCHEDULED; ASSIGNED and SURVEY_SCHEDULED move to CONTACTED. Starts a new intent cycle and cancels the scheduled survey appointment, if any. askingPrice must be sent: a price or null.
+         * @description Allowed in ASSIGNED, CONTACTED, ON_HOLD and SURVEY_SCHEDULED, unless the cycle has a PASSED checklist revision; ASSIGNED and SURVEY_SCHEDULED move to CONTACTED. Starts a new intent cycle and cancels the scheduled survey appointment, if any. askingPrice must be sent: a price or null.
          */
         post: operations["changeIntent"];
         delete?: never;
@@ -776,6 +776,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/survey-checklists/review-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List the revisions waiting for a decision (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description SUBMITTED revisions of visible leads in SURVEY_SCHEDULED or ON_HOLD whose requirement has not changed, oldest submission first, with whether the caller can decide each one and why not.
+         */
+        get: operations["getSurveyChecklistReviewQueue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/survey-checklists/{checklistId}": {
         parameters: {
             query?: never;
@@ -830,6 +850,26 @@ export interface paths {
          */
         put: operations["saveSurveyChecklistCondition"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Decide a submitted survey checklist revision (SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN, outside the revision's excluded set)
+         * @description PASSED moves the lead to QUALIFIED; NEEDS_CHANGES DOCUMENTS_ONLY keeps it for a new revision on the same visit; NEEDS_CHANGES RESURVEY_REQUIRED and FAILED TEMPORARY move it to CONTACTED; FAILED OUT_OF_SCOPE and NOT_ACCEPTED close it as REJECTED. The reviewer's text stays in the decision.
+         */
+        post: operations["decideSurveyChecklist"];
         delete?: never;
         options?: never;
         head?: never;
@@ -900,6 +940,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/survey-checklists/{checklistId}/media/{mediaId}/deselection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Take a carried photo out of a draft revision
+         * @description The revision's holder takes out a photo carried from an earlier revision. The photo itself and the earlier revision are not touched. A photo another person uploaded needs a correction. Taking it out again answers the list as it is.
+         */
+        post: operations["deselectSurveyMedia"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/survey-checklists/{checklistId}/parts": {
         parameters: {
             query?: never;
@@ -920,6 +980,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/survey-checklists/{checklistId}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Start the next revision of a survey checklist returned for documents (the lead's eligible assignee)
+         * @description A DRAFT on the same visit with the groups as submitted and every usable photo carried. Who did not hold the previous revision declares where the information comes from.
+         */
+        post: operations["startSurveyChecklistRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/survey-checklists/{checklistId}/safety": {
         parameters: {
             query?: never;
@@ -934,6 +1014,26 @@ export interface paths {
          */
         put: operations["saveSurveyChecklistSafety"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/submission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Submit a survey checklist revision for review (the holder, who is the lead's eligible assignee)
+         * @description Freezes the revision and every selected photo with its hash. The lead keeps its status and version. The same caller repeating a submit gets the revision back and nothing is written.
+         */
+        post: operations["submitSurveyChecklist"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1787,6 +1887,55 @@ export interface components {
              */
             value: string | null;
         };
+        /** @description The answer of a decision */
+        ChecklistDecidedResponse: {
+            checklist?: components["schemas"]["ChecklistResponse"];
+            historyEntry?: components["schemas"]["ChecklistReviewHistoryEntryResponse"];
+            lead?: components["schemas"]["SurveyLeadStateResponse"];
+        };
+        /** @description Decide a submitted survey checklist revision */
+        ChecklistDecisionRequest: {
+            /**
+             * Format: int64
+             * @description The checklist version the caller read
+             */
+            expectedVersion: number | null;
+            /**
+             * @description Required with FAILED, refused otherwise
+             * @enum {string|null}
+             */
+            failedKind?: "OUT_OF_SCOPE" | "NOT_ACCEPTED" | "TEMPORARY" | null;
+            /** @description 1..2000 characters, no phone number; only with PASSED */
+            limitations?: string | null;
+            /**
+             * @description Required with NEEDS_CHANGES, refused otherwise
+             * @enum {string|null}
+             */
+            needsChangesKind?: "DOCUMENTS_ONLY" | "RESURVEY_REQUIRED" | null;
+            /** @description 1..2000 characters, no phone number */
+            notes?: string | null;
+            /** @enum {string|null} */
+            outcome: "PASSED" | "NEEDS_CHANGES" | "FAILED" | null;
+            /** @description 1..2000 characters, no phone number; required with NEEDS_CHANGES and FAILED */
+            reason?: string | null;
+            /** @description The frozen photos the reviewer does not accept; every other one counts as accepted */
+            rejectedEvidence: components["schemas"]["ChecklistRejectedEvidenceRequest"][] | null;
+        };
+        /** @description The decision on the revision */
+        ChecklistDecisionResponse: {
+            /** Format: date-time */
+            decidedAt?: string;
+            /** @enum {string|null} */
+            failedKind?: "OUT_OF_SCOPE" | "NOT_ACCEPTED" | "TEMPORARY" | null;
+            limitations?: string | null;
+            /** @enum {string|null} */
+            needsChangesKind?: "DOCUMENTS_ONLY" | "RESURVEY_REQUIRED" | null;
+            notes?: string | null;
+            /** @enum {string} */
+            outcome?: "PASSED" | "NEEDS_CHANGES" | "FAILED";
+            reason?: string | null;
+            reviewer?: components["schemas"]["ChecklistStaffMember"];
+        };
         /** @description A deposit as months (0..12) or an amount; 0 means no deposit */
         ChecklistDeposit: {
             /** @description AMOUNT only */
@@ -2168,7 +2317,7 @@ export interface components {
             /** @description Always null: a checklist command keeps the lead's status */
             toStatus?: string | null;
             /** @enum {string} */
-            type?: "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED";
+            type?: "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVISION_STARTED";
         };
         /** @description G1 identification, as read */
         ChecklistIdentificationContent: {
@@ -2372,7 +2521,7 @@ export interface components {
             /** @enum {string} */
             group?: "IDENTIFICATION" | "PARTS" | "DIMENSIONS" | "CONDITION" | "SAFETY" | "AMENITIES" | "EVIDENCE" | "TERMS";
             /** @enum {string} */
-            problem?: "NOT_CHECKED" | "REQUIRED_AREA_NOT_ENTERED" | "SCOPE_MISSING" | "NO_SPACES" | "NOT_IN_SCOPE" | "DIFFERENCE_NOTE_MISSING" | "EVIDENCE_PENDING" | "EVIDENCE_MISSING" | "EVIDENCE_PROCESSING";
+            problem?: "NOT_CHECKED" | "REQUIRED_AREA_NOT_ENTERED" | "SCOPE_MISSING" | "NO_SPACES" | "NOT_IN_SCOPE" | "DIFFERENCE_NOTE_MISSING" | "EVIDENCE_PENDING" | "EVIDENCE_MISSING" | "EVIDENCE_PROCESSING" | "EVIDENCE_UNAVAILABLE";
             spaceId?: string | null;
         };
         /** @description An amount in whole VND that is not a price per period */
@@ -2629,6 +2778,13 @@ export interface components {
             privateAreas: components["schemas"]["ChecklistTextFieldInput"];
             spaceId: string;
         };
+        /** @description Whether the PASSED revision can still be used */
+        ChecklistPassedResponse: {
+            /** @enum {string|null} */
+            reason?: "INTENT_CHANGED" | "LEAD_CLOSED" | "EVIDENCE_HELD" | "EVIDENCE_GONE" | null;
+            surveyedScope?: components["schemas"]["ChecklistSurveyedScope"];
+            usable?: boolean;
+        };
         /** @description The pets policy */
         ChecklistPets: {
             /** @description 1..500 characters, required for CONDITIONAL */
@@ -2722,6 +2878,12 @@ export interface components {
             unconfirmedTerms?: components["schemas"]["ChecklistUnconfirmedTerm"][];
             warnings?: components["schemas"]["ChecklistWarning"][];
         };
+        /** @description A frozen photo the reviewer does not accept */
+        ChecklistRejectedEvidenceRequest: {
+            mediaId: string | null;
+            /** @description 1..500 characters, no phone number */
+            reason: string | null;
+        };
         /** @description A monthly rent in whole VND */
         ChecklistRentMoney: {
             /**
@@ -2791,6 +2953,7 @@ export interface components {
             createdAt?: string;
             createdByName?: string | null;
             createdByUserId?: string;
+            decision?: components["schemas"]["ChecklistDecisionResponse"] | null;
             earlierHazards?: components["schemas"]["ChecklistEarlierHazard"][];
             editable?: boolean;
             editors?: components["schemas"]["ChecklistEditor"][];
@@ -2807,11 +2970,17 @@ export interface components {
             leadStaff?: components["schemas"]["ChecklistStaffMember"][];
             media?: components["schemas"]["ChecklistMedia"];
             ownerForm?: components["schemas"]["ChecklistOwnerForm"] | null;
+            /** @description Only on a PASSED revision */
+            passed?: components["schemas"]["ChecklistPassedResponse"] | null;
+            /** @description The last submitted revision of the cycle this one follows */
+            previousChecklistId?: string | null;
             /** @enum {string|null} */
-            readOnlyReason?: "INTENT_CHANGED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
+            readOnlyReason?: "INTENT_CHANGED" | "SUBMITTED" | "DECIDED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
             readiness?: components["schemas"]["ChecklistReadiness"];
+            review?: components["schemas"]["ChecklistReviewResponse"];
             /** @enum {string} */
-            status?: "DRAFT";
+            status?: "DRAFT" | "SUBMITTED" | "PASSED" | "NEEDS_CHANGES" | "FAILED";
+            submission?: components["schemas"]["ChecklistSubmissionResponse"] | null;
             takeovers?: components["schemas"]["ChecklistTakeover"][];
             templateCode?: string;
             /** Format: int32 */
@@ -2824,6 +2993,84 @@ export interface components {
             /** Format: int64 */
             version?: number;
             visit?: components["schemas"]["ChecklistVisit"];
+        };
+        /** @description The lead History entry written by a decision */
+        ChecklistReviewHistoryEntryResponse: {
+            /** @description Full name of the staff member; null when the id has no user row */
+            actorName?: string | null;
+            actorUserId?: string;
+            /** @description Null when the lead kept its status */
+            fromStatus?: string | null;
+            /** Format: date-time */
+            occurredAt?: string;
+            /** @description The outcome and kind: PASSED, NEEDS_CHANGES:<kind> or FAILED:<kind> */
+            referenceDetail?: string;
+            /** @description The checklist */
+            referenceId?: string;
+            /**
+             * Format: int32
+             * @description The checklist number
+             */
+            referenceNo?: number;
+            /** @description Null when the lead kept its status */
+            toStatus?: string | null;
+            /** @enum {string} */
+            type?: "CHECKLIST_REVIEWED";
+        };
+        /** @description A revision waiting for a decision */
+        ChecklistReviewQueueItemResponse: {
+            canReview?: boolean;
+            checklistId?: string;
+            /** Format: int32 */
+            checklistNo?: number;
+            leadCode?: string;
+            leadId?: string;
+            /** @enum {string|null} */
+            reason?: "NOT_REVIEWER_ROLE" | "NOT_SUBMITTED" | "LEAD_STATUS" | "INTENT_CHANGED" | "SERVING_DISABLED" | "NOT_INDEPENDENT" | null;
+            /** Format: date-time */
+            submittedAt?: string;
+            submittedBy?: components["schemas"]["ChecklistStaffMember"];
+        };
+        /** @description One page of the review queue, oldest submission first */
+        ChecklistReviewQueueResponse: {
+            items?: components["schemas"]["ChecklistReviewQueueItemResponse"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
+        /** @description Whether the viewer can decide the revision now */
+        ChecklistReviewResponse: {
+            canReview?: boolean;
+            /** @description The errors[].field of every PASSED rule that fails now: hazards, evidence.unavailable, appointment, evidence.coverage. Empty unless the revision is SUBMITTED */
+            decisionBlockedBy?: string[];
+            /**
+             * @description The first reason, in the order of the decision command
+             * @enum {string|null}
+             */
+            reason?: "NOT_REVIEWER_ROLE" | "NOT_SUBMITTED" | "LEAD_STATUS" | "INTENT_CHANGED" | "SERVING_DISABLED" | "NOT_INDEPENDENT" | null;
+        };
+        /** @description Start the next revision of a visit returned for documents */
+        ChecklistRevisionRequest: {
+            /** @description Null when the caller held the previous revision, required otherwise */
+            intake: components["schemas"]["ChecklistIntakeRequest"] | null;
+        };
+        /** @description Whether the viewer can start a new revision on the current visit */
+        ChecklistRevisionStartResponse: {
+            allowed?: boolean;
+            /** @enum {string|null} */
+            blockedBy?: "NO_CURRENT_VISIT" | "LEAD_STATUS" | "NOT_RETURNED_FOR_DOCUMENTS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | null;
+            /** @description The revision the new one follows, the path of the start */
+            checklistId?: string | null;
+            /** @description The viewer did not hold that revision, so the start needs an intake declaration */
+            intakeRequired?: boolean;
+        };
+        /** @description The answer of a new revision */
+        ChecklistRevisionStartedResponse: {
+            checklist?: components["schemas"]["ChecklistResponse"];
+            historyEntry?: components["schemas"]["ChecklistHistoryEntryResponse"];
         };
         /** @description G5 safety, as read */
         ChecklistSafetyContent: {
@@ -2958,7 +3205,7 @@ export interface components {
              * @description The first block that applies, null when allowed
              * @enum {string|null}
              */
-            blockedBy?: "NO_CURRENT_VISIT" | "INTENT" | "LEAD_STATUS" | "ALREADY_STARTED" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | null;
+            blockedBy?: "NO_CURRENT_VISIT" | "INTENT" | "LEAD_STATUS" | "CHECKLIST_EXISTS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | null;
             intakeDeclarationRequired?: boolean;
             visitAppointmentId?: string | null;
         };
@@ -2967,6 +3214,43 @@ export interface components {
             checklist?: components["schemas"]["ChecklistResponse"];
             historyEntry?: components["schemas"]["ChecklistHistoryEntryResponse"];
             lead?: components["schemas"]["SurveyLeadStateResponse"];
+        };
+        /** @description Who submitted the revision, when, and its frozen photos */
+        ChecklistSubmissionResponse: {
+            /** @description SHA-256 of the canonical groups and evidence */
+            contentSha256?: string;
+            evidence?: components["schemas"]["ChecklistSubmittedEvidence"][];
+            /** @description The photo policy in force at the submission */
+            mediaPolicy?: string;
+            /** Format: date-time */
+            submittedAt?: string;
+            submittedBy?: components["schemas"]["ChecklistStaffMember"];
+        };
+        /** @description Submit a survey checklist revision for review */
+        ChecklistSubmitRequest: {
+            /**
+             * Format: int64
+             * @description The checklist version the caller read
+             */
+            expectedVersion: number | null;
+        };
+        /** @description A frozen photo of a submission */
+        ChecklistSubmittedEvidence: {
+            /** @description Null before a decision; after it, false for a photo the reviewer did not accept */
+            accepted?: boolean | null;
+            /** @enum {string} */
+            category?: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL";
+            fullSha256?: string;
+            mediaId?: string;
+            rejectionReason?: string | null;
+            spaceCode?: string | null;
+            spaceId?: string | null;
+        };
+        /** @description The answer of a submit */
+        ChecklistSubmittedResponse: {
+            checklist?: components["schemas"]["ChecklistResponse"];
+            /** @description Null when the same caller repeats a submit: nothing was written */
+            historyEntry?: components["schemas"]["ChecklistHistoryEntryResponse"] | null;
         };
         /** @description A checklist of a VISITED appointment in the survey block */
         ChecklistSummaryResponse: {
@@ -2979,13 +3263,25 @@ export interface components {
             /** Format: int32 */
             missingCount?: number;
             /** @enum {string|null} */
-            readOnlyReason?: "INTENT_CHANGED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
+            outcome?: "PASSED" | "NEEDS_CHANGES" | "FAILED" | null;
+            /** @enum {string|null} */
+            readOnlyReason?: "INTENT_CHANGED" | "SUBMITTED" | "DECIDED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
             /** @enum {string} */
-            status?: "DRAFT";
+            status?: "DRAFT" | "SUBMITTED" | "PASSED" | "NEEDS_CHANGES" | "FAILED";
             /** Format: date-time */
             updatedAt?: string;
             updatedByName?: string | null;
             updatedByUserId?: string | null;
+        };
+        /** @description The rental scope and spaces of the PASSED revision */
+        ChecklistSurveyedScope: {
+            /** @enum {string} */
+            rentalScope?: "WHOLE" | "PARTS";
+            spaces?: components["schemas"]["ChecklistSurveyedSpace"][];
+        };
+        ChecklistSurveyedSpace: {
+            code?: string;
+            id?: string;
         };
         /** @description The answer of a takeover */
         ChecklistTakenOverResponse: {
@@ -3000,7 +3296,7 @@ export interface components {
             /** @description Whether a checkpoint can be read (never for START_BY_OTHER) */
             hasSnapshot?: boolean;
             /** @enum {string} */
-            kind?: "START_BY_OTHER" | "TAKEOVER";
+            kind?: "START_BY_OTHER" | "TAKEOVER" | "REVISION_BY_OTHER";
             /** Format: date-time */
             occurredAt?: string;
             reason?: string;
@@ -3363,7 +3659,7 @@ export interface components {
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
-            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED";
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED";
         };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
@@ -3975,14 +4271,18 @@ export interface components {
             /** Format: int32 */
             intentCycle?: number;
             leadId?: string;
+            resume?: components["schemas"]["SurveyResumeResponse"];
             resumeAllowed?: boolean;
             resumptions?: components["schemas"]["SurveyResumptionResponse"][];
+            /** @description Whether the viewer can start a new revision on the current visit (survey-checklist submission spec 7.2) */
+            revisionStart?: components["schemas"]["ChecklistRevisionStartResponse"];
+            survey?: components["schemas"]["SurveyRecordResponse"];
         };
         /** @description Whether and how the lead can get a survey booking now */
         SurveyBookingResponse: {
             allowed?: boolean;
             /** @enum {string} */
-            blockedBy?: "ALREADY_SCHEDULED" | "NO_ASSIGNEE" | "LEAD_STATUS" | "INTENT" | "SURVEYOR_INELIGIBLE";
+            blockedBy?: "ALREADY_SCHEDULED" | "NO_ASSIGNEE" | "CHECKLIST_SUBMITTED" | "CHECKLIST_PASSED" | "LEAD_STATUS" | "INTENT" | "SURVEYOR_INELIGIBLE";
             /** @enum {string} */
             kind?: "FIRST" | "RESURVEY";
             previousVisitId?: string;
@@ -4156,6 +4456,11 @@ export interface components {
             /** @description Null when absent or hidden from this viewer (captionHidden) */
             caption?: string | null;
             captionHidden?: boolean;
+            /**
+             * Format: int32
+             * @description The number of the revision a carried photo came from; null for a photo uploaded into this revision
+             */
+            carriedFromChecklistNo?: number | null;
             /** @enum {string} */
             category?: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL";
             contentAvailable?: boolean;
@@ -4250,6 +4555,21 @@ export interface components {
         SurveyProxyResponse: {
             basis?: components["schemas"]["SurveyBasisResponse"];
             reason?: string;
+        };
+        /** @description The survey record of the lead's current intent cycle */
+        SurveyRecordResponse: {
+            hasPassed?: boolean;
+            hasSubmitted?: boolean;
+            /** @description With a PASSED revision: whether it can still be used */
+            passed?: components["schemas"]["ChecklistPassedResponse"] | null;
+        };
+        /** @description Where a resume of the held lead would take it */
+        SurveyResumeResponse: {
+            /**
+             * @description Null when the lead cannot be resumed
+             * @enum {string|null}
+             */
+            target?: "SURVEY_SCHEDULED" | "QUALIFIED" | null;
         };
         /** @description A resumption of the lead's survey work */
         SurveyResumptionResponse: {
@@ -6936,6 +7256,58 @@ export interface operations {
             };
         };
     };
+    getSurveyChecklistReviewQueue: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page number */
+                page?: number;
+                /** @description Revisions per page, 1 to 50 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of the queue */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistReviewQueueResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED: page or size */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getSurveyChecklist: {
         parameters: {
             query?: never;
@@ -7136,6 +7508,77 @@ export interface operations {
             };
             /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    decideSurveyChecklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description The revision, the lead and the History entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistDecidedResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on expectedVersion, outcome, needsChangesKind, failedKind, reason, notes, limitations or rejectedEvidence.* (a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller's role may not decide; CHECKLIST_REVIEW_NOT_ALLOWED (field reviewer): the caller is in the excluded set or cannot sign in */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedVersion); CHECKLIST_DECISION_NOT_ALLOWED (fields status, lead.status, lead.intentCycle, visit, media.serving, and for PASSED hazards, evidence.rejected, evidence.unavailable, appointment, evidence.coverage) */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -7502,6 +7945,107 @@ export interface operations {
             };
         };
     };
+    deselectSurveyMedia: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+                mediaId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MediaRemovalRequest"];
+            };
+        };
+        responses: {
+            /** @description The media list of the revision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistMediaResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on correction (missing where needed), correction.reason, correction.basis.confirmedOn (not from the visit's arrival date to today) or correction.basis.text; MALFORMED_REQUEST for an unknown or missing key */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such revision or photo, the photo was not carried into this revision, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY; CHECKLIST_TAKEOVER_REQUIRED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description PAYLOAD_TOO_LARGE: the body is above 16 KiB */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take the lead */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED (field budget): only a repeat, which changes nothing and counts in the hourly list budget */
+            429: {
+                headers: {
+                    /** @description Seconds to wait */
+                    "Retry-After"?: number;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     saveSurveyChecklistParts: {
         parameters: {
             query?: never;
@@ -7582,6 +8126,86 @@ export interface operations {
             };
         };
     };
+    startSurveyChecklistRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistRevisionRequest"];
+            };
+        };
+        responses: {
+            /** @description The new revision and its History entry */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistRevisionStartedResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on intake or intake.* (a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_NOT_ALLOWED (field status); CHECKLIST_ALREADY_STARTED: a later revision exists */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     saveSurveyChecklistSafety: {
         parameters: {
             query?: never;
@@ -7643,6 +8267,86 @@ export interface operations {
                 };
             };
             /** @description CHECKLIST_READ_ONLY (the reason is on the next read); CHECKLIST_TAKEOVER_REQUIRED: the caller must take the draft over first; CONCURRENT_MODIFICATION (field expectedVersion or otherGroupVersions.<group>) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submitSurveyChecklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistSubmitRequest"];
+            };
+        };
+        responses: {
+            /** @description The revision; historyEntry is null on a repeat */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistSubmittedResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on expectedVersion (a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not sale staff or ADMIN, or not the lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist, or the caller may not see its lead */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CHECKLIST_READ_ONLY; CHECKLIST_TAKEOVER_REQUIRED; CONCURRENT_MODIFICATION (field expectedVersion); CHECKLIST_SUBMISSION_NOT_AVAILABLE (field submission); CHECKLIST_NOT_READY (one error per failing gate: appointment, readiness.missing, media.pending, media.limit, media.unavailable) */
             409: {
                 headers: {
                     [name: string]: unknown;

@@ -11,6 +11,8 @@ export type SurveyUiErrorKind =
   | "stale"
   | "already-scheduled"
   | "not-allowed"
+  /** 409 SURVEY_NOT_ALLOWED field `checklist`: the survey record refuses a booking or a resume (submission 4.8). */
+  | "checklist-refused"
   | "no-current-visit"
   | "invalid-transition"
   | "surveyor-ineligible"
@@ -79,6 +81,9 @@ export function toSurveyUiError(result: ApiResult<unknown>): SurveyUiError | nul
     case 404:
       return withCorrelation({ kind: "not-found" }, correlationId);
     case 409:
+      if (code === "SURVEY_NOT_ALLOWED" && fieldErrors.some((entry) => entry.field === "checklist")) {
+        return withCorrelation({ kind: "checklist-refused" }, correlationId);
+      }
       return withCorrelation({ kind: byCode(CONFLICTS, code) ?? "stale" }, correlationId);
     case 422:
       return withCorrelation({ kind: byCode(UNPROCESSABLE, code) ?? "retry" }, correlationId);

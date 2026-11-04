@@ -21,6 +21,8 @@ const DEFAULTS = { reason: "", basisDate: "", basisText: "" };
 
 type IntakeDialogProps = {
   surveyNo: number | null;
+  /** The number of the revision a later start opens (A-7); left out for the first checklist of a visit. */
+  revisionNo?: number;
   performerName: string | null;
   arrivedAt: string | null;
   pending: boolean;
@@ -33,10 +35,11 @@ type IntakeDialogProps = {
 };
 
 /**
- * The intake declaration of a start by someone other than the visit's performer (survey-checklist 4.5, BR-14): a
- * reason and a basis (date from the visit's arrival to today, text). The draft stays in tab memory until it starts.
+ * The intake declaration of a start by someone other than the visit's performer (survey-checklist 4.5, BR-14), or of a
+ * new revision by someone other than the previous holder (submission A-7): a reason and a basis (date from the visit's
+ * arrival to today, text). The draft stays in tab memory until it starts.
  */
-export function IntakeDialog({ surveyNo, performerName, arrivedAt, pending, serverProblems, message, onClose, onStart }: IntakeDialogProps) {
+export function IntakeDialog({ surveyNo, revisionNo, performerName, arrivedAt, pending, serverProblems, message, onClose, onStart }: IntakeDialogProps) {
   const t = useTranslations("OwnerLeads");
   const { userId, leadId } = useLeadDetail();
   const [form, setForm, clearForm] = useFormDraft({ userId, leadId, form: "checklistIntake" }, DEFAULTS);
@@ -64,7 +67,7 @@ export function IntakeDialog({ surveyNo, performerName, arrivedAt, pending, serv
     <Dialog
       open
       onClose={pending ? () => undefined : onClose}
-      title={t("checklist.intake.title", { no: surveyNo ?? "" })}
+      title={revisionNo === undefined ? t("checklist.intake.title", { no: surveyNo ?? "" }) : t("checklist.revision.start", { no: revisionNo })}
       closeLabel={pending ? undefined : t("checklist.intake.close")}
       footer={
         <>
@@ -72,7 +75,11 @@ export function IntakeDialog({ surveyNo, performerName, arrivedAt, pending, serv
             {t("checklist.intake.close")}
           </Button>
           <Button type="submit" form={formId} pending={pending}>
-            {pending ? t("checklist.intake.starting") : t("checklist.intake.start")}
+            {pending
+              ? t("checklist.intake.starting")
+              : revisionNo === undefined
+                ? t("checklist.intake.start")
+                : t("checklist.revision.start", { no: revisionNo })}
           </Button>
         </>
       }
@@ -86,7 +93,7 @@ export function IntakeDialog({ surveyNo, performerName, arrivedAt, pending, serv
           if (!pending) submit();
         }}
       >
-        <p className="text-sm text-slate-700">{t("checklist.intake.intro")}</p>
+        <p className="text-sm text-slate-700">{t(revisionNo === undefined ? "checklist.intake.intro" : "checklist.revision.intro")}</p>
         {message !== null && (
           <div role="alert">
             <Alert tone="error">{message}</Alert>

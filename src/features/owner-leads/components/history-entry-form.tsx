@@ -45,7 +45,7 @@ import {
   useOriginalText,
 } from "./duplicate-picker";
 import { HISTORY_CELL } from "./history-cells";
-import { useLeadDetail } from "./lead-detail-context";
+import { surveyRecordOf, useLeadDetail } from "./lead-detail-context";
 
 type Intent = "lookup" | "back";
 
@@ -106,10 +106,10 @@ type HistoryEntryFormProps = {
 export function HistoryEntryForm({ no, message, onMessage, onSaved, onClosedRefused }: HistoryEntryFormProps) {
   const t = useTranslations("OwnerLeads");
   const controller = useLeadDetail();
-  const { userId, leadId, lead, viewer, busy, setBusy } = controller;
+  const { userId, leadId, lead, viewer, survey, busy, setBusy } = controller;
   const { user } = useSession();
   const candidates = lead.duplicateCandidates ?? NO_CANDIDATES;
-  const targets = entryTargets(lead.status);
+  const targets = entryTargets(lead.status, surveyRecordOf(survey));
   const ctx: StatusContext = { leadId, candidates, scope: viewer.access === "ALL" ? "all" : "mine" };
 
   const [activity, setActivity, clearActivity] = useDraft({ userId, leadId, form: "activity" });

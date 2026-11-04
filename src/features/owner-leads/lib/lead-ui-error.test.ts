@@ -66,7 +66,7 @@ describe("toLeadUiError (spec 5.2)", () => {
     expect(toLeadUiError(http(409, { code: "INVALID_STATE_TRANSITION" }))).toEqual({ kind: "invalid-transition" });
     const onlyLater = http(409, {
       code: "INVALID_STATE_TRANSITION",
-      fieldErrors: [{ field: "toStatus", message: "x", allowedValues: ["QUALIFIED"] }],
+      fieldErrors: [{ field: "toStatus", message: "x", allowedValues: ["VALIDATING"] }],
     });
     expect(toLeadUiError(onlyLater)).toEqual({ kind: "invalid-transition" });
   });

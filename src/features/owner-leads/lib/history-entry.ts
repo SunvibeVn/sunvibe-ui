@@ -4,7 +4,7 @@ import type { CommandMessage } from "./command-flow";
 import type { NoteOutcome } from "./note-flow";
 import { NOTE_MAX } from "./note-length";
 import { type OriginalChoice, REASON_MAX, type StatusForm } from "./status-flow";
-import { allowedTargets, isClosing } from "./transitions";
+import { allowedTargets, isClosing, type SurveyRecordFacts } from "./transitions";
 
 /** The STATUS choice of a new history entry that keeps the current status: Save then adds a note. */
 export const KEEP_STATUS = "KEEP";
@@ -13,9 +13,9 @@ export const KEEP_STATUS = "KEEP";
 export type EntryTarget = typeof KEEP_STATUS | LeadStatus;
 
 /** The choices of the STATUS select: keep the status, then the allowed targets (BR-3); none on a closed lead. */
-export function entryTargets(status: string | undefined): EntryTarget[] {
+export function entryTargets(status: string | undefined, survey?: SurveyRecordFacts | null): EntryTarget[] {
   if (!isLeadStatus(status)) return [];
-  const targets = allowedTargets(status);
+  const targets = allowedTargets(status, survey);
   return targets.length === 0 ? [] : [KEEP_STATUS, ...targets];
 }
 

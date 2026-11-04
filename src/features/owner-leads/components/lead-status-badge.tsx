@@ -10,6 +10,7 @@ const TONE: Record<string, BadgeTone> = {
   ASSIGNED: "info",
   CONTACTED: "success",
   SURVEY_SCHEDULED: "info",
+  QUALIFIED: "success",
   ON_HOLD: "warning",
   DUPLICATE: "neutral",
   REJECTED: "neutral",

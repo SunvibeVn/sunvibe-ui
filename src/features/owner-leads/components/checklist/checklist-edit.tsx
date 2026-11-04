@@ -16,11 +16,12 @@ import { IdentificationPanel } from "./identification-panel";
 import { PartsPanel } from "./parts-panel";
 import { PhotosPanel } from "./photos-panel";
 import { SafetyPanel } from "./safety-panel";
+import { SubmitPanel } from "./submit-panel";
 import { TermsPanel } from "./terms-panel";
 
 /**
- * The Edit tab (survey-checklist spec 6.2): the group navigation and one panel per group G1..G8. A viewer who cannot
- * edit sees the groups read-only, without inputs (W16-32).
+ * The Edit tab (survey-checklist spec 6.2): the group navigation, one panel per group G1..G8 and the submit panel. A
+ * viewer who cannot edit sees the groups read-only, without inputs (W16-32).
  */
 export function ChecklistEdit() {
   const t = useTranslations("OwnerLeads");
@@ -37,6 +38,7 @@ export function ChecklistEdit() {
     <div className="space-y-4">
       <GroupNav idPrefix="cl-group" />
       <EditPanels />
+      <SubmitPanel />
     </div>
   );
 }

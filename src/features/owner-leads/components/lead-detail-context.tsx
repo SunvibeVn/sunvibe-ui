@@ -4,6 +4,7 @@ import { createContext, useContext } from "react";
 import type { ChecklistStarted, SurveyBlock, SurveyCommandResult, SurveyUiError } from "@/features/surveys";
 
 import type { CommandSource } from "../lib/command-lock";
+import type { SurveyRecordFacts } from "../lib/transitions";
 import type { Viewer } from "../lib/viewer";
 import type { LeadDetail, LeadNoteResult, LeadSummary } from "../types";
 
@@ -66,6 +67,11 @@ export type LeadDetailController = {
   /** Back to the list with the "not found or no longer allowed" notice (C-37); keeps no lead id in the URL. */
   leaveToList(): void;
 };
+
+/** The survey record of the loaded block; none while the block is loading or failed, so nothing is hidden on a guess. */
+export function surveyRecordOf(survey: SurveyState): SurveyRecordFacts | null {
+  return survey.state === "ready" ? (survey.block.survey ?? null) : null;
+}
 
 const LeadDetailContext = createContext<LeadDetailController | null>(null);
 

@@ -76,6 +76,24 @@ export function removeMedia(
   );
 }
 
+/**
+ * POST /api/v1/staff/survey-checklists/{checklistId}/media/{mediaId}/deselection: a carried photo leaves this revision
+ * and stays in the earlier one (survey-checklist submission 4.6). `correction` is always sent, null when empty.
+ */
+export function deselectMedia(
+  checklistId: string,
+  mediaId: string,
+  input: MediaRemovalInput,
+  deps: SurveysDeps = DEFAULT_DEPS,
+): Promise<ApiResult<MediaList>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/survey-checklists/{checklistId}/media/{mediaId}/deselection", {
+      params: { path: { checklistId, mediaId } },
+      body: input,
+    }),
+  );
+}
+
 /** POST /api/v1/staff/survey-media/{mediaId}/hold (ADMIN, A-23): already held answers 200 unchanged. */
 export function holdMedia(
   mediaId: string,

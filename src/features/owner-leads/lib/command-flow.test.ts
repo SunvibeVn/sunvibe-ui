@@ -37,7 +37,7 @@ describe("toCommandOutcome (spec 5.2, assign and status change)", () => {
     expect(
       toCommandOutcome(
         http(409, "INVALID_STATE_TRANSITION", [
-          { field: "toStatus", message: "x", allowedValues: ["ON_HOLD", "REJECTED", "QUALIFIED"] },
+          { field: "toStatus", message: "x", allowedValues: ["ON_HOLD", "REJECTED", "VALIDATING"] },
         ]),
       ),
     ).toEqual({ kind: "invalid-transition", allowed: ["ON_HOLD", "REJECTED"] });

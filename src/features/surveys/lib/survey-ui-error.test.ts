@@ -17,6 +17,25 @@ const http = (
   correlationId: extras.correlationId,
 });
 
+describe("SURVEY_NOT_ALLOWED field checklist (survey-checklist submission 4.8, 7.3)", () => {
+  it("says the survey record refused a booking or a resume", () => {
+    const result = {
+      ok: false as const,
+      kind: "http" as const,
+      status: 409,
+      code: "SURVEY_NOT_ALLOWED",
+      fieldErrors: [{ field: "checklist", message: "x" }],
+      correlationId: "c-1",
+    };
+    expect(toSurveyUiError(result)).toEqual({ kind: "checklist-refused", correlationId: "c-1" });
+  });
+
+  it("keeps not-allowed for the other fields", () => {
+    const result = { ok: false as const, kind: "http" as const, status: 409, code: "SURVEY_NOT_ALLOWED", fieldErrors: [], correlationId: undefined };
+    expect(toSurveyUiError(result)).toEqual({ kind: "not-allowed" });
+  });
+});
+
 describe("toSurveyUiError (spec 6.7, 7.3: by code, never by message)", () => {
   it("returns null for a success", () => {
     expect(toSurveyUiError({ ok: true, data: {}, status: 200, replayed: false, correlationId: "c" })).toBeNull();

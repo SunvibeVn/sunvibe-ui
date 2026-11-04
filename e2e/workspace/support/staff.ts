@@ -100,10 +100,11 @@ const FIXTURE_LEADS: ReadonlyArray<readonly [code: string, contactName: string, 
   ["SV-E2EA-AA2M", "Lý Văn Phúc", "912000012"],
   ["SV-E2EA-AA2N", "Phan Thị Ngọc", "912000013"],
   ["SV-E2EA-AA2P", "Trịnh Văn Khoa", "912000014"],
+  ["SV-E2EA-AA2Q", "Đoàn Thị Hạnh", "912000015"],
 ];
 
 export const fixture = {
-  /** L1..L14 by their fixed id and request code (never by list position). */
+  /** L1..L15 by their fixed id and request code (never by list position). */
   lead(n: number): FixtureLead {
     const row = FIXTURE_LEADS[n - 1];
     if (row === undefined) throw new Error(`No fixture lead L${n}`);
@@ -176,6 +177,7 @@ export const T = {
     ASSIGNED: "Assigned",
     CONTACTED: "Contacted",
     SURVEY_SCHEDULED: "Survey Scheduled",
+    QUALIFIED: "Qualified",
     ON_HOLD: "On Hold",
     DUPLICATE: "Duplicate",
     REJECTED: "Declined",

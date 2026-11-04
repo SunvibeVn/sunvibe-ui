@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { Alert } from "@/components/ui/alert";
+import type { ChecklistView } from "@/features/surveys";
 
 import type { EarlierChecklist } from "../../lib/checklist/page-notices";
 import { pageNotices } from "../../lib/checklist/page-notices";
@@ -13,20 +14,27 @@ import { pageNotices } from "../../lib/checklist/page-notices";
  */
 export function PageBanners({
   earlier,
-  photosAvailable,
+  view,
   withLaterVisit = true,
 }: {
   earlier: EarlierChecklist | null;
-  /** `media.available` of the read (survey-media A-1): which photo and submission banner shows. */
-  photosAvailable: boolean;
+  /** The read: `media.available` (survey-media A-1), the status and the reason say which photo and submission banner shows. */
+  view: ChecklistView;
   withLaterVisit?: boolean;
 }) {
   const t = useTranslations("OwnerLeads");
-  const notices = pageNotices({ earlier, photosAvailable });
+  const notices = pageNotices({
+    earlier,
+    photosAvailable: view.media?.available === true,
+    status: view.status,
+    unavailableReason: view.readiness?.submissionUnavailableReason,
+  });
   return (
     <div className="space-y-2">
       <Alert tone="info">{t("checklist.page.legal")}</Alert>
-      <Alert tone="info">{t(notices.media === "laterRelease" ? "checklist.page.laterRelease" : "checklist.page.media")}</Alert>
+      {notices.media !== null && (
+        <Alert tone="info">{t(notices.media === "laterRelease" ? "checklist.page.laterRelease" : "checklist.page.media")}</Alert>
+      )}
       {withLaterVisit && notices.laterVisit !== null && (
         <Alert tone="info">
           {t("checklist.page.laterVisit", { surveyNo: notices.laterVisit.surveyNo, checklistNo: notices.laterVisit.checklistNo })}

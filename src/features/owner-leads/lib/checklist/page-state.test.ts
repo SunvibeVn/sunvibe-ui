@@ -15,6 +15,7 @@ import {
   NO_LOCKS,
   pageFailureStep,
   readOnlyNotice,
+  readOrder,
   unlockAll,
   unlockGroup,
   viewEvent,
@@ -112,6 +113,61 @@ describe("forgetLeadChecklists (security M3: a 404 on a start drops the intake a
     for (const key of [intake, group, note, otherLead]) memory.drafts.set(key, "x");
     forgetLeadChecklists(memory.drafts, { userId: "u1", leadId: "L1" });
     expect([intake, group, note, otherLead].map((key) => memory.drafts.get(key))).toEqual([undefined, undefined, "x", "x"]);
+  });
+});
+
+describe("a 403 ends a review (survey-checklist submission 6.3, 4.2)", () => {
+  it("clears the hint of a read-only revision, so no form stays live on it", () => {
+    const view = viewOf(emptyContent(), 1, {
+      status: "SUBMITTED",
+      editable: false,
+      readOnlyReason: "SUBMITTED",
+      review: { canReview: true, reason: null, decisionBlockedBy: [] },
+    });
+    const { state, reload } = viewEvent({ view, locked: false }, { type: "forbidden" });
+    expect(state.view?.review?.canReview).toBe(false);
+    expect(state.view?.readOnlyReason).toBe("SUBMITTED");
+    expect(state.locked).toBe(true);
+    expect(reload).toBe(true);
+  });
+
+  it("leaves a read-only view without the hint as it is", () => {
+    const view = viewOf(emptyContent(), 1, { editable: false, readOnlyReason: "NOT_ASSIGNEE" });
+    expect(viewEvent({ view, locked: false }, { type: "forbidden" }).state.view).toBe(view);
+  });
+});
+
+describe("readOrder by status (survey-checklist submission 4.1: nothing returns to DRAFT)", () => {
+  const content = emptyContent();
+  const at = (status: "DRAFT" | "SUBMITTED" | "PASSED" | "NEEDS_CHANGES" | "FAILED", version: number, set = 0) =>
+    viewOf(content, 1, { status, version, media: { available: true, uploadEnabled: true, setVersion: set } });
+
+  it("pageState_olderReadAfterSubmit_ignored: a read sent before the submit answers after it", () => {
+    const screen = { view: at("SUBMITTED", 5), locked: false };
+    const result = viewEvent(screen, { type: "read", view: at("DRAFT", 4) });
+    expect(result).toEqual({ state: screen, reload: false });
+  });
+
+  it("ignores a read of an earlier status even when another version of it is higher", () => {
+    expect(readOrder(at("SUBMITTED", 5, 2), at("DRAFT", 4, 3))).toBe("older");
+    expect(readOrder(at("PASSED", 6, 2), at("SUBMITTED", 5, 3))).toBe("older");
+  });
+
+  it("a newer status wins over any lower version: the page never waits on a stale photo version", () => {
+    expect(readOrder(at("DRAFT", 4, 3), at("SUBMITTED", 5, 2))).toBe("current");
+    expect(readOrder(at("SUBMITTED", 5, 3), at("NEEDS_CHANGES", 6, 2))).toBe("current");
+    const shown = viewEvent({ view: at("SUBMITTED", 5, 3), locked: false }, { type: "read", view: at("FAILED", 6, 2) });
+    expect(shown.state.view?.status).toBe("FAILED");
+    expect(shown.reload).toBe(false);
+  });
+
+  it("treats the three decided statuses alike and compares their versions as before", () => {
+    expect(readOrder(at("PASSED", 6), at("FAILED", 7))).toBe("current");
+    expect(readOrder(at("PASSED", 6), at("PASSED", 5))).toBe("older");
+  });
+
+  it("orders a read without a status as a draft", () => {
+    expect(readOrder(at("SUBMITTED", 5), viewOf(content, 1, { status: undefined, version: 9 }))).toBe("older");
   });
 });
 

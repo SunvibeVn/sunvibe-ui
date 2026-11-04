@@ -17,7 +17,36 @@ export type ChecklistUiErrorKind =
   | "not-allowed"
   | "already-started"
   | "surveyor-ineligible"
+  /** 409 CHECKLIST_SUBMISSION_NOT_AVAILABLE: uploads or submission are off. */
+  | "submission-not-available"
+  /** 409 CHECKLIST_NOT_READY: `gates` names each failing gate. */
+  | "not-ready"
+  /** 403 CHECKLIST_REVIEW_NOT_ALLOWED: the caller is outside the reviewers of this revision. */
+  | "review-not-allowed"
+  /** 409 CHECKLIST_DECISION_NOT_ALLOWED: `rules` names each rule that refused. */
+  | "decision-not-allowed"
   | "retry";
+
+/** A failing gate of a submit (spec 4.4), with the names of `readiness.submissionUnavailableReason`. */
+export type ChecklistSubmitGate =
+  | "APPOINTMENT_SCHEDULED"
+  | "MISSING_ITEMS"
+  | "PHOTOS_NOT_FINISHED"
+  | "PHOTO_LIMIT"
+  | "PHOTO_UNAVAILABLE";
+
+/** A rule that refuses a decision (spec 4.5, 7.3); also the entries of `review.decisionBlockedBy`. */
+export type ChecklistDecisionRule =
+  | "STATUS"
+  | "LEAD_STATUS"
+  | "LEAD_INTENT_CYCLE"
+  | "VISIT"
+  | "MEDIA_SERVING"
+  | "HAZARDS"
+  | "EVIDENCE_REJECTED"
+  | "EVIDENCE_UNAVAILABLE"
+  | "APPOINTMENT"
+  | "EVIDENCE_COVERAGE";
 
 export type ChecklistUiError = {
   kind: ChecklistUiErrorKind;
@@ -27,6 +56,10 @@ export type ChecklistUiError = {
   staleGroup?: ChecklistGroupPath | null;
   /** `not-allowed`: the field of CHECKLIST_NOT_ALLOWED (`appointmentId`, `intent`, `status`, `holder`), or null. */
   notAllowedField?: string | null;
+  /** `not-ready`: the failing gates, in the order of the answer. */
+  gates?: ChecklistSubmitGate[];
+  /** `decision-not-allowed`: the rules that refused, in the order of the answer. */
+  rules?: ChecklistDecisionRule[];
   /** Shown in small text under every message when present (ADR-010). */
   correlationId?: string;
 };
@@ -35,7 +68,42 @@ const CONFLICTS: Record<string, ChecklistUiErrorKind> = {
   CHECKLIST_READ_ONLY: "read-only",
   CHECKLIST_TAKEOVER_REQUIRED: "takeover-required",
   CHECKLIST_ALREADY_STARTED: "already-started",
+  CHECKLIST_SUBMISSION_NOT_AVAILABLE: "submission-not-available",
 };
+
+const SUBMIT_GATES: Readonly<Record<string, ChecklistSubmitGate>> = {
+  appointment: "APPOINTMENT_SCHEDULED",
+  "readiness.missing": "MISSING_ITEMS",
+  "media.pending": "PHOTOS_NOT_FINISHED",
+  "media.limit": "PHOTO_LIMIT",
+  "media.unavailable": "PHOTO_UNAVAILABLE",
+};
+
+const DECISION_RULES: Readonly<Record<string, ChecklistDecisionRule>> = {
+  status: "STATUS",
+  "lead.status": "LEAD_STATUS",
+  "lead.intentCycle": "LEAD_INTENT_CYCLE",
+  visit: "VISIT",
+  "media.serving": "MEDIA_SERVING",
+  hazards: "HAZARDS",
+  "evidence.rejected": "EVIDENCE_REJECTED",
+  "evidence.unavailable": "EVIDENCE_UNAVAILABLE",
+  appointment: "APPOINTMENT",
+  "evidence.coverage": "EVIDENCE_COVERAGE",
+};
+
+const known = <T>(table: Readonly<Record<string, T>>, fields: readonly string[]): T[] =>
+  fields.filter((field) => Object.hasOwn(table, field)).map((field) => table[field]);
+
+/** The gates a CHECKLIST_NOT_READY names by `errors[].field`; a field this UI does not know is left out. */
+export function submitGates(fields: readonly string[]): ChecklistSubmitGate[] {
+  return known(SUBMIT_GATES, fields);
+}
+
+/** The rules a CHECKLIST_DECISION_NOT_ALLOWED or `review.decisionBlockedBy` names; an unknown field is left out. */
+export function decisionRules(fields: readonly string[]): ChecklistDecisionRule[] {
+  return known(DECISION_RULES, fields);
+}
 
 const OTHER_GROUP = "otherGroupVersions.";
 
@@ -82,15 +150,20 @@ export function toChecklistUiError(result: ApiResult<unknown>): ChecklistUiError
       return withCorrelation({ kind, fieldErrors: Object.fromEntries(fields) }, correlationId);
     }
     case 403:
-      return withCorrelation({ kind: "forbidden" }, correlationId);
+      return withCorrelation({ kind: code === "CHECKLIST_REVIEW_NOT_ALLOWED" ? "review-not-allowed" : "forbidden" }, correlationId);
     case 404:
       return withCorrelation({ kind: "not-found" }, correlationId);
     case 409: {
       if (code === "CHECKLIST_NOT_ALLOWED") {
         return withCorrelation({ kind: "not-allowed", notAllowedField: fieldErrors[0]?.field ?? null }, correlationId);
       }
-      const known = code !== undefined && Object.hasOwn(CONFLICTS, code) ? CONFLICTS[code] : undefined;
-      if (known !== undefined) return withCorrelation({ kind: known }, correlationId);
+      const names = fieldErrors.map((entry) => entry.field);
+      if (code === "CHECKLIST_NOT_READY") return withCorrelation({ kind: "not-ready", gates: submitGates(names) }, correlationId);
+      if (code === "CHECKLIST_DECISION_NOT_ALLOWED") {
+        return withCorrelation({ kind: "decision-not-allowed", rules: decisionRules(names) }, correlationId);
+      }
+      const conflict = code !== undefined && Object.hasOwn(CONFLICTS, code) ? CONFLICTS[code] : undefined;
+      if (conflict !== undefined) return withCorrelation({ kind: conflict }, correlationId);
       return withCorrelation({ kind: "stale", staleGroup: staleGroup(fieldErrors) }, correlationId);
     }
     case 422:

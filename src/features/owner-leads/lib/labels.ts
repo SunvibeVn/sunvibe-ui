@@ -31,6 +31,7 @@ export const STATUS_LABEL: Record<LeadStatus, OwnerLeadsKey> = {
   ASSIGNED: "status.ASSIGNED",
   CONTACTED: "status.CONTACTED",
   SURVEY_SCHEDULED: "status.SURVEY_SCHEDULED",
+  QUALIFIED: "status.QUALIFIED",
   ON_HOLD: "status.ON_HOLD",
   DUPLICATE: "status.DUPLICATE",
   REJECTED: "status.REJECTED",
@@ -38,7 +39,7 @@ export const STATUS_LABEL: Record<LeadStatus, OwnerLeadsKey> = {
 };
 
 /**
- * Label key for a status the API sent. The API enum has twelve values but the workspace labels its eight; any
+ * Label key for a status the API sent. The API enum has twelve values but the workspace labels its nine; any
  * other value (or none) gets a generic label, so a badge never shows a raw code.
  */
 export function statusLabelKey(status: string | undefined): OwnerLeadsKey {
@@ -88,6 +89,9 @@ export const ACTIVITY_LABEL: Record<ActivityType, OwnerLeadsKey> = {
   CHECKLIST_SAVED: "activity.CHECKLIST_SAVED",
   CHECKLIST_MEDIA_ADDED: "activity.CHECKLIST_MEDIA_ADDED",
   CHECKLIST_MEDIA_REMOVED: "activity.CHECKLIST_MEDIA_REMOVED",
+  CHECKLIST_SUBMITTED: "activity.CHECKLIST_SUBMITTED",
+  CHECKLIST_REVISION_STARTED: "activity.CHECKLIST_REVISION_STARTED",
+  CHECKLIST_REVIEWED: "activity.CHECKLIST_REVIEWED",
 };
 
 /** The group names of survey-checklist spec 6.4, in the order G1..G8. */

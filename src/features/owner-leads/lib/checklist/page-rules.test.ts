@@ -108,17 +108,36 @@ describe("scopeSwitchWarning (spec 6.4)", () => {
 
 describe("pageNotices and showsUnsourcedReminder (BR-23, US-2 AC-4, W16-31, W16-45)", () => {
   it("shows the legal and media banners on every view and the starts-empty banner on a later visit", () => {
-    expect(pageNotices({ earlier: null, photosAvailable: false })).toEqual({ legal: true, media: "waiting", laterVisit: null });
-    expect(pageNotices({ earlier: { appointmentNo: 1, checklistNo: 1 }, photosAvailable: false })).toEqual({
+    expect(pageNotices({ earlier: null, photosAvailable: false, status: "DRAFT" })).toEqual({ legal: true, media: "waiting", laterVisit: null });
+    expect(pageNotices({ earlier: { appointmentNo: 1, checklistNo: 1 }, photosAvailable: false, status: "DRAFT" })).toEqual({
       legal: true,
       media: "waiting",
       laterVisit: { surveyNo: 1, checklistNo: 1 },
     });
   });
 
-  it("says submission and review come later once photos are available (survey-media spec 6.2), the W16 banner otherwise", () => {
-    expect(pageNotices({ earlier: null, photosAvailable: true }).media).toBe("laterRelease");
-    expect(pageNotices({ earlier: null, photosAvailable: false }).media).toBe("waiting");
+  it("says submission and review come later only while the switch keeps them closed (survey-checklist submission B4)", () => {
+    const base = { earlier: null, status: "DRAFT" };
+    expect(pageNotices({ ...base, photosAvailable: true, unavailableReason: "SUBMISSION_NOT_AVAILABLE" }).media).toBe("laterRelease");
+    expect(pageNotices({ ...base, photosAvailable: false, unavailableReason: "EVIDENCE_NOT_AVAILABLE" }).media).toBe("waiting");
+  });
+
+  it("keeps the banner when uploads are off and the checklist already has photos", () => {
+    expect(pageNotices({ earlier: null, status: "DRAFT", photosAvailable: true, unavailableReason: "EVIDENCE_NOT_AVAILABLE" }).media).toBe("waiting");
+  });
+
+  it("has no photo and submission banner once submission is open: the submit panel names the gate", () => {
+    const base = { earlier: null, status: "DRAFT", photosAvailable: true };
+    for (const reason of ["MISSING_ITEMS", "APPOINTMENT_SCHEDULED", "PHOTOS_NOT_FINISHED", "PHOTO_LIMIT", "PHOTO_UNAVAILABLE", null]) {
+      expect(pageNotices({ ...base, unavailableReason: reason }).media).toBeNull();
+    }
+  });
+
+  it("has no photo and submission banner on a revision that left DRAFT, whatever the switches say", () => {
+    for (const status of ["SUBMITTED", "PASSED", "NEEDS_CHANGES", "FAILED"]) {
+      expect(pageNotices({ earlier: null, status, photosAvailable: true, unavailableReason: "SUBMISSION_NOT_AVAILABLE" }).media).toBeNull();
+      expect(pageNotices({ earlier: null, status, photosAvailable: false }).media).toBeNull();
+    }
   });
 
   it("reminds beside the unsourced inputs other than notes", () => {

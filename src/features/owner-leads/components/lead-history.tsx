@@ -19,7 +19,7 @@ import { isClosedLeadStatus, type LeadActivity } from "../types";
 import { CommandMessageView } from "./command-message";
 import { HISTORY_CELL, HISTORY_ROW } from "./history-cells";
 import { HistoryEntryForm } from "./history-entry-form";
-import { useLeadDetail } from "./lead-detail-context";
+import { surveyRecordOf, useLeadDetail } from "./lead-detail-context";
 import { LeadStatusBadge } from "./lead-status-badge";
 
 const HEAD = "px-3 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500";
@@ -122,7 +122,7 @@ function SavesRow({ row, withAction }: { row: Extract<HistoryRowModel, { kind: "
  */
 export function LeadHistory({ activities }: { activities: readonly LeadActivity[] }) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, lead, busy } = useLeadDetail();
+  const { userId, leadId, lead, survey, busy } = useLeadDetail();
   const [kept, , clearKept] = useDraft({ userId, leadId, form: "activity" });
   const [keptStatus] = useDraft({ userId, leadId, form: "entryStatus" });
   // A draft from before (`unavailable`, a reload, Back/Forward) opens the row again.
@@ -135,7 +135,7 @@ export function LeadHistory({ activities }: { activities: readonly LeadActivity[
 
   const rows = useMemo(() => collapseChecklistSaves(activities), [activities]);
   const closed = isClosedLeadStatus(lead.status);
-  const canAdd = entryTargets(lead.status).length > 0;
+  const canAdd = entryTargets(lead.status, surveyRecordOf(survey)).length > 0;
   const rowOpen = canAdd && open;
 
   return (
