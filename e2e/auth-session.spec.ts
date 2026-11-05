@@ -6,14 +6,12 @@ import {
   authE2eReady,
   bearerOf,
   CUSTOMER,
-  corsHeaders,
   expectSignedInAccount,
   isApiRequest,
   isMeRequest,
   LOGIN_PATH,
   LOGOUT_PATH,
   logOutButton,
-  ME_PATH,
   REFRESH_PATH,
   refreshCookieOf,
   sendsRefreshCookie,
@@ -27,8 +25,8 @@ import {
 // the seeded accounts and the two env passwords (see AUTH_E2E_SKIP_REASON).
 //
 // Sign-in budget (login 10/min, refresh 30/min per IP; one worker): 5 sign-ins in this file, 1 in
-// staff-session.spec.ts, 6 per run in all (limit 6). Cases that can share a signed-in browser do:
-//   1. cases 1 + 2 + 3   2. cases 4 + 8   3. cases 5 + 9 + 6   4.-5. case 7 (signs in again with a pending logout)
+// staff-session.spec.ts, 3 in auth-email.spec.ts, 9 per run in all. Cases that can share a signed-in browser do:
+//   1. cases 1 + 2 + 3   2. case 8   3. cases 5 + 9 + 6   4.-5. case 7 (signs in again with a pending logout)
 // About 12 real refreshes per run. A saved browser state cannot be reused (every refresh rotates the cookie).
 //
 // The logout is sent with `keepalive`, so its abort and its observation are on the browser context (context.route,
@@ -45,8 +43,6 @@ test.beforeEach(async () => {
   test.skip(!(await authE2eReady()), AUTH_E2E_SKIP_REASON);
 });
 
-const VERIFY_PHONE_SEND_PATH = "/api/v1/me/verification/phone/send-code";
-const VERIFY_PHONE_CONFIRM_PATH = "/api/v1/me/verification/phone/confirm-code";
 const LOGIN_EXPIRED_URL = "/login?session=expired&next=%2Faccount";
 
 const apiUrl = (path: string) => `${API_URL}${path}`;
@@ -68,8 +64,8 @@ async function expectSignedOutAt(page: Page): Promise<void> {
   await expect(page).toHaveURL(/\/login(\?|$)/);
   await expect(page.getByRole("button", { name: "Log in" })).toBeVisible();
   await expect(logOutButton(page)).toHaveCount(0);
-  // Not exact: the phone shares its <dd> with the "Verified" badge.
-  await expect(page.getByText(CUSTOMER.phone)).toHaveCount(0);
+  // Not exact: the email shares its <dd> with the "Verified" badge.
+  await expect(page.getByText(CUSTOMER.email)).toHaveCount(0);
 }
 
 test("login, reload and a second tab stay signed in; the token stays in memory; logout signs out every tab (cases 1, 2, 3)", async ({
@@ -151,25 +147,25 @@ test("login, reload and a second tab stay signed in; the token stays in memory; 
         .catch(() => true);
     await expect.poll(sameDocument, { message: "the tab reloaded after the logout", timeout: 15_000 }).toBe(false);
     // Counts hidden nodes too: nothing of the profile is left in the document.
-    await expect(tabKept.locator(`text=${CUSTOMER.phone}`)).toHaveCount(0);
+    await expect(tabKept.locator(`text=${CUSTOMER.email}`)).toHaveCount(0);
 
-    // From here on, rendered (not hidden) text with the phone number counts, in every document of this tab.
+    // From here on, rendered (not hidden) text with the email counts, in every document of this tab.
     let profileShown = false;
     await tabKept.exposeFunction("svE2eProfileShown", () => {
       profileShown = true;
     });
-    const watch = (phone: string) => {
+    const watch = (email: string) => {
       const report = () => {
         // innerText holds only rendered text: a route hidden with display: none does not count.
-        if (document.body?.innerText.includes(phone)) {
+        if (document.body?.innerText.includes(email)) {
           (window as Window & { svE2eProfileShown?: () => void }).svE2eProfileShown?.();
         }
       };
       new MutationObserver(report).observe(document, { childList: true, subtree: true, characterData: true });
       report();
     };
-    await tabKept.addInitScript(watch, CUSTOMER.phone);
-    await tabKept.evaluate(watch, CUSTOMER.phone);
+    await tabKept.addInitScript(watch, CUSTOMER.email);
+    await tabKept.evaluate(watch, CUSTOMER.email);
 
     await tabKept.bringToFront();
     await tabKept.goBack();
@@ -185,80 +181,11 @@ test("login, reload and a second tab stay signed in; the token stays in memory; 
   });
 });
 
-test("a 401 on verify-phone refreshes once and sends the typed code again; a failed logout warns and is sent on the next load (cases 4, 8)", async ({
+test("a failed logout warns and is sent on the next load (case 8; case 4 is in e2e/phone, /verify-phone is closed here)", async ({
   page,
   context,
 }) => {
   await signIn(page, CUSTOMER);
-
-  await test.step("case 4: confirm-code answers 401 once, then 204", async () => {
-    // The seeded account is verified, so the page data is stubbed; the refresh stays real.
-    await page.route(apiUrl(ME_PATH), async (route) => {
-      if (route.request().method() !== "GET") return route.continue();
-      const response = await route.fetch();
-      const body = { ...(await response.json()), phoneVerified: false };
-      // The body changes, so its length and encoding headers no longer apply.
-      const headers = Object.fromEntries(
-        Object.entries(response.headers()).filter(([name]) => !["content-length", "content-encoding"].includes(name)),
-      );
-      await route.fulfill({ response, json: body, headers: { ...headers, ...corsHeaders(route.request()) } });
-    });
-    await page.route(apiUrl(VERIFY_PHONE_SEND_PATH), async (route) => {
-      if (route.request().method() !== "POST") return route.continue();
-      await route.fulfill({
-        status: 200,
-        headers: corsHeaders(route.request()),
-        json: {
-          channel: "PHONE",
-          sentTo: "*******101",
-          expiresAt: new Date(Date.now() + 300_000).toISOString(),
-          resendAvailableAt: new Date(Date.now() + 60_000).toISOString(),
-        },
-      });
-    });
-    const confirms: { code: unknown; token: string }[] = [];
-    await page.route(apiUrl(VERIFY_PHONE_CONFIRM_PATH), async (route) => {
-      const request = route.request();
-      if (request.method() !== "POST") return route.continue();
-      confirms.push({ code: (request.postDataJSON() as { code?: unknown } | null)?.code, token: await bearerOf(request) });
-      if (confirms.length === 1) {
-        await route.fulfill({
-          status: 401,
-          headers: corsHeaders(request),
-          json: { code: "UNAUTHORIZED", message: "Token expired" },
-        });
-      } else {
-        await route.fulfill({ status: 204, headers: corsHeaders(request) });
-      }
-    });
-
-    await page.goto("/verify-phone");
-    const send = page.getByRole("button", { name: /^Send code to / });
-    await expect(send).toBeVisible({ timeout: 20_000 });
-    // The account page after the confirm reads the real (verified) profile.
-    await page.unroute(apiUrl(ME_PATH));
-
-    const refreshes = recordRequests(page, isRefresh);
-    const refreshed = page.waitForResponse((response) => isRefresh(response.request()), { timeout: 30_000 });
-    await send.click();
-    const code = page.getByLabel("Digit 1 of 6");
-    await expect(code).toBeVisible();
-    await code.fill("482913");
-    await page.getByRole("button", { name: "Verify phone number" }).click();
-
-    await expect(page).toHaveURL(/\/account\?phone=verified$/, { timeout: 20_000 });
-    await expect(page.getByText(TEXT.phoneVerified)).toBeVisible();
-    await expectSignedInAccount(page);
-    expect(refreshes, "refreshes after the 401").toHaveLength(1);
-    expect(confirms.map((confirm) => confirm.code)).toEqual(["482913", "482913"]);
-    // Compared as a boolean, so a failure never prints a token. Two refreshes in the same second may issue equal
-    // tokens (no jti, whole-second iat/exp), so the retry is compared with the refresh answer, not the first call.
-    const { accessToken } = (await (await refreshed).json()) as { accessToken?: string };
-    expect(Boolean(accessToken) && confirms[1]!.token === accessToken, "the retry carries the refreshed token").toBe(
-      true,
-    );
-    await page.unrouteAll({ behavior: "ignoreErrors" });
-  });
 
   await test.step("case 8: the logout call fails, the page warns and offers a retry", async () => {
     await context.route(apiUrl(LOGOUT_PATH), (route) => route.abort());

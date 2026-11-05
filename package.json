@@ -15,11 +15,14 @@
     "prepare": "husky",
     "e2e": "playwright test",
     "e2e:workspace": "playwright test -c playwright.workspace.config.ts",
+    "e2e:phone": "playwright test -c playwright.phone.config.ts",
+    "e2e:legacy": "playwright test -c playwright.legacy.config.ts",
     "test:tooling": "node --test \"scripts/tests/*.test.mjs\""
   },
   "dependencies": {
     "hash-wasm": "4.12.0",
     "leaflet": "1.9.4",
+    "libphonenumber-js": "1.13.15",
     "next": "16.4.2",
     "next-intl": "4.14.9",
     "openapi-fetch": "0.17.0",

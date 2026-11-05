@@ -19,6 +19,7 @@ const user: SessionUser = {
   roles: ["SALE"],
   phoneVerified: true,
   emailVerified: false,
+  requiredAction: null,
 };
 
 describe("sessionView (W10-34)", () => {

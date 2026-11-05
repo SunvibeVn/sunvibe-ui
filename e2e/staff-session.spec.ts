@@ -4,7 +4,7 @@ import { API_URL } from "./support/api";
 import { AUTH_E2E_SKIP_REASON, authE2eReady, captureBearer, expectSignedInAccount, SALE, signIn } from "./support/auth";
 
 // A SALE calls /api/v1/staff/** with the browser session (auth-browser-session spec §10.3, S-22, W10-31).
-// Sign-in budget: 1 sign-in in this file (6 per run with auth-session.spec.ts; limit 6).
+// Sign-in budget: 1 sign-in in this file (see auth-session.spec.ts).
 
 // A trace records request headers, and the Bearer token must never land in a file.
 test.use({ trace: "off" });

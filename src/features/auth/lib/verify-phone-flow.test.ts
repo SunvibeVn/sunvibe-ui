@@ -67,6 +67,7 @@ const me = (patch: Partial<MeResponse> = {}): MeResponse => ({
   email: null,
   emailVerified: false,
   phoneVerified: false,
+  requiredAction: patch.phoneVerified ? null : "VERIFY_PHONE",
   accountStatus: "PENDING",
   ...patch,
 });
@@ -79,18 +80,31 @@ const codeSent: CodeSentResponse = {
 };
 
 describe("loadVerifyPhone", () => {
+  it("verifyPhone_usesRequiredAction", async () => {
+    // An email account: no verified phone, and the server asks for none.
+    const { deps, store } = setup(ok(me({ username: null, phoneVerified: false, requiredAction: null })));
+    expect(await loadVerifyPhone(deps)).toEqual({ redirect: "/account" });
+    expect(store.updateUser).not.toHaveBeenCalled();
+  });
+
+  it("leaves an account asked to bind an email to the account page", async () => {
+    const { deps, store } = setup(ok(me({ phoneVerified: false, requiredAction: "BIND_EMAIL" })));
+    expect(await loadVerifyPhone(deps)).toEqual({ redirect: "/account" });
+    expect(store.updateUser).not.toHaveBeenCalled();
+  });
+
   it("verifyPhone_alreadyVerified_goesToAccount", async () => {
     const { deps, sent, store } = setup(ok(me({ phoneVerified: true })));
     expect(await loadVerifyPhone(deps)).toEqual({ redirect: "/account" });
     expect(sent).toEqual([{ method: "GET", path: "/api/v1/me" }]);
     // the session's user reads as verified too, like after ALREADY_VERIFIED
-    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true });
+    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true, requiredAction: null });
   });
 
   it("loadVerifyPhone_alreadyVerified_sameSignIn_marksVerifiedAndRedirects", async () => {
     const { deps, store } = setup(ok(me({ phoneVerified: true })), { generationAfterCall: "gen-1" });
     expect(await loadVerifyPhone(deps)).toEqual({ redirect: "/account" });
-    expect(store.updateUser).toHaveBeenCalledExactlyOnceWith({ phoneVerified: true });
+    expect(store.updateUser).toHaveBeenCalledExactlyOnceWith({ phoneVerified: true, requiredAction: null });
   });
 
   it("loadVerifyPhone_alreadyVerified_otherSignInMeanwhile_touchesNothing", async () => {
@@ -159,7 +173,7 @@ describe("sendPhoneCode", () => {
   it("sendPhoneCode_alreadyVerified_goesToAccount", async () => {
     const { deps, store } = setup(http(400, "ALREADY_VERIFIED"));
     expect(await sendPhoneCode(deps)).toEqual({ redirect: "/account" });
-    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true });
+    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true, requiredAction: null });
   });
 
   it("sendPhoneCode_alreadyVerified_otherSignInMeanwhile_touchesNothing", async () => {
@@ -188,7 +202,7 @@ describe("confirmPhoneCode", () => {
   it("confirmPhoneCode_success_updatesTheStoreAndRedirects", async () => {
     const { deps, store, sent } = setup(ok(undefined, 204));
     expect(await confirmPhoneCode({ code: " 123456 " }, deps)).toEqual({ redirect: "/account?phone=verified" });
-    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true });
+    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true, requiredAction: null });
     expect(sent).toEqual([
       { method: "POST", path: "/api/v1/me/verification/phone/confirm-code", body: { code: "123456" } },
     ]);
@@ -224,7 +238,7 @@ describe("confirmPhoneCode", () => {
   it("confirmPhoneCode_alreadyVerified_goesToAccount", async () => {
     const { deps, store } = setup(http(400, "ALREADY_VERIFIED"));
     expect(await confirmPhoneCode({ code: "123456" }, deps)).toEqual({ redirect: "/account" });
-    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true });
+    expect(store.updateUser).toHaveBeenCalledWith({ phoneVerified: true, requiredAction: null });
   });
 
   it("confirmPhoneCode_alreadyVerified_otherSignInMeanwhile_touchesNothing", async () => {

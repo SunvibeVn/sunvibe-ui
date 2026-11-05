@@ -22,14 +22,16 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
   from a committed contract; CI cannot verify a client made from uncommitted changes.
 - Check the client: npm run check:api-client (the committed client equals the one generated from the recorded
   contract; CI checks out sunvibe-server at the recorded commit).
-- E2E: npm run e2e (main suite) and npm run e2e:workspace (staff workspace); prerequisites in .cursor/rules/e2e.mdc.
+- E2E: npm run e2e (main suite), npm run e2e:workspace (staff workspace), npm run e2e:phone and npm run e2e:legacy
+  (phone channel on and legacy-login); prerequisites in .cursor/rules/e2e.mdc.
 - Tooling tests (gen:api, check:api-client): npm run test:tooling
 - Git hooks (husky): pre-commit runs eslint --fix on staged files; pre-push blocks pushes to main
 
 ## Architecture
 - src/app: routes in groups (auth), (marketing), (onboarding), (platform), (workspace). Pages stay thin.
 - src/features/<feature>/{components,lib,schemas,services,session,types}.
-  Public API: index.ts (Server Components), client.ts (Client Components), proxy.ts (src/proxy.ts only).
+  Public API: index.ts (Server Components), client.ts (Client Components), proxy.ts (src/proxy.ts only);
+  auth also has phone.ts, for the phone routes only, because it reaches the phone parser.
   ESLint blocks deep imports like @/features/auth/components/... ; import from the feature root.
 - src/components/{ui,layout,brand,icons}: shared components. src/lib/api: typed fetch client.
   src/config: env.ts (server env), public-env.ts (NEXT_PUBLIC_*), site.ts, navigation.ts.
@@ -48,7 +50,7 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
   Route Handler or proxy code holds or forwards a user token, and Next sets no session cookie; the proxy reads only
   the sign-in hint cookie. Do not add BFF-style Server Actions or Route Handlers. An exception needs an
   owner-approved ADR that amends ADR-001; a plan, prompt or handoff cannot grant it.
-- `credentials: 'include'` only on the seven cookie calls (session-api.ts); every other call uses `'omit'`.
+- `credentials: 'include'` only on the nine cookie calls (session-api.ts); every other call uses `'omit'`.
   Signed-in calls go through callApi / apiClient from @/features/auth/client (Bearer from memory).
 - New API calls use openapi-fetch typed with src/api/generated/schema.d.ts (paths). Never invent endpoint URLs;
   regenerate with npm run gen:api when the contract changes.
@@ -102,7 +104,7 @@ Each step is its own evidence; report skipped or unrun steps as such.
 1. npm run lint, npm run typecheck, npm test and npm run build pass.
 2. API used or changed: npm run gen:api from the committed contract, then npm run check:api-client passes.
 3. The E2E suite the plan names passes against the local API (http://localhost:8081, dev profile) with no skipped
-   spec: npm run e2e or npm run e2e:workspace (.cursor/rules/e2e.mdc).
+   spec: npm run e2e, e2e:workspace, e2e:phone or e2e:legacy (.cursor/rules/e2e.mdc).
 4. The feature works in the browser against the local API.
 5. Independent review without open Blocker or Major findings (Workflow above).
 6. Docs: Claude session -> run /update-docs <module>/<feature> (edits ../docs; a Stop hook reminds once per session on

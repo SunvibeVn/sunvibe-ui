@@ -4,21 +4,29 @@ import type { components, paths } from "@/api/generated/schema";
 import { publicEnv } from "@/config/public-env";
 import { type ClientResponse, PUBLIC_API_TIMEOUT_MS, type PublicApiResult, toPublicResult } from "@/lib/api";
 
+import type { ApiResult } from "./api-client";
 import { type CookieLockManager, withCookieLock } from "./cookie-lock";
+import type { SessionStore, SignInRef } from "./session-store";
 
 // The calls that set, read or clear the HttpOnly refresh cookie (auth-browser-session §4.3): they send
-// `credentials: "include"` and run under the browser-wide cookie lock. Bearer only on password change and
-// logout-all. Every other call keeps `credentials: "omit"`.
+// `credentials: "include"` and run under the browser-wide cookie lock. Bearer only on password change, logout-all and
+// the email bind. Every other call keeps `credentials: "omit"`.
 
 export type SessionResponse = components["schemas"]["SessionResponse"];
 export type LoginRequest = components["schemas"]["LoginRequest"];
 export type RegisterRequest = components["schemas"]["UserRegisterRequest"];
+export type EmailRegisterRequest = components["schemas"]["EmailRegisterRequest"];
+export type EmailBindConfirmRequest = components["schemas"]["EmailBindConfirmRequest"];
 export type PasswordResetCompleteRequest = components["schemas"]["PasswordResetRequest"];
 export type PasswordChangeRequest = components["schemas"]["PasswordChangeRequest"];
 
 /** The refresh answers fast or not at all; a page waits on it before showing private data. */
 export const REFRESH_TIMEOUT_MS = 10_000;
 export const SESSION_CALL_TIMEOUT_MS = PUBLIC_API_TIMEOUT_MS;
+
+/** The account behind the session changed, so a call of the old form is not sent, or its answer not used. */
+export type EmailBindStale = { ok: false; kind: "stale" };
+const STALE: EmailBindStale = Object.freeze({ ok: false, kind: "stale" });
 
 export type SessionApiOptions = {
   baseUrl?: string;
@@ -85,6 +93,8 @@ export function createSessionApi(options: SessionApiOptions = {}) {
     login: (body: LoginRequest) => locked(() => timed((signal) => client.POST("/api/v1/auth/login", { body, signal }))),
     register: (body: RegisterRequest) =>
       locked(() => timed((signal) => client.POST("/api/v1/auth/registration", { body, signal }))),
+    registerWithEmail: (body: EmailRegisterRequest) =>
+      locked(() => timed((signal) => client.POST("/api/v1/auth/registration/email", { body, signal }))),
     refresh: () => locked(refreshUnlocked),
     refreshUnlocked,
     logout: () => locked(logoutUnlocked),
@@ -101,6 +111,17 @@ export function createSessionApi(options: SessionApiOptions = {}) {
       locked(() =>
         timed((signal) => client.POST("/api/v1/me/sessions/logout-all", { headers: bearer(accessToken), signal })),
       ),
+    /**
+     * `stillCurrent` is asked once the lock is held: the wait for the lock may outlast the sign-in the form started under.
+     * Use `confirmEmailBindSession`, which owns the token and the session.
+     */
+    confirmEmailBind: (accessToken: string, body: EmailBindConfirmRequest, stillCurrent: () => boolean) =>
+      locked(async (): Promise<PublicApiResult<SessionResponse> | EmailBindStale> => {
+        if (!stillCurrent()) return STALE;
+        return timed((signal) =>
+          client.POST("/api/v1/me/email/confirm-code", { body, headers: bearer(accessToken), signal }),
+        );
+      }),
   };
 }
 
@@ -122,4 +143,60 @@ export const sessionApi: SessionApi = {
   completePasswordReset: async (body) => resolveDefault().completePasswordReset(body),
   changePassword: async (accessToken, body) => resolveDefault().changePassword(accessToken, body),
   logoutAll: async (accessToken) => resolveDefault().logoutAll(accessToken),
+  registerWithEmail: async (body) => resolveDefault().registerWithEmail(body),
+  confirmEmailBind: async (accessToken, body, stillCurrent) =>
+    resolveDefault().confirmEmailBind(accessToken, body, stillCurrent),
 };
+
+export type EmailBindStore = Pick<
+  SessionStore,
+  "getAccessToken" | "forceRefresh" | "isSignIn" | "adopt" | "markUnavailable"
+>;
+
+export type EmailBindResult = ApiResult<SessionResponse> | EmailBindStale;
+
+const isUnauthorized = (answer: PublicApiResult<SessionResponse> | EmailBindStale): boolean =>
+  !answer.ok && answer.kind === "http" && answer.status === 401;
+
+/**
+ * Confirms a new email for the sign-in `start` (auth-email-access spec 6.3). The token is taken before the cookie lock
+ * and a 401 is refreshed after it: both may need that lock, and Web Locks are not re-entrant. One retry, as `callApi`.
+ * The call is sent only for that same sign-in; an answer that arrives for another one is dropped, so nothing of it
+ * reaches this tab's session (US-4 AC-4). On success the session is adopted like a sign-in: every other session ended.
+ */
+export async function confirmEmailBindSession(
+  { api, store }: { api: Pick<SessionApi, "confirmEmailBind">; store: EmailBindStore },
+  body: EmailBindConfirmRequest,
+  start: SignInRef,
+): Promise<EmailBindResult> {
+  const stillCurrent = () => store.isSignIn(start);
+
+  const attempt = async () => {
+    const token = await store.getAccessToken();
+    if (token === null || !stillCurrent()) return { token, answer: STALE };
+    return { token, answer: await api.confirmEmailBind(token, body, stillCurrent) };
+  };
+
+  try {
+    const first = await attempt();
+    let { answer } = first;
+    if (first.token !== null && isUnauthorized(answer)) {
+      const outcome = await store.forceRefresh(first.token);
+      if (outcome !== "refreshed") return { ok: false, kind: outcome === "ended" ? "signed-out" : "unavailable" };
+      ({ answer } = await attempt());
+      if (isUnauthorized(answer)) {
+        // The new token is refused too: nothing refreshes again on its own. Another sign-in meanwhile is left alone.
+        if (stillCurrent()) store.markUnavailable();
+        return { ok: false, kind: "unavailable" };
+      }
+    }
+    if (!answer.ok) return answer;
+    if (!stillCurrent() || answer.data.user?.userId !== start.userId) return STALE;
+    // Adopted in the same continuation as the answer, as after a sign-in.
+    store.adopt(answer.data, { newSignIn: true });
+    return answer;
+  } catch {
+    // For example a missing API URL or a refused Web Lock: nothing was sent.
+    return { ok: false, kind: "network" };
+  }
+}

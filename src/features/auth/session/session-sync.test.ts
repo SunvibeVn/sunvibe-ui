@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { memoryStorage } from "../lib/test-support/memory-storage";
 import type { AuthMessage } from "./auth-channel";
 import { readHint } from "./browser-cookies";
 import type { SessionApi, SessionResponse } from "./session-api";
@@ -87,7 +88,7 @@ function session(userId = "u1"): SessionResponse {
 
 type RefreshResult = Awaited<ReturnType<SessionApi["refreshUnlocked"]>>;
 
-function newStore(jar: FakeJar, broadcast: (message: AuthMessage) => void = vi.fn()) {
+function newStore(jar: FakeJar, broadcast: (message: AuthMessage) => void = vi.fn(), storage = memoryStorage()) {
   return createSessionStore({
     api: {
       refreshUnlocked: async (): Promise<RefreshResult> => {
@@ -103,6 +104,7 @@ function newStore(jar: FakeJar, broadcast: (message: AuthMessage) => void = vi.f
     lock: (task) => task(),
     broadcast,
     onIdentityChange: vi.fn(),
+    sessionStorage: () => storage,
   });
 }
 
@@ -134,7 +136,8 @@ function setup({ signedIn = true, hint = null, channel = true }: Setup = {}) {
   const jar = new FakeJar();
   if (hint) jar.put("sv_signed_in", hint);
   const broadcast = vi.fn();
-  const store: SessionStore = newStore(jar, broadcast);
+  const storage = memoryStorage();
+  const store: SessionStore = newStore(jar, broadcast, storage);
   if (signedIn) store.adopt(session(), { newSignIn: true });
   // The sign-in above broadcast once; from here on only the sync runs.
   broadcast.mockClear();
@@ -148,6 +151,7 @@ function setup({ signedIn = true, hint = null, channel = true }: Setup = {}) {
   const stop = startSessionSync({ store, jar, channel: fakeChannel, win, doc, resetPrivateViews, timers });
   return {
     jar,
+    storage,
     store,
     bound,
     channel: fakeChannel,
@@ -167,6 +171,62 @@ function setup({ signedIn = true, hint = null, channel = true }: Setup = {}) {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+});
+
+describe("flow progress follows the session (SV-008, auth-email-access spec 6.3)", () => {
+  /** The tab holds a sign-up, a reset and something that is none of the session's business. */
+  function withProgress(options: Setup = {}) {
+    const t = setup(options);
+    t.storage.setItem("sv_signup", "signup-progress");
+    t.storage.setItem("sv_reset", "reset-progress");
+    t.storage.setItem("other", "kept");
+    return t;
+  }
+  const keys = (storage: Storage) => [storage.getItem("sv_signup"), storage.getItem("sv_reset"), storage.getItem("other")];
+
+  it("sync_remoteSignOut_clearsBothKeys", () => {
+    const t = withProgress();
+    t.jar.put("sv_signed_in", null);
+    t.channel?.dispatch("message", message({ type: "signed-out", generation: null }));
+    expect(keys(t.storage)).toEqual([null, null, "kept"]);
+  });
+
+  it("sync_otherSignIn_clearsBothKeys", () => {
+    const t = withProgress();
+    t.jar.put("sv_signed_in", "another-sign-in");
+    t.channel?.dispatch("message", message({ type: "signed-in", generation: "another-sign-in" }));
+    expect(keys(t.storage)).toEqual([null, null, "kept"]);
+  });
+
+  it("sync_alreadySignedOutTab_clearsBothKeys", () => {
+    const t = withProgress({ signedIn: false });
+    expect(t.store.getSnapshot().status).toBe("signed-out");
+    t.channel?.dispatch("message", message({ type: "signed-out", generation: null }));
+    expect(keys(t.storage)).toEqual([null, null, "kept"]);
+    expect(t.resetPrivateViews).not.toHaveBeenCalled();
+  });
+
+  it("clears the progress before the tab reacts, so a page that reloads does not read it", () => {
+    const t = withProgress();
+    t.jar.put("sv_signed_in", null);
+    let seen: unknown[] = [];
+    t.resetPrivateViews.mockImplementation(() => {
+      seen = keys(t.storage);
+    });
+    t.channel?.dispatch("message", message({ type: "signed-out", generation: null }));
+    expect(seen).toEqual([null, null, "kept"]);
+  });
+
+  it("sync_focusAndVisibility_keepProgress", () => {
+    const t = withProgress();
+    // A visitor who leaves the tab to read the code comes back to the same step, even when the session changed.
+    t.jar.put("sv_signed_in", null);
+    t.win.dispatch("focus");
+    t.doc.dispatch("visibilitychange");
+    t.win.dispatch("pageshow", pageshow(true));
+    expect(t.resetPrivateViews).toHaveBeenCalled();
+    expect(keys(t.storage)).toEqual(["signup-progress", "reset-progress", "kept"]);
+  });
 });
 
 describe("session sync (W10-28, W10-29, W10-42, W10-45)", () => {

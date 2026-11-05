@@ -1,20 +1,21 @@
 import type { components } from "@/api/generated/schema";
 import type { PublicApiResult } from "@/lib/api";
 import { AUTH_ROUTES } from "../constants";
-import { forgotByEmailSchema, forgotBySmsSchema, resetPasswordSchema } from "../schemas/auth.schema";
+import { forgotByEmailSchema, resetPasswordSchema } from "../schemas/auth.schema";
 import { type BrowserEnvironment, cookiesAndStorageWork } from "../session/browser-cookies";
 import type { SessionApi } from "../session/session-api";
 import type { SessionStore } from "../session/session-store";
 import { AUTH_ERROR_TEXT } from "./auth-error-text";
 import { type FormState, formStateFromResult, validationError } from "./form-state";
 import { createPublicAuthClient } from "./public-auth-client";
-import { clearResetProgress, readResetProgress, saveResetToken } from "./reset-progress";
+import { clearResetProgress, readResetProgress } from "./reset-progress";
 import { sessionStorageOf } from "./session-storage";
 
 // Forgot and reset password from the browser (auth-browser-session §5 `/forgot-password`, `/reset-password`). The SMS
 // reset token and the token of an e-mail link wait in this tab's sessionStorage (auth-browser-session C-7). Every
 // check runs inside these functions, not only on the buttons: React replays a submit made before hydration through
-// the form action (auth-browser-session §4.9). Nothing here logs.
+// the form action (auth-browser-session §4.9). Nothing here logs. The SMS start is in password-reset-sms-flow.ts, so
+// the public pages do not load the phone parser.
 
 export type PasswordResetStartResponse = components["schemas"]["PasswordResetStartResponse"];
 
@@ -41,10 +42,13 @@ export type PasswordResetDeps = {
 };
 
 export type Redirect = { redirect: string };
+/** `tokenGone`: this tab holds no usable token any more, so the page offers a new reset instead of the form. */
+export type ResetState = FormState & { tokenGone?: boolean };
+
+const TOKEN_GONE: ResetState = { status: "error", message: AUTH_ERROR_TEXT.resetTokenInvalid, tokenGone: true };
 
 const EMAIL_SENT =
   "If an account uses this email, we've sent it a 6-digit code and a reset link. Open the link to choose a new password.";
-const SMS_SENT = "If an account uses this phone number, we've sent it a 6-digit code.";
 
 /** E-mails a code and a reset link. The answer reads the same whether or not the account exists. */
 export async function requestResetByEmail(
@@ -63,29 +67,6 @@ export async function requestResetByEmail(
   return { status: "success", message: EMAIL_SENT, values: kept };
 }
 
-/** Texts a code; when the answer carries a reset token, keeps it in this tab and moves to the reset page. */
-export async function requestResetBySms(
-  values: { phoneNumber: string },
-  deps: Pick<PasswordResetDeps, "reset" | "env">,
-): Promise<FormState | Redirect> {
-  const kept = { phoneNumber: values.phoneNumber };
-  // auth-browser-session S-18: the SMS token waits in sessionStorage, so without it send nothing.
-  if (!cookiesAndStorageWork(deps.env)) return { status: "error", message: AUTH_ERROR_TEXT.cookiesRequired, values: kept };
-
-  const parsed = forgotBySmsSchema.safeParse(kept);
-  if (!parsed.success) return validationError(parsed.error, kept);
-  const phone = parsed.data.phoneNumber;
-
-  const result = await deps.reset.bySms(phone);
-  if (!result.ok) return formStateFromResult(result, { values: kept, screen: "reset" });
-
-  const { resetToken } = result.data;
-  if (!resetToken) return { status: "success", message: SMS_SENT, values: kept };
-  // Inside the resend cooldown the token is a decoy and no SMS is sent: saveResetToken keeps the real one.
-  saveResetToken(sessionStorageOf(deps.env), resetToken, phone);
-  return { redirect: `${AUTH_ROUTES.resetPassword}?via=sms` };
-}
-
 export type ResetValues = { otpCode: string; newPassword: string; confirmPassword: string };
 
 /**
@@ -93,10 +74,10 @@ export type ResetValues = { otpCode: string; newPassword: string; confirmPasswor
  * session of the account and clears the refresh cookie; this browser ends its session locally too, which clears the
  * hint and tells every other tab (auth-browser-session US-4 AC-3). The state returned never holds a password.
  */
-export async function completeReset(values: ResetValues, deps: PasswordResetDeps): Promise<FormState | Redirect> {
+export async function completeReset(values: ResetValues, deps: PasswordResetDeps): Promise<ResetState | Redirect> {
   const storage = sessionStorageOf(deps.env);
   const progress = readResetProgress(storage);
-  if (!progress) return { status: "error", message: AUTH_ERROR_TEXT.resetTokenInvalid };
+  if (!progress) return TOKEN_GONE;
 
   const parsed = resetPasswordSchema.safeParse({
     resetToken: progress.token,
@@ -115,7 +96,10 @@ export async function completeReset(values: ResetValues, deps: PasswordResetDeps
   }
   if (!result.ok) {
     // auth-browser-session C-7: a used or expired reset token leaves this tab's storage at once.
-    if (result.kind === "http" && result.code === "RESET_TOKEN_INVALID") clearResetProgress(storage);
+    if (result.kind === "http" && result.code === "RESET_TOKEN_INVALID") {
+      clearResetProgress(storage);
+      return TOKEN_GONE;
+    }
     return formStateFromResult(result, { screen: "reset" });
   }
 

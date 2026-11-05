@@ -11,25 +11,38 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { AUTH_ROUTES } from "../constants";
 import { type FormState, initialFormState, readForm } from "../lib/form-state";
 import { signUpBrowserDeps } from "../lib/sign-up-browser";
-import { type ResendState, resendSignUpCode, verifySignUpCode } from "../lib/sign-up-flow";
+import {
+  type ResendState,
+  resendSignUpCode,
+  type SignUpConflict,
+  verifySignUpCode,
+} from "../lib/sign-up-flow";
 import { useCountdown } from "../lib/use-countdown";
 
 function formatSeconds(seconds: number) {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;
 }
 
-/** Sign-up step 2: the SMS code. The code was already sent in step 1, so the boxes show at once. */
+/** Sign-up step 2: the code. It was already sent in step 1, so the boxes show at once. */
 export function SignUpVerifyForm({
-  maskedPhone,
+  channel,
+  sentTo,
   resendAvailableAt,
+  onRefused,
 }: {
-  maskedPhone: string;
+  channel: "EMAIL" | "PHONE";
+  sentTo: string;
   resendAvailableAt?: string;
+  /** The address goes no further: the section shows the way out instead of this form. */
+  onRefused(refusal: { conflict: SignUpConflict; message?: string }): void;
 }) {
   const router = useRouter();
   const [confirmState, confirmAction] = useActionState(async (_previous: FormState, formData: FormData) => {
     const outcome = await verifySignUpCode(readForm(formData, ["code"]), signUpBrowserDeps());
-    if (!("redirect" in outcome)) return outcome;
+    if (!("redirect" in outcome)) {
+      if (outcome.conflict) onRefused({ conflict: outcome.conflict, message: outcome.message });
+      return outcome;
+    }
     router.push(outcome.redirect);
     return { status: "success" } satisfies FormState;
   }, initialFormState);
@@ -46,10 +59,13 @@ export function SignUpVerifyForm({
 
   return (
     <div className="space-y-5">
-      <p className="text-center text-sm text-slate-600">
-        We sent a 6-digit code to <span className="font-semibold text-slate-800">{maskedPhone}</span>.{" "}
-        <Link href={AUTH_ROUTES.signUp} className="font-semibold text-violet-700 hover:text-violet-800">
-          Wrong number?
+      <p className="text-center text-sm break-words text-slate-600">
+        We sent a 6-digit code to <span className="font-semibold text-slate-800">{sentTo}</span>.{" "}
+        <Link
+          href={channel === "EMAIL" ? AUTH_ROUTES.signUp : AUTH_ROUTES.signUpPhone}
+          className="font-semibold text-violet-700 hover:text-violet-800"
+        >
+          {channel === "EMAIL" ? "Wrong email?" : "Wrong number?"}
         </Link>
       </p>
 

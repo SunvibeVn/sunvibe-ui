@@ -2,10 +2,10 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { maskPhone } from "../lib/mask-phone";
+import { signUpSentTo } from "../lib/mask-phone";
 import { useSignUpStep } from "../lib/sign-up-browser";
 import { sessionStorageOf } from "../lib/session-storage";
-import { leaveSignUpStep } from "../lib/signup-progress";
+import { leaveSignUpStep, signUpIdentifier } from "../lib/signup-progress";
 import { FormSkeleton } from "./form-skeleton";
 import { SignUpDetailsForm } from "./sign-up-details-form";
 
@@ -20,5 +20,6 @@ export function SignUpDetailsSection() {
   }, [router, step]);
 
   if (step?.kind !== "details") return <FormSkeleton fields={3} />;
-  return <SignUpDetailsForm maskedPhone={maskPhone(step.progress.phone)} />;
+  // Next keeps this route's state between visits: another address starts with a fresh form.
+  return <SignUpDetailsForm key={signUpIdentifier(step.progress)} verified={signUpSentTo(step.progress)} />;
 }

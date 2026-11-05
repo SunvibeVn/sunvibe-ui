@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { FieldError, PublicApiHttpError, PublicApiResult } from "@/lib/api";
 import { type BrowserEnvironment, pendingCookieName } from "../session/browser-cookies";
 import { settlePendingLogoutBeforeSignIn } from "../session/logout";
@@ -14,7 +14,8 @@ import {
   startSignUp,
   verifySignUpCode,
 } from "./sign-up-flow";
-import { readSignUpProgress, writeSignUpProgress } from "./signup-progress";
+import { startPhoneSignUp } from "./sign-up-phone-flow";
+import { readSignUpProgress, type SignUpProgress, writeSignUpProgress } from "./signup-progress";
 import { memoryStorage } from "./test-support/memory-storage";
 
 const COOKIE_TEXT =
@@ -39,6 +40,7 @@ class FakeJar {
   }
 }
 
+const signUpPhoneOf = (progress: SignUpProgress | null) => (progress?.channel === "PHONE" ? progress.phone : undefined);
 const inMinutes = (minutes: number) => new Date(Date.now() + minutes * 60_000).toISOString();
 
 function ok<T>(data: T, status = 200): PublicApiResult<T> {
@@ -71,8 +73,26 @@ function session(phoneVerified: boolean): SessionResponse {
       roles: ["TENANT"],
       phoneVerified,
       emailVerified: false,
+      requiredAction: phoneVerified ? null : "VERIFY_PHONE",
     },
   } as SessionResponse;
+}
+
+function emailSession(): SessionResponse {
+  return {
+    accessToken: "access-token",
+    expiresIn: 900,
+    tokenType: "Bearer",
+    user: {
+      userId: "u-2",
+      fullName: "Nguyen Van An",
+      username: null,
+      roles: ["TENANT", "CUSTOMER"],
+      phoneVerified: false,
+      emailVerified: true,
+      requiredAction: null,
+    },
+  };
 }
 
 const sent = (resendAvailableAt = inMinutes(1)): CodeSentResponse => ({
@@ -103,11 +123,23 @@ function setup({
       calls.push("verify-code");
       return ok({ registrationToken: "token-1", expiresAt: inMinutes(15) });
     }),
+    sendEmailCode: vi.fn<RegistrationApi["sendEmailCode"]>(async () => {
+      calls.push("send-email-code");
+      return ok(sent());
+    }),
+    verifyEmailCode: vi.fn<RegistrationApi["verifyEmailCode"]>(async () => {
+      calls.push("verify-email-code");
+      return ok({ registrationToken: "token-1", expiresAt: inMinutes(15) });
+    }),
   };
   const api = {
     register: vi.fn<SignUpDeps["api"]["register"]>(async () => {
       calls.push("register");
       return ok(session(true), 201);
+    }),
+    registerWithEmail: vi.fn<SignUpDeps["api"]["registerWithEmail"]>(async () => {
+      calls.push("register-email");
+      return ok(emailSession(), 201);
     }),
     logout: vi.fn(async () => {
       calls.push("logout");
@@ -131,6 +163,7 @@ function setup({
           roles: user.roles ?? [],
           phoneVerified: user.phoneVerified ?? false,
           emailVerified: user.emailVerified ?? false,
+          requiredAction: user.requiredAction ?? null,
         },
       };
     }),
@@ -191,17 +224,289 @@ describe("createRegistrationApi (anonymous calls, auth-browser-session R-1)", ()
   });
 });
 
-describe("startSignUp", () => {
+describe("createRegistrationApi by email", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  function recorder() {
+    const requests: Request[] = [];
+    const fetch = vi.fn(async (request: Request) => {
+      requests.push(request);
+      return new Response("{}", { status: 200, headers: { "Content-Type": "application/json" } });
+    });
+    return { requests, api: createRegistrationApi({ baseUrl: "http://api.test", fetch }) };
+  }
+
+  it("posts the address without credentials", async () => {
+    const { requests, api } = recorder();
+    await api.sendEmailCode("an@sunvibe.vn");
+    expect(requests[0].url).toBe("http://api.test/api/v1/auth/registration/email/send-code");
+    expect(requests[0].credentials).toBe("omit");
+    expect(requests[0].headers.get("Authorization")).toBeNull();
+    expect(await requests[0].json()).toEqual({ email: "an@sunvibe.vn" });
+  });
+
+  it("posts the address and the code without credentials", async () => {
+    const { requests, api } = recorder();
+    await api.verifyEmailCode("an@sunvibe.vn", "123456");
+    expect(requests[0].url).toBe("http://api.test/api/v1/auth/registration/email/verify-code");
+    expect(requests[0].credentials).toBe("omit");
+    expect(await requests[0].json()).toEqual({ email: "an@sunvibe.vn", code: "123456" });
+  });
+
+  it("sendCode_uses30sDeadline", async () => {
+    vi.useFakeTimers();
+    let aborted = false;
+    const fetch = (request: Request) =>
+      new Promise<Response>((_, reject) => {
+        request.signal.addEventListener("abort", () => {
+          aborted = true;
+          reject(new DOMException("aborted", "AbortError"));
+        });
+      });
+    const api = createRegistrationApi({ baseUrl: "http://api.test", fetch });
+
+    const pending = api.sendEmailCode("an@sunvibe.vn");
+    // A slow relay can pass the default 15 s and then deliver the code.
+    await vi.advanceTimersByTimeAsync(29_999);
+    expect(aborted).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(aborted).toBe(true);
+    await expect(pending).resolves.toEqual({ ok: false, kind: "network" });
+  });
+});
+
+describe("email sign-up (auth-email-access spec 6.2)", () => {
+  const ADDRESS = "an@sunvibe.vn";
+  const DETAILS = { fullName: "Nguyen Van An", password: "Sunvibe@2026", confirmPassword: "Sunvibe@2026" };
+  const atCode = (resendAvailableAt = inMinutes(1)) => ({ channel: "EMAIL", email: ADDRESS, resendAvailableAt }) as const;
+  const atDetails = () =>
+    ({ channel: "EMAIL", email: ADDRESS, registrationToken: "token-1", tokenExpiresAt: inMinutes(10) }) as const;
+
+  it("signUp_emailSteps_happyPath", async () => {
+    expect(await startSignUp({ email: " An@Sunvibe.VN " }, t.deps)).toEqual({ redirect: "/sign-up/verify" });
+    expect(t.registration.sendEmailCode).toHaveBeenCalledExactlyOnceWith(ADDRESS);
+    expect(readSignUpProgress(t.storage)).toMatchObject({ channel: "EMAIL", email: ADDRESS });
+
+    expect(await verifySignUpCode({ code: "123456" }, t.deps)).toEqual({ redirect: "/sign-up/details" });
+    expect(t.registration.verifyEmailCode).toHaveBeenCalledExactlyOnceWith(ADDRESS, "123456");
+    expect(readSignUpProgress(t.storage)).toMatchObject({ registrationToken: "token-1" });
+
+    expect(await completeSignUp(DETAILS, t.deps)).toEqual({ redirect: "/account" });
+    expect(t.api.registerWithEmail).toHaveBeenCalledExactlyOnceWith({
+      email: ADDRESS,
+      registrationToken: "token-1",
+      ...DETAILS,
+    });
+    expect(t.api.register).not.toHaveBeenCalled();
+    expect(t.store.adopt).toHaveBeenCalledExactlyOnceWith(emailSession(), { newSignIn: true });
+    expect(readSignUpProgress(t.storage)).toBeNull();
+  });
+
+  it("signUp_storageBlocked_refusesSubmit", async () => {
+    const blocked: BrowserEnvironment = {
+      ...t.deps.env,
+      get sessionStorage(): Storage {
+        throw new DOMException("blocked", "SecurityError");
+      },
+    };
+    const outcome = await startSignUp({ email: ADDRESS }, { ...t.deps, env: blocked });
+    expect(outcome).toEqual({ status: "error", message: COOKIE_TEXT, values: { email: ADDRESS } });
+    expect(t.registration.sendEmailCode).not.toHaveBeenCalled();
+  });
+
+  it("refuses an address the policy refuses without a call", async () => {
+    const outcome = await startSignUp({ email: "an@sunvibe" }, t.deps);
+    expect(outcome).toMatchObject({ fieldErrors: { email: ["Enter a valid email address."] } });
+    expect(t.registration.sendEmailCode).not.toHaveBeenCalled();
+  });
+
+  it("does not spend a mail on the address already waiting for its code", async () => {
+    writeSignUpProgress(t.storage, atCode());
+    expect(await startSignUp({ email: ADDRESS }, t.deps)).toEqual({ redirect: "/sign-up/verify" });
+    expect(t.registration.sendEmailCode).not.toHaveBeenCalled();
+  });
+
+  it("resumes at the details step for the address already proved", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    expect(await startSignUp({ email: ADDRESS }, t.deps)).toEqual({ redirect: "/sign-up/details" });
+    expect(t.registration.sendEmailCode).not.toHaveBeenCalled();
+  });
+
+  it("signUp_changeEmail_dropsProof", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    await startSignUp({ email: "other@sunvibe.vn" }, t.deps);
+    expect(readSignUpProgress(t.storage)).toEqual({
+      channel: "EMAIL",
+      email: "other@sunvibe.vn",
+      resendAvailableAt: expect.any(String),
+    });
+  });
+
+  it("a changed address drops the proof even when its mail fails", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    t.registration.sendEmailCode.mockResolvedValue(fail(503, "EMAIL_DELIVERY_FAILED", { retryAfterSeconds: 60 }));
+    await startSignUp({ email: "other@sunvibe.vn" }, t.deps);
+    expect(readSignUpProgress(t.storage)).toBeNull();
+  });
+
+  it("a phone sign-up in progress is not continued from the email form", async () => {
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) });
+    expect(await startSignUp({ email: ADDRESS }, t.deps)).toEqual({ redirect: "/sign-up/verify" });
+    expect(t.registration.sendEmailCode).toHaveBeenCalledTimes(1);
+    expect(readSignUpProgress(t.storage)).toMatchObject({ channel: "EMAIL", email: ADDRESS });
+  });
+
+  it("shows a refusal of the address under its field", async () => {
+    const invalid = [{ field: "email", message: "Invalid email format." }];
+    t.registration.sendEmailCode.mockResolvedValue(fail(400, "VALIDATION_FAILED", { fieldErrors: invalid }));
+    const outcome = await startSignUp({ email: ADDRESS }, t.deps);
+    expect(outcome).toMatchObject({ fieldErrors: { email: ["Invalid email format."] }, values: { email: ADDRESS } });
+  });
+
+  it("a mail failure at the first step stays on the form, ready for a retry", async () => {
+    t.registration.sendEmailCode.mockResolvedValueOnce(fail(503, "EMAIL_DELIVERY_FAILED", { retryAfterSeconds: 60 }));
+    expect(await startSignUp({ email: ADDRESS }, t.deps)).toEqual({
+      status: "error",
+      message: "We couldn't send the email. Try again in a minute.",
+      values: { email: ADDRESS },
+    });
+    expect(readSignUpProgress(t.storage)).toBeNull();
+    expect(await startSignUp({ email: ADDRESS }, t.deps)).toEqual({ redirect: "/sign-up/verify" });
+  });
+
+  it("verify_mailFailure_offersRetry", async () => {
+    writeSignUpProgress(t.storage, atCode(inMinutes(-1)));
+    t.registration.sendEmailCode.mockResolvedValue(fail(503, "EMAIL_DELIVERY_FAILED", { retryAfterSeconds: 60 }));
+    const outcome = await resendSignUpCode(t.deps);
+    // No wait: nothing was sent, so no cooldown was charged.
+    expect(outcome).toEqual({ status: "error", message: "We couldn't send the email. Try again in a minute." });
+  });
+
+  it("resends to the address in progress", async () => {
+    const resendAvailableAt = inMinutes(1);
+    writeSignUpProgress(t.storage, atCode(inMinutes(-1)));
+    t.registration.sendEmailCode.mockResolvedValue(ok(sent(resendAvailableAt)));
+    const outcome = await resendSignUpCode(t.deps);
+    expect(outcome).toMatchObject({ status: "success", resendAvailableAt });
+    expect(t.registration.sendEmailCode).toHaveBeenCalledExactlyOnceWith(ADDRESS);
+    expect(t.registration.sendCode).not.toHaveBeenCalled();
+    expect(readSignUpProgress(t.storage)).toEqual({ channel: "EMAIL", email: ADDRESS, resendAvailableAt });
+  });
+
+  it("verify_retryAfter_used", async () => {
+    writeSignUpProgress(t.storage, atCode(inMinutes(-1)));
+    t.registration.sendEmailCode.mockResolvedValue(fail(429, "CODE_RESEND_TOO_SOON", { retryAfterSeconds: 45 }));
+    const outcome = await resendSignUpCode(t.deps);
+    if ("redirect" in outcome) throw new Error("expected a form state");
+    expect(outcome.message).toBe("Too many requests. Please wait 45 seconds and try again.");
+    expect(Date.parse(outcome.resendAvailableAt ?? "")).toBeGreaterThan(Date.now() + 40_000);
+  });
+
+  it("a wrong code keeps the sign-up", async () => {
+    writeSignUpProgress(t.storage, atCode());
+    t.registration.verifyEmailCode.mockResolvedValue(fail(400, "CODE_INCORRECT"));
+    expect(await verifySignUpCode({ code: "123456" }, t.deps)).toEqual({
+      status: "error",
+      message: "Incorrect verification code.",
+    });
+    expect(readSignUpProgress(t.storage)).toEqual(atCode(readSignUpProgress(t.storage)?.resendAvailableAt));
+  });
+
+  it("verify_accountExists_linksSignInAndReset", async () => {
+    writeSignUpProgress(t.storage, atCode());
+    t.registration.verifyEmailCode.mockResolvedValue(fail(409, "EMAIL_ACCOUNT_EXISTS"));
+    expect(await verifySignUpCode({ code: "123456" }, t.deps)).toEqual({
+      status: "error",
+      message: "This email already has a Sunvibe account.",
+      conflict: "account-exists",
+    });
+  });
+
+  it("verify_notAvailable_offersAnotherEmail", async () => {
+    writeSignUpProgress(t.storage, atCode());
+    t.registration.verifyEmailCode.mockResolvedValue(fail(409, "EMAIL_NOT_AVAILABLE"));
+    expect(await verifySignUpCode({ code: "123456" }, t.deps)).toEqual({
+      status: "error",
+      message: "This email can't be used right now. Try another email or contact Sunvibe.",
+      conflict: "not-available",
+    });
+  });
+
+  it.each(["EMAIL_ACCOUNT_EXISTS", "EMAIL_NOT_AVAILABLE"])("verify_409_clearsProgress (%s)", async (code) => {
+    writeSignUpProgress(t.storage, atCode());
+    t.registration.verifyEmailCode.mockResolvedValue(fail(409, code));
+    await verifySignUpCode({ code: "123456" }, t.deps);
+    expect(readSignUpProgress(t.storage)).toBeNull();
+  });
+
+  it("details_secondSubmitWhilePending_ignored", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    let answer: (result: Awaited<ReturnType<SignUpDeps["api"]["registerWithEmail"]>>) => void = () => {};
+    t.api.registerWithEmail.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          answer = resolve;
+        }),
+    );
+
+    const first = completeSignUp(DETAILS, t.deps);
+    const second = completeSignUp(DETAILS, t.deps);
+    await vi.waitFor(() => expect(t.api.registerWithEmail).toHaveBeenCalled());
+    answer(ok(emailSession(), 201));
+
+    await expect(first).resolves.toEqual({ redirect: "/account" });
+    await expect(second).resolves.toEqual({ redirect: "/account" });
+    expect(t.api.registerWithEmail).toHaveBeenCalledTimes(1);
+    expect(t.store.adopt).toHaveBeenCalledTimes(1);
+  });
+
+  it("a submit after the first one finished is a new submit", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    t.api.registerWithEmail.mockResolvedValueOnce(fail(500));
+    await completeSignUp(DETAILS, t.deps);
+    expect(await completeSignUp(DETAILS, t.deps)).toEqual({ redirect: "/account" });
+    expect(t.api.registerWithEmail).toHaveBeenCalledTimes(2);
+  });
+
+  it("details_tokenExpired_restarts", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    t.api.registerWithEmail.mockResolvedValue(fail(400, "REGISTRATION_TOKEN_INVALID"));
+    expect(await completeSignUp(DETAILS, t.deps)).toEqual({ redirect: "/sign-up?expired=1" });
+    expect(readSignUpProgress(t.storage)).toBeNull();
+  });
+
+  it("details_conflict_noSession", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    t.api.registerWithEmail.mockResolvedValue(fail(409, "EMAIL_NOT_AVAILABLE"));
+    expect(await completeSignUp(DETAILS, t.deps)).toEqual({
+      status: "error",
+      message: "This email can't be used right now. Try another email or contact Sunvibe.",
+      conflict: "not-available",
+      values: { fullName: DETAILS.fullName },
+    });
+    expect(t.store.adopt).not.toHaveBeenCalled();
+  });
+
+  it("never returns a password in the form state", async () => {
+    writeSignUpProgress(t.storage, atDetails());
+    t.api.registerWithEmail.mockResolvedValue(fail(500));
+    expect(JSON.stringify(await completeSignUp(DETAILS, t.deps))).not.toContain(DETAILS.password);
+  });
+});
+
+describe("startPhoneSignUp", () => {
   it("startSignUp_cookiesBlocked_sendsNothing", async () => {
     t = setup({ cookiesEnabled: false });
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toMatchObject({ status: "error", message: COOKIE_TEXT });
     expect(t.registration.sendCode).not.toHaveBeenCalled();
   });
 
   it("rejects a bad phone number without calling the backend", async () => {
-    const outcome = await startSignUp({ username: "12345" }, t.deps);
-    expect(outcome).toMatchObject({ fieldErrors: { username: ["Enter a phone number of 10 to 12 digits."] } });
+    const outcome = await startPhoneSignUp({ username: "12345" }, t.deps);
+    expect(outcome).toMatchObject({ fieldErrors: { username: ["Enter a valid phone number."] } });
     expect(t.registration.sendCode).not.toHaveBeenCalled();
   });
 
@@ -209,16 +514,16 @@ describe("startSignUp", () => {
     const resendAvailableAt = inMinutes(1);
     t.registration.sendCode.mockResolvedValue(ok(sent(resendAvailableAt)));
 
-    const outcome = await startSignUp({ username: "090 123 4567" }, t.deps);
+    const outcome = await startPhoneSignUp({ username: "090 123 4567" }, t.deps);
 
     expect(outcome).toEqual({ redirect: "/sign-up/verify" });
     expect(t.registration.sendCode).toHaveBeenCalledWith("0901234567");
-    expect(readSignUpProgress(t.storage)).toEqual({ phone: "0901234567", resendAvailableAt });
+    expect(readSignUpProgress(t.storage)).toEqual({ channel: "PHONE", phone: "0901234567", resendAvailableAt });
   });
 
   it("shows a taken number under the phone field and keeps what was typed", async () => {
     t.registration.sendCode.mockResolvedValue(fail(400, "VALIDATION_FAILED", { fieldErrors: TAKEN }));
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toEqual({
       status: "error",
       fieldErrors: { username: ["Phone number is already in use."] },
@@ -231,32 +536,32 @@ describe("startSignUp", () => {
     t.registration.sendCode.mockResolvedValue(
       fail(400, "VALIDATION_FAILED", { fieldErrors: [{ field: "phoneNumber", message: "Invalid phone number." }] }),
     );
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toMatchObject({ fieldErrors: { username: ["Invalid phone number."] } });
   });
 
   it("tells how long to wait when the backend throttles the SMS", async () => {
     t.registration.sendCode.mockResolvedValue(fail(429, "CODE_RESEND_TOO_SOON", { retryAfterSeconds: 45 }));
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toMatchObject({ message: "Too many requests. Please wait 45 seconds and try again." });
   });
 
   it("shows the generic text when the server cannot be reached", async () => {
     t.registration.sendCode.mockResolvedValue({ ok: false, kind: "network" });
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toMatchObject({ status: "error", message: GENERIC });
   });
 
   it("does not send another SMS when the same number is still waiting for its code", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567", resendAvailableAt: inMinutes(1) });
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) });
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toEqual({ redirect: "/sign-up/verify" });
     expect(t.registration.sendCode).not.toHaveBeenCalled();
   });
 
   it("resumes at the details step when the number was already verified", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(10) });
-    const outcome = await startSignUp({ username: "0901234567" }, t.deps);
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(10) });
+    const outcome = await startPhoneSignUp({ username: "0901234567" }, t.deps);
     expect(outcome).toEqual({ redirect: "/sign-up/details" });
     expect(t.registration.sendCode).not.toHaveBeenCalled();
   });
@@ -265,24 +570,24 @@ describe("startSignUp", () => {
     const start = Date.parse("2026-10-18T10:00:00Z");
     vi.useFakeTimers({ now: start });
     try {
-      writeSignUpProgress(t.storage, { phone: "0901234567", resendAvailableAt: inMinutes(1) });
+      writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) });
       vi.setSystemTime(start + 20 * 60_000);
       t.registration.sendCode.mockResolvedValue(ok(sent(inMinutes(1))));
-      expect(await startSignUp({ username: "0901234567" }, t.deps)).toEqual({ redirect: "/sign-up/verify" });
+      expect(await startPhoneSignUp({ username: "0901234567" }, t.deps)).toEqual({ redirect: "/sign-up/verify" });
       expect(t.registration.sendCode).toHaveBeenCalledTimes(1);
       vi.setSystemTime(start + 45 * 60_000);
-      expect(readSignUpProgress(t.storage)?.phone).toBe("0901234567");
+      expect(signUpPhoneOf(readSignUpProgress(t.storage))).toBe("0901234567");
     } finally {
       vi.useRealTimers();
     }
   });
 
   it("sends a fresh code for a different number", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567", resendAvailableAt: inMinutes(1) });
-    const outcome = await startSignUp({ username: "0987654321" }, t.deps);
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) });
+    const outcome = await startPhoneSignUp({ username: "0987654321" }, t.deps);
     expect(outcome).toEqual({ redirect: "/sign-up/verify" });
     expect(t.registration.sendCode).toHaveBeenCalledWith("0987654321");
-    expect(readSignUpProgress(t.storage)?.phone).toBe("0987654321");
+    expect(signUpPhoneOf(readSignUpProgress(t.storage))).toBe("0987654321");
   });
 });
 
@@ -293,13 +598,13 @@ describe("resendSignUpCode", () => {
   });
 
   it("goes on to the details step when the number is already verified", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(10) });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(10) });
     expect(await resendSignUpCode(t.deps)).toEqual({ redirect: "/sign-up/details" });
     expect(t.registration.sendCode).not.toHaveBeenCalled();
   });
 
   it("sends a new code to the number in progress and reports when to try again", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567" });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567" });
     const resendAvailableAt = inMinutes(1);
     t.registration.sendCode.mockResolvedValue(ok(sent(resendAvailableAt)));
 
@@ -307,13 +612,13 @@ describe("resendSignUpCode", () => {
 
     expect(t.registration.sendCode).toHaveBeenCalledWith("0901234567");
     expect(outcome).toEqual({ status: "success", message: "We sent you a new code.", resendAvailableAt });
-    expect(readSignUpProgress(t.storage)).toEqual({ phone: "0901234567", resendAvailableAt });
+    expect(readSignUpProgress(t.storage)).toEqual({ channel: "PHONE", phone: "0901234567", resendAvailableAt });
   });
 
   it.each(["CODE_RESEND_TOO_SOON", "CODE_DAILY_LIMIT", "RATE_LIMITED"])(
     "turns a throttled answer (%s) into the wait text and a countdown",
     async (code) => {
-      writeSignUpProgress(t.storage, { phone: "0901234567" });
+      writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567" });
       t.registration.sendCode.mockResolvedValue(fail(429, code, { retryAfterSeconds: 30 }));
 
       const outcome = await resendSignUpCode(t.deps);
@@ -325,7 +630,7 @@ describe("resendSignUpCode", () => {
   );
 
   it("tells a number taken in the meantime in the alert", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567" });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567" });
     t.registration.sendCode.mockResolvedValue(fail(400, "VALIDATION_FAILED", { fieldErrors: TAKEN }));
     expect(await resendSignUpCode(t.deps)).toEqual({ status: "error", message: "Phone number is already in use." });
   });
@@ -344,13 +649,13 @@ describe("verifySignUpCode", () => {
   });
 
   it("goes on to the details step when the number is already verified", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(10) });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(10) });
     expect(await verifySignUpCode({ code: "123456" }, t.deps)).toEqual({ redirect: "/sign-up/details" });
     expect(t.registration.verifyCode).not.toHaveBeenCalled();
   });
 
   it("keeps the registration token in sessionStorage and moves to the details step", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567", resendAvailableAt: inMinutes(1) });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) });
     const expiresAt = inMinutes(15);
     t.registration.verifyCode.mockResolvedValue(ok({ registrationToken: "token-1", expiresAt }));
 
@@ -358,6 +663,7 @@ describe("verifySignUpCode", () => {
 
     expect(t.registration.verifyCode).toHaveBeenCalledWith("0901234567", "123456");
     expect(readSignUpProgress(t.storage)).toEqual({
+      channel: "PHONE",
       phone: "0901234567",
       registrationToken: "token-1",
       tokenExpiresAt: expiresAt,
@@ -369,15 +675,15 @@ describe("verifySignUpCode", () => {
     ["CODE_EXPIRED", "The verification code is invalid or has expired. Please request a new one."],
     ["CODE_ATTEMPTS_EXCEEDED", "Too many incorrect codes. Please request a new one."],
   ])("shows the sign-up text for %s", async (code, text) => {
-    writeSignUpProgress(t.storage, { phone: "0901234567" });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567" });
     t.registration.verifyCode.mockResolvedValue(fail(400, code));
 
     expect(await verifySignUpCode({ code: "123456" }, t.deps)).toEqual({ status: "error", message: text });
-    expect(readSignUpProgress(t.storage)).toEqual({ phone: "0901234567" });
+    expect(readSignUpProgress(t.storage)).toEqual({ channel: "PHONE", phone: "0901234567" });
   });
 
   it("falls back to the generic wording for other failures", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567" });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567" });
     t.registration.verifyCode.mockResolvedValue(fail(429, "RATE_LIMITED", { retryAfterSeconds: 120 }));
 
     const outcome = await verifySignUpCode({ code: "123456" }, t.deps);
@@ -387,7 +693,8 @@ describe("verifySignUpCode", () => {
 });
 
 describe("completeSignUp", () => {
-  const verified = () => ({ phone: "0901234567", registrationToken: "token-1", tokenExpiresAt: inMinutes(10) });
+  const verified = () =>
+    ({ channel: "PHONE", phone: "0901234567", registrationToken: "token-1", tokenExpiresAt: inMinutes(10) }) as const;
   const valid = { fullName: "Nguyen Van An", password: "Sunvibe@2026", confirmPassword: "Sunvibe@2026" };
 
   beforeEach(() => writeSignUpProgress(t.storage, verified()));
@@ -399,7 +706,7 @@ describe("completeSignUp", () => {
   });
 
   it("sends a visitor whose phone is not verified yet to the code step", async () => {
-    writeSignUpProgress(t.storage, { phone: "0901234567" });
+    writeSignUpProgress(t.storage, { channel: "PHONE", phone: "0901234567" });
     expect(await completeSignUp(valid, t.deps)).toEqual({ redirect: "/sign-up/verify" });
     expect(t.api.register).not.toHaveBeenCalled();
   });
@@ -433,7 +740,6 @@ describe("completeSignUp", () => {
     expect(t.api.register).toHaveBeenCalledWith({
       fullName: "Nguyen Van An",
       username: "0901234567",
-      email: "",
       idCardNumber: "",
       password: "Sunvibe@2026",
       confirmPassword: "Sunvibe@2026",

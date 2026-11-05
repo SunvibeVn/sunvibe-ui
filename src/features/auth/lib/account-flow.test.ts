@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { ClientResponse } from "@/lib/api";
 import type { ApiCall, ApiResult } from "../session/api-client";
 import type { CallApi } from "../session/api-client";
-import { type AccountDeps, type MeResponse, accountStatusLabel, readMe } from "./account-flow";
+import { type AccountDeps, type MeResponse, accountOverview, accountStatusLabel, readMe } from "./account-flow";
 
 function setup(result: ApiResult<unknown>, { generationAfterCall }: { generationAfterCall?: string | null } = {}) {
   const paths: string[] = [];
@@ -80,9 +80,56 @@ describe("readMe", () => {
   });
 });
 
+describe("accountOverview (auth-email-access spec 6.2)", () => {
+  const emailAccount: MeResponse = {
+    fullName: "Nguyen Van A",
+    username: null,
+    email: "a@example.com",
+    emailVerified: true,
+    phoneVerified: false,
+    requiredAction: null,
+    accountStatus: "ACTIVE",
+  };
+
+  it("account_nullUsername_noPhoneRow", () => {
+    expect(accountOverview(emailAccount).phone).toBeNull();
+  });
+
+  it("shows the phone row when the account has a number", () => {
+    const view = accountOverview({ ...emailAccount, username: "0901234567", phoneVerified: true });
+    expect(view.phone).toEqual({ value: "0901234567", verified: true });
+  });
+
+  it("account_bindPrompt_onlyForBindEmail", () => {
+    expect(accountOverview({ ...emailAccount, requiredAction: "BIND_EMAIL" }).prompt).toBe("bind-email");
+    expect(accountOverview({ ...emailAccount, requiredAction: "VERIFY_PHONE" }).prompt).toBe("verify-phone");
+    expect(accountOverview(emailAccount).prompt).toBeNull();
+    // A flag is not a gate: an email account owes no phone.
+    expect(accountOverview({ ...emailAccount, phoneVerified: false, username: "0901234567" }).prompt).toBeNull();
+  });
+
+  it("gives the email row its badge and the change link", () => {
+    expect(accountOverview(emailAccount).email).toEqual({ value: "a@example.com", verified: true, action: "Change email" });
+  });
+
+  it("an unverified stored email reads as not verified", () => {
+    const view = accountOverview({ ...emailAccount, emailVerified: false });
+    expect(view.email).toEqual({ value: "a@example.com", verified: false, action: "Change email" });
+  });
+
+  it("an account without an email is offered one", () => {
+    const view = accountOverview({ ...emailAccount, email: null, emailVerified: false });
+    expect(view.email).toEqual({ value: "Not provided", verified: undefined, action: "Add email" });
+  });
+});
+
 describe("accountStatusLabel", () => {
+  it("account_pendingLabel", () => {
+    expect(accountStatusLabel("PENDING")).toBe("Pending verification");
+  });
+
   it("accountStatusLabel_knownAndUnknownStatuses", () => {
-    expect(accountStatusLabel("PENDING")).toBe("Pending phone verification");
+    expect(accountStatusLabel("PENDING")).toBe("Pending verification");
     expect(accountStatusLabel("ACTIVE")).toBe("Active");
     expect(accountStatusLabel("SUSPENDED")).toBe("suspended");
     expect(accountStatusLabel(undefined)).toBe("");

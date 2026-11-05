@@ -15,6 +15,7 @@ import { type LoginDeps, submitLogin } from "../lib/login-flow";
 import { useCookiesWork } from "../lib/use-cookies-work";
 import { useFieldErrors } from "../lib/use-field-errors";
 import { loginSchema } from "../schemas/auth.schema";
+import { EMAIL_MAX_RAW_LENGTH } from "../schemas/identifier-policy";
 import { documentJar } from "../session/browser-cookies";
 import { settlePendingLogoutBeforeSignIn } from "../session/logout";
 import { sessionApi } from "../session/session-api";
@@ -36,13 +37,13 @@ export function LoginForm({ next }: { next?: string }) {
   // A client function as the form action: React renders it as a non-submitting `javascript:` action and replays a
   // submit made before hydration, so the password never lands in a URL.
   const [state, formAction] = useActionState(async (previous: FormState, formData: FormData) => {
-    const outcome = await submitLogin(readForm(formData, ["username", "password", "next"]), browserDeps());
+    const outcome = await submitLogin(readForm(formData, ["email", "password", "next"]), browserDeps());
     if (!("redirect" in outcome)) return outcome;
     router.replace(outcome.redirect);
     return { status: "success", values: previous.values } satisfies FormState;
   }, initialFormState);
   const { onBlur, errorFor } = useFieldErrors(loginSchema, state.fieldErrors);
-  const phoneError = errorFor("username");
+  const emailError = errorFor("email");
   const passwordError = errorFor("password");
 
   return (
@@ -51,19 +52,22 @@ export function LoginForm({ next }: { next?: string }) {
       {state.message && <Alert tone="error">{state.message}</Alert>}
       {next && <input type="hidden" name="next" value={next} />}
 
-      <FormField id="username" label="Phone number" error={phoneError}>
+      <FormField id="email" label="Email" error={emailError}>
         <Input
           compact
-          id="username"
-          name="username"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="0901 234 567"
+          id="email"
+          name="email"
+          type="text"
+          inputMode="email"
+          autoComplete="username"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={EMAIL_MAX_RAW_LENGTH}
+          placeholder="name@example.com"
           required
-          defaultValue={state.values?.username}
-          invalid={Boolean(phoneError)}
-          aria-describedby={describedBy("username", phoneError)}
+          defaultValue={state.values?.email}
+          invalid={Boolean(emailError)}
+          aria-describedby={describedBy("email", emailError)}
         />
       </FormField>
 

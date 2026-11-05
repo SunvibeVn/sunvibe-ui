@@ -64,7 +64,7 @@ function setup({ pending = true }: { pending?: boolean } = {}) {
   const answer = deferred<LogoutResult>();
   const logout = vi.fn(() => answer.promise);
   const refreshUnlocked = vi.fn();
-  const store = { getSnapshot: vi.fn(), generation: vi.fn(() => null), resetLocal: vi.fn() };
+  const store = { getSnapshot: vi.fn(), generation: vi.fn(() => null), resetLocal: vi.fn(), clearFlowProgress: vi.fn() };
   const channel = new FakeTarget();
   const win = new FakeTarget();
   const doc = new FakeDocument();

@@ -1,5 +1,6 @@
 // Public API for pages and layouts (Server Components). Client Components use
 // "@/features/auth/client"; src/proxy.ts uses "@/features/auth/proxy".
+export { AccountEmailSection } from "./components/account-email-form";
 export { AccountOverview } from "./components/account-overview";
 export { AuthCard } from "./components/auth-card";
 export { AuthHeader } from "./components/auth-header";
@@ -15,9 +16,11 @@ export { NoscriptNotice } from "./components/noscript-notice";
 export { ResetPasswordSection } from "./components/reset-password-section";
 export { SessionProvider } from "./components/session-provider";
 export { SignUpDetailsSection } from "./components/sign-up-details-section";
-export { SignUpPhoneForm } from "./components/sign-up-phone-form";
+export { SignUpEmailForm } from "./components/sign-up-email-form";
 export { SignUpVerifySection } from "./components/sign-up-verify-section";
 export { UserMenu } from "./components/user-menu";
 export { VerifyPhoneSection } from "./components/verify-phone-section";
 export { AUTH_ROUTES } from "./constants";
+export { parsePhoneMode, phoneRouteAccess } from "./lib/phone-mode";
+export type { PhoneMode } from "./lib/phone-mode";
 export { safeRedirectPath } from "./lib/safe-redirect";

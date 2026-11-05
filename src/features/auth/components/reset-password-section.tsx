@@ -1,32 +1,19 @@
 "use client";
 
-import Link from "next/link";
-import { Alert } from "@/components/ui/alert";
-import { AUTH_ROUTES } from "../constants";
 import { useResetSectionView } from "../lib/password-reset-browser";
 import { FormSkeleton } from "./form-skeleton";
+import { ResetLinkInvalid } from "./reset-link-invalid";
 import { ResetPasswordForm } from "./reset-password-form";
 
 /**
- * The reset form, or the invalid-link notice when this tab holds no reset token. `fromLink` (the address carries a
- * token or `via=sms`) renders the form on the server already, so a submit before hydration works; the token itself is
- * read from this tab's storage after mount, never from the page props.
+ * The reset form, or the invalid-link notice when this tab holds no reset token. `fromLink` (`via=sms`) renders the form
+ * on the server already, so a submit before hydration works. The token of an e-mail link is in the fragment, which the
+ * server never sees: that page shows a placeholder until mount moves it into this tab's storage.
  */
 export function ResetPasswordSection({ via, fromLink }: { via: "email" | "sms"; fromLink: boolean }) {
   const view = useResetSectionView(fromLink);
 
-  if (view === "invalid") {
-    return (
-      <div className="space-y-5">
-        <Alert tone="error" title="This link is invalid or has expired">
-          Reset links and codes only work for a short time and only once.
-        </Alert>
-        <Link href={AUTH_ROUTES.forgotPassword} className="block text-center text-sm font-semibold text-violet-700 hover:text-violet-800">
-          Request a new code
-        </Link>
-      </div>
-    );
-  }
+  if (view === "invalid") return <ResetLinkInvalid />;
   if (view === "pending") return <FormSkeleton fields={3} />;
   return <ResetPasswordForm via={via} />;
 }

@@ -1,5 +1,8 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { FieldError, PublicApiHttpError, PublicApiResult } from "@/lib/api";
+import { ForgotPasswordForm } from "../components/forgot-password-form";
 import type { BrowserEnvironment } from "../session/browser-cookies";
 import {
   type PasswordResetApi,
@@ -7,10 +10,12 @@ import {
   type PasswordResetStartResponse,
   completeReset,
   requestResetByEmail,
-  requestResetBySms,
 } from "./password-reset-flow";
+import { requestResetBySms } from "./password-reset-sms-flow";
 import { RESET_STORAGE_KEY, readResetProgress, saveResetToken } from "./reset-progress";
 import { memoryStorage } from "./test-support/memory-storage";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
 
 const COOKIE_TEXT =
   "Sunvibe needs cookies to keep you signed in. Turn on cookies for sunvibe.vn in your browser settings, then reload this page.";
@@ -85,6 +90,21 @@ const fields = { otpCode: "123456", newPassword: "Sunvibe@2026", confirmPassword
 let t: ReturnType<typeof setup>;
 beforeEach(() => {
   t = setup();
+});
+
+describe("ForgotPasswordForm (auth-email-access spec 6.1)", () => {
+  it("forgot_off_noSmsTab", () => {
+    const html = renderToStaticMarkup(createElement(ForgotPasswordForm, { smsEnabled: false }));
+    expect(html).toContain('name="email"');
+    expect(html).not.toContain('role="tab"');
+    expect(html).not.toMatch(/phone|sms/i);
+  });
+
+  it("shows the SMS tab only when it is enabled", () => {
+    const html = renderToStaticMarkup(createElement(ForgotPasswordForm, { smsEnabled: true }));
+    expect(html).toContain('role="tab"');
+    expect(html).toContain("Phone");
+  });
 });
 
 describe("requestResetByEmail", () => {
@@ -195,17 +215,17 @@ describe("requestResetBySms", () => {
 describe("completeReset", () => {
   it("refuses when this tab holds no reset token", async () => {
     const outcome = await completeReset(fields, t.deps);
-    expect(outcome).toEqual({ status: "error", message: INVALID_LINK });
+    expect(outcome).toEqual({ status: "error", message: INVALID_LINK, tokenGone: true });
     expect(t.api.completePasswordReset).not.toHaveBeenCalled();
   });
 
   it("refuses an expired reset token", async () => {
     saveResetToken(t.storage, "old", undefined, Date.now() - 15 * 60_000 - 1);
-    expect(await completeReset(fields, t.deps)).toEqual({ status: "error", message: INVALID_LINK });
+    expect(await completeReset(fields, t.deps)).toEqual({ status: "error", message: INVALID_LINK, tokenGone: true });
     expect(t.api.completePasswordReset).not.toHaveBeenCalled();
   });
 
-  it("completeReset_success_signsEveryTabOut", async () => {
+  it("reset_success_signsOutEveryTab", async () => {
     saveResetToken(t.storage, "reset-sms", "0901234567", Date.now());
     const outcome = await completeReset(fields, t.deps);
     expect(outcome).toEqual({ redirect: "/login?reset=success" });
@@ -241,12 +261,22 @@ describe("completeReset", () => {
     expect(t.store.endLocally).not.toHaveBeenCalled();
   });
 
-  it("explains a used or expired reset token", async () => {
+  it("reset_tokenInvalid_clearsAndOffersNew", async () => {
     saveResetToken(t.storage, "t", undefined, Date.now());
     t.api.completePasswordReset.mockResolvedValue(fail(400, "RESET_TOKEN_INVALID"));
-    expect(await completeReset(fields, t.deps)).toEqual({ status: "error", message: INVALID_LINK });
+    expect(await completeReset(fields, t.deps)).toEqual({ status: "error", message: INVALID_LINK, tokenGone: true });
     // C-7: a used or expired token is cleared at once; the session is not touched.
     expect(t.storage.getItem(RESET_STORAGE_KEY)).toBeNull();
+    expect(t.store.endLocally).not.toHaveBeenCalled();
+  });
+
+  it("a closed channel keeps the token and says so", async () => {
+    saveResetToken(t.storage, "t", "0901234567", Date.now());
+    t.api.completePasswordReset.mockResolvedValue(fail(403, "AUTH_CHANNEL_DISABLED"));
+    expect(await completeReset(fields, t.deps)).toEqual({
+      status: "error",
+      message: "This sign-in method isn't available.",
+    });
     expect(t.store.endLocally).not.toHaveBeenCalled();
   });
 

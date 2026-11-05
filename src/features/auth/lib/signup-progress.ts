@@ -2,21 +2,31 @@ import { AUTH_ROUTES } from "../constants";
 
 // Sign-up progress of this tab (auth-browser-session C-7): kept in `sessionStorage`, so a reload in the same tab keeps
 // it and a new tab starts over. It may hold the single-use registration token, never an access or refresh token.
-// It lasts 30 minutes from the start of the sign-up, like the sign-up cookie it replaced, so a phone number typed on a
-// shared PC does not stay behind for good. Every storage access is guarded: blocked storage reads as "no progress".
-// Never logged.
+// It lasts 30 minutes from the start of the sign-up, like the sign-up cookie it replaced, so an address or a number typed
+// on a shared PC does not stay behind for good. Every storage access is guarded: blocked storage reads as "no progress".
+// Never logged. Only the version below is read (auth-email-access spec 6.3): a proof of one channel is never taken for
+// the other, so progress of an older build reads as none.
 
 export const SIGN_UP_STORAGE_KEY = "sv_signup";
 
 /** How long the progress of one sign-up is kept, counted from its start. */
 export const SIGN_UP_PROGRESS_MAX_AGE_MS = 30 * 60 * 1000;
 
-export type SignUpProgress = {
-  phone: string;
+const PROGRESS_VERSION = 2;
+
+type SignUpProof = {
   resendAvailableAt?: string;
   registrationToken?: string;
   tokenExpiresAt?: string;
 };
+
+export type EmailSignUpProgress = SignUpProof & { channel: "EMAIL"; email: string };
+export type PhoneSignUpProgress = SignUpProof & { channel: "PHONE"; phone: string };
+export type SignUpProgress = EmailSignUpProgress | PhoneSignUpProgress;
+
+/** What the code of this sign-up went to. */
+export const signUpIdentifier = (progress: SignUpProgress): string =>
+  progress.channel === "EMAIL" ? progress.email : progress.phone;
 
 /** Where the sign-up of this tab stands. `expired`: the registration token ran out (and was cleared). */
 export type SignUpStep =
@@ -44,19 +54,25 @@ function parseStored(raw: string | null): StoredProgress | null {
     return null;
   }
   if (!value || typeof value !== "object") return null;
-  const { phone, resendAvailableAt, registrationToken, tokenExpiresAt, startedAt } = value as Record<string, unknown>;
-  if (typeof phone !== "string" || !phone) return null;
+  const { v, channel, email, phone, resendAvailableAt, registrationToken, tokenExpiresAt, startedAt } = value as Record<
+    string,
+    unknown
+  >;
+  if (v !== PROGRESS_VERSION) return null;
   if (![resendAvailableAt, registrationToken, tokenExpiresAt].every(optionalString)) return null;
   if (typeof startedAt !== "number" || !Number.isFinite(startedAt)) return null;
-  return {
-    progress: {
-      phone,
-      ...(resendAvailableAt !== undefined && { resendAvailableAt: resendAvailableAt as string }),
-      ...(registrationToken !== undefined && { registrationToken: registrationToken as string }),
-      ...(tokenExpiresAt !== undefined && { tokenExpiresAt: tokenExpiresAt as string }),
-    },
-    startedAt,
+  const proof: SignUpProof = {
+    ...(resendAvailableAt !== undefined && { resendAvailableAt: resendAvailableAt as string }),
+    ...(registrationToken !== undefined && { registrationToken: registrationToken as string }),
+    ...(tokenExpiresAt !== undefined && { tokenExpiresAt: tokenExpiresAt as string }),
   };
+  if (channel === "EMAIL" && typeof email === "string" && email) {
+    return { progress: { channel, email, ...proof }, startedAt };
+  }
+  if (channel === "PHONE" && typeof phone === "string" && phone) {
+    return { progress: { channel, phone, ...proof }, startedAt };
+  }
+  return null;
 }
 
 const isCurrent = (stored: StoredProgress, now: number) => now - stored.startedAt < SIGN_UP_PROGRESS_MAX_AGE_MS;
@@ -109,7 +125,8 @@ export function signUpStepRedirect(step: SignUpStep, page: "code" | "details"): 
 
 /**
  * What a step page does once it has read the progress: sends a visitor who skipped a step, or whose token ran out, on
- * through `replace`. An expired registration token is cleared first: it is of no use any more. True when it left.
+ * through `replace`. An expired registration token is cleared first: it is of no use any more, and neither is anything
+ * stored that reads as none, such as progress of an older build. True when it left.
  */
 export function leaveSignUpStep(
   step: SignUpStep,
@@ -118,7 +135,7 @@ export function leaveSignUpStep(
 ): boolean {
   const target = signUpStepRedirect(step, page);
   if (!target) return false;
-  if (step.kind === "expired") clearSignUpProgress(deps.storage);
+  if (step.kind === "expired" || step.kind === "none") clearSignUpProgress(deps.storage);
   deps.replace(target);
   return true;
 }
@@ -130,8 +147,8 @@ export function readSignUpProgress(storage: Storage | null): SignUpProgress | nu
 }
 
 /**
- * Stores the progress. A later step of the same phone number keeps the start of its sign-up; `restart` (a new code
- * sent from the first step) or another number starts a new 30-minute lifetime.
+ * Stores the progress. A later step of the same address or number keeps the start of its sign-up; `restart` (a new
+ * code sent from the first step) or another one starts a new 30-minute lifetime.
  */
 export function writeSignUpProgress(
   storage: Storage | null,
@@ -140,10 +157,12 @@ export function writeSignUpProgress(
 ): void {
   const now = Date.now();
   const previous = options.restart ? null : parseStored(readSignUpRaw(storage));
-  const startedAt =
-    previous && previous.progress.phone === progress.phone && isCurrent(previous, now) ? previous.startedAt : now;
+  const sameSignUp =
+    previous?.progress.channel === progress.channel &&
+    signUpIdentifier(previous.progress) === signUpIdentifier(progress);
+  const startedAt = previous && sameSignUp && isCurrent(previous, now) ? previous.startedAt : now;
   try {
-    storage?.setItem(SIGN_UP_STORAGE_KEY, JSON.stringify({ ...progress, startedAt }));
+    storage?.setItem(SIGN_UP_STORAGE_KEY, JSON.stringify({ v: PROGRESS_VERSION, ...progress, startedAt }));
   } catch {
     // Blocked or full storage: the flow carries on and a later step reads "no progress".
   }

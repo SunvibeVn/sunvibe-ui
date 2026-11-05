@@ -1,12 +1,15 @@
 export const AUTH_ROUTES = {
   login: "/login",
+  loginPhone: "/login/phone",
   signUp: "/sign-up",
+  signUpPhone: "/sign-up/phone",
   signUpVerify: "/sign-up/verify",
   signUpDetails: "/sign-up/details",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
   verifyPhone: "/verify-phone",
   account: "/account",
+  accountEmail: "/account/email",
 } as const;
 
 /** Pages that need a session: the proxy sends visitors without one to the login page. */
@@ -16,6 +19,12 @@ export const PROTECTED_PATHS: readonly string[] = [AUTH_ROUTES.account, AUTH_ROU
 export const GUEST_ONLY_PATHS: readonly string[] = [AUTH_ROUTES.login, AUTH_ROUTES.signUp];
 
 export const RESET_TOKEN_MAX_AGE_SECONDS = 15 * 60;
+
+/**
+ * The email `send-code` calls wait this long: a slow relay can pass the default 15 s and show a failure for a code that
+ * then arrives (auth-email-access spec 6.3).
+ */
+export const EMAIL_SEND_TIMEOUT_MS = 30_000;
 
 /**
  * auth-service `password-reset.resend-cooldown`. Inside it, asking again for an

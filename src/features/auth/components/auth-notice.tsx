@@ -12,7 +12,7 @@ export async function AuthNotice({ searchParams }: { searchParams: SearchParams 
     return <Alert tone="info">Your session has ended. Please log in again.</Alert>;
   }
   if (params.expired === "1") {
-    return <Alert tone="info">Your phone verification has expired. Please verify your number again.</Alert>;
+    return <Alert tone="info">Your verification has expired. Please start again.</Alert>;
   }
   return null;
 }

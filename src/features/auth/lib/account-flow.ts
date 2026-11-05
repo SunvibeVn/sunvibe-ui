@@ -36,8 +36,28 @@ export async function readMe(deps: AccountDeps): Promise<MeLoad> {
   return { kind: "error" };
 }
 
+/** What `/account` shows of an account (auth-email-access spec 6.2). The server decides what it asks: flags never do. */
+export type AccountOverviewView = {
+  email: { value: string; verified?: boolean; action: "Change email" | "Add email" };
+  /** Null on an account without a number. */
+  phone: { value: string; verified: boolean } | null;
+  prompt: "bind-email" | "verify-phone" | null;
+};
+
+const PROMPTS = { BIND_EMAIL: "bind-email", VERIFY_PHONE: "verify-phone" } as const;
+
+export function accountOverview(me: MeResponse): AccountOverviewView {
+  return {
+    email: me.email
+      ? { value: me.email, verified: me.emailVerified ?? false, action: "Change email" }
+      : { value: "Not provided", verified: undefined, action: "Add email" },
+    phone: me.username ? { value: me.username, verified: me.phoneVerified ?? false } : null,
+    prompt: me.requiredAction ? PROMPTS[me.requiredAction] : null,
+  };
+}
+
 const STATUS_LABELS: Partial<Record<string, string>> = {
-  PENDING: "Pending phone verification",
+  PENDING: "Pending verification",
   ACTIVE: "Active",
 };
 

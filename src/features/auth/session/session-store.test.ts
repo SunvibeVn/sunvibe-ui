@@ -165,6 +165,62 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+describe("session store: identity without a phone (auth-email-access spec 4.6, 6.3)", () => {
+  function signedInStore() {
+    const jar = new FakeJar();
+    const store = createSessionStore({
+      api: { refreshUnlocked: vi.fn(), logoutUnlocked: vi.fn() },
+      jar,
+      now: () => 0,
+      sleep: async () => undefined,
+      lock: (task) => task(),
+      broadcast: vi.fn(),
+      onIdentityChange: vi.fn(),
+      sessionStorage: () => null,
+    });
+    const base = session("u1");
+    store.adopt(
+      { ...base, user: { ...base.user, username: null, requiredAction: "BIND_EMAIL" } },
+      { newSignIn: true },
+    );
+    return { jar, store, ref: { generation: store.generation() ?? "", userId: "u1" } };
+  }
+
+  it("keeps a null username and the required action of the answer", () => {
+    const { store } = signedInStore();
+    expect(store.getSnapshot().user).toMatchObject({ username: null, requiredAction: "BIND_EMAIL" });
+  });
+
+  it("reads a missing required action as none", () => {
+    const { store } = signedInStore();
+    store.adopt(session("u1"), { newSignIn: true });
+    expect(store.getSnapshot().user?.requiredAction).toBeNull();
+  });
+
+  it("isSignIn_trueForTheSignInOfThisTab", () => {
+    const { store, ref } = signedInStore();
+    expect(store.isSignIn(ref)).toBe(true);
+  });
+
+  it("isSignIn_falseForAnotherUserOrGeneration", () => {
+    const { store, ref } = signedInStore();
+    expect(store.isSignIn({ ...ref, userId: "u2" })).toBe(false);
+    expect(store.isSignIn({ ...ref, generation: "older" })).toBe(false);
+  });
+
+  it("isSignIn_falseWhenAnotherTabReplacedTheHint", () => {
+    const { jar, store, ref } = signedInStore();
+    jar.put("sv_signed_in", "another-sign-in");
+    expect(store.isSignIn(ref)).toBe(false);
+  });
+
+  it("isSignIn_falseAfterASignOut", () => {
+    const { store, ref } = signedInStore();
+    store.endLocally("signed-out");
+    expect(store.isSignIn(ref)).toBe(false);
+  });
+});
+
 describe("session store (W10-23, W10-25, W10-32, W10-33, W10-41)", () => {
   // Rule 1
   it("noHint_returnsNullWithoutRefresh", async () => {
@@ -221,6 +277,7 @@ describe("session store (W10-23, W10-25, W10-32, W10-33, W10-41)", () => {
         roles: ["CUSTOMER"],
         phoneVerified: true,
         emailVerified: false,
+        requiredAction: null,
       },
     });
     expect(JSON.stringify(snapshot)).not.toContain("at-1");
@@ -520,6 +577,12 @@ describe("session store (W10-23, W10-25, W10-32, W10-33, W10-41)", () => {
     it("adopt_newSignIn_clearsTheProgress", () => {
       const { storage, fake } = withProgress();
       storeWith(() => fake).adopt(session("u1", "at-login"), { newSignIn: true });
+      expect([...storage.keys()]).toEqual(["other"]);
+    });
+
+    it("clearFlowProgress_removesBothKeysOnly", () => {
+      const { storage, fake } = withProgress();
+      storeWith(() => fake).clearFlowProgress();
       expect([...storage.keys()]).toEqual(["other"]);
     });
 

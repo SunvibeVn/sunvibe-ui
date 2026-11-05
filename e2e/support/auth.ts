@@ -5,12 +5,20 @@ import { API_URL, isApiAvailable } from "./api";
 // Accounts and helpers of the browser-session E2E specs (auth-browser-session spec §10.3). The passwords come from
 // the shell only (never a file in the repo); nothing here logs a password or a token.
 
-export type E2eAccount = { phone: string; password: string | undefined };
+export type E2eAccount = { email: string; phone: string; password: string | undefined };
 
-/** `TENANT` + `CUSTOMER`, `ACTIVE`, phone verified (seeded by sunvibe-server/scripts/dev/seed-e2e-accounts.sql). */
-export const CUSTOMER: E2eAccount = { phone: "0900000101", password: process.env.E2E_CUSTOMER_PASSWORD };
-/** `SALE`, `ACTIVE`, phone verified (same seed). */
-export const SALE: E2eAccount = { phone: "0900000102", password: process.env.E2E_SALE_PASSWORD };
+/** `TENANT` + `CUSTOMER`, `ACTIVE`, email and phone verified (seeded by sunvibe-server/scripts/dev/seed-e2e-accounts.sql). */
+export const CUSTOMER: E2eAccount = {
+  email: "e2e.customer@sunvibe.test",
+  phone: "0900000101",
+  password: process.env.E2E_CUSTOMER_PASSWORD,
+};
+/** `SALE`, `ACTIVE`, email and phone verified (same seed). */
+export const SALE: E2eAccount = {
+  email: "e2e.sale@sunvibe.test",
+  phone: "0900000102",
+  password: process.env.E2E_SALE_PASSWORD,
+};
 
 export const AUTH_E2E_SKIP_REASON =
   `The auth E2E specs need the local API at ${API_URL} (dev profile), the accounts from ` +
@@ -19,10 +27,20 @@ export const AUTH_E2E_SKIP_REASON =
   "docs/features/auth/auth-browser-session/impl/2026-10-17-auth-browser-session-fe-handoff.md §3 E2E prerequisites); " +
   "at least one of them is missing.";
 
-/** `SALE_LEADER`, `ACTIVE`, phone verified (same seed; used by the workspace specs only). */
-export const LEADER: E2eAccount = { phone: "0900000103", password: process.env.E2E_LEADER_PASSWORD };
-/** `ADMIN`, `ACTIVE`, phone verified (same seed; used by the workspace specs only). */
-export const ADMIN: E2eAccount = { phone: "0900000104", password: process.env.E2E_ADMIN_PASSWORD };
+/** `SALE_LEADER`, `ACTIVE`, email and phone verified (same seed; used by the workspace specs only). */
+export const LEADER: E2eAccount = {
+  email: "e2e.leader@sunvibe.test",
+  phone: "0900000103",
+  password: process.env.E2E_LEADER_PASSWORD,
+};
+/** `ADMIN`, `ACTIVE`, email and phone verified (same seed; used by the workspace specs only). */
+export const ADMIN: E2eAccount = {
+  email: "e2e.admin@sunvibe.test",
+  phone: "0900000104",
+  password: process.env.E2E_ADMIN_PASSWORD,
+};
+/** `CUSTOMER`, phone only: no email (same seed, with the customer's password; used by the phone suites only). */
+export const PHONE_ONLY = { phone: "0900000105", password: process.env.E2E_CUSTOMER_PASSWORD };
 
 /**
  * True when the API answers and the passwords are set; never reveals the values. The auth specs need the customer and
@@ -103,11 +121,11 @@ export type LoginFormOptions = {
 
 /**
  * Fills and submits the `/login` form already on screen, then waits for `/account` with the header updated (the
- * seeded accounts are phone verified).
+ * server asks nothing of the seeded accounts).
  */
 export async function submitLoginForm(page: Page, account: E2eAccount, options: LoginFormOptions = {}): Promise<void> {
   if (!account.password) throw new Error(AUTH_E2E_SKIP_REASON);
-  await page.getByLabel("Phone number").fill(account.phone);
+  await page.getByLabel("Email", { exact: true }).fill(account.email);
   const password = page.getByLabel("Password", { exact: true });
   if (options.setPassword) await options.setPassword(password, account.password);
   else await password.fill(account.password);
@@ -126,6 +144,11 @@ export async function signIn(page: Page, account: E2eAccount, options: LoginForm
   if (!account.password) throw new Error(AUTH_E2E_SKIP_REASON);
   await page.goto("/login");
   await submitLoginForm(page, account, options);
+}
+
+/** Signs in through the real `/login` form with an address and a password that are not a seeded account's. */
+export function signInWith(page: Page, email: string, password: string): Promise<void> {
+  return signIn(page, { email, phone: "", password });
 }
 
 /**
