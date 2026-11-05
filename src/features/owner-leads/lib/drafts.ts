@@ -31,6 +31,7 @@ export type DraftForm =
   | "surveyCancel"
   | "surveyVisit"
   | "surveyResume"
+  | "surveyRequalify"
   | "requirement"
   | "checklistIntake"
   | `checklist:${string}`;

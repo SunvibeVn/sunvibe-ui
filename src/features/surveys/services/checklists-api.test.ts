@@ -12,6 +12,7 @@ import {
   getCheckpoint,
   getChecklist,
   getReviewQueue,
+  requalifyChecklist,
   saveChecklistGroup,
   startChecklist,
   startRevision,
@@ -90,6 +91,25 @@ describe("submission, review and revisions (survey-checklist submission spec 7.1
     expect(sent.map((entry) => [entry.method, entry.url.pathname, entry.body])).toEqual([
       ["POST", "/api/v1/staff/survey-checklists/C1/revisions", { intake: null }],
       ["POST", "/api/v1/staff/survey-checklists/C1/revisions", { intake: { reason: "Took the lead over", basis: BASIS } }],
+    ]);
+  });
+
+  it("posts a requalification as built, every key present (property-create requalification spec 7)", async () => {
+    const { sent, deps } = fakeServer(() => json({ checklist: { id: "C1" }, lead: { status: "CONTACTED" }, historyEntry: {} }));
+    const input = {
+      expectedVersion: 4,
+      reasonKind: "WRONG_ASSET" as const,
+      reason: "The survey was of the neighbouring unit",
+      eventSource: "Owner phone call",
+      scope: "The whole survey",
+      basisDate: "2026-11-05",
+    };
+    const result = await requalifyChecklist("C1", input, deps);
+    expect(result.ok && result.data.lead?.status).toBe("CONTACTED");
+    expect([sent[0].method, sent[0].url.pathname, sent[0].body]).toEqual([
+      "POST",
+      "/api/v1/staff/survey-checklists/C1/requalification",
+      input,
     ]);
   });
 

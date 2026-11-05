@@ -5,6 +5,8 @@ import type {
   ChecklistDecided,
   ChecklistDecisionInput,
   ChecklistGroupPath,
+  ChecklistRequalificationInput,
+  ChecklistRequalified,
   ChecklistReviewQueue,
   ChecklistReviewQueueQuery,
   ChecklistRevisionInput,
@@ -102,6 +104,24 @@ export function decideChecklist(
 ): Promise<ApiResult<ChecklistDecided>> {
   return deps.callApi((client) =>
     client.POST("/api/v1/staff/survey-checklists/{checklistId}/decision", {
+      params: { path: { checklistId } },
+      body: input,
+    }),
+  );
+}
+
+/**
+ * POST /api/v1/staff/survey-checklists/{checklistId}/requalification, on the revision and version the survey block's
+ * `survey.requalification` names. The mark commits before its answer is built (property-create requalification spec
+ * 5.3), and the answer is not a `SurveyCommandResult`: read the lead and its survey block again after it.
+ */
+export function requalifyChecklist(
+  checklistId: string,
+  input: ChecklistRequalificationInput,
+  deps: SurveysDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ChecklistRequalified>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/survey-checklists/{checklistId}/requalification", {
       params: { path: { checklistId } },
       body: input,
     }),

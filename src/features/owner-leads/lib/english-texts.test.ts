@@ -46,6 +46,15 @@ describe("English assignee options (C-29)", () => {
   });
 });
 
+describe("English requalification texts (property-create requalification spec 6)", () => {
+  it("reads as requalified, and says a pass no longer counts", () => {
+    expect(text("activity.REQUALIFICATION_MARKED")).toBe("Survey requalified");
+    expect(text("checklist.lines.requalified")).toBe("Requalified");
+    expect(text("checklist.decision.passedReason.REQUALIFIED")).toBe("This pass no longer counts: it was requalified.");
+    expect(text("survey.requalify")).toBe("Requalify");
+  });
+});
+
 describe("English price and errors (A-10, spec 5.5)", () => {
   it("has the 404 and 409 texts", () => {
     expect(text("errors.leadNotFound")).toBe("Lead not found, or you can no longer see it.");

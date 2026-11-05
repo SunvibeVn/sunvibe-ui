@@ -5,10 +5,26 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { decisionPanelModel } from "../../lib/checklist/status-model";
+import { decisionPanelModel, type RequalificationModel } from "../../lib/checklist/status-model";
 
 import { useChecklistMedia } from "./media-context";
 import type { ChainLoad } from "./use-revision-chain";
+
+/** Why an earlier pass was withdrawn from use: where the next reviewer reads the mark (property-create requalification 4). */
+function EarlierRequalification({ mark }: { mark: RequalificationModel }) {
+  const t = useTranslations("OwnerLeads");
+  return (
+    <div className="mt-2 space-y-0.5 border-t border-slate-200 pt-2">
+      <p className="break-words font-medium text-slate-900">
+        {t("checklist.review.earlier.requalified", { kind: mark.kind, name: mark.markedBy, when: mark.markedAt })}
+      </p>
+      <p className="whitespace-pre-wrap break-words text-slate-700">{t("checklist.review.earlier.reason", { text: mark.reason })}</p>
+      <p className="whitespace-pre-wrap break-words text-slate-700">{t("checklist.review.earlier.source", { text: mark.source })}</p>
+      <p className="whitespace-pre-wrap break-words text-slate-700">{t("checklist.review.earlier.scope", { text: mark.scope })}</p>
+      <p className="text-slate-700">{t("checklist.review.earlier.basisDate", { date: mark.basisDate })}</p>
+    </div>
+  );
+}
 
 /**
  * The decisions on the earlier revisions of the chain, with their reasons (survey-checklist submission spec 6.1): what
@@ -60,6 +76,7 @@ export function EarlierDecisions({ chain, onRetry }: { chain: ChainLoad; onRetry
                       {t("checklist.decision.mark", { photo: mark.photo, reason: mark.reason })}
                     </p>
                   ))}
+                  {model.requalification !== null && <EarlierRequalification mark={model.requalification} />}
                 </li>
               ))}
             </ul>

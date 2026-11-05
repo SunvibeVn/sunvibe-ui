@@ -1,7 +1,8 @@
 import type { ChecklistDecision, ChecklistOutcome, ChecklistView } from "@/features/surveys";
-import { formatDateTime } from "@/lib/format/vietnam-time";
+import { formatDate, formatDateTime } from "@/lib/format/vietnam-time";
 
 import type { OwnerLeadsTranslate } from "../history-activity-text";
+import { requalificationKindKey } from "../labels";
 
 import { photoPair } from "./preview-model";
 
@@ -11,6 +12,17 @@ import { photoPair } from "./preview-model";
 export type StatusBanner = { tone: "info" | "success"; text: string };
 
 export type DecisionMark = { mediaId: string; photo: string; reason: string };
+
+/** Why a pass stopped being used. Only on the revision: never in History, lists, titles or URLs (`survey BR-4`). */
+export type RequalificationModel = {
+  kind: string;
+  reason: string;
+  source: string;
+  scope: string;
+  basisDate: string;
+  markedBy: string;
+  markedAt: string;
+};
 
 export type DecisionPanelModel = {
   outcome: string;
@@ -23,6 +35,8 @@ export type DecisionPanelModel = {
   marks: DecisionMark[];
   /** On a pass: what it is not (US-3 AC-3, D3-1) and, when it stopped being usable, why. */
   passedNotes: string[];
+  /** On a pass withdrawn from use; the decision above it stays as it was (I-2). */
+  requalification: RequalificationModel | null;
 };
 
 const person = (name: string | null | undefined, t: OwnerLeadsTranslate): string => name?.trim() || t("survey.unknownPerson");
@@ -63,6 +77,10 @@ export function statusBanner(view: ChecklistView, t: OwnerLeadsTranslate): Statu
     const name = person(view.submission?.submittedBy?.name, t);
     return { tone: "info", text: t("checklist.banner.submitted", { name, when: when(view.submission?.submittedAt) }) };
   }
+  const mark = view.requalification;
+  if (mark) {
+    return { tone: "info", text: t("checklist.banner.requalified", { name: person(mark.markedBy?.name, t), when: when(mark.markedAt) }) };
+  }
   const decision = view.decision;
   if (!decision) return null;
   return {
@@ -72,6 +90,20 @@ export function statusBanner(view: ChecklistView, t: OwnerLeadsTranslate): Statu
       name: person(decision.reviewer?.name, t),
       when: when(decision.decidedAt),
     }),
+  };
+}
+
+function requalificationModel(view: ChecklistView, t: OwnerLeadsTranslate): RequalificationModel | null {
+  const mark = view.requalification;
+  if (!mark) return null;
+  return {
+    kind: t(requalificationKindKey(mark.reasonKind) ?? "checklist.requalification.kinds.OTHER"),
+    reason: mark.reason ?? "",
+    source: mark.eventSource ?? "",
+    scope: mark.scope ?? "",
+    basisDate: mark.basisDate ? formatDate(mark.basisDate) : "",
+    markedBy: person(mark.markedBy?.name, t),
+    markedAt: when(mark.markedAt),
   };
 }
 
@@ -106,5 +138,6 @@ export function decisionPanelModel(
     limitations: filled(decision.limitations),
     marks,
     passedNotes,
+    requalification: requalificationModel(view, t),
   };
 }

@@ -97,6 +97,7 @@ describe("decisionPanelModel (spec 6.1: for every lead viewer)", () => {
       limitations: null,
       marks: [],
       passedNotes: [],
+      requalification: null,
     });
   });
 
@@ -170,6 +171,58 @@ describe("decisionPanelModel (spec 6.1: for every lead viewer)", () => {
     expect(note("LEAD_CLOSED")).toBe("This pass no longer counts: the lead is closed.");
     expect(note("EVIDENCE_HELD")).toBe("A frozen photo is on hold. This pass counts again once the hold is released.");
     expect(note("EVIDENCE_GONE")).toBe("A frozen photo lost its content. This pass can no longer be used.");
+  });
+});
+
+describe("a requalified revision (property-create requalification U-2, I-2)", () => {
+  const requalification = {
+    reasonKind: "WRONG_ASSET" as const,
+    reason: "The survey was of the neighbouring unit",
+    eventSource: "Owner phone call",
+    scope: "The whole survey",
+    basisDate: "2026-11-05",
+    markedBy: { userId: "U3", name: "Chi Manager" },
+    markedAt: "2026-11-05T02:00:00Z",
+  };
+  const marked = (mark: object = requalification) =>
+    decided({ outcome: "PASSED", reason: "Looks right" }, { passed: { usable: false, reason: "REQUALIFIED" }, requalification: mark });
+
+  it("the banner reads Requalified, never a pass as current, and names who and when only", () => {
+    const banner = statusBanner(marked(), t);
+    expect(banner).toEqual({ tone: "info", text: "Requalified by Chi Manager on 05/11/2026 09:00. This pass no longer counts." });
+    expect(banner?.text).not.toContain(requalification.reason);
+  });
+
+  it("earlierDecision_showsRequalification: the next reviewer reads the whole mark beside the decision", () => {
+    const model = decisionPanelModel(marked(), t);
+    expect(model?.requalification).toEqual({
+      kind: "Wrong property",
+      reason: "The survey was of the neighbouring unit",
+      source: "Owner phone call",
+      scope: "The whole survey",
+      basisDate: "05/11/2026",
+      markedBy: "Chi Manager",
+      markedAt: "05/11/2026 09:00",
+    });
+    expect(t("checklist.review.earlier.requalified", { kind: "Wrong property", name: "Chi Manager", when: "05/11/2026 09:00" })).toBe(
+      "Requalified: Wrong property · Chi Manager, 05/11/2026 09:00",
+    );
+  });
+
+  it("keeps the decision readable as it was, and says the pass no longer counts", () => {
+    const model = decisionPanelModel(marked(), t);
+    expect(model?.outcome).toBe("Passed");
+    expect(model?.reason).toBe("Looks right");
+    expect(model?.passedNotes[1]).toBe("This pass no longer counts: it was requalified.");
+  });
+
+  it("names a kind this UI does not know as Other, never the raw code", () => {
+    expect(decisionPanelModel(marked({ ...requalification, reasonKind: "NEW_KIND" }), t)?.requalification?.kind).toBe("Other");
+  });
+
+  it("has no mark on a revision without one", () => {
+    expect(decisionPanelModel(decided({ outcome: "PASSED" }), t)?.requalification).toBeNull();
+    expect(statusBanner(decided({ outcome: "PASSED" }, { requalification: null }), t)?.tone).toBe("success");
   });
 });
 

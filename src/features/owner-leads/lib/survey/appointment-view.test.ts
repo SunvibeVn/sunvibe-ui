@@ -160,6 +160,17 @@ describe("the survey record in the Survey section (survey-checklist submission 6
     expect(revisionChip({ status: "FAILED", outcome: "FAILED" })).toEqual({ label: "checklist.review.outcome.FAILED", tone: "danger" });
   });
 
+  it("revision_requalifiedChip_noCurrentBadge: a marked pass reads Requalified, never Passed (property-create requalification U-2)", () => {
+    expect(revisionChip({ status: "PASSED", outcome: "PASSED", requalified: true })).toEqual({
+      label: "checklist.lines.requalified",
+      tone: "neutral",
+    });
+    expect(revisionChip({ status: "PASSED", outcome: "PASSED", requalified: false })).toEqual({
+      label: "checklist.review.outcome.PASSED",
+      tone: "success",
+    });
+  });
+
   it("gives a draft no chip: its line says Draft", () => {
     expect(revisionChip({ status: "DRAFT" })).toBeNull();
     expect(revisionChip({})).toBeNull();

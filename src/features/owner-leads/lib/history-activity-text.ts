@@ -27,6 +27,9 @@ function photoText(activity: Pick<LeadActivity, "type" | "referenceDetail">, t: 
 
 const REVIEW_OUTCOMES = new Set(["PASSED", "NEEDS_CHANGES", "FAILED"]);
 
+/** Rows that never show a note: their text stays on the revision (`survey BR-4`). */
+const EVENT_ONLY = new Set<string>(["CHECKLIST_REVIEWED", "REQUALIFICATION_MARKED"]);
+
 /** The checklist rows' own wording (survey-checklist spec 6.4): "Checklist #m started", "Checklist #m: <group> saved". */
 function checklistText(
   activity: Pick<LeadActivity, "type" | "referenceNo" | "referenceDetail">,
@@ -38,6 +41,7 @@ function checklistText(
   if (activity.type === "CHECKLIST_TAKEN_OVER") return t("history.checklistTakenOver", { no });
   if (activity.type === "CHECKLIST_SUBMITTED") return t("history.checklistSubmitted", { no });
   if (activity.type === "CHECKLIST_REVISION_STARTED") return t("history.revisionStarted", { no });
+  if (activity.type === "REQUALIFICATION_MARKED") return t("history.requalified", { no });
   if (activity.type === "CHECKLIST_REVIEWED") {
     // `<OUTCOME>[:<KIND>]`: the row names the outcome only (survey-checklist 6.2).
     const outcome = (activity.referenceDetail ?? "").split(":")[0];
@@ -60,8 +64,8 @@ export function historyActivityText(
   activity: Pick<LeadActivity, "type" | "note" | "referenceNo" | "referenceDetail">,
   t: OwnerLeadsTranslate,
 ): string {
-  // A review row says only the outcome, whatever else it carries (`survey BR-4`).
-  const note = activity.type === "CHECKLIST_REVIEWED" ? "" : activity.note?.trim();
+  // A review or requalification row says only the event, whatever else it carries (`survey BR-4`).
+  const note = EVENT_ONLY.has(activity.type ?? "") ? "" : activity.note?.trim();
   if (note) return activity.note ?? "";
   const checklist = checklistText(activity, t) ?? photoText(activity, t);
   if (checklist !== null) return checklist;

@@ -28,6 +28,7 @@ type SurveyTextFieldProps = {
 /**
  * One labelled text, textarea, date or date-time control of a survey dialog, with its message. A date or date-time
  * also shows its value as `dd/MM/yyyy (HH:mm)` under the input, since the browser draws it in its own locale (W15-38).
+ * The browser keeps no form history of this text (`survey BR-4`).
  */
 export function SurveyTextField({
   id,
@@ -57,6 +58,7 @@ export function SurveyTextField({
             type={type}
             value={value}
             max={max}
+            autoComplete="off"
             invalid={error !== undefined}
             aria-describedby={describe}
             aria-required={required || undefined}
@@ -72,6 +74,7 @@ export function SurveyTextField({
         <Textarea
           id={id}
           rows={rows}
+          autoComplete="off"
           value={value}
           invalid={error !== undefined}
           aria-describedby={describe}
