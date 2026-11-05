@@ -75,6 +75,20 @@ describe("historyActivityText (survey-schedule spec 6.3, A-12)", () => {
     expect(historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2, note: "PRIVATE" }, t)).toBe("Checklist reviewed · #2");
   });
 
+  it("history_requalificationLabel: names the checklist, and only the label without its number (U-2)", () => {
+    expect(historyActivityText({ type: "REQUALIFICATION_MARKED", referenceNo: 2 }, t)).toBe("Checklist #2 requalified");
+    expect(historyActivityText({ type: "REQUALIFICATION_MARKED", referenceNo: null }, t)).toBe("Survey requalified");
+  });
+
+  it("history_noReasonText: a requalification row shows the event only, whatever else it carries (survey BR-4)", () => {
+    const row = historyActivityText(
+      { type: "REQUALIFICATION_MARKED", referenceNo: 2, referenceDetail: "PRIVATE DETAIL", note: "PRIVATE REASON" },
+      t,
+    );
+    expect(row).toBe("Checklist #2 requalified");
+    expect(row).not.toContain("PRIVATE");
+  });
+
   it("falls back to the plain label for a review row of an outcome this UI does not know", () => {
     expect(historyActivityText({ type: "CHECKLIST_REVIEWED", referenceNo: 2, referenceDetail: "OTHER" }, t)).toBe(
       "Checklist reviewed · #2",

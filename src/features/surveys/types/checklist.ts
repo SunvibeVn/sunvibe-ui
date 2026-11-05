@@ -39,6 +39,10 @@ export type ChecklistSubmitted = Schemas["ChecklistSubmittedResponse"];
 export type ChecklistDecided = Schemas["ChecklistDecidedResponse"];
 /** Answer of a new revision: its first read and the History row. */
 export type ChecklistRevisionStarted = Schemas["ChecklistRevisionStartedResponse"];
+/** Answer of a requalification: the revision, the lead state and the History row; not a `SurveyCommandResult`. */
+export type ChecklistRequalified = Schemas["ChecklistRequalifiedResponse"];
+/** Why a PASSED revision was withdrawn from use, on the revision read only (property-create requalification spec 4). */
+export type ChecklistRequalification = Schemas["ChecklistRequalificationResponse"];
 export type ChecklistSubmission = Schemas["ChecklistSubmissionResponse"];
 export type ChecklistSubmittedEvidence = Schemas["ChecklistSubmittedEvidence"];
 export type ChecklistDecision = Schemas["ChecklistDecisionResponse"];
@@ -55,11 +59,13 @@ export type ChecklistNeedsChangesKind = NonNullable<ChecklistDecision["needsChan
 export type ChecklistFailedKind = NonNullable<ChecklistDecision["failedKind"]>;
 export type ChecklistReviewReason = NonNullable<ChecklistReview["reason"]>;
 export type ChecklistPassedReason = NonNullable<ChecklistPassed["reason"]>;
+export type ChecklistRequalificationKind = NonNullable<ChecklistRequalification["reasonKind"]>;
 
 export type ChecklistSubmitInput = Schemas["ChecklistSubmitRequest"];
 export type ChecklistDecisionInput = Schemas["ChecklistDecisionRequest"];
 export type ChecklistRejectedEvidenceInput = Schemas["ChecklistRejectedEvidenceRequest"];
 export type ChecklistRevisionInput = Schemas["ChecklistRevisionRequest"];
+export type ChecklistRequalificationInput = Schemas["ChecklistRequalificationRequest"];
 export type ChecklistReviewQueueQuery = { page: number; size: number };
 
 export type ChecklistStartInput = Schemas["ChecklistStartRequest"];

@@ -136,14 +136,20 @@ export function passedNoteKey(block: Pick<NonNullable<SurveyBlock>, "survey">): 
 }
 
 /** A checklist line of the survey block, which may leave any field out or send `null`. */
-type ChecklistLine = ApiShape<Pick<ChecklistSummary, "status" | "outcome" | "readOnlyReason" | "editable">>;
+type ChecklistLine = ApiShape<Pick<ChecklistSummary, "status" | "outcome" | "readOnlyReason" | "editable" | "requalified">>;
 
 const CHIP_TONE: Record<ChecklistOutcome, BadgeTone> = { PASSED: "success", NEEDS_CHANGES: "warning", FAILED: "danger" };
 
-/** The chip of a revision past the draft (spec 6.2); a draft says so in its line. */
-export function revisionChip(line: Pick<ChecklistLine, "status" | "outcome">): { label: OwnerLeadsKey; tone: BadgeTone } | null {
+/**
+ * The chip of a revision past the draft (spec 6.2); a draft says so in its line. A requalified pass shows no Passed badge:
+ * its result is no longer used (property-create requalification U-2).
+ */
+export function revisionChip(
+  line: Pick<ChecklistLine, "status" | "outcome" | "requalified">,
+): { label: OwnerLeadsKey; tone: BadgeTone } | null {
   if (!line.status || line.status === "DRAFT") return null;
   if (line.status === "SUBMITTED") return { label: "checklist.lines.submitted", tone: "info" };
+  if (line.requalified === true) return { label: "checklist.lines.requalified", tone: "neutral" };
   const outcome = line.outcome ?? line.status;
   return { label: `checklist.review.outcome.${outcome}`, tone: CHIP_TONE[outcome] };
 }

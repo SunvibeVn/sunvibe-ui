@@ -566,7 +566,7 @@ export interface paths {
         put?: never;
         /**
          * Change the requirement (rental intent and price) of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
-         * @description Allowed in ASSIGNED, CONTACTED, ON_HOLD and SURVEY_SCHEDULED, unless the cycle has a PASSED checklist revision; ASSIGNED and SURVEY_SCHEDULED move to CONTACTED. Starts a new intent cycle and cancels the scheduled survey appointment, if any. askingPrice must be sent: a price or null.
+         * @description Allowed in ASSIGNED, CONTACTED, ON_HOLD and SURVEY_SCHEDULED, unless the cycle has a current PASSED checklist revision (one that was not requalified); ASSIGNED and SURVEY_SCHEDULED move to CONTACTED. Starts a new intent cycle and cancels the scheduled survey appointment, if any. askingPrice must be sent: a price or null.
          */
         post: operations["changeIntent"];
         delete?: never;
@@ -1034,6 +1034,26 @@ export interface paths {
          */
         put: operations["saveSurveyChecklistParts"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/survey-checklists/{checklistId}/requalification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Withdraw the current PASSED survey checklist revision from use (SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description The revision stays exactly as it is and its result stops being used; the mark is never removed. A QUALIFIED lead moves to CONTACTED; an ON_HOLD lead stays held and can then be moved to CONTACTED by hand. The reason, source and scope stay on the revision, out of History and lists. A repeat answers 409.
+         */
+        post: operations["requalifySurveyChecklist"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2841,7 +2861,7 @@ export interface components {
         /** @description Whether the PASSED revision can still be used */
         ChecklistPassedResponse: {
             /** @enum {string|null} */
-            reason?: "INTENT_CHANGED" | "LEAD_CLOSED" | "EVIDENCE_HELD" | "EVIDENCE_GONE" | null;
+            reason?: "INTENT_CHANGED" | "LEAD_CLOSED" | "EVIDENCE_HELD" | "EVIDENCE_GONE" | "REQUALIFIED" | null;
             surveyedScope?: components["schemas"]["ChecklistSurveyedScope"];
             usable?: boolean;
         };
@@ -3004,6 +3024,78 @@ export interface components {
             /** @description Present exactly when state is VALUE */
             value: components["schemas"]["ChecklistRentMoney"] | null;
         };
+        /** @description The lead History entry written by a requalification */
+        ChecklistRequalificationHistoryEntryResponse: {
+            /** @description Full name of the staff member; null when the id has no user row */
+            actorName?: string | null;
+            actorUserId?: string;
+            /** @description Null when the lead kept its status */
+            fromStatus?: string | null;
+            /** Format: date-time */
+            occurredAt?: string;
+            /** @description The checklist */
+            referenceId?: string;
+            /**
+             * Format: int32
+             * @description The checklist number
+             */
+            referenceNo?: number;
+            /** @description Null when the lead kept its status */
+            toStatus?: string | null;
+            /** @enum {string} */
+            type?: "REQUALIFICATION_MARKED";
+        };
+        /** @description Withdraw a PASSED survey checklist revision from use */
+        ChecklistRequalificationRequest: {
+            /**
+             * Format: date
+             * @description Vietnam date the source confirmed it, from the day of the decision to today
+             */
+            basisDate: string | null;
+            /** @description Who or what reported it: 1..500 characters, no phone number */
+            eventSource: string | null;
+            /**
+             * Format: int64
+             * @description The checklist version the caller read
+             */
+            expectedVersion: number | null;
+            /** @description What is wrong: 1..2000 characters, no phone number */
+            reason: string | null;
+            /** @enum {string|null} */
+            reasonKind: "WRONG_ASSET" | "WRONG_OWNER" | "WRONG_PERSON" | "WRONG_SCOPE" | "NEED_CHANGED" | "PHOTO_PROBLEM" | "HAZARD" | "OTHER" | null;
+            /** @description What it affects: 1..500 characters, no phone number */
+            scope: string | null;
+        };
+        /** @description Why the PASSED revision was withdrawn from use */
+        ChecklistRequalificationResponse: {
+            /** Format: date */
+            basisDate?: string;
+            eventSource?: string;
+            /** Format: date-time */
+            markedAt?: string;
+            markedBy?: components["schemas"]["ChecklistStaffMember"];
+            reason?: string;
+            /** @enum {string} */
+            reasonKind?: "WRONG_ASSET" | "WRONG_OWNER" | "WRONG_PERSON" | "WRONG_SCOPE" | "NEED_CHANGED" | "PHOTO_PROBLEM" | "HAZARD" | "OTHER";
+            scope?: string;
+        };
+        /** @description Whether the viewer can withdraw the lead's current PASSED revision */
+        ChecklistRequalificationStateResponse: {
+            allowed?: boolean;
+            /** @description The revision to mark; null when not allowed */
+            checklistId?: string | null;
+            /**
+             * Format: int64
+             * @description The version the command names; null when not allowed
+             */
+            expectedVersion?: number | null;
+        };
+        /** @description The answer of a requalification */
+        ChecklistRequalifiedResponse: {
+            checklist?: components["schemas"]["ChecklistResponse"];
+            historyEntry?: components["schemas"]["ChecklistRequalificationHistoryEntryResponse"];
+            lead?: components["schemas"]["SurveyLeadStateResponse"];
+        };
         /** @description A survey checklist as a reader of its lead sees it */
         ChecklistResponse: {
             /** Format: int32 */
@@ -3037,6 +3129,8 @@ export interface components {
             /** @enum {string|null} */
             readOnlyReason?: "INTENT_CHANGED" | "SUBMITTED" | "DECIDED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
             readiness?: components["schemas"]["ChecklistReadiness"];
+            /** @description Only on a PASSED revision withdrawn from use */
+            requalification?: components["schemas"]["ChecklistRequalificationResponse"] | null;
             review?: components["schemas"]["ChecklistReviewResponse"];
             /** @enum {string} */
             status?: "DRAFT" | "SUBMITTED" | "PASSED" | "NEEDS_CHANGES" | "FAILED";
@@ -3326,6 +3420,8 @@ export interface components {
             outcome?: "PASSED" | "NEEDS_CHANGES" | "FAILED" | null;
             /** @enum {string|null} */
             readOnlyReason?: "INTENT_CHANGED" | "SUBMITTED" | "DECIDED" | "NEWER_VISIT" | "LEAD_STATUS" | "NOT_ASSIGNEE" | "ASSIGNEE_INELIGIBLE" | "TAKEOVER_REQUIRED" | null;
+            /** @description A PASSED revision withdrawn from use; the reason is on the revision */
+            requalified?: boolean;
             /** @enum {string} */
             status?: "DRAFT" | "SUBMITTED" | "PASSED" | "NEEDS_CHANGES" | "FAILED";
             /** Format: date-time */
@@ -3734,7 +3830,7 @@ export interface components {
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
-            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED";
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED" | "REQUALIFICATION_MARKED";
         };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
@@ -4654,6 +4750,8 @@ export interface components {
             hasSubmitted?: boolean;
             /** @description With a PASSED revision: whether it can still be used */
             passed?: components["schemas"]["ChecklistPassedResponse"] | null;
+            /** @description Whether the viewer can withdraw the current PASSED revision (property-create requalification spec 7) */
+            requalification?: components["schemas"]["ChecklistRequalificationStateResponse"];
         };
         /** @description Where a resume of the held lead would take it */
         SurveyResumeResponse: {
@@ -8538,6 +8636,77 @@ export interface operations {
             };
             /** @description SURVEYOR_INELIGIBLE: the assignee can no longer take leads */
             422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    requalifySurveyChecklist: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                checklistId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistRequalificationRequest"];
+            };
+        };
+        responses: {
+            /** @description The revision, the lead and the History entry */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ChecklistRequalifiedResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on expectedVersion, reasonKind, reason, eventSource, scope or basisDate (a missing or unknown key too); MALFORMED_REQUEST */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller's role may not withdraw a revision */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: no such checklist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION (field expectedVersion); SURVEY_NOT_ALLOWED (field checklist): the revision is not the current PASSED of the lead's cycle; INVALID_STATE_TRANSITION (field status): the lead is neither QUALIFIED nor ON_HOLD */
+            409: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -67,6 +67,11 @@ describe("allowedTargets (acquisition BR-3, W11-32)", () => {
     expect(allowedTargets(status)).toEqual([]);
   });
 
+  it("onHold_afterMark_offersContacted: a mark frees Contacted, because hasPassed is false after it (U-3, D5-2)", () => {
+    expect(allowedTargets("ON_HOLD", { hasPassed: true, hasSubmitted: false })).not.toContain("CONTACTED");
+    expect(allowedTargets("ON_HOLD", { hasPassed: false, hasSubmitted: false })).toContain("CONTACTED");
+  });
+
   it("returns a copy that callers may mutate", () => {
     const first = allowedTargets("NEW");
     first.pop();

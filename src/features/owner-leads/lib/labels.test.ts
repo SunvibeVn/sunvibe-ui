@@ -14,6 +14,8 @@ import {
   PRICE_UNIT_LABEL,
   PROPERTY_TYPE_LABEL,
   propertyTypeLabelKey,
+  REQUALIFICATION_KIND_LABEL,
+  requalificationKindKey,
   ROLE_LABEL,
   SOURCE_LABEL,
   sourceLabelKey,
@@ -94,6 +96,7 @@ describe("label maps (W11-40)", () => {
       "CHECKLIST_SUBMITTED",
       "CHECKLIST_REVISION_STARTED",
       "CHECKLIST_REVIEWED",
+      "REQUALIFICATION_MARKED",
     ].sort());
     expect(Object.keys(ROLE_LABEL).sort()).toEqual(["SALE", "SALE_LEADER"]);
     expect(Object.keys(PRICE_UNIT_LABEL).sort()).toEqual(["MONTH", "NIGHT", "TOTAL"]);
@@ -149,6 +152,29 @@ describe("checklist activity labels and groups (survey-checklist spec 6.4)", () 
   it("labels the two survey photo types (survey-media spec 5.3, A-10)", () => {
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_MEDIA_ADDED)).toBe("Photo added");
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_MEDIA_REMOVED)).toBe("Photo removed");
+  });
+
+  it("history_requalificationLabel: labels the requalification type (property-create requalification U-2)", () => {
+    expect(resolve(ACTIVITY_LABEL.REQUALIFICATION_MARKED)).toBe("Survey requalified");
+  });
+
+  it("names every requalification kind (spec A-5)", () => {
+    expect(Object.fromEntries(Object.entries(REQUALIFICATION_KIND_LABEL).map(([kind, key]) => [kind, resolve(key)]))).toEqual({
+      WRONG_ASSET: "Wrong property",
+      WRONG_OWNER: "Wrong owner",
+      WRONG_PERSON: "Wrong surveyor",
+      WRONG_SCOPE: "Wrong scope",
+      NEED_CHANGED: "The need changed",
+      PHOTO_PROBLEM: "Photo problem",
+      HAZARD: "Hazard",
+      OTHER: "Other",
+    });
+  });
+
+  it("gives null for a requalification kind this UI does not know, never a raw code", () => {
+    expect(requalificationKindKey("WRONG_ASSET")).toBe("checklist.requalification.kinds.WRONG_ASSET");
+    expect(requalificationKindKey("NEW_KIND")).toBeNull();
+    expect(requalificationKindKey(null)).toBeNull();
   });
 
   it("names every group with the spec 6.4 wording", () => {

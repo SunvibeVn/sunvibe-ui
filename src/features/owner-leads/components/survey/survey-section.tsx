@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import {
   resumesToQualified,
   scheduledAppointment,
 } from "../../lib/survey/appointment-view";
+import { requalifyTarget } from "../../lib/requalify-form";
 import { isClosedLeadStatus } from "../../types";
 import { useLeadDetail } from "../lead-detail-context";
 
@@ -27,19 +28,20 @@ import { CancelDialog } from "./cancel-dialog";
 import { ChangeDialog } from "./change-dialog";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { OverlapList } from "./overlap-list";
+import { RequalifyDialog } from "./requalify-dialog";
 import { RequirementChanges } from "./requirement-changes";
 import { ResumeDialog } from "./resume-dialog";
 import { RevisionAction } from "./revision-action";
 import { VisitDialog } from "./visit-dialog";
 
 /** The open dialog; an appointment's dialog names the appointment it was opened for. */
-type OpenDialog = { dialog: "book" | "resume" } | { dialog: AppointmentAction; appointmentId: string } | null;
+type OpenDialog = { dialog: "book" | "resume" | "requalify" } | { dialog: AppointmentAction; appointmentId: string } | null;
 
 const NO_ITEMS: readonly never[] = [];
 
 /**
  * The Survey section of the lead detail (spec 6.1, A-20), between the 2x2 grid and History, anchor `#survey`: the top
- * action (book, re-survey or the reason booking is blocked; resume; the checklist action of the current visit), the scheduled appointment with its buttons, the
+ * action (book, re-survey or the reason booking is blocked; resume; the checklist action of the current visit; requalify), the scheduled appointment with its buttons, the
  * earlier appointments collapsed and the requirement changes. Loading, empty and error states. Every button waits
  * while any command of the page runs (CR-2).
  */
@@ -50,6 +52,8 @@ export function SurveySection() {
   /** The last save: "Saved." and the overlaps of its answer (A-10), until the next action. */
   const [saved, setSaved] = useState<{ overlaps: NonNullable<SurveyOverlap>[] } | null>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
+  /** Counts the dialogs that closed with their opener gone (a requalification refused after a reload). */
+  const [titleAsked, askTitleFocus] = useReducer((count: number) => count + 1, 0);
 
   const leadPlace: Place = {
     addressText: lead.addressDetail ?? "",
@@ -72,14 +76,16 @@ export function SurveySection() {
   // gone (booked, cancelled, visited), focus lands on the section title instead of the page body. Runs after the
   // dialog's own cleanup.
   useEffect(() => {
-    if ((saved !== null || gone) && (document.activeElement === null || document.activeElement === document.body)) {
+    const landed = saved !== null || gone || titleAsked > 0;
+    if (landed && (document.activeElement === null || document.activeElement === document.body)) {
       titleRef.current?.focus();
     }
-  }, [saved, gone]);
+  }, [saved, gone, titleAsked]);
   const start = (next: Exclude<OpenDialog, null>) => {
     setSaved(null);
     setOpen(next);
   };
+  const requalify = survey.state === "ready" ? requalifyTarget(survey.block) : null;
 
   let body;
   if (survey.state === "loading") {
@@ -138,6 +144,11 @@ export function SurveySection() {
           {showBlocked && <p className="text-sm text-slate-600">{t(`survey.blocked.${blockedBy}`)}</p>}
           <ChecklistAction block={block} />
           <RevisionAction block={block} />
+          {requalify !== null && (
+            <Button variant="secondary" disabled={busy} onClick={() => start({ dialog: "requalify" })}>
+              {t("survey.requalify")}
+            </Button>
+          )}
         </div>
 
         {passedNote !== null && <Alert>{t(passedNote)}</Alert>}
@@ -201,6 +212,19 @@ export function SurveySection() {
         {t("survey.title")}
       </h2>
       <div className="mt-3">{body}</div>
+      {/* Outside the body: a lost answer reloads, and a failed read must not take the form and its message away (U-1). */}
+      {open?.dialog === "requalify" && (
+        <RequalifyDialog
+          target={requalify}
+          read={survey.state === "ready"}
+          held={lead.status === "ON_HOLD"}
+          onClose={() => {
+            close();
+            if (requalify === null) askTitleFocus();
+          }}
+          onSaved={() => done()}
+        />
+      )}
     </section>
   );
 }

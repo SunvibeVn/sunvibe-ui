@@ -98,7 +98,8 @@
       "CHECKLIST_MEDIA_REMOVED": "Photo removed",
       "CHECKLIST_SUBMITTED": "Checklist submitted",
       "CHECKLIST_REVISION_STARTED": "Revision started",
-      "CHECKLIST_REVIEWED": "Checklist reviewed"
+      "CHECKLIST_REVIEWED": "Checklist reviewed",
+      "REQUALIFICATION_MARKED": "Survey requalified"
     },
     "role": {
       "SALE": "Sale",
@@ -260,6 +261,7 @@
       "checklistSubmitted": "Checklist #{no} submitted",
       "checklistReviewed": "Checklist #{no} reviewed: {outcome}",
       "revisionStarted": "Revision #{no} started",
+      "requalified": "Checklist #{no} requalified",
       "checklistSaved": "Checklist #{no}: {group} saved",
       "checklistSaves": "Checklist #{no}: {count} saves by {name} ({from}–{to})",
       "showSaves": "Show the {count} saves",
@@ -347,6 +349,7 @@
       "book": "Book survey",
       "bookResurvey": "Book re-survey",
       "resume": "Resume survey",
+      "requalify": "Requalify",
       "resumeQualified": "Resume to Qualified",
       "blocked": {
         "NO_ASSIGNEE": "Assign the lead first",
@@ -545,6 +548,23 @@
         "basisText": "What the owner confirmed",
         "basisHint": "The owner confirmed that the requirement and scope have not changed."
       },
+      "requalifyDialog": {
+        "title": "Requalify this survey",
+        "intro": "The survey record stays exactly as it is. Its pass stops being used, and this cannot be undone.",
+        "kind": "What is wrong",
+        "kindPlaceholder": "Choose a reason",
+        "reason": "What happened",
+        "source": "Who or what reported it",
+        "scope": "What it affects",
+        "basisDate": "Date the source confirmed it",
+        "basisDateHint": "From the day of the decision to today.",
+        "confirmQualified": "I confirm: the lead goes back to Contacted for a new survey.",
+        "confirmHeld": "I confirm: the lead stays on hold, and can then go back to Contacted for a new survey.",
+        "confirmRequired": "Tick this box to go on.",
+        "noLonger": "This pass can no longer be requalified. It may already be done: close this window to see the survey.",
+        "unknown": "The survey could not be read, so this may already be done. Close this window and check the survey first.",
+        "submit": "Requalify"
+      },
       "problems": {
         "required": "Fill in this field.",
         "tooLong": "Use at most {max} characters.",
@@ -555,6 +575,7 @@
         "arrivedTooLate": "The arrival cannot be in the future.",
         "dateTooLate": "The date cannot be after today.",
         "dateTooEarly": "The date is too early.",
+        "beforeDecision": "The date cannot be before the day of the decision.",
         "notAllowed": "Only a sale leader, a sales manager or an admin can record a visit for someone else."
       },
       "errors": {
@@ -590,9 +611,30 @@
       "saved": "Requirement changed."
     },
     "checklist": {
+      "requalification": {
+        "title": "Requalification",
+        "kind": "What is wrong",
+        "reason": "What happened",
+        "source": "Source",
+        "scope": "What it affects",
+        "basisDate": "Confirmed on",
+        "markedBy": "Marked by",
+        "markedAt": "Marked on",
+        "kinds": {
+          "WRONG_ASSET": "Wrong property",
+          "WRONG_OWNER": "Wrong owner",
+          "WRONG_PERSON": "Wrong surveyor",
+          "WRONG_SCOPE": "Wrong scope",
+          "NEED_CHANGED": "The need changed",
+          "PHOTO_PROBLEM": "Photo problem",
+          "HAZARD": "Hazard",
+          "OTHER": "Other"
+        }
+      },
       "banner": {
         "submitted": "Submitted by {name} on {when}. Waiting for review.",
-        "decided": "{outcome} · reviewed by {name} on {when}"
+        "decided": "{outcome} · reviewed by {name} on {when}",
+        "requalified": "Requalified by {name} on {when}. This pass no longer counts."
       },
       "decision": {
         "title": "Review decision",
@@ -611,7 +653,8 @@
           "INTENT_CHANGED": "This pass no longer counts: the requirement changed.",
           "LEAD_CLOSED": "This pass no longer counts: the lead is closed.",
           "EVIDENCE_HELD": "A frozen photo is on hold. This pass counts again once the hold is released.",
-          "EVIDENCE_GONE": "A frozen photo lost its content. This pass can no longer be used."
+          "EVIDENCE_GONE": "A frozen photo lost its content. This pass can no longer be used.",
+          "REQUALIFIED": "This pass no longer counts: it was requalified."
         }
       },
       "review": {
@@ -645,7 +688,11 @@
           "line": "Checklist #{no}: {outcome} · {name}, {when}",
           "reason": "Reason: {text}",
           "notes": "Notes: {text}",
-          "limitations": "Limitations: {text}"
+          "limitations": "Limitations: {text}",
+          "requalified": "Requalified: {kind} · {name}, {when}",
+          "source": "Source: {text}",
+          "scope": "Affects: {text}",
+          "basisDate": "Confirmed on: {date}"
         },
         "evidence": {
           "title": "Submitted photos",
@@ -819,6 +866,7 @@
         "line": "Checklist #{no} · Draft · {missing, plural, =0 {no items missing} one {# item missing} other {# items missing}} · held by {holder}",
         "frozen": "Checklist #{no} · held by {holder}",
         "submitted": "Submitted",
+        "requalified": "Requalified",
         "saved": "saved {when} by {name}",
         "open": "Open checklist #{no}"
       },

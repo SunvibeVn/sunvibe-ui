@@ -304,6 +304,7 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       CHECKLIST_SUBMITTED: "Checklist submitted",
       CHECKLIST_REVISION_STARTED: "Revision started",
       CHECKLIST_REVIEWED: "Checklist reviewed",
+      REQUALIFICATION_MARKED: "Survey requalified",
     });
   });
 
