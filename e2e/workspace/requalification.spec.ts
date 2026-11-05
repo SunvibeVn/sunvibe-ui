@@ -23,7 +23,7 @@ import {
 // sees the pass and no action, a manager is refused once and keeps the form, marks with a double click, the lead goes back
 // to Contacted and the revision reads Requalified for both. U-3 (a held lead) is covered by the server tests and by
 // `onHold_afterMark_offersContacted`: no fixture reaches ON_HOLD with a pass. Answers changed in the browser: a stale
-// version, a lost answer with a failed read of the block, and a block that lands after the detail. Budget: 2 sign-ins
+// version, a lead read as held, a lost answer with a failed read of the block, and a block that lands after the detail. Budget: 2 sign-ins
 // (SALE, SALE_LEADER), navigation by links but for one reload. No trace, video or screenshot in this project
 // (playwright.workspace.config.ts): a revision holds photos.
 //
@@ -52,6 +52,7 @@ const R = {
 
 const REQUALIFY_CALL = /\/api\/v1\/staff\/survey-checklists\/[0-9A-Z]{26}\/requalification$/;
 const SURVEY_READ = /\/api\/v1\/staff\/owner-leads\/[0-9A-Z]{26}\/survey$/;
+const LEAD_READ = /\/api\/v1\/staff\/owner-leads\/[0-9A-Z]{26}$/;
 
 const surveySection = (page: Page): Locator => mainArea(page).getByRole("region", { name: "Survey", exact: true });
 const action = (page: Page): Locator => surveySection(page).getByRole("button", { name: R.action, exact: true });
@@ -64,6 +65,21 @@ const secondRevision = (page: Page): Locator => surveySection(page).getByRole("l
 
 /** Opens the collapsed earlier appointments, which hold the revision lines. */
 const openEarlier = (page: Page): Promise<void> => surveySection(page).getByText(/^Earlier appointments/).click();
+
+/** The next requalification answers a stale version, until the route is removed. */
+async function refuseAsStale(page: Page): Promise<void> {
+  await page.route(REQUALIFY_CALL, (route) =>
+    route.fulfill({
+      status: 409,
+      contentType: "application/json",
+      body: JSON.stringify({
+        code: "CONCURRENT_MODIFICATION",
+        message: "x",
+        errors: [{ field: "expectedVersion", message: "x" }],
+      }),
+    }),
+  );
+}
 
 /** Today in Vietnam, where the server counts `basisDate`. */
 const today = (): string => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
@@ -138,17 +154,7 @@ test.describe("Requalification of a passed survey (property-create requalificati
     expect(calls.filter((call) => REQUALIFY_CALL.test(call.url.pathname))).toHaveLength(0);
     await reason.fill(R.reason);
 
-    await leader.route(REQUALIFY_CALL, (route) =>
-      route.fulfill({
-        status: 409,
-        contentType: "application/json",
-        body: JSON.stringify({
-          code: "CONCURRENT_MODIFICATION",
-          message: "x",
-          errors: [{ field: "expectedVersion", message: "x" }],
-        }),
-      }),
-    );
+    await refuseAsStale(leader);
     await submit.click();
     await expect(form.getByText(R.stale, { exact: true })).toBeVisible({ timeout: 20_000 });
     await leader.unrouteAll({ behavior: "wait" });
@@ -156,6 +162,32 @@ test.describe("Requalification of a passed survey (property-create requalificati
     await expect(reason).toHaveValue(R.reason);
     await expect(scope).toHaveValue(R.scope);
     await expect(confirmation(form)).toBeChecked();
+  });
+
+  test("U-1: a reload that changes what the mark does asks for the confirmation again", async () => {
+    const form = dialog(leader, R.dialog);
+    const submit = form.getByRole("button", { name: R.action, exact: true });
+    const held = form.getByRole("checkbox", { name: /^I confirm: the lead stays on hold/ });
+
+    // The lead was put on hold meanwhile: the mark no longer sends it back to Contacted.
+    await refuseAsStale(leader);
+    await leader.route(LEAD_READ, async (route) => {
+      const response = await route.fetch();
+      await route.fulfill({ response, json: { ...(await response.json()), status: "ON_HOLD" } });
+    });
+    await submit.click();
+    await expect(held).toBeVisible({ timeout: 20_000 });
+    await expect(held).not.toBeChecked();
+    await leader.unrouteAll({ behavior: "wait" });
+
+    // And back, with the real lead: a tick given for the hold does not stand for Contacted.
+    await held.check();
+    await refuseAsStale(leader);
+    await submit.click();
+    await expect(confirmation(form)).toBeVisible({ timeout: 20_000 });
+    await expect(confirmation(form)).not.toBeChecked();
+    await leader.unrouteAll({ behavior: "wait" });
+    await confirmation(form).check();
   });
 
   test("Review Focus 1: a lost answer and a failed read keep the dialog, its text and its message", async () => {

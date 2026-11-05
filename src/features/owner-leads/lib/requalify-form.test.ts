@@ -19,6 +19,7 @@ import {
   type RequalifyForm,
   requalifyTarget,
   runRequalify,
+  tickStands,
   toRequalifyBody,
   validateRequalify,
 } from "./requalify-form";
@@ -126,6 +127,17 @@ describe("the dialog belongs to the revision it opened for (a mark cannot be und
     expect(openedTarget({ ...target, expectedVersion: 5 }, "C2")).toEqual({ checklistId: "C2", expectedVersion: 5 });
     expect(openedTarget({ checklistId: "C3", expectedVersion: 1 }, "C2")).toBeNull();
     expect(openedTarget(null, "C2")).toBeNull();
+  });
+});
+
+describe("tickStands (a mark cannot be undone)", () => {
+  it("a tick stands only for the consequence it was given for", () => {
+    expect(tickStands(null, false)).toBe(false);
+    expect(tickStands(null, true)).toBe(false);
+    expect(tickStands(false, false)).toBe(true);
+    expect(tickStands(true, true)).toBe(true);
+    expect(tickStands(false, true)).toBe(false);
+    expect(tickStands(true, false)).toBe(false);
   });
 });
 

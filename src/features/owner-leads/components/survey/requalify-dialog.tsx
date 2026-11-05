@@ -23,6 +23,7 @@ import {
   type RequalifyField,
   type RequalifyTarget,
   runRequalify,
+  tickStands,
   toRequalifyBody,
   validateRequalify,
 } from "../../lib/requalify-form";
@@ -63,8 +64,9 @@ export function RequalifyDialog({ target, read, held, onClose, onSaved }: Requal
   const [opened] = useState(target?.checklistId ?? "");
   const sendable = openedTarget(target, opened);
   const [form, setForm, clearForm] = useFormDraft({ userId, leadId, form: "surveyRequalify" }, REQUALIFY_DEFAULTS, opened);
-  /** Not a draft: every opening is confirmed again. */
-  const [confirmed, setConfirmed] = useState(false);
+  /** Not a draft: every opening is confirmed again, and so is a consequence that changed under it. */
+  const [tickedFor, setTickedFor] = useState<boolean | null>(null);
+  const confirmed = tickStands(tickedFor, held);
   const [gate] = useState(createSubmitGate);
 
   const [state, dispatch, pending] = useActionState(async (prev: RequalifyState): Promise<RequalifyState> => {
@@ -218,7 +220,7 @@ export function RequalifyDialog({ target, read, held, onClose, onSaved }: Requal
                 checked={confirmed}
                 aria-invalid={confirmedError !== undefined || undefined}
                 aria-describedby={describedBy(ids.confirmed, confirmedError)}
-                onChange={(event) => setConfirmed(event.target.checked)}
+                onChange={(event) => setTickedFor(event.target.checked ? held : null)}
               />
               {t(held ? "survey.requalifyDialog.confirmHeld" : "survey.requalifyDialog.confirmQualified")}
             </label>

@@ -55,6 +55,12 @@ export function openedTarget(target: RequalifyTarget | null, opened: string): Re
   return target?.checklistId === opened ? target : null;
 }
 
+/**
+ * The tick confirms one consequence, and a mark cannot be undone: `tickedFor` is whether the lead was held when the box
+ * was ticked, null while it is not ticked. A reload that changes what the mark does asks for the confirmation again.
+ */
+export const tickStands = (tickedFor: boolean | null, held: boolean): boolean => tickedFor === held;
+
 /** The action is offered only where the block says so: the UI never derives it from roles (handoff 3). */
 export function requalifyTarget(block: Pick<NonNullable<SurveyBlock>, "survey">): RequalifyTarget | null {
   const state = block.survey?.requalification;
