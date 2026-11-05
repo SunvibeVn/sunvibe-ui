@@ -3,22 +3,44 @@ import { leaveAfterReset, moveResetTokenFromUrl } from "./password-reset-browser
 import { RESET_STORAGE_KEY, readResetProgress } from "./reset-progress";
 import { memoryStorage } from "./test-support/memory-storage";
 
-describe("moveResetTokenFromUrl (auth-browser-session S-19, W10-39)", () => {
-  it("moveResetToken_tokenInTheAddress_storesItAndReplacesTheAddressOnce", () => {
+describe("moveResetTokenFromUrl (auth-email-access spec 6.2, U-6)", () => {
+  const at = (href: string) => ({ href, replace: vi.fn() });
+
+  it("reset_readsFragment_clearsIt", () => {
     const storage = memoryStorage();
-    const router = { replace: vi.fn() };
-    const location = { href: "https://sunvibe.test/reset-password?token=reset-1&via=email#x" };
-    moveResetTokenFromUrl({ router, location, storage });
-    expect(router.replace).toHaveBeenCalledTimes(1);
-    expect(router.replace).toHaveBeenCalledWith("/reset-password?via=email#x", { scroll: false });
+    const location = at("https://sunvibe.test/reset-password#token=reset-1");
+    moveResetTokenFromUrl({ location, storage });
+    // A new document: the router of this one keeps the first URL, fragment included (e2e/reset-link-address.spec.ts).
+    expect(location.replace).toHaveBeenCalledExactlyOnceWith("/reset-password");
     expect(readResetProgress(storage)?.token).toBe("reset-1");
+  });
+
+  it("reset_routerRefresh_doesNotRestoreToken", () => {
+    const storage = memoryStorage();
+    moveResetTokenFromUrl({ location: at("https://sunvibe.test/reset-password#token=reset-1"), storage });
+
+    // The new document has nothing to move: a token cleared since then is not stored again.
+    storage.removeItem(RESET_STORAGE_KEY);
+    const reloaded = at("https://sunvibe.test/reset-password");
+    moveResetTokenFromUrl({ location: reloaded, storage });
+
+    expect(reloaded.replace).not.toHaveBeenCalled();
+    expect(storage.getItem(RESET_STORAGE_KEY)).toBeNull();
+  });
+
+  it("reset_queryToken_ignored", () => {
+    const storage = memoryStorage();
+    const location = at("https://sunvibe.test/reset-password?token=reset-1");
+    moveResetTokenFromUrl({ location, storage });
+    expect(location.replace).not.toHaveBeenCalled();
+    expect(storage.getItem(RESET_STORAGE_KEY)).toBeNull();
   });
 
   it("moveResetToken_noToken_doesNothing", () => {
     const storage = memoryStorage();
-    const router = { replace: vi.fn() };
-    moveResetTokenFromUrl({ router, location: { href: "https://sunvibe.test/reset-password?via=email" }, storage });
-    expect(router.replace).not.toHaveBeenCalled();
+    const location = at("https://sunvibe.test/reset-password?via=email");
+    moveResetTokenFromUrl({ location, storage });
+    expect(location.replace).not.toHaveBeenCalled();
     expect(storage.getItem(RESET_STORAGE_KEY)).toBeNull();
   });
 });

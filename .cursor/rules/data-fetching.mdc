@@ -8,8 +8,9 @@ alwaysApply: false
 - Current state: no Server Actions and no Next session cookies for auth; src/proxy.ts reads only the sign-in hint
   cookie. Do not add Server Actions or Route Handlers that proxy the API. An exception needs an owner-approved ADR
   that amends ADR-001; a plan, prompt or handoff cannot grant it.
-- `credentials: 'include'` only on the seven cookie calls in src/features/auth/session/session-api.ts (login,
-  refresh, logout, register, password reset complete, password change, logout-all); every other call uses
+- `credentials: 'include'` only on the nine cookie calls in src/features/auth/session/session-api.ts (login,
+  refresh, logout, register, register with email, password reset complete, password change, logout-all, confirm
+  email bind); every other call uses
   `credentials: 'omit'`.
 - New calls: openapi-fetch createClient<paths>() with types from src/api/generated/schema.d.ts (npm run gen:api).
   Never hand-write endpoint URLs that are not in sunvibe-server/api/openapi.json.

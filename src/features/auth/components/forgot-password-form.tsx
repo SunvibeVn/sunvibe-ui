@@ -1,23 +1,31 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { AUTH_ROUTES } from "../constants";
 import { type FormState, initialFormState, readForm } from "../lib/form-state";
 import { passwordResetBrowserDeps } from "../lib/password-reset-browser";
-import { requestResetByEmail, requestResetBySms } from "../lib/password-reset-flow";
+import { requestResetByEmail } from "../lib/password-reset-flow";
 import { useCookiesWork } from "../lib/use-cookies-work";
 import { useFieldErrors } from "../lib/use-field-errors";
-import { forgotByEmailSchema, forgotBySmsSchema } from "../schemas/auth.schema";
+import { forgotByEmailSchema } from "../schemas/auth.schema";
+import { EMAIL_MAX_RAW_LENGTH } from "../schemas/identifier-policy";
 import { CookiesRequiredNotice } from "./cookies-required-notice";
+import { FormSkeleton } from "./form-skeleton";
 
-// Both forms use a client function as the form action: React renders it as a non-submitting `javascript:` action and
-// replays a submit made before hydration. The browser dependencies are resolved at submit time.
+// The form uses a client function as its action: React renders it as a non-submitting `javascript:` action and replays
+// a submit made before hydration. The browser dependencies are resolved at submit time.
+
+// A chunk of its own: the phone parser loads only when the SMS tab opens (auth-email-access spec 6.3).
+const ForgotSmsForm = dynamic(() => import("./forgot-sms-form").then((module) => module.ForgotSmsForm), {
+  loading: () => <FormSkeleton fields={1} />,
+});
 
 type Channel = "email" | "sms";
 
@@ -26,7 +34,21 @@ const tabs: { id: Channel; label: string }[] = [
   { id: "sms", label: "Phone" },
 ];
 
-export function ForgotPasswordForm() {
+/** `smsEnabled`: the build opens the phone channel (`on`). Otherwise the page has only the email form. */
+export function ForgotPasswordForm({ smsEnabled }: { smsEnabled: boolean }) {
+  return smsEnabled ? <ChannelTabs /> : <EmailPanel />;
+}
+
+/**
+ * Next keeps this route's state between visits, so the sent page would come back with no field: the answer reads the same
+ * for any address, and a typo must not be a dead end. Each new try is a fresh form.
+ */
+function EmailPanel() {
+  const [attempt, setAttempt] = useState(0);
+  return <EmailForm key={attempt} onStartOver={() => setAttempt((value) => value + 1)} />;
+}
+
+function ChannelTabs() {
   const [channel, setChannel] = useState<Channel>("email");
   return (
     <div className="space-y-6">
@@ -49,13 +71,13 @@ export function ForgotPasswordForm() {
         ))}
       </div>
       <div id={`panel-${channel}`} role="tabpanel" aria-labelledby={`tab-${channel}`}>
-        {channel === "email" ? <EmailForm /> : <SmsForm />}
+        {channel === "email" ? <EmailPanel /> : <ForgotSmsForm />}
       </div>
     </div>
   );
 }
 
-function EmailForm() {
+function EmailForm({ onStartOver }: { onStartOver(): void }) {
   const cookiesWork = useCookiesWork();
   const [state, formAction] = useActionState(
     (_previous: FormState, formData: FormData) =>
@@ -71,7 +93,14 @@ function EmailForm() {
         <Alert tone="success" title="Check your inbox">
           {state.message}
         </Alert>
-        <Link href={AUTH_ROUTES.login} className="block text-center text-sm font-semibold text-violet-700 hover:text-violet-800">
+        <Button type="button" variant="ghost" fullWidth onClick={onStartOver}>
+          Use another email
+        </Button>
+        <Link
+          href={AUTH_ROUTES.login}
+          onClick={onStartOver}
+          className="block text-center text-sm font-semibold text-violet-700 hover:text-violet-800"
+        >
           Back to log in
         </Link>
       </div>
@@ -82,12 +111,16 @@ function EmailForm() {
     <form action={formAction} onBlur={onBlur} noValidate className="space-y-5">
       <CookiesRequiredNotice />
       {state.message && <Alert tone="error">{state.message}</Alert>}
-      <FormField id="email" label="Email address" error={error}>
+      <FormField id="email" label="Email" error={error}>
         <Input
           id="email"
           name="email"
-          type="email"
+          type="text"
+          inputMode="email"
           autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          maxLength={EMAIL_MAX_RAW_LENGTH}
           required
           defaultValue={state.values?.email}
           invalid={Boolean(error)}
@@ -95,43 +128,6 @@ function EmailForm() {
         />
       </FormField>
       <SubmitButton disabled={!cookiesWork}>Email me a reset link</SubmitButton>
-    </form>
-  );
-}
-
-function SmsForm() {
-  const router = useRouter();
-  const cookiesWork = useCookiesWork();
-  const [state, formAction] = useActionState(async (_previous: FormState, formData: FormData): Promise<FormState> => {
-    const values = readForm(formData, ["phoneNumber"]);
-    const outcome = await requestResetBySms(values, passwordResetBrowserDeps());
-    if (!("redirect" in outcome)) return outcome;
-    router.push(outcome.redirect);
-    // Keeps the typed number in the field while the next page loads.
-    return { status: "success", values } satisfies FormState;
-  }, initialFormState);
-  const { onBlur, errorFor } = useFieldErrors(forgotBySmsSchema, state.fieldErrors);
-  const error = errorFor("phoneNumber");
-
-  return (
-    <form action={formAction} onBlur={onBlur} noValidate className="space-y-5">
-      <CookiesRequiredNotice />
-      {state.message && <Alert tone={state.status === "success" ? "success" : "error"}>{state.message}</Alert>}
-      <FormField id="phoneNumber" label="Phone number" error={error}>
-        <Input
-          id="phoneNumber"
-          name="phoneNumber"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="0901 234 567"
-          required
-          defaultValue={state.values?.phoneNumber}
-          invalid={Boolean(error)}
-          aria-describedby={describedBy("phoneNumber", error)}
-        />
-      </FormField>
-      <SubmitButton disabled={!cookiesWork}>Text me a code</SubmitButton>
     </form>
   );
 }

@@ -20,14 +20,22 @@ import { type SessionApi, type SessionResponse, sessionApi } from "./session-api
 // a page asks for a token, one refresh at a time per tab. Only a refresh 401 ends the session on its own
 // (auth-browser-session BR-9); every other failure leaves it `unavailable` with the hint kept.
 
+/** What the server asks of the account next (auth-email-access spec 4.6). It prompts; it never blocks. */
+export type RequiredAction = "BIND_EMAIL" | "VERIFY_PHONE";
+
 export type SessionUser = {
   userId: string;
   fullName: string;
-  username: string;
+  /** The account's phone number; null on an account without one. */
+  username: string | null;
   roles: readonly string[];
   phoneVerified: boolean;
   emailVerified: boolean;
+  requiredAction: RequiredAction | null;
 };
+
+/** The sign-in a form started under: it may only act for that sign-in (auth-email-access US-4 AC-4). */
+export type SignInRef = { generation: string; userId: string };
 
 export type SessionStatus = "signed-out" | "restoring" | "signed-in" | "unavailable";
 
@@ -90,10 +98,11 @@ function parseSession(response: SessionResponse): ParsedSession | null {
     user: freezeUser({
       userId: user.userId,
       fullName: user.fullName ?? "",
-      username: user.username ?? "",
+      username: user.username ?? null,
       roles: user.roles ?? [],
       phoneVerified: user.phoneVerified ?? false,
       emailVerified: user.emailVerified ?? false,
+      requiredAction: user.requiredAction ?? null,
     }),
   };
 }
@@ -445,6 +454,8 @@ export function createSessionStore(deps: SessionStoreDeps) {
 
     endLocally,
 
+    clearFlowProgress,
+
     /**
      * Drops this tab's token, user and generation but keeps the cookies and tells no other tab: for a newer sign-in
      * seen in this browser (auth-browser-session §4.5). The next token request restores that sign-in.
@@ -487,6 +498,13 @@ export function createSessionStore(deps: SessionStoreDeps) {
     },
 
     generation: (): string | null => bound,
+
+    /**
+     * True while `ref` is the sign-in of this tab and of the browser: another tab's sign-in shows in the hint before this
+     * tab hears of it.
+     */
+    isSignIn: (ref: SignInRef): boolean =>
+      bound === ref.generation && user?.userId === ref.userId && liveHint() === ref.generation,
   };
 }
 

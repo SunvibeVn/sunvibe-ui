@@ -6,6 +6,7 @@ import {
   leaveSignUpStep,
   readSignUpProgress,
   readSignUpStep,
+  signUpIdentifier,
   signUpStepOf,
   signUpStepRedirect,
   writeSignUpProgress,
@@ -36,19 +37,19 @@ describe("isFuture", () => {
 describe("sign-up progress in sessionStorage (C-7)", () => {
   it("progress_reloadInTheSameTab_isKept", () => {
     const storage = memoryStorage();
-    const progress = { phone: "0901234567", resendAvailableAt: inMinutes(1) };
+    const progress = { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) } as const;
     writeSignUpProgress(storage, progress);
 
     // A reload keeps the tab's sessionStorage: a fresh read sees the same progress under `sv_signup`.
     expect(SIGN_UP_STORAGE_KEY).toBe("sv_signup");
-    expect(JSON.parse(storage.getItem("sv_signup") ?? "null")).toEqual({ ...progress, startedAt: expect.any(Number) });
+    expect(JSON.parse(storage.getItem("sv_signup") ?? "null")).toEqual({ v: 2, ...progress, startedAt: expect.any(Number) });
     expect(readSignUpProgress(storage)).toEqual(progress);
     expect(readSignUpStep(storage)).toEqual({ kind: "code", progress });
   });
 
   it("is at the details step while the registration token is valid", () => {
     const storage = memoryStorage();
-    const progress = { phone: "0901234567", registrationToken: "token-1", tokenExpiresAt: inMinutes(10) };
+    const progress = { channel: "PHONE", phone: "0901234567", registrationToken: "token-1", tokenExpiresAt: inMinutes(10) } as const;
     writeSignUpProgress(storage, progress);
     expect(readSignUpStep(storage)).toEqual({ kind: "details", progress });
   });
@@ -56,6 +57,7 @@ describe("sign-up progress in sessionStorage (C-7)", () => {
   it("progress_expiredToken_isCleared", () => {
     const storage = memoryStorage();
     writeSignUpProgress(storage, {
+      channel: "PHONE",
       phone: "0901234567",
       registrationToken: "token-1",
       tokenExpiresAt: new Date(Date.now() - 1000).toISOString(),
@@ -68,7 +70,7 @@ describe("sign-up progress in sessionStorage (C-7)", () => {
 
   it("readSignUpProgress returns null for an expired token and clears it", () => {
     const storage = memoryStorage();
-    writeSignUpProgress(storage, { phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(-1) });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(-1) });
     expect(readSignUpProgress(storage)).toBeNull();
     expect(storage.getItem("sv_signup")).toBeNull();
   });
@@ -84,7 +86,7 @@ describe("sign-up progress in sessionStorage (C-7)", () => {
 
   it("clears the progress", () => {
     const storage = memoryStorage();
-    writeSignUpProgress(storage, { phone: "0901234567" });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567" });
     clearSignUpProgress(storage);
     expect(storage.getItem("sv_signup")).toBeNull();
   });
@@ -93,9 +95,50 @@ describe("sign-up progress in sessionStorage (C-7)", () => {
     const blocked = throwingStorage();
     expect(readSignUpStep(blocked)).toEqual({ kind: "none" });
     expect(readSignUpStep(null)).toEqual({ kind: "none" });
-    expect(() => writeSignUpProgress(blocked, { phone: "0901234567" })).not.toThrow();
+    expect(() => writeSignUpProgress(blocked, { channel: "PHONE", phone: "0901234567" })).not.toThrow();
     expect(() => clearSignUpProgress(blocked)).not.toThrow();
-    expect(() => writeSignUpProgress(null, { phone: "0901234567" })).not.toThrow();
+    expect(() => writeSignUpProgress(null, { channel: "PHONE", phone: "0901234567" })).not.toThrow();
+  });
+});
+
+describe("sign-up progress v2 (auth-email-access spec 6.3)", () => {
+  const stored = (value: object) => JSON.stringify({ startedAt: Date.now(), ...value });
+
+  it("progress_v1_discarded", () => {
+    const storage = memoryStorage();
+    storage.setItem(SIGN_UP_STORAGE_KEY, stored({ phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(9) }));
+
+    expect(readSignUpStep(storage)).toEqual({ kind: "none" });
+    expect(storage.getItem(SIGN_UP_STORAGE_KEY)).toBeNull();
+  });
+
+  it("discards another version", () => {
+    expect(signUpStepOf(stored({ v: 3, channel: "EMAIL", email: "an@sunvibe.vn" }))).toEqual({ kind: "none" });
+  });
+
+  it("progress_phoneNotReadAsEmail", () => {
+    expect(signUpStepOf(stored({ v: 2, channel: "EMAIL", phone: "0901234567" }))).toEqual({ kind: "none" });
+    expect(signUpStepOf(stored({ v: 2, phone: "0901234567" }))).toEqual({ kind: "none" });
+    expect(signUpStepOf(stored({ v: 2, channel: "PHONE", email: "an@sunvibe.vn" }))).toEqual({ kind: "none" });
+  });
+
+  it("drops a field of the other channel from what it reads", () => {
+    const step = signUpStepOf(stored({ v: 2, channel: "EMAIL", email: "an@sunvibe.vn", phone: "0901234567" }));
+    expect(step).toEqual({ kind: "code", progress: { channel: "EMAIL", email: "an@sunvibe.vn" } });
+  });
+
+  it("keeps an email sign-up through a reload", () => {
+    const storage = memoryStorage();
+    const progress = { channel: "EMAIL", email: "an@sunvibe.vn", resendAvailableAt: inMinutes(1) } as const;
+    writeSignUpProgress(storage, progress);
+
+    expect(JSON.parse(storage.getItem("sv_signup") ?? "null")).toEqual({ v: 2, ...progress, startedAt: expect.any(Number) });
+    expect(readSignUpStep(storage)).toEqual({ kind: "code", progress });
+  });
+
+  it("names what the code went to", () => {
+    expect(signUpIdentifier({ channel: "EMAIL", email: "an@sunvibe.vn" })).toBe("an@sunvibe.vn");
+    expect(signUpIdentifier({ channel: "PHONE", phone: "0901234567" })).toBe("0901234567");
   });
 });
 
@@ -110,9 +153,9 @@ describe("sign-up progress lifetime (30 minutes, like the former sign-up cookie)
   it("phoneOnlyProgress_olderThan30Minutes_isClearedAndReadsAsNone", () => {
     vi.useFakeTimers({ now: START });
     const storage = memoryStorage();
-    writeSignUpProgress(storage, { phone: "0901234567" }, { restart: true });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567" }, { restart: true });
     vi.setSystemTime(START + 30 * MINUTE - 1);
-    expect(readSignUpStep(storage)).toEqual({ kind: "code", progress: { phone: "0901234567" } });
+    expect(readSignUpStep(storage)).toEqual({ kind: "code", progress: { channel: "PHONE", phone: "0901234567" } });
     vi.setSystemTime(START + 30 * MINUTE);
     expect(readSignUpStep(storage)).toEqual({ kind: "none" });
     expect(storage.getItem(SIGN_UP_STORAGE_KEY)).toBeNull();
@@ -121,11 +164,11 @@ describe("sign-up progress lifetime (30 minutes, like the former sign-up cookie)
   it("laterStepsOfTheSamePhone_keepTheStart", () => {
     vi.useFakeTimers({ now: START });
     const storage = memoryStorage();
-    writeSignUpProgress(storage, { phone: "0901234567" }, { restart: true });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567" }, { restart: true });
     vi.setSystemTime(START + 20 * MINUTE);
     // A resend, then the verified code: the progress still ends 30 minutes after the sign-up started.
-    writeSignUpProgress(storage, { phone: "0901234567", resendAvailableAt: inMinutes(1) });
-    writeSignUpProgress(storage, { phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(60) });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567", resendAvailableAt: inMinutes(1) });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(60) });
     vi.setSystemTime(START + 30 * MINUTE);
     expect(readSignUpProgress(storage)).toBeNull();
   });
@@ -133,33 +176,47 @@ describe("sign-up progress lifetime (30 minutes, like the former sign-up cookie)
   it("restartOrAnotherPhone_startsANewLifetime", () => {
     vi.useFakeTimers({ now: START });
     const storage = memoryStorage();
-    writeSignUpProgress(storage, { phone: "0901234567" }, { restart: true });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567" }, { restart: true });
     vi.setSystemTime(START + 20 * MINUTE);
-    writeSignUpProgress(storage, { phone: "0901234567" }, { restart: true });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567" }, { restart: true });
     vi.setSystemTime(START + 45 * MINUTE);
-    expect(readSignUpProgress(storage)).toEqual({ phone: "0901234567" });
+    expect(readSignUpProgress(storage)).toEqual({ channel: "PHONE", phone: "0901234567" });
 
-    writeSignUpProgress(storage, { phone: "0907654321" });
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0907654321" });
     vi.setSystemTime(START + 70 * MINUTE);
-    expect(readSignUpProgress(storage)).toEqual({ phone: "0907654321" });
+    expect(readSignUpProgress(storage)).toEqual({ channel: "PHONE", phone: "0907654321" });
+  });
+
+  it("anotherChannel_startsANewLifetime", () => {
+    vi.useFakeTimers({ now: START });
+    const storage = memoryStorage();
+    writeSignUpProgress(storage, { channel: "EMAIL", email: "an@sunvibe.vn" }, { restart: true });
+    vi.setSystemTime(START + 20 * MINUTE);
+    writeSignUpProgress(storage, { channel: "PHONE", phone: "0901234567" });
+    vi.setSystemTime(START + 45 * MINUTE);
+    expect(readSignUpProgress(storage)).toEqual({ channel: "PHONE", phone: "0901234567" });
   });
 
   it("progressWithoutAStart_readsAsNone", () => {
-    expect(signUpStepOf(JSON.stringify({ phone: "0901234567" }))).toEqual({ kind: "none" });
-    expect(signUpStepOf(JSON.stringify({ phone: "0901234567", startedAt: "yesterday" }))).toEqual({ kind: "none" });
+    expect(signUpStepOf(JSON.stringify({ v: 2, channel: "PHONE", phone: "0901234567" }))).toEqual({ kind: "none" });
+    expect(signUpStepOf(JSON.stringify({ v: 2, channel: "PHONE", phone: "0901234567", startedAt: "yesterday" }))).toEqual({
+      kind: "none",
+    });
   });
 });
 
 describe("signUpStepOf and signUpStepRedirect (what a step page does with the progress)", () => {
   it("reads the stored text without touching storage", () => {
     expect(signUpStepOf(null)).toEqual({ kind: "none" });
-    expect(signUpStepOf(JSON.stringify({ phone: "0901234567", startedAt: Date.now() }))).toEqual({
+    expect(signUpStepOf(JSON.stringify({ v: 2, channel: "PHONE", phone: "0901234567", startedAt: Date.now() }))).toEqual({
       kind: "code",
-      progress: { phone: "0901234567" },
+      progress: { channel: "PHONE", phone: "0901234567" },
     });
     expect(
       signUpStepOf(
         JSON.stringify({
+          v: 2,
+          channel: "PHONE",
           phone: "0901234567",
           registrationToken: "t",
           tokenExpiresAt: inMinutes(-1),
@@ -170,8 +227,8 @@ describe("signUpStepOf and signUpStepRedirect (what a step page does with the pr
   });
 
   it("sends a visitor who skipped a step back to it", () => {
-    const code = { kind: "code", progress: { phone: "0901234567" } } as const;
-    const details = { kind: "details", progress: { phone: "0901234567", registrationToken: "t" } } as const;
+    const code = { kind: "code", progress: { channel: "PHONE", phone: "0901234567" } } as const;
+    const details = { kind: "details", progress: { channel: "PHONE", phone: "0901234567", registrationToken: "t" } } as const;
 
     expect(signUpStepRedirect({ kind: "none" }, "code")).toBe("/sign-up");
     expect(signUpStepRedirect({ kind: "none" }, "details")).toBe("/sign-up");
@@ -185,7 +242,7 @@ describe("signUpStepOf and signUpStepRedirect (what a step page does with the pr
 });
 
 describe("leaveSignUpStep (both step pages, /sign-up/verify and /sign-up/details)", () => {
-  const expiredRaw = JSON.stringify({ phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(-1) });
+  const expiredRaw = JSON.stringify({ channel: "PHONE", phone: "0901234567", registrationToken: "t", tokenExpiresAt: inMinutes(-1) });
 
   it.each(["code", "details"] as const)("leaveSignUpStep_expiredToken_clearsItAndStartsOver (%s page)", (page) => {
     const storage = memoryStorage();
@@ -196,12 +253,22 @@ describe("leaveSignUpStep (both step pages, /sign-up/verify and /sign-up/details
     expect(replace).toHaveBeenCalledExactlyOnceWith("/sign-up?expired=1");
   });
 
+  it("leaveSignUpStep_nothingReadable_discardsWhatIsStored", () => {
+    // Progress of an older build reads as none: it may hold a number and a token, so it does not stay behind.
+    const storage = memoryStorage();
+    storage.setItem(SIGN_UP_STORAGE_KEY, JSON.stringify({ phone: "0901234567", registrationToken: "t" }));
+    const replace = vi.fn();
+    expect(leaveSignUpStep({ kind: "none" }, "code", { storage, replace })).toBe(true);
+    expect(storage.getItem(SIGN_UP_STORAGE_KEY)).toBeNull();
+    expect(replace).toHaveBeenCalledExactlyOnceWith("/sign-up");
+  });
+
   it("leaveSignUpStep_skippedStep_goesThereAndKeepsTheProgress", () => {
     const storage = memoryStorage();
-    const raw = JSON.stringify({ phone: "0901234567" });
+    const raw = JSON.stringify({ channel: "PHONE", phone: "0901234567" });
     storage.setItem(SIGN_UP_STORAGE_KEY, raw);
     const replace = vi.fn();
-    expect(leaveSignUpStep({ kind: "code", progress: { phone: "0901234567" } }, "details", { storage, replace })).toBe(
+    expect(leaveSignUpStep({ kind: "code", progress: { channel: "PHONE", phone: "0901234567" } }, "details", { storage, replace })).toBe(
       true,
     );
     expect(replace).toHaveBeenCalledExactlyOnceWith("/sign-up/verify");
@@ -211,7 +278,7 @@ describe("leaveSignUpStep (both step pages, /sign-up/verify and /sign-up/details
   it("leaveSignUpStep_pageFits_staysAndTouchesNothing", () => {
     const storage = memoryStorage();
     const replace = vi.fn();
-    expect(leaveSignUpStep({ kind: "code", progress: { phone: "0901234567" } }, "code", { storage, replace })).toBe(
+    expect(leaveSignUpStep({ kind: "code", progress: { channel: "PHONE", phone: "0901234567" } }, "code", { storage, replace })).toBe(
       false,
     );
     expect(replace).not.toHaveBeenCalled();

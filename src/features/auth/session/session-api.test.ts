@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { createSessionApi, type SessionApi, type SessionResponse } from "./session-api";
+import {
+  confirmEmailBindSession,
+  createSessionApi,
+  type EmailBindStore,
+  type SessionApi,
+  type SessionResponse,
+} from "./session-api";
 
 function json(status: number, body: unknown) {
   return new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
@@ -60,6 +66,21 @@ const calls: Array<[string, (api: SessionApi) => Promise<unknown>]> = [
     (api) => api.changePassword("at-1", { currentPassword: "o", newPassword: "n", confirmPassword: "n" }),
   ],
   ["/api/v1/me/sessions/logout-all", (api) => api.logoutAll("at-1")],
+  [
+    "/api/v1/auth/registration/email",
+    (api) =>
+      api.registerWithEmail({
+        email: "an@sunvibe.vn",
+        registrationToken: "rt",
+        fullName: "Nguyen An",
+        password: "secret",
+        confirmPassword: "secret",
+      }),
+  ],
+  [
+    "/api/v1/me/email/confirm-code",
+    (api) => api.confirmEmailBind("at-1", { newEmail: "an@sunvibe.vn", code: "123456" }, () => true),
+  ],
 ];
 
 afterEach(() => {
@@ -84,6 +105,24 @@ describe("session api (W10-25)", () => {
       null,
       "Bearer at-1",
       "Bearer at-1",
+      null,
+      "Bearer at-1",
+    ]);
+  });
+
+  it("sessionApi_newCookieCalls_includeCredentials_underLock", async () => {
+    const newCalls = calls.slice(-2);
+    const { api, requests, events } = setup();
+    for (const [, call] of newCalls) await call(api);
+
+    expect(requests.map((request) => request.credentials)).toEqual(["include", "include"]);
+    expect(events).toEqual([
+      "lock:sv-auth-cookie",
+      "fetch:/api/v1/auth/registration/email",
+      "release",
+      "lock:sv-auth-cookie",
+      "fetch:/api/v1/me/email/confirm-code",
+      "release",
     ]);
   });
 
@@ -258,6 +297,166 @@ describe("session api (W10-25)", () => {
     const { api, events } = setup(() => new Response(null, { status: 204 }));
     await expect(api.logout()).resolves.toMatchObject({ ok: true, status: 204 });
     expect(events).toEqual(["lock:sv-auth-cookie", "fetch:/api/v1/auth/session/logout", "release"]);
+  });
+});
+
+describe("confirmEmailBindSession (auth-email-access spec 6.3, US-4 AC-4)", () => {
+  const start = { generation: "g1", userId: "u1" };
+  const body = { newEmail: "an@sunvibe.vn", code: "123456" };
+  const boundSession = (userId = "u1"): SessionResponse => ({ ...session, user: { userId } });
+  const unauthorized = () => json(401, { code: "UNAUTHORIZED", message: "x", errors: [], correlationId: "c" });
+
+  function bindStore(events: string[], overrides: Partial<EmailBindStore> = {}): EmailBindStore {
+    return {
+      getAccessToken: vi.fn(async () => {
+        events.push("token");
+        return "at-1";
+      }),
+      forceRefresh: vi.fn(async () => {
+        events.push("force-refresh");
+        return "refreshed" as const;
+      }),
+      isSignIn: vi.fn(() => true),
+      adopt: vi.fn(),
+      markUnavailable: vi.fn(),
+      ...overrides,
+    };
+  }
+
+  it("takes the token before the lock and adopts the session like a sign-in", async () => {
+    const t = setup(() => json(200, boundSession()));
+    const store = bindStore(t.events);
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toMatchObject({ ok: true });
+
+    expect(t.events).toEqual(["token", "lock:sv-auth-cookie", "fetch:/api/v1/me/email/confirm-code", "release"]);
+    expect(store.adopt).toHaveBeenCalledExactlyOnceWith(boundSession(), { newSignIn: true });
+    expect(t.requests[0]?.headers.get("Authorization")).toBe("Bearer at-1");
+  });
+
+  it("confirmBind_generationChanged_noCall", async () => {
+    const t = setup();
+    const store = bindStore(t.events, { isSignIn: vi.fn(() => false) });
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind: "stale" });
+
+    expect(t.requests).toEqual([]);
+    expect(store.adopt).not.toHaveBeenCalled();
+  });
+
+  it("makes no call when the account changes while the call waits for the lock", async () => {
+    const t = setup();
+    // True when the token is read, false once the lock is held: another tab signed in meanwhile.
+    const isSignIn = vi.fn<EmailBindStore["isSignIn"]>().mockReturnValueOnce(true).mockReturnValue(false);
+    const store = bindStore(t.events, { isSignIn });
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind: "stale" });
+
+    expect(t.events).toEqual(["token", "lock:sv-auth-cookie", "release"]);
+    expect(t.requests).toEqual([]);
+  });
+
+  it("answers stale without a call when there is no token", async () => {
+    const t = setup();
+    const store = bindStore(t.events, { getAccessToken: vi.fn(async () => null) });
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind: "stale" });
+    expect(t.requests).toEqual([]);
+  });
+
+  it("confirmBind_lateAnswerOtherUser_dropped", async () => {
+    const t = setup(() => json(200, boundSession()));
+    // Still this sign-in before the call and inside the lock; another one by the time the answer arrives.
+    const isSignIn = vi
+      .fn<EmailBindStore["isSignIn"]>()
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
+      .mockReturnValue(false);
+    const store = bindStore(t.events, { isSignIn });
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind: "stale" });
+
+    expect(store.adopt).not.toHaveBeenCalled();
+  });
+
+  it("drops an answer for another user than the form started with", async () => {
+    const t = setup(() => json(200, boundSession("someone-else")));
+    const store = bindStore(t.events);
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind: "stale" });
+
+    expect(store.adopt).not.toHaveBeenCalled();
+  });
+
+  it("confirmBind_401_refreshesOutsideLock_retriesOnce", async () => {
+    let calls = 0;
+    const t = setup(() => (++calls === 1 ? unauthorized() : json(200, boundSession())));
+    const store = bindStore(t.events);
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toMatchObject({ ok: true });
+
+    expect(t.events).toEqual([
+      "token",
+      "lock:sv-auth-cookie",
+      "fetch:/api/v1/me/email/confirm-code",
+      "release",
+      "force-refresh",
+      "token",
+      "lock:sv-auth-cookie",
+      "fetch:/api/v1/me/email/confirm-code",
+      "release",
+    ]);
+    expect(store.forceRefresh).toHaveBeenCalledExactlyOnceWith("at-1");
+    expect(store.adopt).toHaveBeenCalledTimes(1);
+  });
+
+  it("stops after a second 401 and leaves the session unavailable", async () => {
+    const t = setup(unauthorized);
+    const store = bindStore(t.events);
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({
+      ok: false,
+      kind: "unavailable",
+    });
+
+    expect(t.requests).toHaveLength(2);
+    expect(store.markUnavailable).toHaveBeenCalledTimes(1);
+    expect(store.adopt).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["ended", "signed-out"],
+    ["unavailable", "unavailable"],
+  ] as const)("a refresh that answers %s sends nothing more", async (outcome, kind) => {
+    const t = setup(unauthorized);
+    const store = bindStore(t.events, { forceRefresh: vi.fn(async () => outcome) });
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind });
+    expect(t.requests).toHaveLength(1);
+  });
+
+  it("passes a refusal of the code through untouched", async () => {
+    const refused = { code: "CODE_INCORRECT", message: "x", errors: [], correlationId: "c" };
+    const t = setup(() => json(400, refused));
+    const store = bindStore(t.events);
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toMatchObject({
+      ok: false,
+      kind: "http",
+      code: "CODE_INCORRECT",
+    });
+    expect(store.forceRefresh).not.toHaveBeenCalled();
+  });
+
+  it("a failing lock or a throwing store answers as a network failure", async () => {
+    const t = setup();
+    const store = bindStore(t.events, {
+      getAccessToken: vi.fn(async () => {
+        throw new Error("boom");
+      }),
+    });
+
+    await expect(confirmEmailBindSession({ api: t.api, store }, body, start)).resolves.toEqual({ ok: false, kind: "network" });
   });
 });
 

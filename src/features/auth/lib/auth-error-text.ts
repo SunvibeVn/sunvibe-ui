@@ -5,11 +5,16 @@ import type { PublicApiHttpError, PublicApiNetworkError } from "@/lib/api";
 // "couldn't reach the server".
 
 /** Which auth screen asks: some codes read differently on the sign-up code step. */
-export type AuthErrorScreen = "login" | "sign-up-code" | "reset" | "generic";
+export type AuthErrorScreen = "login" | "phone-login" | "sign-up-code" | "reset" | "generic";
 
 export const AUTH_ERROR_TEXT = {
   generic: "We couldn't reach the server. Please try again.",
-  invalidCredentials: "Phone number or password is incorrect.",
+  invalidCredentials: "Email or password is incorrect.",
+  invalidPhoneCredentials: "Phone number or password is incorrect.",
+  channelDisabled: "This sign-in method isn't available.",
+  emailNotAvailable: "This email can't be used right now. Try another email or contact Sunvibe.",
+  emailAccountExists: "This email already has a Sunvibe account.",
+  emailDeliveryFailed: "We couldn't send the email. Try again in a minute.",
   locked: (wait: string) => `Too many failed attempts. Try again in ${wait}.`,
   tooManyRequests: (wait: string) => `Too many requests. Please wait ${wait} and try again.`,
   codeIncorrect: "Incorrect verification code.",
@@ -33,11 +38,19 @@ export function authErrorText(
   result: PublicApiHttpError | PublicApiNetworkError,
   screen: AuthErrorScreen,
 ): string {
-  if (result.kind === "network" || result.status >= 500) return AUTH_ERROR_TEXT.generic;
+  if (result.kind === "network") return AUTH_ERROR_TEXT.generic;
+  // The one 5xx with its own text: the server is up and the visitor may retry at once (auth-email-access US-1 AC-3).
+  if (result.code === "EMAIL_DELIVERY_FAILED") return AUTH_ERROR_TEXT.emailDeliveryFailed;
+  if (result.status >= 500) return AUTH_ERROR_TEXT.generic;
 
   switch (result.code) {
     case "INVALID_CREDENTIALS":
-      return screen === "login" ? AUTH_ERROR_TEXT.invalidCredentials : AUTH_ERROR_TEXT.generic;
+      if (screen === "login") return AUTH_ERROR_TEXT.invalidCredentials;
+      return screen === "phone-login" ? AUTH_ERROR_TEXT.invalidPhoneCredentials : AUTH_ERROR_TEXT.generic;
+    case "AUTH_CHANNEL_DISABLED":
+      return AUTH_ERROR_TEXT.channelDisabled;
+    case "EMAIL_NOT_AVAILABLE":
+      return AUTH_ERROR_TEXT.emailNotAvailable;
     case "ACCOUNT_LOCKED":
       return AUTH_ERROR_TEXT.locked(formatWait(result.retryAfterSeconds));
     case "RATE_LIMITED":

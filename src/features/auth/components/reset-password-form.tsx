@@ -1,27 +1,24 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useActionState, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { OtpInput } from "@/components/ui/otp-input";
 import { PasswordInput } from "@/components/ui/password-input";
 import { SubmitButton } from "@/components/ui/submit-button";
-import { type FormState, initialFormState, readForm } from "../lib/form-state";
-import { completeReset } from "../lib/password-reset-flow";
-import { leaveAfterReset, moveResetTokenFromUrl, passwordResetBrowserDeps } from "../lib/password-reset-browser";
+import { initialFormState, readForm } from "../lib/form-state";
+import { completeReset, type ResetState } from "../lib/password-reset-flow";
+import { leaveAfterReset, passwordResetBrowserDeps } from "../lib/password-reset-browser";
 import { useFieldErrors } from "../lib/use-field-errors";
 import { resetPasswordFieldsSchema } from "../schemas/auth.schema";
 import { PasswordChecklist } from "./password-checklist";
+import { ResetLinkInvalid } from "./reset-link-invalid";
 
 export function ResetPasswordForm({ via }: { via: "email" | "sms" }) {
-  const router = useRouter();
   // A client function as the form action: React renders it as a non-submitting `javascript:` action and replays a
   // submit made before hydration, so no password or code lands in a URL. The reset token comes from this tab's
   // storage, never from a form field.
-  const [state, formAction] = useActionState(async (_previous: FormState, formData: FormData) => {
-    // A submit replayed before the page moved the link token out of the address bar.
-    moveResetTokenFromUrl({ router });
+  const [state, formAction] = useActionState<ResetState, FormData>(async (_previous, formData) => {
     const outcome = await completeReset(
       readForm(formData, ["otpCode", "newPassword", "confirmPassword"]),
       passwordResetBrowserDeps(),
@@ -33,6 +30,9 @@ export function ResetPasswordForm({ via }: { via: "email" | "sms" }) {
   const codeError = state.fieldErrors?.otpCode?.[0];
   const passwordError = errorFor("newPassword");
   const confirmError = errorFor("confirmPassword");
+
+  // A used or refused token cannot be tried again: a change of the password or the email ends it too.
+  if (state.tokenGone) return <ResetLinkInvalid />;
 
   return (
     <form action={formAction} onBlur={onBlur} noValidate className="space-y-5">

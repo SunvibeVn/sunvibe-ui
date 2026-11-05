@@ -87,9 +87,10 @@ export function clearResetProgress(storage: Storage | null): void {
 }
 
 /**
- * Moves the token of an e-mail reset link (`?token=`) into this tab's storage (auth-browser-session S-19). Returns the
- * address without the token (other parameters and the hash kept) for the caller to navigate to through the router, so
- * the router's own URL drops the token too; null when the address carries no token. An empty token is not stored.
+ * Moves the token of an e-mail reset link (`#token=`) into this tab's storage: a fragment reaches no server and no
+ * Referer (auth-email-access US-4 AC-2). Returns the address to leave for, without any fragment, because with one left
+ * the browser would stay in this document; null when the address carries no token. An empty token is not stored. A token
+ * in the query is not read: that path is gone (spec A-17).
  */
 export function takeTokenFromUrl(
   location: { readonly href: string },
@@ -97,20 +98,21 @@ export function takeTokenFromUrl(
   now: number = Date.now(),
 ): string | null {
   const url = new URL(location.href);
-  if (!url.searchParams.has("token")) return null;
-  const token = url.searchParams.get("token");
+  const fragment = new URLSearchParams(url.hash.slice(1));
+  if (!fragment.has("token")) return null;
+  const token = fragment.get("token");
   if (token) saveResetToken(storage, token, undefined, now);
-  url.searchParams.delete("token");
-  return `${url.pathname}${url.search}${url.hash}`;
+  return `${url.pathname}${url.search}`;
 }
 
 /** What the reset page shows: the form, the invalid-link notice, or a placeholder until it knows. */
 export type ResetSectionView = "form" | "invalid" | "pending";
 
 /**
- * Before mount (server render and hydration) the form shows when the address came from a reset link (`fromLink`), so a
- * submit before hydration works; otherwise a placeholder. Once mounted: the form when this tab holds a usable token, or
- * while a token still waits in the address (moved right after mount); else the invalid-link notice.
+ * Before mount (server render and hydration) the form shows for a reset the page can see on the server (`fromLink`: the
+ * SMS step), so a submit before hydration works; otherwise a placeholder: the server never sees a fragment. Once mounted:
+ * the form when this tab holds a usable token, or while a token still waits in the address (moved right after mount);
+ * else the invalid-link notice.
  */
 export function resetSectionView({
   mounted,

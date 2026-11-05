@@ -10,11 +10,31 @@ function http(status: number, code?: string, retryAfterSeconds?: number): Public
 }
 
 const network: PublicApiNetworkError = { ok: false, kind: "network" };
-const OTHER_SCREENS: AuthErrorScreen[] = ["login", "reset", "generic"];
+const OTHER_SCREENS: AuthErrorScreen[] = ["login", "phone-login", "reset", "generic"];
 
 describe("authErrorText", () => {
   it("authErrorText_INVALID_CREDENTIALS_login", () => {
-    expect(authErrorText(http(401, "INVALID_CREDENTIALS"), "login")).toBe("Phone number or password is incorrect.");
+    expect(authErrorText(http(401, "INVALID_CREDENTIALS"), "login")).toBe("Email or password is incorrect.");
+  });
+
+  it("authErrorText_INVALID_CREDENTIALS_phone-login", () => {
+    expect(authErrorText(http(401, "INVALID_CREDENTIALS"), "phone-login")).toBe("Phone number or password is incorrect.");
+  });
+
+  it("authErrorText_AUTH_CHANNEL_DISABLED", () => {
+    expect(authErrorText(http(403, "AUTH_CHANNEL_DISABLED"), "phone-login")).toBe("This sign-in method isn't available.");
+  });
+
+  it("authErrorText_EMAIL_NOT_AVAILABLE", () => {
+    expect(authErrorText(http(409, "EMAIL_NOT_AVAILABLE"), "generic")).toBe(
+      "This email can't be used right now. Try another email or contact Sunvibe.",
+    );
+  });
+
+  it("authErrorText_EMAIL_DELIVERY_FAILED: a 503 with its own text", () => {
+    expect(authErrorText(http(503, "EMAIL_DELIVERY_FAILED", 60), "generic")).toBe(
+      "We couldn't send the email. Try again in a minute.",
+    );
   });
 
   it("authErrorText_ACCOUNT_LOCKED_login", () => {

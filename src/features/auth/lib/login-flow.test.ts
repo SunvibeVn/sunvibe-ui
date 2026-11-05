@@ -1,11 +1,16 @@
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 import type { PublicApiResult } from "@/lib/api";
+import { LoginForm } from "../components/login-form";
 import { type BrowserEnvironment, pendingCookieName } from "../session/browser-cookies";
 import { settlePendingLogoutBeforeSignIn } from "../session/logout";
 import type { SessionResponse } from "../session/session-api";
-import type { SessionSnapshot } from "../session/session-store";
+import type { RequiredAction, SessionSnapshot } from "../session/session-store";
 import { type LoginDeps, submitLogin } from "./login-flow";
 import { memoryStorage } from "./test-support/memory-storage";
+
+vi.mock("next/navigation", () => ({ useRouter: () => ({ replace: vi.fn() }) }));
 
 const COOKIE_TEXT =
   "Sunvibe needs cookies to keep you signed in. Turn on cookies for sunvibe.vn in your browser settings, then reload this page.";
@@ -30,7 +35,10 @@ class FakeJar {
   }
 }
 
-function session(phoneVerified: boolean): SessionResponse {
+function session({
+  requiredAction = null,
+  phoneVerified = false,
+}: { requiredAction?: RequiredAction | null; phoneVerified?: boolean } = {}): SessionResponse {
   return {
     accessToken: "access-token",
     expiresIn: 900,
@@ -38,10 +46,11 @@ function session(phoneVerified: boolean): SessionResponse {
     user: {
       userId: "u-1",
       fullName: "An Nguyen",
-      username: "0901234567",
+      username: null,
       roles: ["TENANT"],
       phoneVerified,
-      emailVerified: false,
+      emailVerified: true,
+      requiredAction,
     },
   } as SessionResponse;
 }
@@ -51,7 +60,7 @@ const ok = (data: SessionResponse): PublicApiResult<SessionResponse> => ({ ok: t
 type LoginResult = PublicApiResult<SessionResponse>;
 
 function setup({
-  answer = ok(session(true)),
+  answer = ok(session()),
   cookiesEnabled = true,
   pendingLogout = false,
   adoptWorks = true,
@@ -89,6 +98,7 @@ function setup({
           roles: user.roles ?? [],
           phoneVerified: user.phoneVerified ?? false,
           emailVerified: user.emailVerified ?? false,
+          requiredAction: user.requiredAction ?? null,
         },
       };
     }),
@@ -104,7 +114,8 @@ function setup({
   return { api, store, jar, deps, calls };
 }
 
-const VALID = { username: "0901234567", password: "pw" };
+const VALID = { email: "an@sunvibe.vn", password: "pw" };
+const KEPT = { email: "an@sunvibe.vn" };
 
 describe("submitLogin (W10-22, W10-43, W10-44)", () => {
   it("submitLogin_cookiesBlocked_sendsNothing", async () => {
@@ -135,7 +146,7 @@ describe("submitLogin (W10-22, W10-43, W10-44)", () => {
 
   it("submitLogin_pendingLogoutInvalidForm_keepsTheFlag", async () => {
     const { api, jar, deps } = setup({ pendingLogout: true });
-    await submitLogin({ username: "12", password: "" }, deps);
+    await submitLogin({ email: "an", password: "" }, deps);
     expect(api.logout).not.toHaveBeenCalled();
     expect(api.login).not.toHaveBeenCalled();
     expect(jar.cookie).toContain(`${pendingCookieName()}=1`);
@@ -152,31 +163,75 @@ describe("submitLogin (W10-22, W10-43, W10-44)", () => {
 
   it("returns field errors without calling the backend (ported)", async () => {
     const { api, deps } = setup();
-    const state = await submitLogin({ username: "12", password: "" }, deps);
-    expect(state).toMatchObject({ status: "error", values: { username: "12" } });
+    const state = await submitLogin({ email: "an", password: "" }, deps);
+    expect(state).toMatchObject({ status: "error", values: { email: "an" } });
     if ("redirect" in state) throw new Error("expected a form state");
-    expect(state.fieldErrors?.username).toBeDefined();
+    expect(state.fieldErrors?.email).toBeDefined();
     expect(state.fieldErrors?.password).toBeDefined();
     expect(api.login).not.toHaveBeenCalled();
   });
 
-  it("adopts the new sign-in and goes to `next` when the phone is verified (ported)", async () => {
-    const response = session(true);
-    const { api, store, deps } = setup({ answer: ok(response) });
-    expect(await submitLogin({ ...VALID, next: "/account?tab=1" }, deps)).toEqual({ redirect: "/account?tab=1" });
-    expect(api.login).toHaveBeenCalledWith({ username: "0901234567", password: "pw" });
+  it("adopts the new sign-in as a new sign-in (ported)", async () => {
+    const response = session();
+    const { store, deps } = setup({ answer: ok(response) });
+    await submitLogin(VALID, deps);
     expect(store.adopt).toHaveBeenCalledWith(response, { newSignIn: true });
+  });
+
+  it("login_sendsEmailField", async () => {
+    const { api, deps } = setup();
+    await submitLogin({ email: "  An@Sunvibe.VN ", password: " pw " }, deps);
+    expect(api.login).toHaveBeenCalledExactlyOnceWith({ email: "an@sunvibe.vn", password: " pw " });
+  });
+
+  it("login_null_keepsNext", async () => {
+    const { deps } = setup();
+    expect(await submitLogin({ ...VALID, next: "/account?tab=1" }, deps)).toEqual({ redirect: "/account?tab=1" });
+  });
+
+  it("login_bindEmail_goesToAccountEmail", async () => {
+    const { deps } = setup({ answer: ok(session({ requiredAction: "BIND_EMAIL" })) });
+    expect(await submitLogin({ ...VALID, next: "/account?tab=1" }, deps)).toEqual({ redirect: "/account/email" });
+  });
+
+  it("goes to /verify-phone when the server asks for it (ignores `next`)", async () => {
+    const { deps } = setup({ answer: ok(session({ requiredAction: "VERIFY_PHONE" })) });
+    expect(await submitLogin({ ...VALID, next: "//evil.com" }, deps)).toEqual({ redirect: "/verify-phone" });
+    expect(await submitLogin({ ...VALID, next: "/account?tab=1" }, deps)).toEqual({ redirect: "/verify-phone" });
+  });
+
+  it("login_neverVerifyPhoneForEmailAccount", async () => {
+    // A flag is not a gate: an email account has no verified phone, and only requiredAction decides.
+    const { deps } = setup({ answer: ok(session({ phoneVerified: false, requiredAction: null })) });
+    expect(await submitLogin(VALID, deps)).toEqual({ redirect: "/account" });
+  });
+
+  it("login_channelDisabled_message", async () => {
+    const { deps } = setup({
+      answer: { ok: false, kind: "http", status: 403, code: "AUTH_CHANNEL_DISABLED", fieldErrors: [] },
+    });
+    expect(await submitLogin(VALID, deps)).toEqual({
+      status: "error",
+      message: "This sign-in method isn't available.",
+      values: KEPT,
+    });
+  });
+
+  it("login_offersNoPhone", () => {
+    const html = renderToStaticMarkup(createElement(LoginForm));
+    expect(html).toContain('name="email"');
+    expect(html).toContain('type="text"');
+    expect(html).toContain('inputMode="email"');
+    expect(html).toContain('autoComplete="username"');
+    expect(html).toContain('maxLength="320"');
+    expect(html).toContain(">Email<");
+    expect(html).not.toMatch(/phone/i);
+    expect(html).not.toContain('type="tel"');
   });
 
   it("goes to the account page without `next`", async () => {
     const { deps } = setup();
     expect(await submitLogin(VALID, deps)).toEqual({ redirect: "/account" });
-  });
-
-  it("submitLogin_unverifiedPhone_goesToVerifyPhone (ported: ignores unsafe `next`)", async () => {
-    const { deps } = setup({ answer: ok(session(false)) });
-    expect(await submitLogin({ ...VALID, next: "//evil.com" }, deps)).toEqual({ redirect: "/verify-phone" });
-    expect(await submitLogin({ ...VALID, next: "/account?tab=1" }, deps)).toEqual({ redirect: "/verify-phone" });
   });
 
   it("submitLogin_nextOutsideTheSite_goesToAccount (ported)", async () => {
@@ -186,14 +241,14 @@ describe("submitLogin (W10-22, W10-43, W10-44)", () => {
     }
   });
 
-  it("submitLogin_401_showsTheOldText (ported: keeps the phone number, adopts nothing)", async () => {
+  it("submitLogin_401_showsTheEmailText (keeps the address, adopts nothing)", async () => {
     const { store, deps } = setup({
       answer: { ok: false, kind: "http", status: 401, code: "INVALID_CREDENTIALS", fieldErrors: [] },
     });
-    expect(await submitLogin({ username: "0901234567", password: "wrong" }, deps)).toEqual({
+    expect(await submitLogin({ ...VALID, password: "wrong" }, deps)).toEqual({
       status: "error",
-      message: "Phone number or password is incorrect.",
-      values: { username: "0901234567" },
+      message: "Email or password is incorrect.",
+      values: KEPT,
     });
     expect(store.adopt).not.toHaveBeenCalled();
   });
@@ -207,14 +262,14 @@ describe("submitLogin (W10-22, W10-43, W10-44)", () => {
 
   it("submitLogin_network_showsTheGenericText", async () => {
     const { deps } = setup({ answer: { ok: false, kind: "network" } });
-    expect(await submitLogin(VALID, deps)).toEqual({ status: "error", message: GENERIC, values: { username: "0901234567" } });
+    expect(await submitLogin(VALID, deps)).toEqual({ status: "error", message: GENERIC, values: KEPT });
   });
 
   // A rejecting call (missing API URL, a rejected Web Lock) is shown on the form, not as the route error page.
   it("submitLogin_rejectingApi_showsTheGenericTextAndKeepsTheValues", async () => {
     const { api, store, deps } = setup();
     api.login.mockRejectedValue(new Error("NEXT_PUBLIC_API_URL is missing"));
-    expect(await submitLogin(VALID, deps)).toEqual({ status: "error", message: GENERIC, values: { username: "0901234567" } });
+    expect(await submitLogin(VALID, deps)).toEqual({ status: "error", message: GENERIC, values: KEPT });
     expect(store.adopt).not.toHaveBeenCalled();
   });
 
@@ -223,15 +278,13 @@ describe("submitLogin (W10-22, W10-43, W10-44)", () => {
     expect(await submitLogin({ ...VALID, next: "/account" }, deps)).toEqual({
       status: "error",
       message: GENERIC,
-      values: { username: "0901234567" },
+      values: KEPT,
     });
   });
 
   it("never returns the password in the form state", async () => {
     const { deps } = setup({ answer: { ok: false, kind: "http", status: 500, code: "INTERNAL_ERROR", fieldErrors: [] } });
-    expect(JSON.stringify(await submitLogin({ username: "0901234567", password: "s3cret" }, deps))).not.toContain(
-      "s3cret",
-    );
+    expect(JSON.stringify(await submitLogin({ ...VALID, password: "s3cret" }, deps))).not.toContain("s3cret");
   });
 
   it("submitLogin_adoptsWithoutAwaitGap", async () => {
@@ -251,7 +304,7 @@ describe("submitLogin (W10-22, W10-43, W10-44)", () => {
     // Registered after the flow awaits the answer: it runs in the next microtask after the flow's continuation, so an
     // `await` between the answer and `adopt` (where another tab's refresh could run) would let it run first.
     void answer.then(() => calls.push("other task"));
-    resolveLogin(ok(session(true)));
+    resolveLogin(ok(session()));
     await running;
     expect(calls.indexOf("adopt")).toBeGreaterThan(-1);
     expect(calls.indexOf("adopt")).toBeLessThan(calls.indexOf("other task"));

@@ -90,33 +90,41 @@ describe("reset progress (sessionStorage sv_reset, W10-39)", () => {
   });
 });
 
-describe("takeTokenFromUrl (S-19)", () => {
+describe("takeTokenFromUrl (auth-email-access spec 6.2, U-6)", () => {
   it("takeTokenFromUrl_movesItAndCleansTheAddressBar", () => {
     const storage = memoryStorage();
-    const cleaned = takeTokenFromUrl(
-      { href: "https://sunvibe.vn/reset-password?token=mail-token&via=email#top" },
-      storage,
-      NOW,
-    );
+    const cleaned = takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password?via=email#token=mail-token" }, storage, NOW);
     // The caller navigates to this path through the router, so the router's URL drops the token too.
-    expect(cleaned).toBe("/reset-password?via=email#top");
+    expect(cleaned).toBe("/reset-password?via=email");
     expect(readResetProgress(storage, NOW)).toEqual({ token: "mail-token", issuedAt: NOW });
   });
 
-  it("removes an empty token parameter without storing anything", () => {
+  it("drops the whole fragment: with one left, leaving for the address would not be a new document", () => {
+    const cleaned = takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password#token=t&top=1" }, memoryStorage(), NOW);
+    expect(cleaned).toBe("/reset-password");
+  });
+
+  it("removes an empty token without storing anything", () => {
     const storage = memoryStorage();
-    expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password?token=" }, storage, NOW)).toBe("/reset-password");
+    expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password#token=" }, storage, NOW)).toBe("/reset-password");
     expect(storage.getItem(RESET_STORAGE_KEY)).toBeNull();
   });
 
   it("leaves the address alone when there is no token", () => {
     const storage = memoryStorage();
     expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password?via=sms" }, storage, NOW)).toBeNull();
+    expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password#top" }, storage, NOW)).toBeNull();
+    expect(storage.getItem(RESET_STORAGE_KEY)).toBeNull();
+  });
+
+  it("never reads a token from the query", () => {
+    const storage = memoryStorage();
+    expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password?token=old-mail" }, storage, NOW)).toBeNull();
     expect(storage.getItem(RESET_STORAGE_KEY)).toBeNull();
   });
 
   it("still cleans the address when storage is blocked", () => {
-    expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password?token=t" }, blockedStorage(), NOW)).toBe(
+    expect(takeTokenFromUrl({ href: "https://sunvibe.vn/reset-password#token=t" }, blockedStorage(), NOW)).toBe(
       "/reset-password",
     );
   });

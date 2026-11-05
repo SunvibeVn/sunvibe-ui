@@ -16,6 +16,18 @@ describe("guardRedirect", () => {
     expect(guardRedirect(at("/sign-up"), true)?.pathname).toBe("/account");
   });
 
+  it("proxy_guestOnly_coversNestedRoutes", () => {
+    expect(guardRedirect(at("/login/phone"), true)?.pathname).toBe("/account");
+    expect(guardRedirect(at("/sign-up/phone"), true)?.pathname).toBe("/account");
+    expect(guardRedirect(at("/login/phone"), false)).toBeNull();
+  });
+
+  it("sends signed-out visitors of the email page to login with a return path", () => {
+    expect(guardRedirect(at("/account/email"), false)?.toString()).toBe(
+      "http://localhost:3000/login?next=%2Faccount%2Femail",
+    );
+  });
+
   it("lets a stale session reach the login page when the server said it expired", () => {
     expect(guardRedirect(at("/login?session=expired&next=%2Faccount"), true)).toBeNull();
   });

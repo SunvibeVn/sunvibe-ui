@@ -6,12 +6,11 @@ export const metadata: Metadata = { title: "Set a new password" };
 
 type SearchParams = PageProps<"/reset-password">["searchParams"];
 
-/** Only whether the address carries a reset link reaches the page: the token itself is never read on the server. */
+/** The token of an e-mail link is in the fragment, so it never reaches this page. Only the SMS step shows here. */
 async function ResetPasswordContent({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams;
   const via = params.via === "sms" ? "sms" : "email";
-  const fromLink = (typeof params.token === "string" && params.token !== "") || via === "sms";
-  return <ResetPasswordSection via={via} fromLink={fromLink} />;
+  return <ResetPasswordSection via={via} fromLink={via === "sms"} />;
 }
 
 export default function ResetPasswordPage({ searchParams }: PageProps<"/reset-password">) {

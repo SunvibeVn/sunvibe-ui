@@ -9,10 +9,10 @@ import { Input } from "@/components/ui/input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { type FormState, initialFormState, readForm } from "../lib/form-state";
 import { signUpBrowserDeps } from "../lib/sign-up-browser";
-import { startSignUp } from "../lib/sign-up-flow";
+import { startPhoneSignUp } from "../lib/sign-up-phone-flow";
 import { useCookiesWork } from "../lib/use-cookies-work";
 import { useFieldErrors } from "../lib/use-field-errors";
-import { signUpPhoneSchema } from "../schemas/auth.schema";
+import { signUpPhoneSchema } from "../schemas/phone-auth.schema";
 import { CookiesRequiredNotice } from "./cookies-required-notice";
 
 /** Sign-up step 1: just the phone number, which receives the SMS code. */
@@ -22,7 +22,7 @@ export function SignUpPhoneForm() {
   // A client function as the form action: the form still renders on the server, and React replays a submit made
   // before hydration through it.
   const [state, formAction] = useActionState(async (previous: FormState, formData: FormData) => {
-    const outcome = await startSignUp(readForm(formData, ["username"]), signUpBrowserDeps());
+    const outcome = await startPhoneSignUp(readForm(formData, ["username"]), signUpBrowserDeps());
     if (!("redirect" in outcome)) return outcome;
     router.push(outcome.redirect);
     return { status: "success", values: previous.values } satisfies FormState;

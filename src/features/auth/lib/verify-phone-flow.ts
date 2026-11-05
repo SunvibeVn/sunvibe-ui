@@ -27,7 +27,7 @@ export type VerifyPhoneLoad = { kind: "ready"; maskedPhone: string } | { kind: "
 const IDLE: FormState = { status: "idle" };
 
 function markVerified(deps: Pick<VerifyPhoneDeps, "store">): void {
-  deps.store.updateUser({ phoneVerified: true });
+  deps.store.updateUser({ phoneVerified: true, requiredAction: null });
 }
 
 /**
@@ -40,15 +40,16 @@ function alreadyVerified(deps: Pick<VerifyPhoneDeps, "store">, generation: strin
   return { redirect: AUTH_ROUTES.account };
 }
 
-/** The page's start: an account whose phone is verified already goes to `/account`. */
+/** The page's start: an account the server does not ask to verify a phone goes to `/account`. */
 export async function loadVerifyPhone(deps: VerifyPhoneDeps): Promise<VerifyPhoneLoad | Redirect> {
   const generation = deps.store.generation();
   const load = await readMe(deps);
   if (load.kind !== "ready") return load;
-  if (load.me.phoneVerified) {
+  if (load.me.requiredAction !== "VERIFY_PHONE") {
     // A late answer for an older sign-in must not mark the user who replaced it as verified.
     if (deps.store.generation() !== generation) return { kind: "session" };
-    markVerified(deps);
+    // An email account has no verified phone and owes none: only a real verification is marked.
+    if (load.me.phoneVerified) markVerified(deps);
     return { redirect: AUTH_ROUTES.account };
   }
   const phone = load.me.username ?? "";

@@ -53,7 +53,7 @@ describe("formStateFromResult", () => {
         { ok: false, kind: "http", status: 401, code: "INVALID_CREDENTIALS", fieldErrors: [] },
         { values: { username: "0901234567" }, screen: "login" },
       ),
-    ).toEqual({ status: "error", message: "Phone number or password is incorrect.", values: { username: "0901234567" } });
+    ).toEqual({ status: "error", message: "Email or password is incorrect.", values: { username: "0901234567" } });
   });
 
   it("formStateFromResult_network_genericAndNoLog", () => {

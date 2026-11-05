@@ -6,7 +6,9 @@ import type { SessionStore } from "./session-store";
 // Keeps this tab in step with the sign-in of the browser (auth-browser-session §4.5, §4.7, §4.8): after a sign-out or
 // a new sign-in in another tab, and when a page comes back from the back-forward cache, this tab drops its token and
 // private data and updates its header. Channel messages are only a trigger; the decision is taken from the cookies,
-// never from a message.
+// never from a message. A message also takes the tab's sign-up and reset progress away, because another tab changed who
+// is signed in (SV-008). Focus, visibility and pageshow never do: a visitor who leaves the tab to read a code must come
+// back to the same step.
 
 type Listener = (event: Event) => void;
 
@@ -25,7 +27,7 @@ export type SyncTimers = {
 };
 
 export type SessionSyncDeps = {
-  store: Pick<SessionStore, "getSnapshot" | "generation" | "resetLocal">;
+  store: Pick<SessionStore, "getSnapshot" | "generation" | "resetLocal" | "clearFlowProgress">;
   jar: CookieJar;
   /** The tab's `sv-auth` channel, or null where the browser has none (focus, visibility and pageshow still work). */
   channel: Listenable | null;
@@ -86,6 +88,8 @@ export function startSessionSync(deps: SessionSyncDeps): () => void {
   }
 
   const onMessage: Listener = () => {
+    // First and unconditional: `reset` never runs in a tab that is already signed out, and it may reload the page.
+    store.clearFlowProgress();
     reconcile();
     // One pending re-check at a time: a burst of messages keeps only the latest.
     cancelRecheck();

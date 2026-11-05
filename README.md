@@ -42,7 +42,7 @@ src/
 │   ├── icon.png, opengraph-image.jpg, twitter-image.jpg
 │   ├── (marketing)/        # "/" landing page, with site header + footer
 │   ├── (auth)/             # /login, /sign-up, /forgot-password, /reset-password
-│   ├── (onboarding)/       # /verify-phone (signed in, phone not verified yet)
+│   ├── (onboarding)/       # /verify-phone (phone channel on only: signed in, phone not verified yet)
 │   └── (platform)/         # /account and future signed-in pages
 │
 ├── features/               # One folder per business domain; backend-facing ones mirror a service
@@ -94,7 +94,7 @@ public/images/brand/        # Logo and share-banner source files
 The browser talks to sunvibe-server directly (ADR-001); Next.js holds no session:
 
 1. Forms run client-function actions (`useActionState`) that validate with zod and call the flows in `src/features/auth/lib/*-flow.ts`.
-2. The access token lives only in the memory of one tab (`session/session-store.ts`). The refresh token is an HttpOnly cookie that the API sets. Only the seven cookie calls in `session/session-api.ts` (login, refresh, logout, register, password reset, password change, logout-all) send `credentials: "include"`, under a browser-wide lock; every other call omits credentials.
+2. The access token lives only in the memory of one tab (`session/session-store.ts`). The refresh token is an HttpOnly cookie that the API sets. Only the nine cookie calls in `session/session-api.ts` (login, refresh, logout, register, register with email, password reset, password change, logout-all, confirm email bind) send `credentials: "include"`, under a browser-wide lock; every other call omits credentials.
 3. `callApi` / `apiClient` send `Authorization: Bearer` and refresh once on a 401. Tabs stay in step through a `BroadcastChannel`; only a refresh 401 ends the session.
 4. A sign-in hint cookie (`sv_signed_in`, no token) lets `src/proxy.ts` redirect signed-out visitors away from `/account` and `/verify-phone`, and signed-in users away from `/login` and `/sign-up`. The hint never authorizes anything.
 5. Signed-in sections wrap their content in `RequireSession` (and `RequireRole` for staff screens) and read the user with `useSession` (from `@/features/auth/client`). The API decides every access.

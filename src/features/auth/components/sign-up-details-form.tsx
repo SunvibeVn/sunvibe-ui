@@ -10,17 +10,21 @@ import { PasswordInput } from "@/components/ui/password-input";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { type FormState, initialFormState, readForm } from "../lib/form-state";
 import { signUpBrowserDeps } from "../lib/sign-up-browser";
-import { completeSignUp } from "../lib/sign-up-flow";
+import { completeSignUp, type SignUpState } from "../lib/sign-up-flow";
 import { useFieldErrors } from "../lib/use-field-errors";
 import { signUpDetailsSchema } from "../schemas/auth.schema";
+import { SignUpConflictNotice } from "./sign-up-conflict";
 
 /**
- * Sign-up step 3: name and password for the phone number that was just verified.
- * The number itself is not a field: the flow takes it from this tab's sign-up progress.
+ * Sign-up step 3: name and password for the address or number that was just verified.
+ * It is not a field: the flow takes it from this tab's sign-up progress.
  */
-export function SignUpDetailsForm({ maskedPhone }: { maskedPhone: string }) {
+export function SignUpDetailsForm({ verified }: { verified: string }) {
   const router = useRouter();
-  const [state, formAction] = useActionState(async (previous: FormState, formData: FormData) => {
+  const [state, formAction] = useActionState<SignUpState, FormData>(async (previous, formData) => {
+    // React runs queued submits one after the other: once the account exists a second one has nothing to do, and its
+    // redirect would replace the one on its way (auth-email-access Review Focus 2).
+    if (previous.status === "success") return previous;
     const values = readForm(formData, ["fullName", "password", "confirmPassword"]);
     const outcome = await completeSignUp(values, signUpBrowserDeps());
     if (!("redirect" in outcome)) return outcome;
@@ -50,11 +54,15 @@ export function SignUpDetailsForm({ maskedPhone }: { maskedPhone: string }) {
       noValidate
       className="space-y-5"
     >
-      {state.message && <Alert tone="error">{state.message}</Alert>}
+      {state.conflict ? (
+        <SignUpConflictNotice conflict={state.conflict} message={state.message} />
+      ) : (
+        state.message && <Alert tone="error">{state.message}</Alert>
+      )}
 
-      <p className="flex items-center justify-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-800">
-        <CheckIcon size={16} />
-        {maskedPhone} is verified
+      <p className="flex items-center justify-center gap-2 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium break-all text-emerald-800">
+        <CheckIcon size={16} className="shrink-0" />
+        {verified} is verified
       </p>
 
       <FormField id="fullName" label="Full name" error={error.fullName}>
