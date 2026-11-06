@@ -1,12 +1,12 @@
 import { hasAnyRole } from "@/features/auth/client";
-import { STAFF_WORKSPACE_ROLES, SURVEYS_PATH, WORKSPACE_HOME } from "./routes";
+import { INVENTORY_CASE_ROLES, INVENTORY_CASES_PATH, STAFF_WORKSPACE_ROLES, SURVEYS_PATH, WORKSPACE_HOME } from "./routes";
 
 export { STAFF_WORKSPACE_ROLES, WORKSPACE_HOME };
 
 export type WorkspaceNavItem = {
   href: string;
   /** Key under `Workspace.menu` in en.json. */
-  labelKey: "ownerLeads" | "surveys" | "territories";
+  labelKey: "ownerLeads" | "surveys" | "inventoryCases" | "territories";
 };
 
 /** True when the user holds a staff workspace role (SUPER_ADMIN counts as ADMIN). */
@@ -15,8 +15,8 @@ export function isStaff(roles: readonly string[]): boolean {
 }
 
 /**
- * The left menu: the lead queue and the survey list for every staff role (survey-schedule spec 6.5), the territories
- * settings for ADMIN only (US-1 AC-1b).
+ * The left menu: the lead queue and the survey list for every staff role (survey-schedule spec 6.5), the inventory cases
+ * for the manager roles (property-create intake 4.3), the territories settings for ADMIN only (US-1 AC-1b).
  */
 export function workspaceNav(roles: readonly string[]): WorkspaceNavItem[] {
   if (!isStaff(roles)) return [];
@@ -24,6 +24,7 @@ export function workspaceNav(roles: readonly string[]): WorkspaceNavItem[] {
     { href: WORKSPACE_HOME, labelKey: "ownerLeads" },
     { href: SURVEYS_PATH, labelKey: "surveys" },
   ];
+  if (hasAnyRole(roles, INVENTORY_CASE_ROLES)) items.push({ href: INVENTORY_CASES_PATH, labelKey: "inventoryCases" });
   if (hasAnyRole(roles, ["ADMIN"])) items.push({ href: "/workspace/settings/territories", labelKey: "territories" });
   return items;
 }

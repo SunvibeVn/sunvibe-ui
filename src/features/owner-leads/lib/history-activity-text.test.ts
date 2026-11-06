@@ -108,4 +108,17 @@ describe("historyActivityText (survey-schedule spec 6.3, A-12)", () => {
     );
     expect(historyActivityText({ type: "CHECKLIST_STARTED", referenceNo: null }, t)).toBe("Checklist started");
   });
+
+  it("history_threeTypes_noPropertyText: names the event and its number, never a note or a reference text", () => {
+    const secret = { note: "P-101 at 12 Lê Lợi", referenceDetail: "SV-HOU-000123" };
+    expect(historyActivityText({ type: "INVENTORY_INTAKE_COMPLETED", referenceNo: 2, ...secret }, t)).toBe("Intake #2 completed");
+    expect(historyActivityText({ type: "INVENTORY_INTAKE_SUSPENDED", referenceNo: 2, ...secret }, t)).toBe("Intake #2 suspended");
+    expect(historyActivityText({ type: "INVENTORY_INTAKE_RESTORED", referenceNo: 2, ...secret }, t)).toBe("Intake #2 restored");
+  });
+
+  it("history_threeTypes_noPropertyText: a suspension with no intake reads as the plain event", () => {
+    expect(historyActivityText({ type: "INVENTORY_INTAKE_SUSPENDED", referenceNo: null, note: "why" }, t)).toBe(
+      "Inventory intake suspended",
+    );
+  });
 });

@@ -138,6 +138,7 @@ export const T = {
   menuClose: "Close menu",
   menuOwnerLeads: "SUPPLY LEADS",
   menuSurveys: "SURVEYS",
+  menuInventoryCases: "INVENTORY CASES",
   menuTerritories: "TERRITORIES",
   signOut: "Sign Out",
   listTitle: "SUPPLY LEADS",

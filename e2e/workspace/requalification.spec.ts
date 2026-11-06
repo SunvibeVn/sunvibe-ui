@@ -279,4 +279,12 @@ test.describe("Requalification of a passed survey (property-create requalificati
     await line.getByRole("link", { name: "Open checklist #2", exact: true }).click();
     await expect(decisionPanel(sale)).toContainText(R.reason, { timeout: 20_000 });
   });
+
+  test("property-create intake 4.1: the intake on this pass reads as ended, with its reason", async () => {
+    await sale.goto(`/workspace/owner-leads/${L15.id}/inventory-intake`);
+    const result = mainArea(sale).getByRole("region", { name: "Result", exact: true });
+    await expect(result).toContainText("Ended", { timeout: 20_000 });
+    await expect(result).toContainText("The survey behind this result was requalified.");
+    await expect(mainArea(sale).getByText(/^An earlier intake made /)).toBeVisible();
+  });
 });

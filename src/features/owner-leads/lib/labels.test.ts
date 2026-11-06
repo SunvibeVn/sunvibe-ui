@@ -97,6 +97,9 @@ describe("label maps (W11-40)", () => {
       "CHECKLIST_REVISION_STARTED",
       "CHECKLIST_REVIEWED",
       "REQUALIFICATION_MARKED",
+      "INVENTORY_INTAKE_COMPLETED",
+      "INVENTORY_INTAKE_SUSPENDED",
+      "INVENTORY_INTAKE_RESTORED",
     ].sort());
     expect(Object.keys(ROLE_LABEL).sort()).toEqual(["SALE", "SALE_LEADER"]);
     expect(Object.keys(PRICE_UNIT_LABEL).sort()).toEqual(["MONTH", "NIGHT", "TOTAL"]);

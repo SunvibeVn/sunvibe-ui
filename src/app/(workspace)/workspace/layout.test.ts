@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 import { englishSessionTexts, RequireSession } from "@/features/auth/client";
 import { WorkspaceDocument, WorkspaceShell } from "@/features/workspace";
 import en from "@/i18n/messages/en.json";
+import * as casePage from "./inventory-cases/[caseId]/page";
+import * as casesPage from "./inventory-cases/page";
 import WorkspaceLayout, { metadata } from "./layout";
+import * as intakePage from "./owner-leads/[leadId]/inventory-intake/page";
 import * as leadDetailPage from "./owner-leads/[leadId]/page";
 import * as checklistPage from "./owner-leads/[leadId]/survey-checklists/[checklistId]/page";
 import * as leadListPage from "./owner-leads/page";
@@ -50,8 +53,11 @@ describe("workspace pages opt out of instant-navigation validation", () => {
   // every workspace page as a dropped segment unless it sets `instant = false`.
   const pages: Record<string, { instant?: unknown }> = {
     "page.tsx": workspacePage,
+    "inventory-cases/page.tsx": casesPage,
+    "inventory-cases/[caseId]/page.tsx": casePage,
     "owner-leads/page.tsx": leadListPage,
     "owner-leads/[leadId]/page.tsx": leadDetailPage,
+    "owner-leads/[leadId]/inventory-intake/page.tsx": intakePage,
     "owner-leads/[leadId]/survey-checklists/[checklistId]/page.tsx": checklistPage,
     "settings/territories/page.tsx": territoriesPage,
     "surveys/page.tsx": surveysPage,

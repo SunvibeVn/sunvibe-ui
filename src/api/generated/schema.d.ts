@@ -324,6 +324,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/property-confirmations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The requests and live confirmations of the signed-in account */
+        get: operations["list_4"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/property-confirmations/{id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Enter the phrase the manager read out */
+        post: operations["check"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/property-confirmations/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm with the code, the password and the statement version */
+        post: operations["confirm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/property-confirmations/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline a request; staff cannot read that it was declined */
+        post: operations["decline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/property-confirmations/{id}/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** What the code opens: the parts and the statement to confirm */
+        post: operations["details"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/property-confirmations/{id}/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a live confirmation with the password */
+        post: operations["withdraw"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/sessions/logout-all": {
         parameters: {
             query?: never;
@@ -455,6 +557,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/inventory-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The cases a manager may act on, oldest first; whoever worked a side does not see them */
+        get: operations["list_3"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/inventory-cases/{caseId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One case; writes an access log row */
+        get: operations["read"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/inventory-cases/{caseId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rule on a case: DIFFERENT_ASSET or SAME_ASSET */
+        post: operations["decide"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-lead-assignees": {
         parameters: {
             query?: never;
@@ -569,6 +722,244 @@ export interface paths {
          * @description Allowed in ASSIGNED, CONTACTED, ON_HOLD and SURVEY_SCHEDULED, unless the cycle has a current PASSED checklist revision (one that was not requalified); ASSIGNED and SURVEY_SCHEDULED move to CONTACTED. Starts a new intent cycle and cancels the scheduled survey appointment, if any. askingPrice must be sent: a price or null.
          */
         post: operations["changeIntent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The intake block of a lead, for any staff who can see it */
+        get: operations["block_1"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** What the owner said about each selected space, on the day of the contact */
+        put: operations["availability"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/completion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Write the result, all or nothing; a repeat with the same hash answers the stored result */
+        post: operations["complete"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/inventory-search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The confirmed owner's properties, by code, or by ward and text; writes an access log row */
+        get: operations["search"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/owner-check-context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a manager reads before calling the lead's phone; writes an access log row */
+        get: operations["ownerCheckContext"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/owner-check/refusal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refuse the proof after reaching a stranger; an open row goes back to DRAFT */
+        post: operations["refuseOwner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/owner-check/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open a phrase for 10 minutes; a new start replaces it */
+        post: operations["startOwnerCheck"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/owner-confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ask an account to confirm; the answer is the same whether the address matched or not */
+        post: operations["requestOwner"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a completion would write, and the hash it must name; writes an access log row */
+        get: operations["preview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/restoration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Let a new checked proof of the owner take over a result */
+        post: operations["restore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/selection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Choose the parts an intake takes; a change voids the request, proof, target and availability */
+        put: operations["select"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/suspensions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Restrict the whole lead, or one unit of a result of the lead */
+        post: operations["suspend"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/suspensions/{id}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Release a suspension of this lead */
+        post: operations["release"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/owner-leads/{leadId}/inventory-intake/target": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Choose a new property, or a link to one the confirmed owner holds */
+        put: operations["target"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1434,6 +1825,13 @@ export interface components {
             expectedAppointmentVersion: number;
             /** Format: int64 */
             expectedLeadVersion: number;
+        };
+        CaseDecisionRequest: {
+            basis?: string;
+            /** Format: int64 */
+            expectedVersion?: number;
+            outcome?: string;
+            proceedingIntakeId?: string;
         };
         /** @description Change a scheduled survey appointment; every key is required, optional values may be null */
         ChangeAppointmentRequest: {
@@ -3799,6 +4197,324 @@ export interface components {
             errors?: unknown[];
             message?: string;
         };
+        IntakeAvailabilityItemRequest: {
+            /** Format: date */
+            contactedOn: string;
+            /** Format: date */
+            expectedDate?: string;
+            note?: string;
+            spaceId: string;
+            /** @enum {string} */
+            state: "VACANT" | "OCCUPIED" | "UNDER_REPAIR" | "PAUSED" | "OWNER_UNSURE" | "SOURCE_CONFLICT";
+        };
+        IntakeAvailabilityRequest: {
+            /** Format: int64 */
+            expectedVersion?: number;
+            items: components["schemas"]["IntakeAvailabilityItemRequest"][];
+        };
+        IntakeBlockAvailability: {
+            /** Format: date */
+            contactedOn?: string;
+            /** Format: date */
+            expectedDate?: string | null;
+            note?: string;
+            spaceId?: string;
+            /** @enum {string} */
+            state?: "VACANT" | "OCCUPIED" | "UNDER_REPAIR" | "PAUSED" | "OWNER_UNSURE" | "SOURCE_CONFLICT";
+        };
+        IntakeBlockResult: {
+            /** Format: date-time */
+            completedAt?: string;
+            propertyCode?: string | null;
+            /** Format: int32 */
+            unitCount?: number;
+        };
+        IntakeBlockSelection: {
+            spaceIds?: string[];
+        };
+        IntakeBlockSource: {
+            /** @enum {string|null} */
+            assetType?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+            /** @enum {string} */
+            rentalScope?: "WHOLE" | "PARTS";
+            revisionId?: string;
+            spaces?: components["schemas"]["IntakeBlockSpace"][];
+            unconfirmedTerms?: components["schemas"]["IntakeBlockTerm"][];
+        };
+        IntakeBlockSpace: {
+            accessLimits?: string | null;
+            code?: string;
+            location?: string | null;
+            /** Format: date */
+            sourceDate?: string | null;
+            spaceId?: string;
+        };
+        IntakeBlockSuspension: {
+            /** Format: date-time */
+            createdAt?: string;
+            id?: string;
+            /** @description Left out for an assignee who holds a manager role */
+            reason?: string;
+            /** @description Null for the whole lead */
+            unitCode?: string | null;
+        };
+        IntakeBlockTarget: {
+            canonicalSpaceId?: string | null;
+            /** @enum {string} */
+            mode?: "CREATE" | "LINK";
+            propertyCode?: string | null;
+        };
+        IntakeBlockTerm: {
+            /** Format: date */
+            date?: string | null;
+            name?: string;
+            source?: string | null;
+            /** @description Null when the survey left it unknown */
+            value?: components["schemas"]["IntakeTermValue"] | null;
+        };
+        IntakeBlockView: {
+            availability?: components["schemas"]["IntakeBlockAvailability"][];
+            /** @enum {string} */
+            caseState?: "NONE" | "OPEN" | "WAITING" | "DECIDED";
+            earlierResult?: components["schemas"]["IntakeEarlierResult"] | null;
+            forcedPropertyCode?: string | null;
+            gate?: components["schemas"]["IntakeGate"];
+            /** @enum {string} */
+            ownerCheck?: "NONE" | "REQUIRED" | "DONE";
+            /** @enum {string} */
+            ownerState?: "NONE" | "WAITING" | "CONFIRMED";
+            readiness?: components["schemas"]["IntakeReadiness"];
+            result?: components["schemas"]["IntakeBlockResult"] | null;
+            selection?: components["schemas"]["IntakeBlockSelection"] | null;
+            /** @description Null with no current unmarked PASSED */
+            source?: components["schemas"]["IntakeBlockSource"] | null;
+            /**
+             * @description Null with no current row
+             * @enum {string|null}
+             */
+            status?: "DRAFT" | "AWAITING_OWNER" | "OWNER_CONFIRMED" | "CASE_OPEN" | "COMPLETED" | null;
+            /** @description Only for manager roles */
+            suspensions?: components["schemas"]["IntakeBlockSuspension"][];
+            target?: components["schemas"]["IntakeBlockTarget"] | null;
+            /**
+             * Format: int64
+             * @description Null with no current row
+             */
+            version?: number | null;
+        };
+        IntakeCompletionRequest: {
+            /** Format: int64 */
+            expectedVersion?: number;
+            previewHash: string;
+        };
+        IntakeCompletionResult: {
+            /** Format: date-time */
+            completedAt?: string;
+            /** @enum {string} */
+            mode?: "CREATE" | "LINK";
+            propertyCode?: string;
+            propertyId?: string;
+            units?: components["schemas"]["IntakeCompletionUnit"][];
+        };
+        IntakeCompletionUnit: {
+            unitCode?: string;
+            unitId?: string;
+        };
+        IntakeEarlierResult: {
+            propertyCode?: string | null;
+        };
+        IntakeGate: {
+            ready?: boolean;
+            reasons?: ("NOT_LONG_TERM" | "NOT_QUALIFIED" | "NO_PASSED" | "PASSED_NOT_USABLE" | "TYPE_SCOPE_MISMATCH" | "RECONCILIATION_REQUIRED" | "RESTRICTED")[];
+        };
+        IntakeMappingRequest: {
+            spaceId: string;
+            unitId: string;
+        };
+        IntakePreviewFieldSource: {
+            /** Format: date */
+            date?: string | null;
+            field?: string;
+            source?: string | null;
+        };
+        IntakePreviewOwner: {
+            accountAddressMasked?: string;
+            /** @enum {string} */
+            check?: "DONE";
+            /** @enum {string} */
+            state?: "CONFIRMED";
+        };
+        IntakePreviewProperty: {
+            address?: string;
+            assetType?: string | null;
+            /** @description Null on a CREATE */
+            code?: string | null;
+            layout?: string | null;
+            title?: string;
+            ward?: string;
+        };
+        IntakePreviewSource: {
+            address?: string;
+            /** Format: date-time */
+            decidedAt?: string;
+            revisionId?: string;
+        };
+        IntakePreviewTerm: {
+            /** Format: date */
+            date?: string | null;
+            name?: string;
+            source?: string | null;
+            /** @description The space's code; null for a common term */
+            unit?: string | null;
+            value?: components["schemas"]["IntakeTermValue"] | null;
+        };
+        IntakePreviewUnit: {
+            amenities?: string[];
+            areaSqm?: number | null;
+            /** @enum {string} */
+            availability?: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE" | "BLOCKED";
+            /** Format: int32 */
+            bathrooms?: number | null;
+            /** Format: int32 */
+            bedrooms?: number | null;
+            condition?: string | null;
+            location?: string | null;
+            sources?: components["schemas"]["IntakePreviewFieldSource"][];
+            spaceCode?: string;
+            /** @description Null for the canonical unit of a CREATE */
+            unitCode?: string | null;
+        };
+        IntakePreviewView: {
+            notCarried?: ("PHOTOS" | "NOTES" | "CONTACT" | "TERMS")[];
+            owner?: components["schemas"]["IntakePreviewOwner"];
+            previewHash?: string;
+            property?: components["schemas"]["IntakePreviewProperty"];
+            source?: components["schemas"]["IntakePreviewSource"];
+            termsReference?: components["schemas"]["IntakePreviewTerm"][];
+            units?: components["schemas"]["IntakePreviewUnit"][];
+            warnings?: ("TERMS_UNCONFIRMED" | "UNIT_UNCLASSIFIED" | "AVAILABILITY_DIFFERS" | "LEGACY_PROPERTY" | "SAME_PHONE_LEAD")[];
+        };
+        IntakeReadiness: {
+            missingForBrokerage?: ("AGREEMENT" | "ADVERTISING_PERMISSION" | "CONFIRMED_TERMS" | "PHOTO_RIGHTS")[];
+            reasons?: ("LEAD_ON_HOLD" | "EVIDENCE_HELD" | "OWNER_NOT_CONFIRMED" | "OWNER_NOT_ELIGIBLE" | "RESTRICTED" | "DUPLICATE" | "REJECTED" | "WITHDRAWN" | "REQUALIFIED" | "INTENT_CHANGED" | "EVIDENCE_GONE")[];
+            /** @description Null with no result */
+            sourceRevisionId?: string | null;
+            /** @enum {string} */
+            state?: "NONE" | "USABLE" | "SUSPENDED" | "ENDED";
+            units?: components["schemas"]["IntakeReadinessUnit"][];
+        };
+        IntakeReadinessUnit: {
+            reasons?: ("RESTRICTED" | "AVAILABILITY_DIFFERS")[];
+            unitCode?: string | null;
+            unitId?: string;
+            usable?: boolean;
+        };
+        IntakeReleaseRequest: {
+            /** Format: int64 */
+            expectedVersion?: number;
+            releaseReason?: string;
+        };
+        IntakeRestorationRequest: {
+            /** Format: int64 */
+            expectedVersion?: number;
+        };
+        IntakeSuspensionRequest: {
+            /** Format: int64 */
+            expectedVersion?: number;
+            reason?: string;
+            unitId?: string;
+        };
+        IntakeTargetRequest: {
+            canonicalSpaceId?: string;
+            /** Format: int64 */
+            expectedVersion?: number;
+            mappings?: components["schemas"]["IntakeMappingRequest"][];
+            /** @enum {string} */
+            mode: "CREATE" | "LINK";
+            propertyId?: string;
+        };
+        IntakeTermValue: {
+            /** Format: int64 */
+            amount?: number | null;
+            currency?: string | null;
+            text?: string | null;
+            unit?: string | null;
+        };
+        InventoryCaseBoundary: {
+            addressText?: string | null;
+            assetType?: string | null;
+            layout?: string | null;
+            wardName?: string;
+        };
+        InventoryCaseCandidate: {
+            boundary?: components["schemas"]["InventoryCaseBoundary"];
+            code?: string;
+            intakeId?: string | null;
+            /** @enum {string} */
+            kind?: "PROPERTY" | "INTAKE";
+            /** @description Null with no checked proof */
+            ownerMatches?: boolean | null;
+            units?: components["schemas"]["OwnerRequestPart"][];
+        };
+        InventoryCaseIntake: {
+            intakeId?: string;
+            leadCode?: string;
+            parts?: components["schemas"]["OwnerRequestPart"][];
+            wardName?: string;
+        };
+        InventoryCaseItem: {
+            caseId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            leadCode?: string;
+            wardName?: string;
+        };
+        InventoryCasePage: {
+            items?: components["schemas"]["InventoryCaseItem"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
+        InventoryCaseView: {
+            basis?: string | null;
+            candidate?: components["schemas"]["InventoryCaseCandidate"];
+            caseId?: string;
+            /** Format: date-time */
+            decidedAt?: string | null;
+            intake?: components["schemas"]["InventoryCaseIntake"];
+            /** @enum {string|null} */
+            outcome?: "DIFFERENT_ASSET" | "SAME_ASSET" | null;
+            /** @enum {string} */
+            signal?: "ADDRESS" | "PIN" | "INTAKE" | "LINK_PLACE";
+            /** @enum {string} */
+            status?: "OPEN" | "DECIDED" | "CLOSED";
+            /** Format: int64 */
+            version?: number;
+        };
+        InventorySearchItem: {
+            assetType?: string | null;
+            propertyCode?: string;
+            propertyId?: string;
+            units?: components["schemas"]["InventorySearchUnit"][];
+            wardName?: string;
+        };
+        InventorySearchPage: {
+            items?: components["schemas"]["InventorySearchItem"][];
+            /** Format: int32 */
+            page?: number;
+            /** Format: int32 */
+            size?: number;
+            /** Format: int64 */
+            totalElements?: number;
+        };
+        InventorySearchUnit: {
+            location?: string | null;
+            unitCode?: string;
+            unitId?: string;
+        };
         /** @description History entry of an owner lead */
         LeadActivityResponse: {
             /** @description Full name of the staff member; null for the system or the owner, or when the id has no user row */
@@ -3830,7 +4546,7 @@ export interface components {
             /** @enum {string} */
             toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
             /** @enum {string} */
-            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED" | "REQUALIFICATION_MARKED";
+            type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED" | "REQUALIFICATION_MARKED" | "INVENTORY_INTAKE_COMPLETED" | "INVENTORY_INTAKE_SUSPENDED" | "INVENTORY_INTAKE_RESTORED";
         };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
@@ -4007,6 +4723,85 @@ export interface components {
             /** @example 20242 */
             wardCode: string;
         };
+        OwnerCheckContext: {
+            accountAddressMasked?: string;
+            /** Format: int64 */
+            accountAgeDays?: number;
+            /** @description Null until a start */
+            basis?: string | null;
+            /** Format: date-time */
+            confirmedAt?: string;
+            proofId?: string;
+            refusals?: components["schemas"]["OwnerCheckRefusal"][];
+            signals?: components["schemas"]["OwnerCheckSignals"];
+        };
+        OwnerCheckRefusal: {
+            basis?: string;
+            /** Format: date-time */
+            checkedAt?: string;
+        };
+        OwnerCheckRequest: {
+            basis?: string;
+            /** Format: int64 */
+            expectedVersion?: number;
+            proofId: string;
+        };
+        OwnerCheckSignals: {
+            /** Format: int64 */
+            accountProofs?: number;
+            /** Format: int64 */
+            accountRefusals?: number;
+            /** Format: int64 */
+            creatorProofs?: number;
+            /** Format: int64 */
+            creatorRefusals?: number;
+            /** Format: int64 */
+            otherOpenLeadsOfPhone?: number;
+            /** Format: int64 */
+            otherOwnersOnPhone?: number;
+        };
+        OwnerCheckStarted: {
+            /** Format: date-time */
+            expiresAt?: string;
+            phrase?: string;
+        };
+        OwnerConfirmationCodeRequest: {
+            code: string;
+        };
+        OwnerConfirmationConfirmRequest: {
+            code: string;
+            currentPassword: string;
+            statementVersion: string;
+        };
+        OwnerConfirmationDetails: {
+            address?: string;
+            /** @enum {string|null} */
+            assetType?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+            leadCode?: string;
+            parts?: components["schemas"]["OwnerRequestPart"][];
+            statement?: components["schemas"]["OwnerStatement"];
+            wardName?: string;
+        };
+        OwnerConfirmationItem: {
+            /** @description Only for a CONFIRMED item */
+            checkOpen?: boolean;
+            /** @description Only for a CONFIRMED item */
+            details?: components["schemas"]["OwnerRequestSnapshot"];
+            /** Format: date-time */
+            expiresAt?: string;
+            requestId?: string;
+            /** @enum {string} */
+            status?: "PENDING" | "CONFIRMED";
+        };
+        OwnerConfirmationList: {
+            items?: components["schemas"]["OwnerConfirmationItem"][];
+        };
+        OwnerConfirmationPhraseRequest: {
+            phrase: string;
+        };
+        OwnerConfirmationWithdrawalRequest: {
+            currentPassword: string;
+        };
         /** @description Owner intake form: a property owner asks Sunvibe to call back */
         OwnerIntakeRequest: {
             /** @example 12 Bạch Đằng, căn A-1203 */
@@ -4164,6 +4959,33 @@ export interface components {
             /** @example 20242 */
             wardCode?: string;
             wardName?: string;
+        };
+        OwnerRequestAsk: {
+            /** Format: int64 */
+            expectedVersion?: number;
+            ownerEmail: string;
+        };
+        OwnerRequestIssued: {
+            code?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            requestId?: string;
+        };
+        OwnerRequestPart: {
+            code?: string;
+            location?: string | null;
+        };
+        OwnerRequestSnapshot: {
+            address?: string;
+            /** @enum {string|null} */
+            assetType?: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+            leadCode?: string;
+            parts?: components["schemas"]["OwnerRequestPart"][];
+            wardName?: string;
+        };
+        OwnerStatement: {
+            text?: string;
+            version?: string;
         };
         PasswordChangeRequest: {
             confirmPassword: string;
@@ -4351,6 +5173,15 @@ export interface components {
              * @enum {string}
              */
             wardType?: "WARD" | "COMMUNE" | "SPECIAL_ZONE";
+        };
+        SelectionRequest: {
+            /**
+             * Format: int64
+             * @description The block's version; null only with no current row
+             */
+            expectedVersion?: number | null;
+            /** @description 1..50 space ids of the PASSED; a WHOLE source takes its one space */
+            spaceIds: string[];
         };
         /** @description A started or refreshed session: the access token and the account */
         SessionResponse: {
@@ -6033,6 +6864,445 @@ export interface operations {
             };
         };
     };
+    list_4: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The list; before the code only id, status and expiry show */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerConfirmationList"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    check: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerConfirmationPhraseRequest"];
+            };
+        };
+        responses: {
+            /** @description The owner check is done */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CONFIRMATION_INVALID or VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No such request for this account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    confirm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerConfirmationConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Confirmed */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CONFIRMATION_INVALID, or VALIDATION_FAILED on currentPassword */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No such request for this account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description ACCOUNT_LOCKED */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    decline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerConfirmationCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description Declined */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description CONFIRMATION_INVALID or VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No such request for this account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    details: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerConfirmationCodeRequest"];
+            };
+        };
+        responses: {
+            /** @description The details */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerConfirmationDetails"];
+                };
+            };
+            /** @description CONFIRMATION_INVALID or VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No such request for this account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
+    withdraw: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerConfirmationWithdrawalRequest"];
+            };
+        };
+        responses: {
+            /** @description Withdrawn */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED on currentPassword */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No live confirmation of this request for this account */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description ACCOUNT_LOCKED */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+        };
+    };
     meLogoutAll: {
         parameters: {
             query?: never;
@@ -6428,6 +7698,177 @@ export interface operations {
             };
         };
     };
+    list_3: {
+        parameters: {
+            query?: {
+                status?: string;
+                page?: number;
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of cases */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryCasePage"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description The caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    read: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The case */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryCaseView"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description CASE_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The case does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    decide: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                caseId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CaseDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description The case */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventoryCaseView"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description CASE_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The case does not exist */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     list_2: {
         parameters: {
             query?: never;
@@ -6794,6 +8235,954 @@ export interface operations {
                 };
             };
             /** @description CONCURRENT_MODIFICATION (field expectedVersion) or INVALID_STATE_TRANSITION (field status, allowedValues the statuses that allow the change) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    block_1: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description Caller is not staff */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible, or the intake is off */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    availability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeAvailabilityRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description OWNER_PROOF_REQUIRED, INTAKE_STATE, INTAKE_GATE_FAILED or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    complete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeCompletionRequest"];
+            };
+        };
+        responses: {
+            /** @description The result */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeCompletionResult"];
+                };
+            };
+            /** @description VALIDATION_FAILED or LINK_MAPPING_INVALID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE, INTAKE_GATE_FAILED, OWNER_PROOF_REQUIRED, AVAILABILITY_NOT_CONFIRMED, INTAKE_PREVIEW_STALE, INTAKE_DUPLICATE_CHECK, INTAKE_ALREADY_COMPLETED, INTAKE_CREATE_NOT_ALLOWED, INTAKE_DISPUTED, CANONICAL_UNRECONCILED, INTAKE_SOURCE_INVALID or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    search: {
+        parameters: {
+            query?: {
+                propertyCode?: string;
+                wardCode?: string;
+                q?: string;
+                page?: number;
+            };
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of properties */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["InventorySearchPage"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description OWNER_PROOF_REQUIRED, INTAKE_STATE or INTAKE_GATE_FAILED */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    ownerCheckContext: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The context */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerCheckContext"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    refuseOwner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerCheckRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    startOwnerCheck: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerCheckRequest"];
+            };
+        };
+        responses: {
+            /** @description The phrase, which shows only here */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerCheckStarted"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    requestOwner: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OwnerRequestAsk"];
+            };
+        };
+        responses: {
+            /** @description The request and its code, which shows only here */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["OwnerRequestIssued"];
+                };
+            };
+            /** @description VALIDATION_FAILED on ownerEmail */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE, INTAKE_GATE_FAILED or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description OWNER_REQUEST_LIMIT, or too many requests from this address */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    preview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The preview */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakePreviewView"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description OWNER_PROOF_REQUIRED, INTAKE_STATE, INTAKE_GATE_FAILED or INTAKE_SOURCE_INVALID */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    restore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeRestorationRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE, INTAKE_GATE_FAILED, OWNER_PROOF_REQUIRED, INTAKE_DISPUTED or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    select: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SelectionRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description VALIDATION_FAILED or INTAKE_SELECTION_INVALID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_GATE_FAILED, INTAKE_STATE or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    suspend: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeSuspensionRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead or the unit does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    release: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeReleaseRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description VALIDATION_FAILED */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead or the suspension does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTAKE_STATE or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    target: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IntakeTargetRequest"];
+            };
+        };
+        responses: {
+            /** @description The block */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["IntakeBlockView"];
+                };
+            };
+            /** @description VALIDATION_FAILED or LINK_MAPPING_INVALID */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": Record<string, never>;
+                };
+            };
+            /** @description INTAKE_NOT_ASSIGNEE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description OWNER_PROOF_REQUIRED, CANONICAL_UNRECONCILED, INTAKE_CREATE_NOT_ALLOWED, INTAKE_DISPUTED, INTAKE_STATE, INTAKE_GATE_FAILED or CONCURRENT_MODIFICATION */
             409: {
                 headers: {
                     [name: string]: unknown;
