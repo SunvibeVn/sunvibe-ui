@@ -10,7 +10,7 @@ import {
   decisionRules,
 } from "@/features/surveys";
 
-import { cleanText, optionalText, requiredText, type SurveyProblem, type SurveyProblems } from "../../schemas/survey/survey-text";
+import { cleanText, optionalText, requiredText, type SurveyProblem, type SurveyProblems } from "../../../surveys/schemas/survey/survey-text";
 
 import type { MediaPanelModel, PhotoCard } from "./media-panel-model";
 

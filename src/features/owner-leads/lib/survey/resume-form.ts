@@ -11,7 +11,7 @@ import {
   REASON_MAX,
   requiredText,
   type SurveyProblems,
-} from "../../schemas/survey/survey-text";
+} from "../../../surveys/schemas/survey/survey-text";
 
 /** The resume dialog (spec 6.2): a reason and the owner's confirmation that requirement and scope have not changed. */
 export type ResumeForm = { reason: string; basisDate: string; basisText: string };

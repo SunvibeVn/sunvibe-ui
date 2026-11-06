@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import type { ChecklistGroupPath, ChecklistInput } from "@/features/surveys";
 
-import { basisDateProblem, cleanText, isIsoDate, optionalText, requiredText, type SurveyProblem } from "../survey/survey-text";
+import { basisDateProblem, cleanText, isIsoDate, optionalText, requiredText, type SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 
 // The checks of template LONG_TERM_RENT v1 the page runs before a save (survey-checklist spec 4.6, A-6, A-7, A-11,
 // A-18, D-1), so a refusal shows at its field first; the server stays the authority (TemplateV1Rules). Problems are

@@ -14,7 +14,7 @@ import {
   requiredText,
   type SurveyProblems,
   VISIT_NOTE_MAX,
-} from "../../schemas/survey/survey-text";
+} from "../../../surveys/schemas/survey/survey-text";
 
 /** The record-visit dialog (spec 6.2). `arrivedAt` is a `datetime-local` value in Vietnam time. */
 export type VisitForm = {

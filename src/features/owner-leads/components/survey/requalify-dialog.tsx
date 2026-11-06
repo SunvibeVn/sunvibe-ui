@@ -27,7 +27,7 @@ import {
   toRequalifyBody,
   validateRequalify,
 } from "../../lib/requalify-form";
-import type { SurveyProblems } from "../../schemas/survey/survey-text";
+import type { SurveyProblems } from "../../../surveys/schemas/survey/survey-text";
 
 import { problemText } from "./survey-copy";
 import { type SurveyDialogMessage, SurveyMessage } from "./survey-message";

@@ -20,7 +20,7 @@ import {
   durationOf,
   minuteInstant,
   REASON_MAX,
-} from "../../schemas/survey/survey-text";
+} from "../../../surveys/schemas/survey/survey-text";
 
 import { OverlapWarning } from "./overlap-warning";
 import { PlaceFields } from "./place-fields";

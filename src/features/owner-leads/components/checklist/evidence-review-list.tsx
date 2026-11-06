@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { mediaErrorText } from "../../lib/checklist/media-messages";
 import { type EvidenceRow, type PhotoMark, REJECTION_REASON_MAX } from "../../lib/checklist/review-model";
 import { photoTitle } from "../../lib/checklist/status-model";
-import type { SurveyProblem } from "../../schemas/survey/survey-text";
+import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 import { problemText } from "../survey/survey-copy";
 import { SurveyTextField } from "../survey/survey-text-field";
 

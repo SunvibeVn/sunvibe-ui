@@ -6,7 +6,7 @@ import type { SurveyCommandResult } from "@/features/surveys";
 
 import { type SurveyErrorMessage, surveyFailure } from "../../lib/survey/survey-failure";
 import { runSurveyCommand } from "../../lib/survey/survey-flow";
-import type { SurveyProblem } from "../../schemas/survey/survey-text";
+import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 
 import type { SurveyDialogMessage } from "./survey-message";
 import { useSurveyPanel } from "./survey-panel-context";

@@ -10,7 +10,7 @@ import {
   REASON_MAX,
   requiredText,
   type SurveyProblems,
-} from "../../schemas/survey/survey-text";
+} from "../../../surveys/schemas/survey/survey-text";
 
 import { type Place, placeOf, samePlace } from "./appointment-view";
 import { checkTimeAndPlace, detailTexts, toMeetingLocation } from "./booking-form";

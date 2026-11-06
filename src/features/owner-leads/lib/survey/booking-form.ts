@@ -20,7 +20,7 @@ import {
   requiredText,
   startWindowProblem,
   type SurveyProblems,
-} from "../../schemas/survey/survey-text";
+} from "../../../surveys/schemas/survey/survey-text";
 
 import { type Place, placeDiffersFromLead } from "./appointment-view";
 

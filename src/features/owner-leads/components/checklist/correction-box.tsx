@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/format/vietnam-time";
 
 import { type CorrectionReason, distinctReasons } from "../../lib/checklist/correction-rule";
 import { type ChecklistProblem, type ChecklistRules, checkCorrection } from "../../schemas/checklist";
-import { REASON_MAX } from "../../schemas/survey/survey-text";
+import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { checklistProblemText } from "./checklist-copy";

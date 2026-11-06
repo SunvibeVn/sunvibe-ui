@@ -19,7 +19,7 @@ import {
   toChangeBody,
   validateChange,
 } from "../../lib/survey/change-form";
-import { ACCESS_NOTE_MAX, CONTACT_MAX, DURATIONS, REASON_MAX } from "../../schemas/survey/survey-text";
+import { ACCESS_NOTE_MAX, CONTACT_MAX, DURATIONS, REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 
 import { OverlapWarning } from "./overlap-warning";
 import { PlaceFields } from "./place-fields";

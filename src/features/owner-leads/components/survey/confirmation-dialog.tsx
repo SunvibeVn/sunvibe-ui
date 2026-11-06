@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { useFormDraft } from "@/features/lead-shared/client";
 import { setConfirmation, type SurveyAppointment } from "@/features/surveys";
 
-import { cleanText, optionalText, problemsOf, REASON_MAX } from "../../schemas/survey/survey-text";
+import { cleanText, optionalText, problemsOf, REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";

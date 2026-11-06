@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { checkOverlaps, type SurveyOverlap } from "@/features/surveys";
 import { localInputToInstant } from "@/lib/format/vietnam-time";
 
-import { durationOf, minuteInstant } from "../../schemas/survey/survey-text";
+import { durationOf, minuteInstant } from "../../../surveys/schemas/survey/survey-text";
 
 import { OverlapList } from "./overlap-list";
 

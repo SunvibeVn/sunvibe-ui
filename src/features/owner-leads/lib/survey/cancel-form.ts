@@ -10,7 +10,7 @@ import {
   REASON_MAX,
   requiredText,
   type SurveyProblems,
-} from "../../schemas/survey/survey-text";
+} from "../../../surveys/schemas/survey/survey-text";
 
 import { putText } from "./booking-form";
 

@@ -13,7 +13,7 @@ import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import { holderOptions, visitMode } from "../../lib/survey/appointment-view";
 import { toVisitBody, type VisitField, validateVisit, visitDefaults } from "../../lib/survey/visit-form";
-import { REASON_MAX, VISIT_NOTE_MAX } from "../../schemas/survey/survey-text";
+import { REASON_MAX, VISIT_NOTE_MAX } from "../../../surveys/schemas/survey/survey-text";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";

@@ -16,7 +16,7 @@ import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
 import { unitKey } from "../../lib/checklist/units";
 import type { Place } from "../../lib/survey/appointment-view";
 import type { ChecklistProblems } from "../../schemas/checklist";
-import type { SurveyProblem } from "../../schemas/survey/survey-text";
+import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 import { PlaceFields } from "../survey/place-fields";
 import { SurveyTextField } from "../survey/survey-text-field";
 

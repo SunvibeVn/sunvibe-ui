@@ -10,7 +10,7 @@ import { resumeSurvey } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import { type ResumeField, type ResumeForm, toResumeBody, validateResume } from "../../lib/survey/resume-form";
-import { REASON_MAX } from "../../schemas/survey/survey-text";
+import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";

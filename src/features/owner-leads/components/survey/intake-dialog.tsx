@@ -11,7 +11,7 @@ import { todayInVietnam, vietnamDate } from "@/lib/format/vietnam-time";
 
 import type { IntakeField } from "../../lib/checklist/start-flow";
 import { type ChecklistProblem, checkCorrection } from "../../schemas/checklist";
-import { REASON_MAX } from "../../schemas/survey/survey-text";
+import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 import { checklistProblemText } from "../checklist/checklist-copy";
 
 import { useSurveyPanel } from "./survey-panel-context";

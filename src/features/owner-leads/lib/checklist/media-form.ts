@@ -1,6 +1,6 @@
 import type { MediaCategory } from "@/features/surveys";
 
-import { cleanText, optionalText, type SurveyProblem } from "../../schemas/survey/survey-text";
+import { cleanText, optionalText, type SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 
 import { type CoverageRow, MEDIA_CATEGORIES } from "./media-panel-model";
 

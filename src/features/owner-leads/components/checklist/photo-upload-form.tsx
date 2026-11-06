@@ -9,7 +9,7 @@ import type { MediaCategory } from "@/features/surveys";
 
 import { captionInput, CAPTION_MAX, categoriesFor, megabytes, remainingPlaces } from "../../lib/checklist/media-form";
 import type { MediaPanelModel } from "../../lib/checklist/media-panel-model";
-import type { SurveyProblem } from "../../schemas/survey/survey-text";
+import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 import { problemText } from "../survey/survey-copy";
 import { SurveyTextField } from "../survey/survey-text-field";
 

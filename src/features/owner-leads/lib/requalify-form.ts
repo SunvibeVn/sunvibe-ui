@@ -7,8 +7,6 @@ import {
   type SurveyBlock,
   toSurveyUiError,
 } from "@/features/surveys";
-import { vietnamDate } from "@/lib/format/vietnam-time";
-
 import {
   addProblem,
   basisDateProblem,
@@ -17,7 +15,8 @@ import {
   problemsOf,
   requiredText,
   type SurveyProblems,
-} from "../schemas/survey/survey-text";
+} from "@/features/surveys/client";
+import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import { REQUALIFICATION_KIND_LABEL } from "./checklist/label-text";
 import { surveyFailure, type SurveyFailureStep } from "./survey/survey-failure";

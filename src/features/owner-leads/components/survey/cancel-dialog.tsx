@@ -11,7 +11,7 @@ import { useFormDraft } from "@/features/lead-shared/client";
 import { cancelAppointment, type SurveyAppointment, USER_CANCEL_REASONS } from "@/features/surveys";
 
 import { type CancelField, type CancelForm, toCancelBody, validateCancel } from "../../lib/survey/cancel-form";
-import { REASON_MAX } from "../../schemas/survey/survey-text";
+import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";

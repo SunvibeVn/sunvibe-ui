@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import { todayInVietnam } from "@/lib/format/vietnam-time";
 
 import { type ChecklistProblem, checkCorrection } from "../../schemas/checklist";
-import { REASON_MAX } from "../../schemas/survey/survey-text";
+import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { useChecklistPage } from "./checklist-context";
