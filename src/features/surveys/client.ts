@@ -1,15 +1,12 @@
-// Public entry point for Client Components and the plain modules they use: what the lead page takes from the survey UI.
+// Public entry point for Client Components: the survey UI of a lead, which the checklist route and the lead page render.
+export { ChecklistPage } from "./components/checklist/checklist-page";
+export { type SurveyCalls, SurveyCallsProvider, useSurveyCalls } from "./components/survey/survey-calls-context";
+export { problemText } from "./components/survey/survey-copy";
+export { type SurveyDialogMessage, SurveyMessage } from "./components/survey/survey-message";
 export {
-  addProblem,
-  basisDateProblem,
-  cleanText,
-  crossChecks,
-  problemsOf,
-  REASON_MAX,
-  requiredText,
-  type SurveyProblem,
-  type SurveyProblems,
-} from "./schemas/survey/survey-text";
-export { surveyFailure, type SurveyFailureStep } from "./lib/survey/survey-failure";
-export { historyActivityText } from "./lib/history-activity-text";
-export { REQUALIFICATION_KIND_LABEL } from "./lib/checklist/label-text";
+  type SurveyPanelController,
+  SurveyPanelProvider,
+  type SurveyState,
+} from "./components/survey/survey-panel-context";
+export { SurveySection } from "./components/survey/survey-section";
+export { SurveyTextField } from "./components/survey/survey-text-field";

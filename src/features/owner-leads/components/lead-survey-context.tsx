@@ -1,10 +1,9 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { type SurveyCalls, SurveyCallsProvider } from "@/features/surveys/client";
 
 import { getLeadSurvey, listWards } from "../services/owner-leads-api";
-
-import { type SurveyCalls, SurveyCallsProvider } from "./survey/survey-calls-context";
 
 const CALLS: SurveyCalls = { getLeadSurvey, listWards };
 

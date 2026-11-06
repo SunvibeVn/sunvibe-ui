@@ -10,8 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { intentLabelKey } from "@/features/lead-shared";
 import { useFormDraft } from "@/features/lead-shared/client";
-import { toSurveyUiError } from "@/features/surveys";
-import { REASON_MAX, surveyFailure, type SurveyProblem } from "@/features/surveys/client";
+import { REASON_MAX, surveyFailure, type SurveyProblem, toSurveyUiError } from "@/features/surveys";
+import { problemText, type SurveyDialogMessage, SurveyMessage, SurveyTextField } from "@/features/surveys/client";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import {
@@ -25,9 +25,6 @@ import {
 import { changeIntent } from "../services/owner-leads-api";
 
 import { useLeadDetail } from "./lead-detail-context";
-import { problemText } from "./survey/survey-copy";
-import { type SurveyDialogMessage, SurveyMessage } from "./survey/survey-message";
-import { SurveyTextField } from "./survey/survey-text-field";
 
 /** API field -> field of this dialog, for a 400 (spec 7.3). */
 const FIELDS: Readonly<Record<string, RequirementField>> = {

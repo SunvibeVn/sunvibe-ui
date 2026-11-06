@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { ChecklistPage, LeadSurveyContext } from "@/features/owner-leads";
+import { LeadSurveyContext } from "@/features/owner-leads";
+import { ChecklistPage } from "@/features/surveys/client";
 
 // The title is generic: never the request code, an address or a name (survey-checklist spec 4.10).
 export const metadata: Metadata = {

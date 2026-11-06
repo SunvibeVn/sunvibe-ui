@@ -12,6 +12,7 @@ import { IntakeSection } from "@/features/inventory-intake";
 import { type LeadDetail, type LeadSummary, LIST_PATH } from "@/features/lead-shared";
 import { lastListUrl, listFlash } from "@/features/lead-shared/client";
 import { type ChecklistStarted, type SurveyCommandResult, toSurveyUiError } from "@/features/surveys";
+import { SurveyPanelProvider, SurveySection, type SurveyState } from "@/features/surveys/client";
 
 import { add, isBusy, remove } from "../lib/command-lock";
 import { detailFailureAction } from "../lib/detail-failure";
@@ -28,8 +29,6 @@ import { type CommandSource, type LeadDetailController, LeadDetailProvider } fro
 import { LeadDuplicates } from "./lead-duplicates";
 import { LeadHistory } from "./lead-history";
 import { LeadSurveyContext } from "./lead-survey-context";
-import { SurveyPanelProvider, type SurveyState } from "./survey/survey-panel-context";
-import { SurveySection } from "./survey/survey-section";
 
 /** A detail answer, for one user and one lead. */
 type Loaded = { userId: string; leadId: string; lead: LeadDetail };

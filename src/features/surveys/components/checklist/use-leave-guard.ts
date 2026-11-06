@@ -1,0 +1,73 @@
+"use client";
+
+import { useEffect, useSyncExternalStore } from "react";
+
+import { tabDrafts } from "@/features/lead-shared/client";
+
+import { checklistDraftKey } from "../../lib/checklist/checklist-draft";
+import { type GuardNavigation, installHistoryGuard } from "../../lib/checklist/history-guard";
+import { hasUnsavedChanges } from "../../lib/checklist/unsaved";
+import { CHECKLIST_GROUP_PATHS } from "../../types";
+
+/** True while a group of the checklist holds edits that were not saved. */
+export function useUnsavedChanges({ userId, leadId, checklistId }: { userId: string; leadId: string; checklistId: string }): boolean {
+  return useSyncExternalStore(
+    tabDrafts.subscribe,
+    () =>
+      hasUnsavedChanges(
+        CHECKLIST_GROUP_PATHS.map((group) => tabDrafts.get(checklistDraftKey({ userId, leadId, checklistId, group })) ?? ""),
+      ),
+    () => false,
+  );
+}
+
+/**
+ * Asks before leaving the page or the tab while a group has unsaved changes (survey-checklist spec 6.2) or photos are
+ * still uploading (survey-media spec 6.2: files not sent are lost): the browser's own prompt on unload, a confirm on a
+ * link inside the app and on Back or Forward to another page (SV-010, `installHistoryGuard`). The drafts stay in tab
+ * memory either way.
+ */
+export function useLeaveGuard(
+  key: { userId: string; leadId: string; checklistId: string },
+  confirmText: string,
+  uploads: { running: boolean; confirmText: string } = { running: false, confirmText: "" },
+): boolean {
+  const dirty = useUnsavedChanges(key);
+
+  const uploading = uploads.running;
+  const text = uploading ? uploads.confirmText : confirmText;
+  useEffect(() => {
+    if (!dirty && !uploading) return;
+    const onUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    const onClick = (event: MouseEvent) => {
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      const anchor = event.target instanceof Element ? event.target.closest("a[href]") : null;
+      if (!(anchor instanceof HTMLAnchorElement) || anchor.target === "_blank") return;
+      const url = new URL(anchor.href, window.location.href);
+      if (url.origin !== window.location.origin || url.pathname === window.location.pathname) return;
+      if (!window.confirm(text)) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+    };
+    window.addEventListener("beforeunload", onUnload);
+    document.addEventListener("click", onClick, true);
+    const uninstallHistoryGuard = installHistoryGuard(
+      {
+        navigation: (window as Window & { navigation?: GuardNavigation }).navigation,
+        pathname: () => window.location.pathname,
+        confirm: (message) => window.confirm(message),
+      },
+      text,
+    );
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      document.removeEventListener("click", onClick, true);
+      uninstallHistoryGuard();
+    };
+  }, [dirty, uploading, text]);
+
+  return dirty;
+}

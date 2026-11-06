@@ -1,11 +1,11 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { type SurveyCalls, useSurveyCalls } from "@/features/surveys/client";
 
 import { getLeadSurvey, listWards } from "../services/owner-leads-api";
 
 import { LeadSurveyContext } from "./lead-survey-context";
-import { type SurveyCalls, useSurveyCalls } from "./survey/survey-calls-context";
 
 describe("the survey calls of a lead (W32 F1)", () => {
   it("leadSurveyContext_givesTheCallsOfThisFeature: the survey UI reads them, it never imports them", () => {

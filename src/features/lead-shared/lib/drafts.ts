@@ -18,7 +18,7 @@ import { createListFlash } from "./list-flash";
  * `survey*` and `requirement`: the survey dialogs and the requirement change; each keeps all its fields as one JSON
  * text (`writeFormDraft`), the change dialog with the appointment version it was typed for.
  * `checklistIntake`: the intake declaration of a checklist start by someone other than the performer.
- * `checklist:<checklistId>:<group>`: the edits of one checklist group (`checklist/checklist-draft.ts`).
+ * `checklist:<checklistId>:<group>`: the edits of one checklist group (`checklist-draft.ts` in surveys).
  */
 export type DraftForm =
   | "activity"

@@ -2,12 +2,11 @@
 
 import { createContext, useContext } from "react";
 import type { LeadSummary } from "@/features/lead-shared";
+import type { SurveyPanelController, SurveyState } from "@/features/surveys/client";
 
 import type { CommandSource } from "../lib/command-lock";
 import type { SurveyRecordFacts } from "../lib/transitions";
 import type { LeadNoteResult } from "../types";
-
-import type { SurveyPanelController, SurveyState } from "./survey/survey-panel-context";
 
 export type { CommandSource } from "../lib/command-lock";
 

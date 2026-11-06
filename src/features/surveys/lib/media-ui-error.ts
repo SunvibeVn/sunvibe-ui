@@ -1,7 +1,7 @@
 import type { ApiResult } from "@/features/auth/client";
 
 // What a failed survey photo call means for the page (survey-media spec 6.3, 6.2), by `code` and field, never the
-// message. The owner-leads page turns each kind into its text and its uploader step.
+// message. The checklist page turns each kind into its text and its uploader step.
 
 export type MediaUiErrorKind =
   | "signed-out"

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatDateTime, isClosedLeadStatus, type LeadActivity } from "@/features/lead-shared";
 import { useDraft } from "@/features/lead-shared/client";
-import { historyActivityText } from "@/features/surveys/client";
+import { historyActivityText } from "@/features/surveys";
 
 import type { CommandMessage } from "../lib/command-flow";
 import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";

@@ -8,7 +8,7 @@ import {
   REASON_MAX,
   requiredText,
   type SurveyProblems,
-} from "@/features/surveys/client";
+} from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import type { ChangeIntentInput } from "../services/owner-leads-api";
