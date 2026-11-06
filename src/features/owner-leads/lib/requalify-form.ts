@@ -13,14 +13,13 @@ import {
   cleanText,
   crossChecks,
   problemsOf,
+  REQUALIFICATION_KIND_LABEL,
   requiredText,
   surveyFailure,
   type SurveyFailureStep,
   type SurveyProblems,
 } from "@/features/surveys/client";
 import { vietnamDate } from "@/lib/format/vietnam-time";
-
-import { REQUALIFICATION_KIND_LABEL } from "./checklist/label-text";
 
 // The requalify dialog of the Survey section (property-create requalification spec 6, A-6): its checks, its body and the
 // flow of one command, with the calls injected. The text stays on the revision: never in History, a toast, a title, a

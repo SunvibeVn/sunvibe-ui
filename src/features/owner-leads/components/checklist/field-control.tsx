@@ -7,12 +7,12 @@ import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 import type { ChecklistSource } from "@/features/surveys";
 
-import { afterEdit } from "../../lib/checklist/field-offers";
-import { fieldAnchor } from "../../lib/checklist/readiness-view";
-import { needsRelayBasis, receiverOptions } from "../../lib/checklist/receiver-options";
-import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
-import { spaceIdOfKey } from "../../lib/checklist/units";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { afterEdit } from "../../../surveys/lib/checklist/field-offers";
+import { fieldAnchor } from "../../../surveys/lib/checklist/readiness-view";
+import { needsRelayBasis, receiverOptions } from "../../../surveys/lib/checklist/receiver-options";
+import { problemsUnder, unitPath } from "../../../surveys/lib/checklist/unit-path";
+import { spaceIdOfKey } from "../../../surveys/lib/checklist/units";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { useChecklistPage } from "./checklist-context";

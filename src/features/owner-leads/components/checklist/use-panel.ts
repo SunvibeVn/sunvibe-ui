@@ -5,12 +5,12 @@ import { useCallback, useMemo } from "react";
 import { useDraft } from "@/features/lead-shared/client";
 import type { ChecklistContent, ChecklistGroupPath, ChecklistInput, ChecklistUnitMeta } from "@/features/surveys";
 
-import { checklistDraftKey, readChecklistDraft, writeChecklistDraft } from "../../lib/checklist/checklist-draft";
-import { metaOfUnits } from "../../lib/checklist/correction-rule";
-import { type GroupEdits, inputOfContent, toGroupInput, type UnitValue, unitsOfInput } from "../../lib/checklist/group-input";
-import { withRelayRule } from "../../lib/checklist/receiver-options";
-import { sameUnit } from "../../lib/checklist/unit-equality";
-import { isPanelLocked } from "../../lib/checklist/page-state";
+import { checklistDraftKey, readChecklistDraft, writeChecklistDraft } from "../../../surveys/lib/checklist/checklist-draft";
+import { metaOfUnits } from "../../../surveys/lib/checklist/correction-rule";
+import { type GroupEdits, inputOfContent, toGroupInput, type UnitValue, unitsOfInput } from "../../../surveys/lib/checklist/group-input";
+import { withRelayRule } from "../../../surveys/lib/checklist/receiver-options";
+import { sameUnit } from "../../../surveys/lib/checklist/unit-equality";
+import { isPanelLocked } from "../../../surveys/lib/checklist/page-state";
 
 import { useChecklistPage } from "./checklist-context";
 

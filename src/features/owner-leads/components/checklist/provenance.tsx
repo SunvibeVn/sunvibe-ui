@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import type { ChecklistUnitMeta } from "@/features/surveys";
 
-import { formatProvenance, provenanceLine, type ProvenanceUnit } from "../../lib/checklist/provenance-line";
+import { formatProvenance, provenanceLine, type ProvenanceUnit } from "../../../surveys/lib/checklist/provenance-line";
 
 import { useChecklistPage } from "./checklist-context";
 

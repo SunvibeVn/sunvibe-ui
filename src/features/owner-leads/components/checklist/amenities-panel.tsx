@@ -8,11 +8,11 @@ import { FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 import type { ChecklistAmenityCode, ChecklistInput, ChecklistOtherItemInput } from "@/features/surveys";
 
-import { newOtherItem } from "../../lib/checklist/entries";
-import { fieldAnchor, spaceCodes } from "../../lib/checklist/readiness-view";
-import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
-import { unitKey } from "../../lib/checklist/units";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { newOtherItem } from "../../../surveys/lib/checklist/entries";
+import { fieldAnchor, spaceCodes } from "../../../surveys/lib/checklist/readiness-view";
+import { problemsUnder, unitPath } from "../../../surveys/lib/checklist/unit-path";
+import { unitKey } from "../../../surveys/lib/checklist/units";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { useChecklistPage } from "./checklist-context";

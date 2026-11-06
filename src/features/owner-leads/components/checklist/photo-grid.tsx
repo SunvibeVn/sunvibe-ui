@@ -7,7 +7,7 @@ import { Badge, type BadgeTone } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime } from "@/lib/format/vietnam-time";
 
-import { type MediaPanelModel, type PhotoBadge, type PhotoCard, viewedCard } from "../../lib/checklist/media-panel-model";
+import { type MediaPanelModel, type PhotoBadge, type PhotoCard, viewedCard } from "../../../surveys/lib/checklist/media-panel-model";
 
 import { PhotoHoldControls } from "./photo-hold-controls";
 import { PhotoRemoveDialog } from "./photo-remove-dialog";

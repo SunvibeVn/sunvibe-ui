@@ -21,8 +21,8 @@ import {
   toChecklistUiError,
 } from "@/features/surveys";
 
-import { checklistDraftKey, rebaseOtherDrafts } from "../../lib/checklist/checklist-draft";
-import { earlierChecklist, type EarlierChecklist } from "../../lib/checklist/page-notices";
+import { checklistDraftKey, rebaseOtherDrafts } from "../../../surveys/lib/checklist/checklist-draft";
+import { earlierChecklist, type EarlierChecklist } from "../../../surveys/lib/checklist/page-notices";
 import {
   createAnswerGate,
   forgetChecklist,
@@ -36,9 +36,9 @@ import {
   unlockGroup,
   viewEvent,
   type ViewEvent,
-} from "../../lib/checklist/page-state";
-import { runDecision, runSubmit } from "../../lib/checklist/review-flow";
-import type { DecisionResult } from "../../lib/checklist/review-model";
+} from "../../../surveys/lib/checklist/page-state";
+import { runDecision, runSubmit } from "../../../surveys/lib/checklist/review-flow";
+import type { DecisionResult } from "../../../surveys/lib/checklist/review-model";
 
 import { useSurveyCalls } from "../survey/survey-calls-context";
 import type { ChecklistPageMessage, CommandOutcome } from "./checklist-context";

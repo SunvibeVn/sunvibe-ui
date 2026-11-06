@@ -9,7 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import type { OwnerLeadsKey } from "@/features/lead-shared";
 import { reviewReasonKey } from "@/features/surveys";
 
-import { previewModel } from "../../lib/checklist/preview-model";
+import { previewModel } from "../../../surveys/lib/checklist/preview-model";
 import {
   afterDecision,
   decisionConsequenceKey,
@@ -22,8 +22,8 @@ import {
   reviewProblems,
   toDecisionInput,
   withMark,
-} from "../../lib/checklist/review-model";
-import { createInFlightGuard } from "../../lib/checklist/submission-model";
+} from "../../../surveys/lib/checklist/review-model";
+import { createInFlightGuard } from "../../../surveys/lib/checklist/submission-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { ChecklistSections } from "./checklist-sections";

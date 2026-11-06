@@ -11,3 +11,5 @@ export {
   type SurveyProblems,
 } from "./schemas/survey/survey-text";
 export { surveyFailure, type SurveyFailureStep } from "./lib/survey/survey-failure";
+export { historyActivityText } from "./lib/history-activity-text";
+export { REQUALIFICATION_KIND_LABEL } from "./lib/checklist/label-text";

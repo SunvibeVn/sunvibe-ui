@@ -6,9 +6,9 @@ import { useId, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { mediaErrorText } from "../../lib/checklist/media-messages";
-import { type EvidenceRow, type PhotoMark, REJECTION_REASON_MAX } from "../../lib/checklist/review-model";
-import { photoTitle } from "../../lib/checklist/status-model";
+import { mediaErrorText } from "../../../surveys/lib/checklist/media-messages";
+import { type EvidenceRow, type PhotoMark, REJECTION_REASON_MAX } from "../../../surveys/lib/checklist/review-model";
+import { photoTitle } from "../../../surveys/lib/checklist/status-model";
 import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 import { problemText } from "../survey/survey-copy";
 import { SurveyTextField } from "../survey/survey-text-field";

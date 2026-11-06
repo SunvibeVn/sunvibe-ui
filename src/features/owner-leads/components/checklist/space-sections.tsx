@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
-import { spaceCodes } from "../../lib/checklist/readiness-view";
+import { spaceCodes } from "../../../surveys/lib/checklist/readiness-view";
 
 import { useChecklistPage } from "./checklist-context";
 

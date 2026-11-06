@@ -4,7 +4,7 @@ import { useCallback, useEffect, useLayoutEffect, useState } from "react";
 
 import { getChecklist } from "@/features/surveys";
 
-import { loadChain, type RevisionChain } from "../../lib/checklist/review-model";
+import { loadChain, type RevisionChain } from "../../../surveys/lib/checklist/review-model";
 
 export type ChainLoad = { state: "loading" } | ({ state: "ready" } & RevisionChain);
 

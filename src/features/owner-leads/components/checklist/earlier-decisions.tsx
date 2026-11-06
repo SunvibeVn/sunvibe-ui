@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { decisionPanelModel, type RequalificationModel } from "../../lib/checklist/status-model";
+import { decisionPanelModel, type RequalificationModel } from "../../../surveys/lib/checklist/status-model";
 
 import { useChecklistMedia } from "./media-context";
 import type { ChainLoad } from "./use-revision-chain";

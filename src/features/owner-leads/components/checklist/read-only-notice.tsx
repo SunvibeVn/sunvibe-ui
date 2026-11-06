@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { readOnlyNotice } from "../../lib/checklist/page-state";
+import { readOnlyNotice } from "../../../surveys/lib/checklist/page-state";
 
 import { useChecklistPage } from "./checklist-context";
 import { TakeoverDialog } from "./takeover-dialog";

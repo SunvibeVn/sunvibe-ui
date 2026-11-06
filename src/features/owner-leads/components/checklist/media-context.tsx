@@ -4,9 +4,9 @@ import { createContext, useContext } from "react";
 
 import type { MediaHoldReason, MediaItem, MediaList, MediaRemovalInput, MediaUiError, MediaVariant } from "@/features/surveys";
 
-import type { DownloadResult, ImageEntry } from "../../lib/checklist/media-object-urls";
-import type { MediaPanelModel } from "../../lib/checklist/media-panel-model";
-import type { QueueHold, UploadPlacement, UploadRow } from "../../lib/checklist/media-upload-queue";
+import type { DownloadResult, ImageEntry } from "../../../surveys/lib/checklist/media-object-urls";
+import type { MediaPanelModel } from "../../../surveys/lib/checklist/media-panel-model";
+import type { QueueHold, UploadPlacement, UploadRow } from "../../../surveys/lib/checklist/media-upload-queue";
 
 /** What a photo command gave the part that sent it; page-level outcomes (404, read-only) are handled already. */
 export type MediaCommandOutcome = { kind: "done" } | { kind: "failed"; error: MediaUiError };

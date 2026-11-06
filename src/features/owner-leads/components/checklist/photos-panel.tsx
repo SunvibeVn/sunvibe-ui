@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-import { type CoverageRow, isEditingHolder, type MediaPanelModel } from "../../lib/checklist/media-panel-model";
-import { coverageStateText, mediaErrorText } from "../../lib/checklist/media-messages";
+import { type CoverageRow, isEditingHolder, type MediaPanelModel } from "../../../surveys/lib/checklist/media-panel-model";
+import { coverageStateText, mediaErrorText } from "../../../surveys/lib/checklist/media-messages";
 
 import { useChecklistPage } from "./checklist-context";
 import { type MediaController, useChecklistMedia } from "./media-context";

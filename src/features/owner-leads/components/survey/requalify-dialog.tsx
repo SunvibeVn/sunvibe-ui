@@ -12,7 +12,7 @@ import { useFormDraft } from "@/features/lead-shared/client";
 import { type ChecklistRequalificationKind, requalifyChecklist } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
-import { REQUALIFICATION_KIND_LABEL } from "../../lib/checklist/label-text";
+import { REQUALIFICATION_KIND_LABEL } from "../../../surveys/lib/checklist/label-text";
 import {
   createSubmitGate,
   firstRequalifyField,

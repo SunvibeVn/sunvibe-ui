@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 
-import type { PreviewLine } from "../../lib/checklist/preview-model";
-import { checklistHref } from "../../lib/checklist/routes";
+import type { PreviewLine } from "../../../surveys/lib/checklist/preview-model";
+import { checklistHref } from "../../../surveys/lib/checklist/routes";
 
 import { useChecklistPage } from "./checklist-context";
 

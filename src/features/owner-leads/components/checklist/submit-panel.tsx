@@ -7,8 +7,8 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { OwnerLeadsKey } from "@/features/lead-shared";
 
-import { previewModel } from "../../lib/checklist/preview-model";
-import { createInFlightGuard, submitFailureStep, submitPanelState } from "../../lib/checklist/submission-model";
+import { previewModel } from "../../../surveys/lib/checklist/preview-model";
+import { createInFlightGuard, submitFailureStep, submitPanelState } from "../../../surveys/lib/checklist/submission-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { ReadinessList } from "./readiness-list";

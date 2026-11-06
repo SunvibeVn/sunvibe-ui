@@ -1,6 +1,6 @@
 import type { OwnerLeadsKey } from "@/features/lead-shared";
 
-import type { ChecklistProblem } from "../../schemas/checklist";
+import type { ChecklistProblem } from "../../../surveys/schemas/checklist";
 import { type FieldKind, problemText, type SurveyT } from "../survey/survey-copy";
 
 /** The message of a checklist field problem; the server's own text is never shown (spec 6.3). */

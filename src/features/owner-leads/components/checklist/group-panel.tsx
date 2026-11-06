@@ -8,15 +8,15 @@ import { Button } from "@/components/ui/button";
 import { CHECKLIST_GROUP_NAME, type ChecklistCorrectionInput, type ChecklistInput } from "@/features/surveys";
 import { formatDateTime } from "@/lib/format/vietnam-time";
 
-import { otherGroupVersions } from "../../lib/checklist/answer-merge";
-import { rebaseDraft } from "../../lib/checklist/checklist-draft";
-import { compareRows, unitLabel } from "../../lib/checklist/compare-view";
-import { cascadeReasons, correctionReasons, type CorrectionReason, g1Cascades } from "../../lib/checklist/correction-rule";
-import { idle, type NotSavedReason, panelEvent, type PanelState, saveFailureEvent, startSave } from "../../lib/checklist/panel-state";
-import { spaceCodes } from "../../lib/checklist/readiness-view";
-import { sameUnit } from "../../lib/checklist/unit-equality";
-import { unitPath } from "../../lib/checklist/unit-path";
-import { type ChecklistProblems, checkGroupInput } from "../../schemas/checklist";
+import { otherGroupVersions } from "../../../surveys/lib/checklist/answer-merge";
+import { rebaseDraft } from "../../../surveys/lib/checklist/checklist-draft";
+import { compareRows, unitLabel } from "../../../surveys/lib/checklist/compare-view";
+import { cascadeReasons, correctionReasons, type CorrectionReason, g1Cascades } from "../../../surveys/lib/checklist/correction-rule";
+import { idle, type NotSavedReason, panelEvent, type PanelState, saveFailureEvent, startSave } from "../../../surveys/lib/checklist/panel-state";
+import { spaceCodes } from "../../../surveys/lib/checklist/readiness-view";
+import { sameUnit } from "../../../surveys/lib/checklist/unit-equality";
+import { unitPath } from "../../../surveys/lib/checklist/unit-path";
+import { type ChecklistProblems, checkGroupInput } from "../../../surveys/schemas/checklist";
 
 import { useChecklistPage } from "./checklist-context";
 import { CorrectionBox } from "./correction-box";

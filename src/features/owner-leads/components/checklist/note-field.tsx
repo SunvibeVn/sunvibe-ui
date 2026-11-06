@@ -3,10 +3,10 @@
 import { useTranslations } from "next-intl";
 import { useId } from "react";
 
-import { fieldAnchor } from "../../lib/checklist/readiness-view";
-import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
-import { spaceIdOfKey } from "../../lib/checklist/units";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { fieldAnchor } from "../../../surveys/lib/checklist/readiness-view";
+import { problemsUnder, unitPath } from "../../../surveys/lib/checklist/unit-path";
+import { spaceIdOfKey } from "../../../surveys/lib/checklist/units";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { checklistProblemText } from "./checklist-copy";

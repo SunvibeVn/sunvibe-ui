@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import type { PreviewRow, PreviewSection } from "../../lib/checklist/preview-model";
+import type { PreviewRow, PreviewSection } from "../../../surveys/lib/checklist/preview-model";
 
 import type { PhotoGridMode } from "./photo-grid";
 import { PhotosBody } from "./photos-panel";

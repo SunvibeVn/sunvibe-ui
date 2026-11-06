@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import type { MediaUiError } from "@/features/surveys";
 
-import { mediaErrorText } from "../../lib/checklist/media-messages";
-import type { PhotoCard } from "../../lib/checklist/media-panel-model";
+import { mediaErrorText } from "../../../surveys/lib/checklist/media-messages";
+import type { PhotoCard } from "../../../surveys/lib/checklist/media-panel-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { useChecklistMedia } from "./media-context";

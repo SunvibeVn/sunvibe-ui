@@ -9,8 +9,8 @@ import { Dialog } from "@/components/ui/dialog";
 import { useFormDraft } from "@/features/lead-shared/client";
 import { todayInVietnam, vietnamDate } from "@/lib/format/vietnam-time";
 
-import type { IntakeField } from "../../lib/checklist/start-flow";
-import { type ChecklistProblem, checkCorrection } from "../../schemas/checklist";
+import type { IntakeField } from "../../../surveys/lib/checklist/start-flow";
+import { type ChecklistProblem, checkCorrection } from "../../../surveys/schemas/checklist";
 import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 import { checklistProblemText } from "../checklist/checklist-copy";
 

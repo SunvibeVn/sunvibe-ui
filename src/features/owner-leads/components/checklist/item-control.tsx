@@ -6,9 +6,9 @@ import { useId } from "react";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 
-import { needsRelayBasis, receiverOptions } from "../../lib/checklist/receiver-options";
-import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { needsRelayBasis, receiverOptions } from "../../../surveys/lib/checklist/receiver-options";
+import { problemsUnder, unitPath } from "../../../surveys/lib/checklist/unit-path";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { useChecklistPage } from "./checklist-context";

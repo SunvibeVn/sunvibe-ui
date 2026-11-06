@@ -1,7 +1,7 @@
 "use client";
 
-import { unitKey } from "../../lib/checklist/units";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { unitKey } from "../../../surveys/lib/checklist/units";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 
 import { FieldControl } from "./field-control";
 import { GroupPanel } from "./group-panel";

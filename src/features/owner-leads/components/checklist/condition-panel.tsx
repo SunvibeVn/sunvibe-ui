@@ -4,9 +4,9 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 
-import { ownerFormOffer } from "../../lib/checklist/field-offers";
-import { unitKey } from "../../lib/checklist/units";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { ownerFormOffer } from "../../../surveys/lib/checklist/field-offers";
+import { unitKey } from "../../../surveys/lib/checklist/units";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 
 import { useChecklistPage } from "./checklist-context";
 import { FieldControl } from "./field-control";

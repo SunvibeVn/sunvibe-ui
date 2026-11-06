@@ -7,8 +7,8 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { type ChecklistCheckpoint, getCheckpoint, toChecklistUiError } from "@/features/surveys";
 
-import { checkpointFailure } from "../../lib/checklist/page-state";
-import { previewSections } from "../../lib/checklist/preview-model";
+import { checkpointFailure } from "../../../surveys/lib/checklist/page-state";
+import { previewSections } from "../../../surveys/lib/checklist/preview-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { ChecklistSections } from "./checklist-sections";

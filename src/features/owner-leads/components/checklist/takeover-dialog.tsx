@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { todayInVietnam } from "@/lib/format/vietnam-time";
 
-import { type ChecklistProblem, checkCorrection } from "../../schemas/checklist";
+import { type ChecklistProblem, checkCorrection } from "../../../surveys/schemas/checklist";
 import { REASON_MAX } from "../../../surveys/schemas/survey/survey-text";
 import { SurveyTextField } from "../survey/survey-text-field";
 

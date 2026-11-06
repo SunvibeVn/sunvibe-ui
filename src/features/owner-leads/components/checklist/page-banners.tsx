@@ -5,8 +5,8 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import type { ChecklistView } from "@/features/surveys";
 
-import type { EarlierChecklist } from "../../lib/checklist/page-notices";
-import { pageNotices } from "../../lib/checklist/page-notices";
+import type { EarlierChecklist } from "../../../surveys/lib/checklist/page-notices";
+import { pageNotices } from "../../../surveys/lib/checklist/page-notices";
 
 /**
  * The banners of every checklist view (survey-checklist spec 6.2, section 8, US-2 AC-4) and, on a draft of a later

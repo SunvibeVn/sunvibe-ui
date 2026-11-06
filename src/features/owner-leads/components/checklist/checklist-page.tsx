@@ -11,15 +11,15 @@ import { Button } from "@/components/ui/button";
 import { Tabs } from "@/components/ui/tabs";
 import { todayInVietnam, vietnamDate } from "@/lib/format/vietnam-time";
 
-import { contextOf } from "../../lib/checklist/correction-rule";
+import { contextOf } from "../../../surveys/lib/checklist/correction-rule";
 import {
   EMPTY_REVIEW_FORM,
   hasReviewInput,
   heldReviewForm,
   type HeldReviewForm,
   reviewAccess,
-} from "../../lib/checklist/review-model";
-import { checklistHref, tabOf } from "../../lib/checklist/routes";
+} from "../../../surveys/lib/checklist/review-model";
+import { checklistHref, tabOf } from "../../../surveys/lib/checklist/routes";
 
 import { type ChecklistController, ChecklistProvider } from "./checklist-context";
 import { ChecklistEdit } from "./checklist-edit";

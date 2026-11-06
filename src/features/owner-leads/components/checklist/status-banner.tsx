@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { Alert } from "@/components/ui/alert";
 
-import { statusBanner } from "../../lib/checklist/status-model";
+import { statusBanner } from "../../../surveys/lib/checklist/status-model";
 
 import { useChecklistPage } from "./checklist-context";
 

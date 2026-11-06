@@ -23,19 +23,19 @@ import {
   uploadMediaContent,
 } from "@/features/surveys";
 
-import { newClientId } from "../../lib/checklist/client-id";
-import { heldDetailsLost, heldMediaIds, withoutHeldDetails } from "../../lib/checklist/media-held-details";
-import { attachPageEvents, createObjectUrlStore, type ObjectUrlStore } from "../../lib/checklist/media-object-urls";
-import { listDecision } from "../../lib/checklist/media-ordering";
-import { mediaPanelModel } from "../../lib/checklist/media-panel-model";
-import { createMediaPoller, type MediaPoller, type PollResult } from "../../lib/checklist/media-polling";
+import { newClientId } from "../../../surveys/lib/checklist/client-id";
+import { heldDetailsLost, heldMediaIds, withoutHeldDetails } from "../../../surveys/lib/checklist/media-held-details";
+import { attachPageEvents, createObjectUrlStore, type ObjectUrlStore } from "../../../surveys/lib/checklist/media-object-urls";
+import { listDecision } from "../../../surveys/lib/checklist/media-ordering";
+import { mediaPanelModel } from "../../../surveys/lib/checklist/media-panel-model";
+import { createMediaPoller, type MediaPoller, type PollResult } from "../../../surveys/lib/checklist/media-polling";
 import {
   createUploadQueue,
   type QueueHold,
   type UploadPlacement,
   type UploadQueue,
   type UploadRow,
-} from "../../lib/checklist/media-upload-queue";
+} from "../../../surveys/lib/checklist/media-upload-queue";
 
 import type { ChecklistController } from "./checklist-context";
 import type { MediaCommandOutcome, MediaController } from "./media-context";

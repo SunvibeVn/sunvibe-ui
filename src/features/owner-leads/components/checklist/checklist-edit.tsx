@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { previewSections } from "../../lib/checklist/preview-model";
+import { previewSections } from "../../../surveys/lib/checklist/preview-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { AmenitiesPanel } from "./amenities-panel";

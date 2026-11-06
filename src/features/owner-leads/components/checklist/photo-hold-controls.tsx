@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Select } from "@/components/ui/select";
 import type { MediaHoldReason, MediaUiError } from "@/features/surveys";
 
-import { mediaErrorText } from "../../lib/checklist/media-messages";
-import type { PhotoCard } from "../../lib/checklist/media-panel-model";
+import { mediaErrorText } from "../../../surveys/lib/checklist/media-messages";
+import type { PhotoCard } from "../../../surveys/lib/checklist/media-panel-model";
 
 import { type MediaCommandOutcome, useChecklistMedia } from "./media-context";
 

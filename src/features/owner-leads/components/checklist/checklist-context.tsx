@@ -11,11 +11,11 @@ import type {
   ChecklistView,
 } from "@/features/surveys";
 
-import type { GroupContext } from "../../lib/checklist/group-input";
-import type { EarlierChecklist } from "../../lib/checklist/page-notices";
-import type { PageMessage, PanelLocks } from "../../lib/checklist/page-state";
-import type { DecisionResult } from "../../lib/checklist/review-model";
-import type { ChecklistRules } from "../../schemas/checklist";
+import type { GroupContext } from "../../../surveys/lib/checklist/group-input";
+import type { EarlierChecklist } from "../../../surveys/lib/checklist/page-notices";
+import type { PageMessage, PanelLocks } from "../../../surveys/lib/checklist/page-state";
+import type { DecisionResult } from "../../../surveys/lib/checklist/review-model";
+import type { ChecklistRules } from "../../../surveys/schemas/checklist";
 
 /** What a save or a takeover gave the part that sent it; page-level outcomes (404, read-only) are handled already. */
 export type CommandOutcome = { kind: "saved" } | { kind: "failed"; error: ChecklistUiError };

@@ -8,7 +8,7 @@ import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 
-import type { ChecklistProblem } from "../../schemas/checklist";
+import type { ChecklistProblem } from "../../../surveys/schemas/checklist";
 import { SurveyTextField } from "../survey/survey-text-field";
 
 import { checklistProblemText } from "./checklist-copy";

@@ -6,7 +6,7 @@ import { useId } from "react";
 import type { OwnerLeadsKey } from "@/features/lead-shared";
 import type { ChecklistDecisionRule, ChecklistFailedKind, ChecklistNeedsChangesKind, ChecklistOutcome } from "@/features/surveys";
 
-import { REVIEW_TEXT_MAX, type ReviewField, type ReviewForm, ruleTextKey } from "../../lib/checklist/review-model";
+import { REVIEW_TEXT_MAX, type ReviewField, type ReviewForm, ruleTextKey } from "../../../surveys/lib/checklist/review-model";
 import type { SurveyProblems } from "../../../surveys/schemas/survey/survey-text";
 import { problemText } from "../survey/survey-copy";
 import { SurveyTextField } from "../survey/survey-text-field";

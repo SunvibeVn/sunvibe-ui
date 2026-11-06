@@ -4,7 +4,7 @@ import { useTranslations } from "next-intl";
 
 import { formatDateTime } from "@/lib/format/vietnam-time";
 
-import type { MediaPanelModel } from "../../lib/checklist/media-panel-model";
+import type { MediaPanelModel } from "../../../surveys/lib/checklist/media-panel-model";
 
 import { usePairText } from "./use-pair-text";
 

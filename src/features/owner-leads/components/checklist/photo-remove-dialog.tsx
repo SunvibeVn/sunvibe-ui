@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import type { ChecklistCorrectionInput, MediaUiError } from "@/features/surveys";
 
-import { deselectErrorText, mediaErrorText } from "../../lib/checklist/media-messages";
-import { type PhotoCard, removalAction, removalNeedsCorrection } from "../../lib/checklist/media-panel-model";
+import { deselectErrorText, mediaErrorText } from "../../../surveys/lib/checklist/media-messages";
+import { type PhotoCard, removalAction, removalNeedsCorrection } from "../../../surveys/lib/checklist/media-panel-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { CorrectionBox } from "./correction-box";

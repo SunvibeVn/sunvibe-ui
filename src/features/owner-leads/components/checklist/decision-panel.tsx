@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { decisionPanelModel } from "../../lib/checklist/status-model";
+import { decisionPanelModel } from "../../../surveys/lib/checklist/status-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { useChecklistMedia } from "./media-context";

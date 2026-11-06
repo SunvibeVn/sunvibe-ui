@@ -4,10 +4,10 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 
-import { megabytes } from "../../lib/checklist/media-form";
-import { mediaErrorText } from "../../lib/checklist/media-messages";
-import { uploadRowStatus } from "../../lib/checklist/media-panel-model";
-import type { UploadRow } from "../../lib/checklist/media-upload-queue";
+import { megabytes } from "../../../surveys/lib/checklist/media-form";
+import { mediaErrorText } from "../../../surveys/lib/checklist/media-messages";
+import { uploadRowStatus } from "../../../surveys/lib/checklist/media-panel-model";
+import type { UploadRow } from "../../../surveys/lib/checklist/media-upload-queue";
 
 import { useChecklistPage } from "./checklist-context";
 import { useChecklistMedia } from "./media-context";

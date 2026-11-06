@@ -6,11 +6,11 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import type { ChecklistHazardInput, ChecklistInput } from "@/features/surveys";
 
-import { earlierHazardRows, linkedEntry, newHazard } from "../../lib/checklist/entries";
-import { fieldAnchor } from "../../lib/checklist/readiness-view";
-import { problemsUnder } from "../../lib/checklist/unit-path";
-import { unitKey } from "../../lib/checklist/units";
-import type { ChecklistProblems } from "../../schemas/checklist";
+import { earlierHazardRows, linkedEntry, newHazard } from "../../../surveys/lib/checklist/entries";
+import { fieldAnchor } from "../../../surveys/lib/checklist/readiness-view";
+import { problemsUnder } from "../../../surveys/lib/checklist/unit-path";
+import { unitKey } from "../../../surveys/lib/checklist/units";
+import type { ChecklistProblems } from "../../../surveys/schemas/checklist";
 
 import { useChecklistPage } from "./checklist-context";
 import { checklistProblemText } from "./checklist-copy";

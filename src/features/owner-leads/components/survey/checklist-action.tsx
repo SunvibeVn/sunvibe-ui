@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { tabDrafts } from "@/features/lead-shared/client";
 import { startChecklist, type SurveyBlock, toChecklistUiError } from "@/features/surveys";
 
-import { forgetLeadChecklists } from "../../lib/checklist/page-state";
-import { checklistHref } from "../../lib/checklist/routes";
-import { checklistAction, checklistStartFailure, type IntakeField } from "../../lib/checklist/start-flow";
+import { forgetLeadChecklists } from "../../../surveys/lib/checklist/page-state";
+import { checklistHref } from "../../../surveys/lib/checklist/routes";
+import { checklistAction, checklistStartFailure, type IntakeField } from "../../../surveys/lib/checklist/start-flow";
 
 import { IntakeDialog } from "./intake-dialog";
 import { useSurveyPanel } from "./survey-panel-context";
