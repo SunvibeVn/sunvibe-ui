@@ -34,6 +34,7 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
   auth also has phone.ts, for the phone routes only, because it reaches the phone parser; lead-shared also has
   session-sync.ts, for the root layout only: DraftSessionSync and nothing else.
   ESLint blocks deep imports like @/features/auth/components/... ; import from the feature root.
+  Names and folders: .cursor/rules/naming-layout.mdc, checked by src/naming-layout.test.ts.
 - Lead and survey code, in three layers: owner-leads (the lead list and page) over surveys (the survey and checklist
   UI and /workspace/surveys) over lead-shared (lead types, labels, formats, tab memory). ESLint keeps the direction: a
   feature never imports one above it, so the lead page passes in what the survey UI needs (SurveyPanelContext,

@@ -1,4 +1,4 @@
-import { FIELD_MAX_LENGTH } from "../schemas/owner-intake-schema";
+import { FIELD_MAX_LENGTH } from "../schemas/owner-intake.schema";
 import type { FieldErrorKinds, FieldName } from "../types/form";
 
 /** Field paths as the server reports them in `errors[].field`, in form order (first one gets the focus). */

@@ -87,7 +87,7 @@ public/images/brand/        # Logo and share-banner source files
 
 **Anything that reads cookies, headers or `searchParams` renders inside `<Suspense>`.** With `cacheComponents` on, reading them outside a boundary is a build error.
 
-**File names** are kebab-case with a role suffix where useful: `*-flow.ts`, `*.service.ts`, `*.schema.ts`, `*.types.ts`, and colocated `*.test.ts`.
+**File names** follow `.cursor/rules/naming-layout.mdc`, and `src/naming-layout.test.ts` checks them.
 
 ## Authentication
 

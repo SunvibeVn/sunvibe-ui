@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import vi from "@/i18n/messages/vi.json";
 
 import { EMPTY_FORM_VALUES } from "./form-values";
-import { validateOwnerIntake } from "../schemas/owner-intake-schema";
+import { validateOwnerIntake } from "../schemas/owner-intake.schema";
 
 import {
   fieldElementId,

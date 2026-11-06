@@ -13,7 +13,7 @@ import {
   PREFERRED_CALLBACK_TIME_MAX,
   PROPERTY_TYPES,
   validateOwnerIntake,
-} from "./owner-intake-schema";
+} from "./owner-intake.schema";
 
 const valid: FormValues = {
   ...EMPTY_FORM_VALUES,

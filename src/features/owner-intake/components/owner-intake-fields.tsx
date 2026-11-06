@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { fieldElementId, type FieldErrorMessage } from "../lib/field-errors";
 import { applyCatalogChange } from "../lib/form-values";
 import { PRICE_UNIT_BY_INTENT } from "../lib/to-request-body";
-import { INTENTS, NOTES_MAX, PROPERTY_TYPES } from "../schemas/owner-intake-schema";
+import { INTENTS, NOTES_MAX, PROPERTY_TYPES } from "../schemas/owner-intake.schema";
 import type { FieldName, FormValues } from "../types/form";
 
 import { CatalogSelects } from "./catalog-selects";

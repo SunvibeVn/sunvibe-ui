@@ -3,7 +3,7 @@ import { createPublicClient, toPublicResult, type PublicApiResult } from "@/lib/
 import type { IdempotencyKeys } from "../lib/idempotency";
 import { invalidOutcome, toSubmitOutcome, type OwnerIntakeAccepted, type SubmitOutcome } from "../lib/submit-outcome";
 import { toRequestBody } from "../lib/to-request-body";
-import { validateOwnerIntake } from "../schemas/owner-intake-schema";
+import { validateOwnerIntake } from "../schemas/owner-intake.schema";
 import type { FormValues, OwnerIntakeRequestBody } from "../types/form";
 
 type PublicClient = ReturnType<typeof createPublicClient>;

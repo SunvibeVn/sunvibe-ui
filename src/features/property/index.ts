@@ -1,7 +1,7 @@
-export { propertyService } from "./services/property.service";
+export { propertyService } from "./services/property-api";
 export type {
   Property,
   PropertyListParams,
   PropertyStatus,
   PropertyType,
-} from "./types/property.types";
+} from "./types";
