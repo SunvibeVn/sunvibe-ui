@@ -1,7 +1,6 @@
+import type { OwnerLeadsTranslate } from "@/features/lead-shared";
 import type { ChecklistCorrection, ChecklistUnitMeta, ChecklistVisit } from "@/features/surveys";
 import { formatDate, formatDateTime, vietnamDate } from "@/lib/format/vietnam-time";
-
-import type { OwnerLeadsTranslate } from "../history-activity-text";
 
 // The provenance line of a unit (survey-checklist spec 6.2): where the value came from, then who entered it and, when
 // corrected, by whom and why. Owner statements and form values never read as checked on site (BR-17, BR-19); a note is

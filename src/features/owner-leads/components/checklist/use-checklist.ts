@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { useSession } from "@/features/auth/client";
+import { LIST_PATH } from "@/features/lead-shared";
+import { listFlash, tabDrafts, useDraftSessionSync } from "@/features/lead-shared/client";
 import {
   type ChecklistDecisionInput,
   type ChecklistGroupPath,
@@ -37,10 +39,8 @@ import {
 } from "../../lib/checklist/page-state";
 import { runDecision, runSubmit } from "../../lib/checklist/review-flow";
 import type { DecisionResult } from "../../lib/checklist/review-model";
-import { listFlash, tabDrafts, useDraftSessionSync } from "../../lib/drafts";
-import { getLeadSurvey } from "../../services/owner-leads-api";
-import { LIST_PATH } from "../list-href";
 
+import { useSurveyCalls } from "../survey/survey-calls-context";
 import type { ChecklistPageMessage, CommandOutcome } from "./checklist-context";
 
 export type ChecklistLoad = { state: "loading" } | { state: "ready"; view: ChecklistView } | { state: "error"; error: ChecklistUiError };
@@ -54,6 +54,7 @@ export type ChecklistLoad = { state: "loading" } | { state: "ready"; view: Check
 export function useChecklist(urlLeadId: string, checklistId: string) {
   useDraftSessionSync();
   const { user } = useSession();
+  const { getLeadSurvey } = useSurveyCalls();
   const router = useRouter();
   const userId = user?.userId ?? null;
   const [loaded, setLoaded] = useState<{ userId: string; value: ChecklistLoad } | null>(null);
@@ -170,7 +171,7 @@ export function useChecklist(urlLeadId: string, checklistId: string) {
     return () => {
       cancelled = true;
     };
-  }, [userId, viewLeadId]);
+  }, [getLeadSurvey, userId, viewLeadId]);
 
   /** A save or takeover answer: merged, read-only while a 403 lock holds, and read again when needed. */
   const merge = useCallback(

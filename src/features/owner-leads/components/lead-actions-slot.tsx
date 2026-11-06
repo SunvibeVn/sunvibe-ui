@@ -3,9 +3,9 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { isClosedLeadStatus, isLeadStatus } from "@/features/lead-shared";
 
 import type { CommandMessage } from "../lib/command-flow";
-import { isClosedLeadStatus, isLeadStatus } from "../types";
 
 import { AssignDialog } from "./assign-dialog";
 import { CommandMessageView } from "./command-message";

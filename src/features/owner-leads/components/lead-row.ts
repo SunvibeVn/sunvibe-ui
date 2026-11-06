@@ -1,6 +1,10 @@
-import { formatDateTime } from "../lib/format";
-import { intentLabelKey, type OwnerLeadsKey, propertyTypeLabelKey } from "../lib/labels";
-import type { LeadSummary } from "../types";
+import {
+  formatDateTime,
+  intentLabelKey,
+  type LeadSummary,
+  type OwnerLeadsKey,
+  propertyTypeLabelKey,
+} from "@/features/lead-shared";
 
 /**
  * One list row, shared by the table and the cards: the ten fields of C-46 (ACTION opens `id`). Never holds phone,

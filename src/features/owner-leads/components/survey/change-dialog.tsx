@@ -7,9 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { changeAppointment, type SurveyAppointment } from "@/features/surveys";
 
-import { useFormDraft } from "../../lib/drafts";
 import { placeOf } from "../../lib/survey/appointment-view";
 import {
   type ChangeField,
@@ -20,12 +20,12 @@ import {
   validateChange,
 } from "../../lib/survey/change-form";
 import { ACCESS_NOTE_MAX, CONTACT_MAX, DURATIONS, REASON_MAX } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { OverlapWarning } from "./overlap-warning";
 import { PlaceFields } from "./place-fields";
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 import { useSurveyCommand } from "./use-survey-command";
 
@@ -58,7 +58,7 @@ type ChangeDialogProps = {
  */
 export function ChangeDialog({ appointment, onClose, onSaved }: ChangeDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, version } = useLeadDetail();
+  const { userId, leadId, version } = useSurveyPanel();
   // The appointment and version this opening edits: a draft of another one is dropped on open, and a reload after a
   // conflict (a newer version) keeps what the user typed (spec 6.7). The draft holds only the fields the user changed,
   // over the current values, so the reload brings in what someone else changed and a resubmit does not undo it.

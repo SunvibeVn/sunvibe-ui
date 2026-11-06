@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { LIST_PATH } from "@/features/lead-shared";
 
 import { parseListState } from "../lib/list-url-state";
 import { viewerOf } from "../lib/viewer";
-
-import { LIST_PATH, leadDetailHref, listHref, assigneeListHref } from "./list-href";
+import { assigneeListHref, leadDetailHref, listHref } from "./list-href";
 
 const sale = viewerOf(["SALE"]);
 const leader = viewerOf(["SALE_LEADER"]);

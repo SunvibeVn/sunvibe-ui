@@ -1,6 +1,5 @@
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import type { ChecklistReadiness, ChecklistUiError, ChecklistView } from "@/features/surveys";
-
-import type { OwnerLeadsKey } from "../labels";
 
 // The submit panel of the checklist page (survey-checklist submission spec 6.1, U-1, 4.4) as pure functions: what it
 // shows, what the confirm dialog lists and what a refused submit does.

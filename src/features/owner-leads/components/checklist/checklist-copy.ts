@@ -1,4 +1,5 @@
-import type { OwnerLeadsKey } from "../../lib/labels";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
+
 import type { ChecklistProblem } from "../../schemas/checklist";
 import { type FieldKind, problemText, type SurveyT } from "../survey/survey-copy";
 

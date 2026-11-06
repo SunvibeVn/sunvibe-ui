@@ -1,4 +1,4 @@
-import { LIST_PATH } from "./list-url-state";
+import { LIST_PATH } from "./routes";
 
 export type LastListUrl = {
   /** Remembers `href` for `userId`; anything that is not a list URL of this app is ignored. */

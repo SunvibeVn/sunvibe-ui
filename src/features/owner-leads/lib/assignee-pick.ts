@@ -1,4 +1,4 @@
-import type { EligibleAssignee } from "../types";
+import type { EligibleAssignee } from "@/features/lead-shared";
 
 /**
  * The value of an assignee select: the person picked by hand when still listed, else the current assignee when

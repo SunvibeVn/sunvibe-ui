@@ -7,17 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { recordVisit, type SurveyAppointment } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
-import { useFormDraft } from "../../lib/drafts";
 import { holderOptions, visitMode } from "../../lib/survey/appointment-view";
 import { toVisitBody, type VisitField, validateVisit, visitDefaults } from "../../lib/survey/visit-form";
 import { REASON_MAX, VISIT_NOTE_MAX } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 import { useSurveyCommand } from "./use-survey-command";
 
@@ -45,7 +45,7 @@ type VisitDialogProps = {
  */
 export function VisitDialog({ appointment, onClose, onSaved }: VisitDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, version, viewer } = useLeadDetail();
+  const { userId, leadId, version, viewer } = useSurveyPanel();
   // The defaults of this opening: "now" does not move while the user types.
   const [defaults] = useState(() => visitDefaults(Date.now(), userId, appointment));
   // Tied to this appointment: a draft of another one never prefills this record.

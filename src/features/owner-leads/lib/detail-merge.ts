@@ -1,6 +1,7 @@
+import { isLeadStatus, type LeadActivity, type LeadDetail, type LeadSummary } from "@/features/lead-shared";
 import type { ChecklistStarted, SurveyCommandResult, SurveyHistoryEntry } from "@/features/surveys";
 
-import { isLeadStatus, type LeadActivity, type LeadDetail, type LeadNoteResult, type LeadSummary } from "../types";
+import type { LeadNoteResult } from "../types";
 
 /**
  * Puts the fields a command answer (`LeadSummary`) carries onto the detail. Status and version stay when the answer

@@ -1,7 +1,5 @@
+import type { OwnerLeadsKey, OwnerLeadsTranslate } from "@/features/lead-shared";
 import type { MediaUiError, MediaUiErrorKind } from "@/features/surveys";
-
-import type { OwnerLeadsTranslate } from "../history-activity-text";
-import type { OwnerLeadsKey } from "../labels";
 
 import { megabytes } from "./media-form";
 import type { CoverageRow } from "./media-panel-model";

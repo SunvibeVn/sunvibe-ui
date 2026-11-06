@@ -5,6 +5,7 @@ import { useEffect, useReducer, useRef, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { isClosedLeadStatus } from "@/features/lead-shared";
 import type { SurveyCommandResult, SurveyOverlap } from "@/features/surveys";
 
 import {
@@ -17,8 +18,6 @@ import {
   scheduledAppointment,
 } from "../../lib/survey/appointment-view";
 import { requalifyTarget } from "../../lib/requalify-form";
-import { isClosedLeadStatus } from "../../types";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { type AppointmentAction, AppointmentCard } from "./appointment-card";
 import { AppointmentHistory } from "./appointment-history";
@@ -32,6 +31,7 @@ import { RequalifyDialog } from "./requalify-dialog";
 import { RequirementChanges } from "./requirement-changes";
 import { ResumeDialog } from "./resume-dialog";
 import { RevisionAction } from "./revision-action";
+import { useSurveyPanel } from "./survey-panel-context";
 import { VisitDialog } from "./visit-dialog";
 
 /** The open dialog; an appointment's dialog names the appointment it was opened for. */
@@ -47,7 +47,7 @@ const NO_ITEMS: readonly never[] = [];
  */
 export function SurveySection() {
   const t = useTranslations("OwnerLeads");
-  const { lead, survey, reloadSurvey, busy } = useLeadDetail();
+  const { lead, survey, reloadSurvey, busy } = useSurveyPanel();
   const [open, setOpen] = useState<OpenDialog>(null);
   /** The last save: "Saved." and the overlaps of its answer (A-10), until the next action. */
   const [saved, setSaved] = useState<{ overlaps: NonNullable<SurveyOverlap>[] } | null>(null);

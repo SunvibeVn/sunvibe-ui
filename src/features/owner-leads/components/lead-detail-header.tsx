@@ -3,9 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
-
-import { formatDateTime } from "../lib/format";
-import { isClosedLeadStatus } from "../types";
+import { formatDateTime, isClosedLeadStatus } from "@/features/lead-shared";
 
 import { LeadActionsSlot } from "./lead-actions-slot";
 import { useLeadDetail } from "./lead-detail-context";

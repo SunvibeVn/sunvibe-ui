@@ -2,7 +2,7 @@
 
 import { useLayoutEffect } from "react";
 
-import { useLeadDetail } from "../lead-detail-context";
+import { useSurveyPanel } from "./survey-panel-context";
 
 /**
  * Holds the page's one command lock while a survey dialog's action runs (CR-2, Review Focus 5). Taken in a layout
@@ -10,7 +10,7 @@ import { useLeadDetail } from "../lead-detail-context";
  * finished. Released when the dialog unmounts.
  */
 export function useSurveyLock(pending: boolean): void {
-  const { setBusy } = useLeadDetail();
+  const { setBusy } = useSurveyPanel();
   useLayoutEffect(() => {
     setBusy("survey", pending);
   }, [pending, setBusy]);

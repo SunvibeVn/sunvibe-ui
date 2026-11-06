@@ -8,11 +8,11 @@ import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { intentLabelKey } from "@/features/lead-shared";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { toSurveyUiError } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
-import { useFormDraft } from "../lib/drafts";
-import { intentLabelKey } from "../lib/labels";
 import {
   offeredIntents,
   priceUnitOf,

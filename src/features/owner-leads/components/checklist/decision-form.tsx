@@ -3,10 +3,10 @@
 import { useTranslations } from "next-intl";
 import { useId } from "react";
 
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import type { ChecklistDecisionRule, ChecklistFailedKind, ChecklistNeedsChangesKind, ChecklistOutcome } from "@/features/surveys";
 
 import { REVIEW_TEXT_MAX, type ReviewField, type ReviewForm, ruleTextKey } from "../../lib/checklist/review-model";
-import type { OwnerLeadsKey } from "../../lib/labels";
 import type { SurveyProblems } from "../../schemas/survey/survey-text";
 import { problemText } from "../survey/survey-copy";
 import { SurveyTextField } from "../survey/survey-text-field";

@@ -7,9 +7,9 @@ import type { SurveyCommandResult } from "@/features/surveys";
 import { type SurveyErrorMessage, surveyFailure } from "../../lib/survey/survey-failure";
 import { runSurveyCommand } from "../../lib/survey/survey-flow";
 import type { SurveyProblem } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import type { SurveyDialogMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { useSurveyLock } from "./use-survey-lock";
 
 export type SurveyCommandState<F extends string> = {
@@ -36,7 +36,7 @@ type SurveyCommandOptions<F extends string> = {
  * for a conflict; the draft stays), back to the list for a 404. Holds the page's command lock while it runs.
  */
 export function useSurveyCommand<F extends string>(options: SurveyCommandOptions<F>) {
-  const controller = useLeadDetail();
+  const controller = useSurveyPanel();
   const initial: SurveyCommandState<F> = { problems: {}, message: null };
   /** Set once the command saved: a submit queued behind it (double click) sends nothing (Review Focus 5). */
   const saved = useRef(false);

@@ -7,15 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { cancelAppointment, type SurveyAppointment, USER_CANCEL_REASONS } from "@/features/surveys";
 
-import { useFormDraft } from "../../lib/drafts";
 import { type CancelField, type CancelForm, toCancelBody, validateCancel } from "../../lib/survey/cancel-form";
 import { REASON_MAX } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 import { useSurveyCommand } from "./use-survey-command";
 
@@ -34,7 +34,7 @@ type CancelDialogProps = {
  */
 export function CancelDialog({ appointment, onClose, onSaved }: CancelDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, version } = useLeadDetail();
+  const { userId, leadId, version } = useSurveyPanel();
   // Tied to this appointment: a draft of another one never prefills this cancellation.
   const [form, setForm, clearForm] = useFormDraft({ userId, leadId, form: "surveyCancel" }, DEFAULTS, appointment.id ?? "");
 

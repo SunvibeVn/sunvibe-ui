@@ -2,9 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { mapDirectionsUrl } from "@/features/lead-shared";
 import type { SurveyLocation } from "@/features/surveys";
-
-import { mapDirectionsUrl } from "../../lib/map-link";
 
 const MAP_LINK =
   "inline-flex min-h-11 items-center text-sm font-medium text-violet-700 underline-offset-2 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600 sm:min-h-0";

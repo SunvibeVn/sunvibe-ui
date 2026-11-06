@@ -2,7 +2,7 @@ import type { PriceUnit } from "../types";
 
 import { type OwnerLeadsKey, priceUnitLabelKey } from "./labels";
 
-// The Vietnam time helpers live in `@/lib/format/vietnam-time`; re-exported for this feature's own files.
+// The Vietnam time helpers live in `@/lib/format/vietnam-time`; re-exported for the lead features.
 export { formatDate, formatDateTime, instantToLocalInput, localInputToInstant } from "@/lib/format/vietnam-time";
 
 const VND = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });

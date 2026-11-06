@@ -1,5 +1,6 @@
+import { LIST_PATH } from "@/features/lead-shared";
+
 import {
-  LIST_PATH,
   type ListFilterChange,
   type ListState,
   parseListState,
@@ -7,8 +8,6 @@ import {
   withFilter,
 } from "../lib/list-url-state";
 import type { Viewer } from "../lib/viewer";
-
-export { LIST_PATH };
 
 /** Detail route of a lead; the id is URL-encoded. */
 export function leadDetailHref(leadId: string): string {

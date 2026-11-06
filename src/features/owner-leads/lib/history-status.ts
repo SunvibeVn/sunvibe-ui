@@ -1,4 +1,4 @@
-import type { LeadActivity } from "../types";
+import type { LeadActivity } from "@/features/lead-shared";
 
 /**
  * The STATUS of a history entry: the status it moved the lead to, or undefined for an entry that changed none (a note,

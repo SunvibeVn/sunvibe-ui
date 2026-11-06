@@ -9,7 +9,8 @@ import { formatDateTime } from "@/lib/format/vietnam-time";
 
 import { checklistHref } from "../../lib/checklist/routes";
 import { checklistLineReason, revisionChip } from "../../lib/survey/appointment-view";
-import { useLeadDetail } from "../lead-detail-context";
+
+import { useSurveyPanel } from "./survey-panel-context";
 
 /**
  * The checklists of one VISITED appointment, newest first (survey-checklist spec 6.1): "Checklist #m · Draft · k items
@@ -18,7 +19,7 @@ import { useLeadDetail } from "../lead-detail-context";
  */
 export function ChecklistLines({ appointment }: { appointment: NonNullable<SurveyAppointment> }) {
   const t = useTranslations("OwnerLeads");
-  const { leadId } = useLeadDetail();
+  const { leadId } = useSurveyPanel();
   const checklists = (appointment.checklists ?? []).filter((entry) => entry?.id);
   if (appointment.status !== "VISITED" || checklists.length === 0) return null;
   const person = (name: string | null | undefined) => name?.trim() || t("survey.unknownPerson");

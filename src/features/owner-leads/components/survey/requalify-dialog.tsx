@@ -8,11 +8,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { type ChecklistRequalificationKind, requalifyChecklist } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
-import { useFormDraft } from "../../lib/drafts";
-import { REQUALIFICATION_KIND_LABEL } from "../../lib/labels";
+import { REQUALIFICATION_KIND_LABEL } from "../../lib/checklist/label-text";
 import {
   createSubmitGate,
   firstRequalifyField,
@@ -28,10 +28,10 @@ import {
   validateRequalify,
 } from "../../lib/requalify-form";
 import type { SurveyProblems } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { problemText } from "./survey-copy";
 import { type SurveyDialogMessage, SurveyMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 import { useSurveyLock } from "./use-survey-lock";
 
@@ -59,7 +59,7 @@ type RequalifyDialogProps = {
  */
 export function RequalifyDialog({ target, read, held, onClose, onSaved }: RequalifyDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, reload, leaveToList } = useLeadDetail();
+  const { userId, leadId, reload, leaveToList } = useSurveyPanel();
   /** The revision this opening is about: its text never fills or reaches another one, and a mark cannot be undone. */
   const [opened] = useState(target?.checklistId ?? "");
   const sendable = openedTarget(target, opened);

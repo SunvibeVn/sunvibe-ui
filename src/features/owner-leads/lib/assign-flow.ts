@@ -1,7 +1,7 @@
 import type { ApiResult } from "@/features/auth/client";
+import type { LeadSummary } from "@/features/lead-shared";
 
 import { assignLead, type AssignLeadInput } from "../services/owner-leads-api";
-import type { LeadSummary } from "../types";
 
 import {
   type CommandFailure,

@@ -1,11 +1,9 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { LeadActivity, OwnerLeadsKey } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
 
-import type { LeadActivity } from "../types";
-
 import { collapseChecklistSaves, collapsedSavesText } from "./history-collapse";
-import type { OwnerLeadsKey } from "./labels";
 
 const translator = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });
 const t = (key: OwnerLeadsKey, values?: Record<string, string | number>) => translator(key, values);

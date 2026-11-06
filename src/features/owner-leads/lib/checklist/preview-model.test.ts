@@ -1,9 +1,8 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import type { ChecklistReadiness } from "@/features/surveys";
 import en from "@/i18n/messages/en.json";
-
-import type { OwnerLeadsKey } from "../labels";
 
 import { emptyContent, ownerMeta, P1, P2, siteMeta, sourced, viewOf, B } from "./fixtures.test-support";
 import { previewModel, previewSections } from "./preview-model";

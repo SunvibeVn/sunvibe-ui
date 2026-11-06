@@ -1,8 +1,6 @@
-import type { LeadActivity } from "../types";
+import { formatDateTime, type LeadActivity, type OwnerLeadsTranslate } from "@/features/lead-shared";
 
-import { formatDateTime } from "./format";
 import { HISTORY_ACTOR_KEY } from "./history-actor";
-import type { OwnerLeadsTranslate } from "./history-activity-text";
 
 /** One row of the history table: an entry as it is, or a run of checklist saves shown as one expandable line. */
 export type HistoryRow =

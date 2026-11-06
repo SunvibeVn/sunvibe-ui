@@ -1,6 +1,5 @@
 import type { ApiResult } from "@/features/auth/client";
-
-import { isLeadStatus, type LeadStatus } from "../types";
+import { isLeadStatus, type LeadStatus } from "@/features/lead-shared";
 
 /** What a failed staff call means for the workspace UI (spec 5.2). */
 export type LeadUiErrorKind =

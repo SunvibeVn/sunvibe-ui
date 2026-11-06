@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import { createTabMemory } from "../drafts";
+import { createTabMemory } from "@/features/lead-shared/client";
 
 import { applyAnswer } from "./answer-merge";
 import { checklistDraftKey, rebaseAfterCascade, rebaseDraft, rebaseOtherDrafts, readChecklistDraft, writeChecklistDraft } from "./checklist-draft";

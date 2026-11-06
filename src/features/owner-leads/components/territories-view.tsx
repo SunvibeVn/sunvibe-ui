@@ -8,16 +8,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DataTable, type DataTableColumn } from "@/components/ui/data-table";
 import { type ApiResult, ForbiddenNotice, RequireRole, useSession } from "@/features/auth/client";
+import { formatDateTime, type Territory, wardTypeLabelKey } from "@/features/lead-shared";
 
-import { formatDateTime } from "../lib/format";
-import { wardTypeLabelKey } from "../lib/labels";
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import { sendTerritoryChange } from "../lib/territory-flow";
 import { holderFlag, holderId, type TerritoryProblem } from "../lib/territory-flags";
 import { viewerOf } from "../lib/viewer";
 import { listAssignees } from "../services/owner-leads-api";
 import { listTerritories } from "../services/territories-api";
-import type { Territory } from "../types";
 
 import type { AssigneesLoad } from "./assignee-picker";
 import { assigneeListHref } from "./list-href";

@@ -1,10 +1,8 @@
-import { CLOSED_STATUSES, LEAD_STATUSES, type LeadStatus } from "../types";
+import { CLOSED_STATUSES, LEAD_STATUSES, type LeadStatus } from "@/features/lead-shared";
+
 import type { Scope, Viewer } from "./viewer";
 
 export type { Scope } from "./viewer";
-
-/** The lead list route. */
-export const LIST_PATH = "/workspace/owner-leads";
 
 /** Leads per page of the list (C-25). */
 export const LIST_PAGE_SIZE = 20;

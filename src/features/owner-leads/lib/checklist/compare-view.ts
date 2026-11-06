@@ -1,5 +1,4 @@
-import type { OwnerLeadsTranslate } from "../history-activity-text";
-import type { OwnerLeadsKey } from "../labels";
+import type { OwnerLeadsKey, OwnerLeadsTranslate } from "@/features/lead-shared";
 
 import { fieldOfKey, parseUnitKey, spaceIdOfKey } from "./units";
 import { unitText } from "./value-text";

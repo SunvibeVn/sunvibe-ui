@@ -1,4 +1,3 @@
-import type { ChecklistGroupName, ChecklistRequalificationKind } from "@/features/surveys";
 import type en from "@/i18n/messages/en.json";
 
 import type {
@@ -24,6 +23,9 @@ type LeafPaths<T> = {
  * A path that does not exist in en.json fails `npm run typecheck`.
  */
 export type OwnerLeadsKey = LeafPaths<Messages>;
+
+/** Translator of the `OwnerLeads` namespace, with the values of an ICU message. */
+export type OwnerLeadsTranslate = (key: OwnerLeadsKey, values?: Record<string, string | number>) => string;
 
 /** `Record` over the enum: a value without a label fails `npm run typecheck`. */
 export const STATUS_LABEL: Record<LeadStatus, OwnerLeadsKey> = {
@@ -97,44 +99,6 @@ export const ACTIVITY_LABEL: Record<ActivityType, OwnerLeadsKey> = {
   INVENTORY_INTAKE_SUSPENDED: "activity.INVENTORY_INTAKE_SUSPENDED",
   INVENTORY_INTAKE_RESTORED: "activity.INVENTORY_INTAKE_RESTORED",
 };
-
-/** The group names of survey-checklist spec 6.4, in the order G1..G8. */
-export const CHECKLIST_GROUP_LABEL: Record<ChecklistGroupName, OwnerLeadsKey> = {
-  IDENTIFICATION: "checklist.groups.IDENTIFICATION",
-  PARTS: "checklist.groups.PARTS",
-  DIMENSIONS: "checklist.groups.DIMENSIONS",
-  CONDITION: "checklist.groups.CONDITION",
-  SAFETY: "checklist.groups.SAFETY",
-  AMENITIES: "checklist.groups.AMENITIES",
-  EVIDENCE: "checklist.groups.EVIDENCE",
-  TERMS: "checklist.groups.TERMS",
-};
-
-/** Label key of a group the API sent, or null for none or a group this UI does not know. */
-export function checklistGroupLabelKey(group: string | null | undefined): OwnerLeadsKey | null {
-  return typeof group === "string" && Object.hasOwn(CHECKLIST_GROUP_LABEL, group)
-    ? CHECKLIST_GROUP_LABEL[group as ChecklistGroupName]
-    : null;
-}
-
-/** What is wrong with a PASSED revision (property-create requalification A-5), in the order the dialog offers them. */
-export const REQUALIFICATION_KIND_LABEL: Record<ChecklistRequalificationKind, OwnerLeadsKey> = {
-  WRONG_ASSET: "checklist.requalification.kinds.WRONG_ASSET",
-  WRONG_OWNER: "checklist.requalification.kinds.WRONG_OWNER",
-  WRONG_PERSON: "checklist.requalification.kinds.WRONG_PERSON",
-  WRONG_SCOPE: "checklist.requalification.kinds.WRONG_SCOPE",
-  NEED_CHANGED: "checklist.requalification.kinds.NEED_CHANGED",
-  PHOTO_PROBLEM: "checklist.requalification.kinds.PHOTO_PROBLEM",
-  HAZARD: "checklist.requalification.kinds.HAZARD",
-  OTHER: "checklist.requalification.kinds.OTHER",
-};
-
-/** Label key of a kind the API sent, or null for none or a kind this UI does not know. */
-export function requalificationKindKey(kind: string | null | undefined): OwnerLeadsKey | null {
-  return typeof kind === "string" && Object.hasOwn(REQUALIFICATION_KIND_LABEL, kind)
-    ? REQUALIFICATION_KIND_LABEL[kind as ChecklistRequalificationKind]
-    : null;
-}
 
 /** Roles an assignee can hold (C-29): SALE and SALE_LEADER. */
 export const ROLE_LABEL: Record<AssigneeRole, OwnerLeadsKey> = {

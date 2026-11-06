@@ -8,9 +8,10 @@ import { Dialog } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { useSession } from "@/features/auth/client";
+import { statusLabelKey } from "@/features/lead-shared";
+import { useDraft } from "@/features/lead-shared/client";
 
 import { type CommandMessage, failureMessage } from "../lib/command-flow";
-import { useDraft } from "../lib/drafts";
 import {
   entryMax,
   entryStatusDraft,
@@ -22,7 +23,6 @@ import {
 } from "../lib/history-entry";
 import { submitNote } from "../lib/note-flow";
 import { utf16Length } from "../lib/note-length";
-import { statusLabelKey } from "../lib/labels";
 import {
   type OriginalChoice,
   type OriginalPreview,
@@ -34,8 +34,8 @@ import {
   type StatusRequest,
 } from "../lib/status-flow";
 import { isClosing } from "../lib/transitions";
-import type { DuplicateCandidate } from "../types";
 
+import type { DuplicateCandidate } from "../types";
 import { CommandMessageView } from "./command-message";
 import {
   DuplicatePicker,
@@ -73,7 +73,6 @@ const INITIAL: EntryState = {
 const NO_CANDIDATES: readonly DuplicateCandidate[] = [];
 /** Fields of a 400 that are ACTIVITY (a note, or the reason of a closing status). */
 const ACTIVITY_FIELDS: readonly string[] = ["note", "reason"];
-
 
 /** The support code of an answer, to pass on to a message. */
 const support = (outcome: { correlationId?: string }) =>

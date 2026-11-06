@@ -2,12 +2,12 @@
 
 import { useEffect, useSyncExternalStore } from "react";
 
+import { tabDrafts } from "@/features/lead-shared/client";
 import { CHECKLIST_GROUP_PATHS } from "@/features/surveys";
 
 import { checklistDraftKey } from "../../lib/checklist/checklist-draft";
 import { type GuardNavigation, installHistoryGuard } from "../../lib/checklist/history-guard";
 import { hasUnsavedChanges } from "../../lib/checklist/unsaved";
-import { tabDrafts } from "../../lib/drafts";
 
 /** True while a group of the checklist holds edits that were not saved. */
 export function useUnsavedChanges({ userId, leadId, checklistId }: { userId: string; leadId: string; checklistId: string }): boolean {

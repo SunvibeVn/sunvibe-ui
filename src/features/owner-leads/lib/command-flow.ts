@@ -1,6 +1,5 @@
 import type { ApiResult } from "@/features/auth/client";
-
-import type { LeadStatus, LeadSummary } from "../types";
+import type { LeadStatus, LeadSummary } from "@/features/lead-shared";
 
 import { toLeadUiError, withCorrelation } from "./lead-ui-error";
 

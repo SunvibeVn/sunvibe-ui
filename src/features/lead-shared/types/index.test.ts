@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { isClosedLeadStatus } from "./index";
+import { isClosedLeadStatus } from ".";
 
 describe("isClosedLeadStatus (acquisition BR-3)", () => {
   it("is true for the three closed statuses", () => {

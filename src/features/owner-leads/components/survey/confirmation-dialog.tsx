@@ -6,14 +6,14 @@ import { z } from "zod";
 
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { setConfirmation, type SurveyAppointment } from "@/features/surveys";
 
-import { useFormDraft } from "../../lib/drafts";
 import { cleanText, optionalText, problemsOf, REASON_MAX } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 import { useSurveyCommand } from "./use-survey-command";
 
@@ -31,7 +31,7 @@ type ConfirmationDialogProps = {
 /** "Mark owner confirmed" / "Remove confirmation" with an optional note (spec 6.2, US-1 AC-5). */
 export function ConfirmationDialog({ appointment, confirm, onClose, onSaved }: ConfirmationDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, version } = useLeadDetail();
+  const { userId, leadId, version } = useSurveyPanel();
   // Tied to this appointment and this direction: a note typed for another appointment, or for "Mark owner confirmed",
   // never prefills "Remove confirmation" (and the other way round).
   const [fields, setFields, clearFields] = useFormDraft(

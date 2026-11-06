@@ -5,9 +5,16 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { Select } from "@/components/ui/select";
 import { useSession } from "@/features/auth/client";
+import {
+  type EligibleAssignee,
+  type LeadStatus,
+  type LeadSummary,
+  STATUS_LABEL,
+  type Ward,
+  wardTypeLabelKey,
+} from "@/features/lead-shared";
 
 import { listAssignees, listWards } from "../services/owner-leads-api";
-import { STATUS_LABEL, wardTypeLabelKey } from "../lib/labels";
 import {
   type ListState,
   clearFilters,
@@ -17,12 +24,6 @@ import {
   toggleClosed,
 } from "../lib/list-url-state";
 import type { Viewer } from "../lib/viewer";
-import {
-  type EligibleAssignee,
-  type LeadStatus,
-  type LeadSummary,
-  type Ward,
-} from "../types";
 
 import { assigneeFilterLabel } from "./assignee-filter-label";
 import { listHref } from "./list-href";

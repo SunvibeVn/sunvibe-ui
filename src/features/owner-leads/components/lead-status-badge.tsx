@@ -2,8 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { Badge, type BadgeTone } from "@/components/ui/badge";
-
-import { statusLabelKey } from "../lib/labels";
+import { statusLabelKey } from "@/features/lead-shared";
 
 const TONE: Record<string, BadgeTone> = {
   NEW: "neutral",

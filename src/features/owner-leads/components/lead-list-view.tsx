@@ -10,10 +10,10 @@ import { Pagination } from "@/components/ui/pagination";
 import { paginationRange } from "@/components/ui/pagination-range";
 import { Tabs } from "@/components/ui/tabs";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
+import { type LeadSummary, LIST_PATH } from "@/features/lead-shared";
+import { lastListUrl, listFlash, type ListFlashKind } from "@/features/lead-shared/client";
 
-import { lastListUrl, listFlash } from "../lib/drafts";
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
-import type { ListFlashKind } from "../lib/list-flash";
 import {
   LIST_PAGE_SIZE,
   type ListState,
@@ -24,12 +24,12 @@ import {
 } from "../lib/list-url-state";
 import { type Viewer, viewerOf } from "../lib/viewer";
 import { listLeads } from "../services/owner-leads-api";
-import type { LeadPage, LeadSummary } from "../types";
 
+import type { LeadPage } from "../types";
 import { LeadCards } from "./lead-cards";
 import { LeadFilters } from "./lead-filters";
 import { LeadTable } from "./lead-table";
-import { LIST_PATH, listHref } from "./list-href";
+import { listHref } from "./list-href";
 
 /** What one list call came back with, for one user and one normalized URL. */
 type Loaded = {

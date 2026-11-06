@@ -1,9 +1,9 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
 
 import { historyActivityText } from "./history-activity-text";
-import type { OwnerLeadsKey } from "./labels";
 
 const translator = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });
 const t = (key: OwnerLeadsKey, values?: Record<string, string | number>) => translator(key, values);

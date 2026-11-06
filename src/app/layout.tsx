@@ -4,7 +4,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { siteConfig } from "@/config/site";
 import { SessionProvider } from "@/features/auth";
-import { DraftSessionSync } from "@/features/owner-leads/client";
+import { DraftSessionSync } from "@/features/lead-shared/session-sync";
 import "./globals.css";
 
 const geistSans = Geist({

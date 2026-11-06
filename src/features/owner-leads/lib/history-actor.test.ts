@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import type { LeadActivity } from "../types";
+import type { LeadActivity } from "@/features/lead-shared";
 
 import { historyActor } from "./history-actor";
 

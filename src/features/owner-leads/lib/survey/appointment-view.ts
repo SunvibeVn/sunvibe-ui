@@ -1,4 +1,5 @@
 import type { BadgeTone } from "@/components/ui/badge";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import type {
   BookingBlock,
   ChecklistOutcome,
@@ -7,8 +8,6 @@ import type {
   SurveyBlock,
   SurveyLocation,
 } from "@/features/surveys";
-
-import type { OwnerLeadsKey } from "../labels";
 
 /** A place as the forms edit it: address, ward and an optional pin (both coordinates or none). */
 export type Place = { addressText: string; wardCode: string; latitude: number | null; longitude: number | null };

@@ -1,6 +1,5 @@
+import type { DraftKey, DraftStore } from "@/features/lead-shared/client";
 import { CHECKLIST_GROUP_PATHS, type ChecklistContent, type ChecklistGroupPath, type ChecklistView } from "@/features/surveys";
-
-import type { DraftKey, DraftStore } from "../drafts";
 
 import { contextOf } from "./correction-rule";
 import { inputOfContent, type GroupContext, type GroupEdits, unitsOfInput } from "./group-input";

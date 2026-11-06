@@ -2,11 +2,8 @@
 
 import { useTranslations } from "next-intl";
 
+import { formatPrice, intentLabelKey, type LeadDetail } from "@/features/lead-shared";
 import { formatDate, formatDateTime } from "@/lib/format/vietnam-time";
-
-import { formatPrice } from "../../lib/format";
-import { intentLabelKey } from "../../lib/labels";
-import type { LeadDetail } from "../../types";
 
 type IntentChange = NonNullable<LeadDetail["intentChanges"]>[number];
 type Price = IntentChange["fromAskingPrice"] | null;

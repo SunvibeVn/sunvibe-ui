@@ -1,7 +1,5 @@
+import { type OwnerLeadsTranslate, propertyTypeLabelKey } from "@/features/lead-shared";
 import { formatDate } from "@/lib/format/vietnam-time";
-
-import type { OwnerLeadsTranslate } from "../history-activity-text";
-import { propertyTypeLabelKey } from "../labels";
 
 // One unit's value as text, for the read-only Edit, the compare view of a 409, the preview and the snapshot view
 // (survey-checklist spec 6.2). Terms and available-from read "Not confirmed" while unknown (BR-16).

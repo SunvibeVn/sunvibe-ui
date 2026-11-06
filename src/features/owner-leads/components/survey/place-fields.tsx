@@ -7,12 +7,12 @@ import { type MapPinLabels, MapPinPicker } from "@/components/map/map-pin-picker
 import { Button } from "@/components/ui/button";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import type { Ward } from "@/features/lead-shared";
 
 import { type Place, placeDiffersFromLead } from "../../lib/survey/appointment-view";
 import { ADDRESS_MAX, type SurveyProblem } from "../../schemas/survey/survey-text";
-import { listWards } from "../../services/owner-leads-api";
-import type { Ward } from "../../types";
 
+import { useSurveyCalls } from "./survey-calls-context";
 import { problemText } from "./survey-copy";
 import { SurveyTextField } from "./survey-text-field";
 
@@ -48,6 +48,7 @@ export function PlaceFields({
   leadAction = true,
 }: PlaceFieldsProps) {
   const t = useTranslations("OwnerLeads");
+  const { listWards } = useSurveyCalls();
   const addressId = useId();
   const wardId = useId();
   const pinId = useId();
@@ -63,7 +64,7 @@ export function PlaceFields({
     return () => {
       cancelled = true;
     };
-  }, [round]);
+  }, [listWards, round]);
 
   const list = wards.state === "ready" ? wards.wards : [];
   const ward = list.find((entry) => entry.code === place.wardCode);

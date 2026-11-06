@@ -5,16 +5,15 @@ import { useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { formatDateTime, isClosedLeadStatus, type LeadActivity } from "@/features/lead-shared";
+import { useDraft } from "@/features/lead-shared/client";
 
-import { useDraft } from "../lib/drafts";
-import { formatDateTime } from "../lib/format";
 import type { CommandMessage } from "../lib/command-flow";
 import { HISTORY_ACTOR_KEY, historyActor } from "../lib/history-actor";
 import { entryDraftOpen, entryTargets } from "../lib/history-entry";
 import { historyActivityText } from "../lib/history-activity-text";
 import { collapseChecklistSaves, collapsedSavesText, type HistoryRow as HistoryRowModel } from "../lib/history-collapse";
 import { historyStatus } from "../lib/history-status";
-import { isClosedLeadStatus, type LeadActivity } from "../types";
 
 import { CommandMessageView } from "./command-message";
 import { HISTORY_CELL, HISTORY_ROW } from "./history-cells";

@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { type AppointmentKind, bookSurvey, type SurveyCommandResult } from "@/features/surveys";
 import { formatDateTime, localInputToInstant } from "@/lib/format/vietnam-time";
 
-import { useFormDraft } from "../../lib/drafts";
 import { type Place, placeDiffersFromLead } from "../../lib/survey/appointment-view";
 import { type BookingField, bookingDefaults, toBookBody, validateBooking } from "../../lib/survey/booking-form";
 import {
@@ -21,12 +21,12 @@ import {
   minuteInstant,
   REASON_MAX,
 } from "../../schemas/survey/survey-text";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { OverlapWarning } from "./overlap-warning";
 import { PlaceFields } from "./place-fields";
 import { problemText } from "./survey-copy";
 import { SurveyMessage } from "./survey-message";
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 import { useSurveyCommand } from "./use-survey-command";
 
@@ -66,7 +66,7 @@ type BookDialogProps = {
  */
 export function BookDialog({ kind, leadPlace, onClose, onSaved }: BookDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId, lead, version } = useLeadDetail();
+  const { userId, leadId, lead, version } = useSurveyPanel();
   const defaults = bookingDefaults(leadPlace);
   const [form, setForm, clearForm] = useFormDraft({ userId, leadId, form: "surveyBook" }, defaults);
 

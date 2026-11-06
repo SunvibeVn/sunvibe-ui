@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { PROVINCE_CODE } from "@/features/lead-shared";
 import type { AppointmentKind, BookSurveyInput, MeetingLocationInput } from "@/features/surveys";
 import { localInputToInstant } from "@/lib/format/vietnam-time";
 
@@ -20,7 +21,6 @@ import {
   startWindowProblem,
   type SurveyProblems,
 } from "../../schemas/survey/survey-text";
-import { PROVINCE_CODE } from "../../services/owner-leads-api";
 
 import { type Place, placeDiffersFromLead } from "./appointment-view";
 

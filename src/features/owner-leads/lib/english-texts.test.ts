@@ -1,12 +1,12 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
 
 import { assigneeFilterLabel } from "../components/assignee-filter-label";
 
 import { assigneeOption } from "./assignee-option";
 import { HISTORY_ACTOR_KEY, historyActor } from "./history-actor";
-import type { OwnerLeadsKey } from "./labels";
 
 // The workspace texts of spec 5.5 as the English UI renders them (W14-35): the same messages and ICU formatting.
 const t = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });

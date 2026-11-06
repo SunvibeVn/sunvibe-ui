@@ -1,4 +1,4 @@
-import { isLeadStatus, type LeadStatus } from "../types";
+import { isLeadStatus, type LeadStatus } from "@/features/lead-shared";
 
 import type { CommandMessage } from "./command-flow";
 import type { NoteOutcome } from "./note-flow";

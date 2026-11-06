@@ -1,8 +1,5 @@
 import { callApi, type ApiResult, type CallApi } from "@/features/auth/client";
-
-import type { Territory } from "../types";
-
-import { PROVINCE_CODE } from "./owner-leads-api";
+import { PROVINCE_CODE, type Territory } from "@/features/lead-shared";
 
 /** Signed-in calls go through `callApi` (Bearer from memory); tests pass a fake. */
 export type TerritoriesDeps = { callApi: CallApi };

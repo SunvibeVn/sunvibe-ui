@@ -1,9 +1,8 @@
+import type { OwnerLeadsTranslate } from "@/features/lead-shared";
 import type { ChecklistDecision, ChecklistOutcome, ChecklistView } from "@/features/surveys";
 import { formatDate, formatDateTime } from "@/lib/format/vietnam-time";
 
-import type { OwnerLeadsTranslate } from "../history-activity-text";
-import { requalificationKindKey } from "../labels";
-
+import { requalificationKindKey } from "./label-text";
 import { photoPair } from "./preview-model";
 
 // The status banner and the decision panel of a revision (survey-checklist submission spec 6.1) as pure functions. The

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import { reviewReasonKey } from "@/features/surveys";
 
 import { previewModel } from "../../lib/checklist/preview-model";
@@ -23,7 +24,6 @@ import {
   withMark,
 } from "../../lib/checklist/review-model";
 import { createInFlightGuard } from "../../lib/checklist/submission-model";
-import type { OwnerLeadsKey } from "../../lib/labels";
 
 import { useChecklistPage } from "./checklist-context";
 import { ChecklistSections } from "./checklist-sections";

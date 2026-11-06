@@ -1,4 +1,5 @@
-import type { OwnerLeadsKey } from "../../lib/labels";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
+
 import type { SurveyErrorMessage } from "../../lib/survey/survey-failure";
 import type { SurveyProblem } from "../../schemas/survey/survey-text";
 

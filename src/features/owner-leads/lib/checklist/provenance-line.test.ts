@@ -1,8 +1,7 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
-
-import type { OwnerLeadsKey } from "../labels";
 
 import { B, C, ownerMeta, siteMeta, VISIT } from "./fixtures.test-support";
 import { formatProvenance, provenanceLine } from "./provenance-line";

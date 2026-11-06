@@ -1,7 +1,6 @@
+import type { OwnerLeadsKey } from "@/features/lead-shared";
+import type { DraftStore } from "@/features/lead-shared/client";
 import { CHECKLIST_GROUP_PATHS, type ChecklistGroupPath, type ChecklistUiError, type ChecklistView } from "@/features/surveys";
-
-import type { DraftStore } from "../drafts";
-import type { OwnerLeadsKey } from "../labels";
 
 import { applyAnswer } from "./answer-merge";
 import { type ChecklistDraftKey, dropChecklistDrafts } from "./checklist-draft";

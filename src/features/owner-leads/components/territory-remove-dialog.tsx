@@ -3,9 +3,9 @@
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import type { Territory } from "@/features/lead-shared";
 
 import type { TerritoryProblem } from "../lib/territory-flags";
-import type { Territory } from "../types";
 
 import { ProblemAlert } from "./territory-problem";
 

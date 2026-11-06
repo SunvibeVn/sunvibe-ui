@@ -6,15 +6,15 @@ import { useId, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import { useFormDraft } from "@/features/lead-shared/client";
 import { todayInVietnam, vietnamDate } from "@/lib/format/vietnam-time";
 
-import { useFormDraft } from "../../lib/drafts";
 import type { IntakeField } from "../../lib/checklist/start-flow";
 import { type ChecklistProblem, checkCorrection } from "../../schemas/checklist";
 import { REASON_MAX } from "../../schemas/survey/survey-text";
 import { checklistProblemText } from "../checklist/checklist-copy";
-import { useLeadDetail } from "../lead-detail-context";
 
+import { useSurveyPanel } from "./survey-panel-context";
 import { SurveyTextField } from "./survey-text-field";
 
 const DEFAULTS = { reason: "", basisDate: "", basisText: "" };
@@ -41,7 +41,7 @@ type IntakeDialogProps = {
  */
 export function IntakeDialog({ surveyNo, revisionNo, performerName, arrivedAt, pending, serverProblems, message, onClose, onStart }: IntakeDialogProps) {
   const t = useTranslations("OwnerLeads");
-  const { userId, leadId } = useLeadDetail();
+  const { userId, leadId } = useSurveyPanel();
   const [form, setForm, clearForm] = useFormDraft({ userId, leadId, form: "checklistIntake" }, DEFAULTS);
   const [problems, setProblems] = useState<Record<string, ChecklistProblem>>({});
   const formId = useId();

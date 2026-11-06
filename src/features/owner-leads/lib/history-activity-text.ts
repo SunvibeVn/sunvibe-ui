@@ -1,9 +1,6 @@
-import type { LeadActivity } from "../types";
+import { activityLabelKey, type LeadActivity, type OwnerLeadsTranslate } from "@/features/lead-shared";
 
-import { activityLabelKey, checklistGroupLabelKey, type OwnerLeadsKey } from "./labels";
-
-/** Translator of the `OwnerLeads` namespace, with the values of an ICU message. */
-export type OwnerLeadsTranslate = (key: OwnerLeadsKey, values?: Record<string, string | number>) => string;
+import { checklistGroupLabelKey } from "./checklist/label-text";
 
 const PHOTO_CATEGORIES = new Set([
   "EXTERIOR_ACCESS",

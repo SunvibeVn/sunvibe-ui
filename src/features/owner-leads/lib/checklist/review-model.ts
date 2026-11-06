@@ -1,3 +1,4 @@
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import {
   type ChecklistDecisionInput,
   type ChecklistDecisionRule,
@@ -10,7 +11,6 @@ import {
 } from "@/features/surveys";
 
 import { cleanText, optionalText, requiredText, type SurveyProblem, type SurveyProblems } from "../../schemas/survey/survey-text";
-import type { OwnerLeadsKey } from "../labels";
 
 import type { MediaPanelModel, PhotoCard } from "./media-panel-model";
 

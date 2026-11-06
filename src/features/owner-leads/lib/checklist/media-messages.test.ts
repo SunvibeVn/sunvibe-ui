@@ -1,10 +1,9 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
+import type { OwnerLeadsKey } from "@/features/lead-shared";
 import type { MediaUiError, MediaUiErrorKind } from "@/features/surveys";
 import en from "@/i18n/messages/en.json";
-
-import type { OwnerLeadsKey } from "../labels";
 
 import { coverageStateText, deselectErrorText, mediaErrorText } from "./media-messages";
 

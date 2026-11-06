@@ -1,13 +1,13 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 import type { ApiResult } from "@/features/auth/client";
+import type { OwnerLeadsKey } from "@/features/lead-shared";
+import { readFormDraft, writeFormDraft } from "@/features/lead-shared/client";
 import type { ChecklistRequalified } from "@/features/surveys";
 import en from "@/i18n/messages/en.json";
 
 import { problemText } from "../components/survey/survey-copy";
 
-import { readFormDraft, writeFormDraft } from "./drafts";
-import type { OwnerLeadsKey } from "./labels";
 import {
   createSubmitGate,
   firstRequalifyField,

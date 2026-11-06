@@ -1,3 +1,4 @@
+import type { OwnerLeadsKey, OwnerLeadsTranslate } from "@/features/lead-shared";
 import {
   CHECKLIST_GROUP_PATHS,
   type ChecklistContent,
@@ -8,9 +9,6 @@ import {
   type ChecklistView,
   type ChecklistVisit,
 } from "@/features/surveys";
-
-import type { OwnerLeadsTranslate } from "../history-activity-text";
-import type { OwnerLeadsKey } from "../labels";
 
 import { metaOfUnits } from "./correction-rule";
 import { effectiveTermsBySpace } from "./effective-terms-view";

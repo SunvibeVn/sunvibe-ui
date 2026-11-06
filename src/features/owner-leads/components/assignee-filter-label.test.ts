@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import type { EligibleAssignee, LeadSummary } from "../types";
+import type { EligibleAssignee, LeadSummary } from "@/features/lead-shared";
 
 import { assigneeFilterLabel } from "./assignee-filter-label";
 

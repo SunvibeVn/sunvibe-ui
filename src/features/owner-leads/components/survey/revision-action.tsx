@@ -6,15 +6,15 @@ import { useLayoutEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { tabDrafts } from "@/features/lead-shared/client";
 import { startRevision, type SurveyBlock, toChecklistUiError } from "@/features/surveys";
 
 import { forgetLeadChecklists } from "../../lib/checklist/page-state";
 import { checklistHref } from "../../lib/checklist/routes";
 import { checklistStartFailure, type IntakeField, revisionAction } from "../../lib/checklist/start-flow";
-import { tabDrafts } from "../../lib/drafts";
-import { useLeadDetail } from "../lead-detail-context";
 
 import { IntakeDialog } from "./intake-dialog";
+import { useSurveyPanel } from "./survey-panel-context";
 
 type Failure = { message: string; correlationId?: string } | null;
 
@@ -26,7 +26,7 @@ type Failure = { message: string; correlationId?: string } | null;
 export function RevisionAction({ block }: { block: NonNullable<SurveyBlock> }) {
   const t = useTranslations("OwnerLeads");
   const router = useRouter();
-  const { userId, leadId, busy, setBusy, reloadSurvey, leaveToList, applyChecklistStarted } = useLeadDetail();
+  const { userId, leadId, busy, setBusy, reloadSurvey, leaveToList, applyChecklistStarted } = useSurveyPanel();
   const [pending, setPending] = useState(false);
   const [intakeOpen, setIntakeOpen] = useState(false);
   const [failure, setFailure] = useState<Failure>(null);

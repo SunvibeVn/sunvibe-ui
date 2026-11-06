@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import { createTabMemory } from "../drafts";
+import { createTabMemory } from "@/features/lead-shared/client";
 
 import { checklistDraftKey } from "./checklist-draft";
 import { emptyContent, viewOf } from "./fixtures.test-support";

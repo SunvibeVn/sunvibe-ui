@@ -2,6 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 
+import { useDraft } from "@/features/lead-shared/client";
 import type { ChecklistContent, ChecklistGroupPath, ChecklistInput, ChecklistUnitMeta } from "@/features/surveys";
 
 import { checklistDraftKey, readChecklistDraft, writeChecklistDraft } from "../../lib/checklist/checklist-draft";
@@ -10,7 +11,6 @@ import { type GroupEdits, inputOfContent, toGroupInput, type UnitValue, unitsOfI
 import { withRelayRule } from "../../lib/checklist/receiver-options";
 import { sameUnit } from "../../lib/checklist/unit-equality";
 import { isPanelLocked } from "../../lib/checklist/page-state";
-import { useDraft } from "../../lib/drafts";
 
 import { useChecklistPage } from "./checklist-context";
 

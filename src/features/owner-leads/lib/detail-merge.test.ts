@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import type { LeadActivity, LeadDetail, LeadSummary } from "@/features/lead-shared";
 
-import type { LeadActivity, LeadDetail, LeadNoteResult, LeadSummary } from "../types";
-
+import type { LeadNoteResult } from "../types";
 import { applyChecklistStart, applySurveyCommandResult, mergeNoteResult, mergeSummary } from "./detail-merge";
 
 const submitted: LeadActivity = { type: "SUBMITTED", occurredAt: "2026-10-18T01:00:00Z" };
