@@ -146,7 +146,7 @@ describe("previewModel EVIDENCE_UNAVAILABLE (survey-checklist submission 4.4)", 
 });
 
 describe("previewModel submission line (survey-checklist submission B4)", () => {
-  const line = (reason: string | undefined, status: "DRAFT" | "SUBMITTED" = "DRAFT") =>
+  const line = (reason: string | null | undefined, status: "DRAFT" | "SUBMITTED" = "DRAFT") =>
     previewModel(
       viewOf(emptyContent(), 1, {
         status,
@@ -160,6 +160,10 @@ describe("previewModel submission line (survey-checklist submission B4)", () => 
       }),
       t,
     ).submission;
+
+  it("has no line for the null the server sends when submission is available", () => {
+    expect(line(null)).toBeNull();
+  });
 
   it("appears only while a switch keeps submission closed", () => {
     expect(line("SUBMISSION_NOT_AVAILABLE")).toBe(

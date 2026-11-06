@@ -1,4 +1,4 @@
-import type { ChecklistUiError, ChecklistView } from "@/features/surveys";
+import type { ChecklistReadiness, ChecklistUiError, ChecklistView } from "@/features/surveys";
 
 import type { OwnerLeadsKey } from "../labels";
 
@@ -12,11 +12,10 @@ export type SubmitPanelState =
   /** The first failing gate takes the place of the button. */
   | { kind: "unavailable"; text: OwnerLeadsKey };
 
-/**
- * The texts of `readiness.submissionUnavailableReason` (spec 4.4). A string on purpose: the contract's enum still lists
- * two of the seven values the server sends (survey-checklist-api-gaps.md GAP-1).
- */
-const GATE_TEXT: Readonly<Record<string, OwnerLeadsKey>> = {
+type GateReason = NonNullable<ChecklistReadiness["submissionUnavailableReason"]>;
+
+/** The texts of `readiness.submissionUnavailableReason` (spec 4.4), by the contract's enum: a new value fails the compiler. */
+const GATE_TEXT: Readonly<Record<GateReason, OwnerLeadsKey>> = {
   SUBMISSION_NOT_AVAILABLE: "checklist.submit.gate.SUBMISSION_NOT_AVAILABLE",
   EVIDENCE_NOT_AVAILABLE: "checklist.submit.gate.EVIDENCE_NOT_AVAILABLE",
   APPOINTMENT_SCHEDULED: "checklist.submit.gate.APPOINTMENT_SCHEDULED",
@@ -26,9 +25,11 @@ const GATE_TEXT: Readonly<Record<string, OwnerLeadsKey>> = {
   PHOTO_UNAVAILABLE: "checklist.submit.gate.PHOTO_UNAVAILABLE",
 };
 
-/** The text of a gate or an unavailable reason; a general one for a value this UI does not know. */
+const isGateReason = (reason: string): reason is GateReason => Object.hasOwn(GATE_TEXT, reason);
+
+/** The text of a gate or an unavailable reason; a general one for a value this UI does not know (a newer server). */
 export function gateTextKey(reason: string | null | undefined): OwnerLeadsKey {
-  return typeof reason === "string" && Object.hasOwn(GATE_TEXT, reason) ? GATE_TEXT[reason] : "checklist.submit.gate.UNKNOWN";
+  return typeof reason === "string" && isGateReason(reason) ? GATE_TEXT[reason] : "checklist.submit.gate.UNKNOWN";
 }
 
 /** The panel of an editable draft: the button when the read allows a submit, else the first failing gate (U-1). */

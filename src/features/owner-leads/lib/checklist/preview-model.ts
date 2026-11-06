@@ -202,7 +202,7 @@ const GROUP_TITLE = (group: string): OwnerLeadsKey => `checklist.groups.${group.
 /** The line of a draft while a switch keeps submission closed; the submit panel speaks once it is open. */
 function submissionLine(view: ChecklistView, t: OwnerLeadsTranslate): string | null {
   if (view.status !== "DRAFT") return null;
-  const reason: string | undefined = view.readiness?.submissionUnavailableReason;
+  const reason = view.readiness?.submissionUnavailableReason;
   if (reason === "SUBMISSION_NOT_AVAILABLE") return t("checklist.preview.submissionLater");
   return reason === "EVIDENCE_NOT_AVAILABLE" ? t("checklist.preview.submission") : null;
 }
