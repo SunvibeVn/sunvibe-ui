@@ -3,35 +3,25 @@ import type { Scope } from "@/features/workspace";
 
 type Schemas = components["schemas"];
 
-/**
- * A response as the API sends it: it writes an empty column as `null` (it leaves no field out), while the contract marks
- * the fields only optional. Every field, at every depth, may be left out or `null`, so the compiler asks for both.
- */
-export type ApiShape<T> = T extends readonly (infer U)[]
-  ? ApiShape<U>[]
-  : T extends object
-    ? { [K in keyof T]?: ApiShape<NonNullable<T[K]>> | null }
-    : T;
-
 /** The survey block of a lead: booking state, appointments (newest first), resumptions (spec 7.2). */
-export type SurveyBlock = ApiShape<Schemas["SurveyBlockResponse"]>;
+export type SurveyBlock = Schemas["SurveyBlockResponse"];
 /** One appointment of the block, with its revisions, events, holders, visit and cancellation. */
-export type SurveyAppointment = ApiShape<Schemas["SurveyAppointmentResponse"]>;
-export type SurveyLocation = ApiShape<Schemas["SurveyLocationResponse"]>;
-export type SurveyConfirmation = ApiShape<Schemas["SurveyConfirmationResponse"]>;
-export type SurveyHolder = ApiShape<Schemas["SurveyHolderResponse"]>;
-export type SurveyRevision = ApiShape<Schemas["SurveyRevisionResponse"]>;
-export type SurveyVisit = ApiShape<Schemas["SurveyVisitResponse"]>;
-export type SurveyCancellation = ApiShape<Schemas["SurveyCancellationResponse"]>;
-export type SurveyResumption = ApiShape<Schemas["SurveyResumptionResponse"]>;
+export type SurveyAppointment = Schemas["SurveyAppointmentResponse"];
+export type SurveyLocation = Schemas["SurveyLocationResponse"];
+export type SurveyConfirmation = Schemas["SurveyConfirmationResponse"];
+export type SurveyHolder = Schemas["SurveyHolderResponse"];
+export type SurveyRevision = Schemas["SurveyRevisionResponse"];
+export type SurveyVisit = Schemas["SurveyVisitResponse"];
+export type SurveyCancellation = Schemas["SurveyCancellationResponse"];
+export type SurveyResumption = Schemas["SurveyResumptionResponse"];
 /** The answer of every survey command: block, lead state, History row (null for a no-op) and overlaps (A-23). */
-export type SurveyCommandResult = ApiShape<Schemas["SurveyCommandResponse"]>;
-export type SurveyHistoryEntry = ApiShape<Schemas["SurveyHistoryEntryResponse"]>;
-export type SurveyOverlap = ApiShape<Schemas["SurveyOverlapResponse"]>;
-export type SurveyOverlaps = ApiShape<Schemas["SurveyOverlapsResponse"]>;
+export type SurveyCommandResult = Schemas["SurveyCommandResponse"];
+export type SurveyHistoryEntry = Schemas["SurveyHistoryEntryResponse"];
+export type SurveyOverlap = Schemas["SurveyOverlapResponse"];
+export type SurveyOverlaps = Schemas["SurveyOverlapsResponse"];
 /** One page of `/workspace/surveys` (SCHEDULED only, no private fields: US-4 AC-1). */
-export type SurveyPage = ApiShape<Schemas["SurveyPageResponse"]>;
-export type SurveyListItem = ApiShape<Schemas["SurveyListItemResponse"]>;
+export type SurveyPage = Schemas["SurveyPageResponse"];
+export type SurveyListItem = Schemas["SurveyListItemResponse"];
 /** A staff member who can hold leads, so be a surveyor (C-1). */
 export type Surveyor = Schemas["LeadAssigneeResponse"];
 
