@@ -112,7 +112,7 @@ describe("holderOptions", () => {
   });
 
   it("is empty without holders", () => {
-    expect(holderOptions({})).toEqual([]);
+    expect(holderOptions({ surveyorName: "Sale One" })).toEqual([]);
   });
 });
 
