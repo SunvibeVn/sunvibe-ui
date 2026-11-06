@@ -10,3 +10,4 @@ export {
   type SurveyProblem,
   type SurveyProblems,
 } from "./schemas/survey/survey-text";
+export { surveyFailure, type SurveyFailureStep } from "./lib/survey/survey-failure";

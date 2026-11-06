@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { RecordVisitInput, SurveyAppointment } from "@/features/surveys";
 import { instantToLocalInput, localInputToInstant, vietnamDate } from "@/lib/format/vietnam-time";
 
 import {
@@ -14,7 +13,8 @@ import {
   requiredText,
   type SurveyProblems,
   VISIT_NOTE_MAX,
-} from "../../../surveys/schemas/survey/survey-text";
+} from "../../schemas/survey/survey-text";
+import type { RecordVisitInput, SurveyAppointment } from "../../types";
 
 /** The record-visit dialog (spec 6.2). `arrivedAt` is a `datetime-local` value in Vietnam time. */
 export type VisitForm = {

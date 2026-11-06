@@ -14,7 +14,7 @@ import { fieldAnchor } from "../../lib/checklist/readiness-view";
 import { scopeSwitchWarning } from "../../lib/checklist/scope-switch";
 import { problemsUnder, unitPath } from "../../lib/checklist/unit-path";
 import { unitKey } from "../../lib/checklist/units";
-import type { Place } from "../../lib/survey/appointment-view";
+import type { Place } from "../../../surveys/lib/survey/appointment-view";
 import type { ChecklistProblems } from "../../schemas/checklist";
 import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 import { PlaceFields } from "../survey/place-fields";

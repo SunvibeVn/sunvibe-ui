@@ -1,5 +1,7 @@
 import type { ApiResult } from "@/features/auth/client";
-import { type SurveyCommandResult, type SurveyUiError, toSurveyUiError } from "@/features/surveys";
+
+import type { SurveyCommandResult } from "../../types";
+import { type SurveyUiError, toSurveyUiError } from "../survey-ui-error";
 
 /** How a survey command ended: its answer to apply (A-23), or the UI case of the failure (spec 6.7). */
 export type SurveyOutcome =

@@ -5,7 +5,7 @@ import { useEffect, useRef } from "react";
 
 import { Alert } from "@/components/ui/alert";
 
-import type { SurveyErrorMessage } from "../../lib/survey/survey-failure";
+import type { SurveyErrorMessage } from "../../../surveys/lib/survey/survey-failure";
 
 import { errorKey } from "./survey-copy";
 

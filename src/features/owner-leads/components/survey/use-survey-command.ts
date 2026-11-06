@@ -4,8 +4,8 @@ import { useActionState, useRef } from "react";
 import type { ApiResult } from "@/features/auth/client";
 import type { SurveyCommandResult } from "@/features/surveys";
 
-import { type SurveyErrorMessage, surveyFailure } from "../../lib/survey/survey-failure";
-import { runSurveyCommand } from "../../lib/survey/survey-flow";
+import { type SurveyErrorMessage, surveyFailure } from "../../../surveys/lib/survey/survey-failure";
+import { runSurveyCommand } from "../../../surveys/lib/survey/survey-flow";
 import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 
 import type { SurveyDialogMessage } from "./survey-message";

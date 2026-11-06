@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { ResumeSurveyInput } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import {
@@ -11,7 +10,8 @@ import {
   REASON_MAX,
   requiredText,
   type SurveyProblems,
-} from "../../../surveys/schemas/survey/survey-text";
+} from "../../schemas/survey/survey-text";
+import type { ResumeSurveyInput } from "../../types";
 
 /** The resume dialog (spec 6.2): a reason and the owner's confirmation that requirement and scope have not changed. */
 export type ResumeForm = { reason: string; basisDate: string; basisText: string };

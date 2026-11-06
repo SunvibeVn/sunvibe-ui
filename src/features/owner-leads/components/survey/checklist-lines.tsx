@@ -8,7 +8,7 @@ import type { SurveyAppointment } from "@/features/surveys";
 import { formatDateTime } from "@/lib/format/vietnam-time";
 
 import { checklistHref } from "../../lib/checklist/routes";
-import { checklistLineReason, revisionChip } from "../../lib/survey/appointment-view";
+import { checklistLineReason, revisionChip } from "../../../surveys/lib/survey/appointment-view";
 
 import { useSurveyPanel } from "./survey-panel-context";
 

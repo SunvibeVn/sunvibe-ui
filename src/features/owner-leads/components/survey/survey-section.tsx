@@ -16,7 +16,7 @@ import {
   type Place,
   resumesToQualified,
   scheduledAppointment,
-} from "../../lib/survey/appointment-view";
+} from "../../../surveys/lib/survey/appointment-view";
 import { requalifyTarget } from "../../lib/requalify-form";
 
 import { type AppointmentAction, AppointmentCard } from "./appointment-card";

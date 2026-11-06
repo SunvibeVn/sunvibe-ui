@@ -11,8 +11,8 @@ import { useFormDraft } from "@/features/lead-shared/client";
 import { recordVisit, type SurveyAppointment } from "@/features/surveys";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
-import { holderOptions, visitMode } from "../../lib/survey/appointment-view";
-import { toVisitBody, type VisitField, validateVisit, visitDefaults } from "../../lib/survey/visit-form";
+import { holderOptions, visitMode } from "../../../surveys/lib/survey/appointment-view";
+import { toVisitBody, type VisitField, validateVisit, visitDefaults } from "../../../surveys/lib/survey/visit-form";
 import { REASON_MAX, VISIT_NOTE_MAX } from "../../../surveys/schemas/survey/survey-text";
 
 import { problemText } from "./survey-copy";

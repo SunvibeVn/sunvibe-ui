@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { SurveyAppointment } from "@/features/surveys";
 import { formatDateTime } from "@/lib/format/vietnam-time";
 
-import { placeDiffersFromLead, placeOf } from "../../lib/survey/appointment-view";
+import { placeDiffersFromLead, placeOf } from "../../../surveys/lib/survey/appointment-view";
 
 import { ConfirmationBadge } from "./confirmation-badge";
 import { RevisionList } from "./revision-list";

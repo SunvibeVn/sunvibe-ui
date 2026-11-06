@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { intentLabelKey } from "@/features/lead-shared";
 import { useFormDraft } from "@/features/lead-shared/client";
 import { toSurveyUiError } from "@/features/surveys";
-import { REASON_MAX, type SurveyProblem } from "@/features/surveys/client";
+import { REASON_MAX, surveyFailure, type SurveyProblem } from "@/features/surveys/client";
 import { vietnamDate } from "@/lib/format/vietnam-time";
 
 import {
@@ -22,7 +22,6 @@ import {
   toIntentBody,
   validateRequirement,
 } from "../lib/requirement-form";
-import { surveyFailure } from "../lib/survey/survey-failure";
 import { changeIntent } from "../services/owner-leads-api";
 
 import { useLeadDetail } from "./lead-detail-context";

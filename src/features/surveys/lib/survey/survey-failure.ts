@@ -1,6 +1,5 @@
-import type { SurveyUiError } from "@/features/surveys";
-
-import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
+import type { SurveyProblem } from "../../schemas/survey/survey-text";
+import type { SurveyUiError } from "../survey-ui-error";
 
 /** A message key of `OwnerLeads.survey.errors`. */
 export type SurveyErrorMessage =

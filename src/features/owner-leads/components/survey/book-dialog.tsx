@@ -11,8 +11,8 @@ import { useFormDraft } from "@/features/lead-shared/client";
 import { type AppointmentKind, bookSurvey, type SurveyCommandResult } from "@/features/surveys";
 import { formatDateTime, localInputToInstant } from "@/lib/format/vietnam-time";
 
-import { type Place, placeDiffersFromLead } from "../../lib/survey/appointment-view";
-import { type BookingField, bookingDefaults, toBookBody, validateBooking } from "../../lib/survey/booking-form";
+import { type Place, placeDiffersFromLead } from "../../../surveys/lib/survey/appointment-view";
+import { type BookingField, bookingDefaults, toBookBody, validateBooking } from "../../../surveys/lib/survey/booking-form";
 import {
   ACCESS_NOTE_MAX,
   CONTACT_MAX,

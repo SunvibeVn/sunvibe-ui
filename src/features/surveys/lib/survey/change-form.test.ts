@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { SurveyAppointment } from "@/features/surveys";
-
+import type { SurveyAppointment } from "../../types";
 import { type ChangeForm, changeDefaults, changeIsEmpty, changeRemovesConfirmation, toChangeBody, validateChange } from "./change-form";
 
 const PLACE = { addressText: "25 Trần Phú", wardCode: "20242", latitude: 16.0715, longitude: 108.2239 };

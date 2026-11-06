@@ -1,6 +1,5 @@
 import { z } from "zod";
 import { PROVINCE_CODE } from "@/features/lead-shared";
-import type { AppointmentKind, BookSurveyInput, MeetingLocationInput } from "@/features/surveys";
 import { localInputToInstant } from "@/lib/format/vietnam-time";
 
 import {
@@ -20,8 +19,9 @@ import {
   requiredText,
   startWindowProblem,
   type SurveyProblems,
-} from "../../../surveys/schemas/survey/survey-text";
+} from "../../schemas/survey/survey-text";
 
+import type { AppointmentKind, BookSurveyInput, MeetingLocationInput } from "../../types";
 import { type Place, placeDiffersFromLead } from "./appointment-view";
 
 /** The book and re-survey dialog (spec 6.2). Texts as typed; `start` is a `datetime-local` value in Vietnam time. */

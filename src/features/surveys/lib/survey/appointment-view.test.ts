@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { SurveyAppointment, SurveyBlock } from "@/features/surveys";
-
+import type { SurveyAppointment, SurveyBlock } from "../../types";
 import {
   bookingBlockKey,
   checklistLineReason,

@@ -9,7 +9,7 @@ import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 import type { Ward } from "@/features/lead-shared";
 
-import { type Place, placeDiffersFromLead } from "../../lib/survey/appointment-view";
+import { type Place, placeDiffersFromLead } from "../../../surveys/lib/survey/appointment-view";
 import { ADDRESS_MAX, type SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 
 import { useSurveyCalls } from "./survey-calls-context";

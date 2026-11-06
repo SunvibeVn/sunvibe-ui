@@ -1,6 +1,6 @@
 import type { OwnerLeadsKey } from "@/features/lead-shared";
 
-import type { SurveyErrorMessage } from "../../lib/survey/survey-failure";
+import type { SurveyErrorMessage } from "../../../surveys/lib/survey/survey-failure";
 import type { SurveyProblem } from "../../../surveys/schemas/survey/survey-text";
 
 /** `useTranslations("OwnerLeads")` as the survey parts use it. */

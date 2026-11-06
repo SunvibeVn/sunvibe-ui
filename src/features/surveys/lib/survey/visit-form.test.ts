@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { SurveyAppointment } from "@/features/surveys";
-
+import type { SurveyAppointment } from "../../types";
 import { type VisitForm, toVisitBody, validateVisit, visitDefaults } from "./visit-form";
 
 /** 2026-10-25 10:20:40 in Vietnam. */

@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { ChangeAppointmentInput, SurveyAppointment } from "@/features/surveys";
 import { instantToLocalInput, localInputToInstant } from "@/lib/format/vietnam-time";
 
 import {
@@ -10,8 +9,9 @@ import {
   REASON_MAX,
   requiredText,
   type SurveyProblems,
-} from "../../../surveys/schemas/survey/survey-text";
+} from "../../schemas/survey/survey-text";
 
+import type { ChangeAppointmentInput, SurveyAppointment } from "../../types";
 import { type Place, placeOf, samePlace } from "./appointment-view";
 import { checkTimeAndPlace, detailTexts, toMeetingLocation } from "./booking-form";
 
