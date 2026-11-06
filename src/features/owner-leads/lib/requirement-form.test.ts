@@ -102,6 +102,26 @@ describe("toIntentBody amount (SV-021, W25 U-3)", () => {
       '"amount":999999999999999,',
     );
   });
+
+  it.each(["12,000,000", "12 000 000"])("toIntentBody_cleanGroups_sendTheSameAmount: %s goes out as 12000000 (SV-176)", (amount) => {
+    expect(amountSent(amount)).toBe(12000000);
+  });
+});
+
+describe("validateRequirement amount (SV-176)", () => {
+  it.each(["12,5", "1.5", "1500.5", "0,5", "1,500.50", "1.500.50", "1000.000", "12.000,000"])(
+    "validateRequirement_decimalsAreRefused: %s is not a whole amount",
+    (amount) => {
+      expect(validateRequirement(form({ amount }), ctx).amount).toBe("invalid");
+    },
+  );
+
+  it.each(["12.000.000", "12,000,000", "12 000 000", "1.500", "800000", "0012000000", " 12.000.000 "])(
+    "validateRequirement_cleanGroupsPass: %s is a whole amount",
+    (amount) => {
+      expect(validateRequirement(form({ amount }), ctx).amount).toBeUndefined();
+    },
+  );
 });
 
 describe("validateRequirement (US-5, BR-10, A-14, A-25)", () => {

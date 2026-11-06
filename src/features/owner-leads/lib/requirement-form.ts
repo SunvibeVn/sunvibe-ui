@@ -46,6 +46,9 @@ const FROM_STATUSES: readonly string[] = ["ASSIGNED", "CONTACTED", "ON_HOLD", "S
 /** Most digits of an amount (the intake rule: 1..15 digits, whole VND). */
 const AMOUNT_DIGITS = 15;
 
+/** Plain digits, or groups of three with one separator throughout: a decimal never reads as a whole amount (SV-176). */
+const WHOLE_AMOUNT = /^\d+$|^\d{1,3}([\s.,])\d{3}(?:\1\d{3})*$/;
+
 /** A PASSED of the cycle refuses the change in any status; a SUBMITTED revision does not (survey-checklist D3-7, D3-13). */
 export function canChangeRequirement(status: string | undefined, survey?: SurveyRecordFacts | null): boolean {
   return status !== undefined && FROM_STATUSES.includes(status) && survey?.hasPassed !== true;
@@ -65,9 +68,9 @@ export function priceUnitOf(intent: string): "NIGHT" | "MONTH" | null {
 
 /** The digits of a typed amount ("12.000.000" -> "12000000"); null when it is not a whole positive amount. */
 function amountOf(value: string): string | null {
-  const digits = value.replace(/[\s.,]/g, "");
-  if (!/^\d+$/.test(digits)) return null;
-  const trimmed = digits.replace(/^0+/, "");
+  const typed = value.trim();
+  if (!WHOLE_AMOUNT.test(typed)) return null;
+  const trimmed = typed.replace(/[\s.,]/g, "").replace(/^0+/, "");
   return trimmed === "" || trimmed.length > AMOUNT_DIGITS ? null : trimmed;
 }
 
