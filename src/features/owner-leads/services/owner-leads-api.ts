@@ -35,7 +35,7 @@ export type AddNoteInput = Pick<Schemas["AddLeadNoteRequest"], "note" | "nextAct
 export type ChangeStatusInput = Omit<Schemas["ChangeLeadStatusRequest"], "toStatus"> & { toStatus: LeadStatus };
 export type AssignLeadInput = Schemas["AssignLeadRequest"];
 /** A rental price in the unit of the new intent (NIGHT for short-term, MONTH for long-term); amount in whole VND. */
-export type RentalPriceInput = { amount: string; currency: "VND"; unit: "NIGHT" | "MONTH" };
+export type RentalPriceInput = { amount: number; currency: "VND"; unit: "NIGHT" | "MONTH" };
 /** The requirement change body (survey-schedule A-17): `askingPrice` always present, `null` for no price. */
 export type ChangeIntentInput = Omit<Schemas["ChangeLeadIntentRequest"], "newIntent" | "askingPrice"> & {
   newIntent: "SHORT_TERM_RENT" | "LONG_TERM_RENT";

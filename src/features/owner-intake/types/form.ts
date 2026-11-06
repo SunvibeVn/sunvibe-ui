@@ -10,12 +10,7 @@ export type Intent = OwnerIntakeRequest["intent"];
 export type PropertyType = NonNullable<OwnerIntakeRequest["propertyType"]>;
 export type PriceUnit = NonNullable<components["schemas"]["AskingPriceRequest"]["unit"]>;
 
-/**
- * The OpenAPI file types `askingPrice.amount` as a string (int64 format), but the server wants a JSON number
- * (handoff section 6). This body type overrides that one field; send it with `amount` as a number.
- */
-export type AskingPriceBody = Omit<components["schemas"]["AskingPriceRequest"], "amount"> & { amount: number };
-export type OwnerIntakeRequestBody = Omit<OwnerIntakeRequest, "askingPrice"> & { askingPrice?: AskingPriceBody };
+export type OwnerIntakeRequestBody = OwnerIntakeRequest;
 
 /**
  * Controlled state of the whole form, owned by the form container. Text inputs keep the raw text; empty string
