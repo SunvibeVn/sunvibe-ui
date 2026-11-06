@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-import { containsPhoneNumber } from "../../lib/survey/phone-in-text";
+import { containsPhoneNumber } from "@/lib/text/phone-in-text";
 
 // The free-text and time rules shared by the survey and requirement forms (survey-schedule BR-4, spec A-14, A-24,
 // A-25, Global Constraints of the plan). Issue messages are `SurveyProblem` values; the dialogs turn them into texts.

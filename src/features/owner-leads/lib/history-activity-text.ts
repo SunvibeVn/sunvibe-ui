@@ -27,8 +27,14 @@ function photoText(activity: Pick<LeadActivity, "type" | "referenceDetail">, t: 
 
 const REVIEW_OUTCOMES = new Set(["PASSED", "NEEDS_CHANGES", "FAILED"]);
 
-/** Rows that never show a note: their text stays on the revision (`survey BR-4`). */
-const EVENT_ONLY = new Set<string>(["CHECKLIST_REVIEWED", "REQUALIFICATION_MARKED"]);
+/** Rows that never show a note: their text stays on the revision (`survey BR-4`) or the intake (intake 4.12). */
+const EVENT_ONLY = new Set<string>([
+  "CHECKLIST_REVIEWED",
+  "REQUALIFICATION_MARKED",
+  "INVENTORY_INTAKE_COMPLETED",
+  "INVENTORY_INTAKE_SUSPENDED",
+  "INVENTORY_INTAKE_RESTORED",
+]);
 
 /** The checklist rows' own wording (survey-checklist spec 6.4): "Checklist #m started", "Checklist #m: <group> saved". */
 function checklistText(
@@ -42,6 +48,9 @@ function checklistText(
   if (activity.type === "CHECKLIST_SUBMITTED") return t("history.checklistSubmitted", { no });
   if (activity.type === "CHECKLIST_REVISION_STARTED") return t("history.revisionStarted", { no });
   if (activity.type === "REQUALIFICATION_MARKED") return t("history.requalified", { no });
+  if (activity.type === "INVENTORY_INTAKE_COMPLETED") return t("history.intakeCompleted", { no });
+  if (activity.type === "INVENTORY_INTAKE_SUSPENDED") return t("history.intakeSuspended", { no });
+  if (activity.type === "INVENTORY_INTAKE_RESTORED") return t("history.intakeRestored", { no });
   if (activity.type === "CHECKLIST_REVIEWED") {
     // `<OUTCOME>[:<KIND>]`: the row names the outcome only (survey-checklist 6.2).
     const outcome = (activity.referenceDetail ?? "").split(":")[0];

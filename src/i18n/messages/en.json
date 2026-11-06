@@ -31,7 +31,8 @@
       "close": "Close menu",
       "ownerLeads": "SUPPLY LEADS",
       "surveys": "SURVEYS",
-      "territories": "TERRITORIES"
+      "territories": "TERRITORIES",
+      "inventoryCases": "INVENTORY CASES"
     },
     "header": {
       "home": "Sunvibe home",
@@ -99,7 +100,10 @@
       "CHECKLIST_SUBMITTED": "Checklist submitted",
       "CHECKLIST_REVISION_STARTED": "Revision started",
       "CHECKLIST_REVIEWED": "Checklist reviewed",
-      "REQUALIFICATION_MARKED": "Survey requalified"
+      "REQUALIFICATION_MARKED": "Survey requalified",
+      "INVENTORY_INTAKE_COMPLETED": "Inventory intake completed",
+      "INVENTORY_INTAKE_SUSPENDED": "Inventory intake suspended",
+      "INVENTORY_INTAKE_RESTORED": "Inventory intake restored"
     },
     "role": {
       "SALE": "Sale",
@@ -267,7 +271,10 @@
       "showSaves": "Show the {count} saves",
       "hideSaves": "Hide the saves",
       "photoAdded": "Photo added: {category}",
-      "photoRemoved": "Photo removed: {category}"
+      "photoRemoved": "Photo removed: {category}",
+      "intakeCompleted": "Intake #{no} completed",
+      "intakeSuspended": "Intake #{no} suspended",
+      "intakeRestored": "Intake #{no} restored"
     },
     "statusDialog": {
       "reason": "Reason",
@@ -1612,6 +1619,493 @@
       "forbidden": "You are not allowed to see these surveys.",
       "retry": "Try again",
       "supportCode": "Support code: {correlationId}"
+    }
+  },
+  "InventoryIntake": {
+    "status": {
+      "NONE": "Not started",
+      "DRAFT": "Parts selected",
+      "AWAITING_OWNER": "Waiting for the owner",
+      "OWNER_CONFIRMED": "Owner confirmed",
+      "CASE_OPEN": "Needs a manager check",
+      "COMPLETED": "Completed"
+    },
+    "gate": {
+      "reasons": {
+        "NOT_LONG_TERM": "The lead is not a long-term rental.",
+        "NOT_QUALIFIED": "The lead is not qualified.",
+        "NO_PASSED": "The lead has no passed survey.",
+        "PASSED_NOT_USABLE": "The passed survey can no longer be used.",
+        "TYPE_SCOPE_MISMATCH": "The property type does not fit the surveyed scope. A manager has to mark the survey.",
+        "RECONCILIATION_REQUIRED": "The earlier result needs reconciling first. Nothing on this page lifts that.",
+        "RESTRICTED": "A manager has restricted this lead."
+      }
+    },
+    "readiness": {
+      "state": {
+        "NONE": "No result yet",
+        "USABLE": "Usable",
+        "SUSPENDED": "Suspended",
+        "ENDED": "Ended"
+      },
+      "reasons": {
+        "LEAD_ON_HOLD": "The lead is on hold.",
+        "EVIDENCE_HELD": "The survey evidence is on hold.",
+        "OWNER_NOT_CONFIRMED": "The owner's confirmation no longer stands.",
+        "OWNER_NOT_ELIGIBLE": "The owner's account is not eligible.",
+        "RESTRICTED": "Restricted by a manager.",
+        "DUPLICATE": "The lead was closed as a duplicate.",
+        "REJECTED": "The lead was declined.",
+        "WITHDRAWN": "The owner withdrew the lead.",
+        "REQUALIFIED": "The survey behind this result was requalified.",
+        "INTENT_CHANGED": "The lead's requirement changed.",
+        "EVIDENCE_GONE": "The survey evidence is gone."
+      },
+      "unitReasons": {
+        "RESTRICTED": "Restricted by a manager",
+        "AVAILABILITY_DIFFERS": "Availability differs"
+      },
+      "missing": {
+        "AGREEMENT": "Brokerage agreement",
+        "ADVERTISING_PERMISSION": "Permission to advertise",
+        "CONFIRMED_TERMS": "Confirmed terms",
+        "PHOTO_RIGHTS": "Rights to the photos"
+      }
+    },
+    "assetType": {
+      "HOUSE": "House",
+      "WHOLE_BUILDING": "Whole building",
+      "VILLA": "Villa",
+      "HOMESTAY": "Homestay",
+      "CONDOTEL": "Condotel",
+      "APARTMENT": "Apartment"
+    },
+    "rentalScope": {
+      "WHOLE": "The whole property",
+      "PARTS": "Separate parts"
+    },
+    "availabilityState": {
+      "VACANT": "Vacant",
+      "OCCUPIED": "Occupied",
+      "UNDER_REPAIR": "Under repair",
+      "PAUSED": "Paused",
+      "OWNER_UNSURE": "Owner unsure",
+      "SOURCE_CONFLICT": "Sources conflict"
+    },
+    "unitAvailability": {
+      "AVAILABLE": "Available",
+      "OCCUPIED": "Occupied",
+      "MAINTENANCE": "Maintenance",
+      "BLOCKED": "Blocked"
+    },
+    "notCarried": {
+      "PHOTOS": "Photos",
+      "NOTES": "Notes",
+      "CONTACT": "Contact details",
+      "TERMS": "Terms"
+    },
+    "warnings": {
+      "TERMS_UNCONFIRMED": "The terms are unconfirmed reference only.",
+      "UNIT_UNCLASSIFIED": "The units have no classification yet.",
+      "AVAILABILITY_DIFFERS": "What the owner said differs from a linked unit.",
+      "LEGACY_PROPERTY": "This is an older property record.",
+      "SAME_PHONE_LEAD": "Another open lead has the same phone."
+    },
+    "case": {
+      "signal": {
+        "ADDRESS": "Same address",
+        "PIN": "Pins within 50 m",
+        "INTAKE": "Another intake",
+        "LINK_PLACE": "The link's place differs"
+      },
+      "status": {
+        "OPEN": "Open",
+        "DECIDED": "Decided",
+        "CLOSED": "Closed"
+      },
+      "outcome": {
+        "DIFFERENT_ASSET": "Different asset",
+        "SAME_ASSET": "Same asset"
+      }
+    },
+    "errors": {
+      "forbidden": "You don't have permission to do this.",
+      "not-found": "This is not available.",
+      "not-assignee": "Only the lead's assignee can do this.",
+      "check-not-allowed": "You can't act on this owner check.",
+      "case-not-allowed": "You can't act on this case.",
+      "validation": "Some values were not accepted. Check the form and try again.",
+      "selection-invalid": "This selection does not fit the survey. The page has been reloaded.",
+      "link-invalid": "This link can't be used. Check the property and its units.",
+      "stale": "Something changed on this intake. The page has been reloaded.",
+      "state": "The intake has moved on, so this can't be done now. The page has been reloaded.",
+      "gate": "The intake gate is closed. The page shows why.",
+      "proof-required": "This needs a checked owner confirmation first.",
+      "canonical": "This property's main unit can't take parts yet.",
+      "create-not-allowed": "This intake can only link to its property.",
+      "disputed": "This intake needs a manager check.",
+      "source-invalid": "The survey holds a value that can't be used. A manager needs to look at it.",
+      "availability": "Availability has to be confirmed with the owner today.",
+      "preview-stale": "The preview was out of date. Read the new one before completing.",
+      "duplicate-check": "This intake needs a manager check.",
+      "already-completed": "This intake is already completed.",
+      "request-limit": "Too many owner requests for this intake today.",
+      "rate-limited": "Too many attempts. Please wait a while and try again.",
+      "retry": "Something went wrong. Please try again.",
+      "supportCode": "Support code: {correlationId}"
+    },
+    "section": {
+      "title": "Inventory intake",
+      "open": "Open the intake",
+      "status": "Status",
+      "property": "Property",
+      "readiness": "Readiness",
+      "closed": "Not ready for inventory yet.",
+      "loadFailed": "The intake could not be read.",
+      "retry": "Try again"
+    },
+    "page": {
+      "title": "Inventory intake",
+      "back": "Back to the lead",
+      "leads": "Back to leads",
+      "loading": "Loading the intake",
+      "gone": "Inventory intake is not available for this lead.",
+      "loadFailed": "The intake could not be read.",
+      "retry": "Try again",
+      "request": "Request {code}",
+      "readOnly": "Only the lead's assignee can run these steps."
+    },
+    "gatePanel": {
+      "closedTitle": "This lead can't go to inventory yet",
+      "earlier": "An earlier intake made {code}. A new intake can only link to it."
+    },
+    "selection": {
+      "title": "Parts",
+      "intro": "Choose the parts the survey approved.",
+      "scope": "Surveyed scope: {scope}",
+      "location": "Location",
+      "accessLimits": "Access limits",
+      "sourceDate": "Source date",
+      "terms": "Unconfirmed terms, for reference only",
+      "noValue": "Not recorded",
+      "none": "No parts chosen yet.",
+      "save": "Save the selection",
+      "saving": "Saving…",
+      "changeWarning": "Saving a new selection ends the owner's request or confirmation, and clears the target and availability.",
+      "separate": "Several separate assets, a co-owner or a representative stay on this lead: add a lead note.",
+      "problems": {
+        "required": "Choose at least one part.",
+        "tooMany": "Choose at most 50 parts."
+      }
+    },
+    "owner": {
+      "title": "Owner confirmation",
+      "intro": "Ask the owner for the email of their Sunvibe account. They confirm on their own account page.",
+      "email": "Owner's email",
+      "emailHint": "The answer here is the same for any address.",
+      "submit": "Create the request",
+      "saving": "Creating…",
+      "state": {
+        "NONE": "No request yet.",
+        "WAITING": "Waiting for the owner, until the request ends.",
+        "CONFIRMED": "The owner has confirmed."
+      },
+      "problems": {
+        "required": "Enter the owner's email.",
+        "invalid": "Enter a valid email."
+      },
+      "codeTitle": "Read this code to the owner by phone",
+      "codeOnce": "It is shown once. Staff give this code and never ask for it back.",
+      "codeEnds": "The request ends {date}.",
+      "codeDone": "I've read it out"
+    },
+    "ownerCheck": {
+      "title": "Owner check",
+      "NONE": "No owner check yet.",
+      "REQUIRED": "A manager has to call the owner before this goes on.",
+      "DONE": "The manager's owner check is done."
+    },
+    "caseGate": {
+      "title": "Manager check",
+      "needsCheck": "This intake needs a manager check."
+    },
+    "target": {
+      "title": "Target",
+      "legend": "How this goes into inventory",
+      "create": "Create a new property",
+      "link": "Link to a property the owner holds",
+      "currentCreate": "Current target: a new property.",
+      "currentLink": "Current target: a link to {code}.",
+      "forced": "A manager's check ties this intake to {code}: only a link to it can go on.",
+      "canonical": "Main part",
+      "canonicalHint": "The property code goes to the unit of this part.",
+      "canonicalPlaceholder": "Choose a part",
+      "unitFor": "Unit for {part}",
+      "unitPlaceholder": "Choose a unit",
+      "save": "Save the target",
+      "saving": "Saving…",
+      "problems": {
+        "mode": "Choose how this goes into inventory.",
+        "canonical": "Choose the main part.",
+        "property": "Find and pick the property first.",
+        "mappingsRequired": "Choose a unit for every part.",
+        "mappingsOverlap": "Each unit can take one part only."
+      }
+    },
+    "search": {
+      "title": "Find the owner's property",
+      "propertyCode": "Property code",
+      "q": "Address or name",
+      "hint": "Leave both empty to list the owner's properties in this ward.",
+      "submit": "Search",
+      "searching": "Searching…",
+      "nothingToSearch": "Enter a property code or some text.",
+      "empty": "No property of this owner fits this search.",
+      "results": "{count, plural, one {# property} other {# properties}}",
+      "pick": "Use this property",
+      "picked": "Using {code}",
+      "units": "{count, plural, one {# unit} other {# units}}",
+      "previous": "Previous page",
+      "next": "Next page"
+    },
+    "availability": {
+      "title": "Availability",
+      "intro": "Record what the owner told you about each part. It has to be from today when you complete.",
+      "state": "State",
+      "statePlaceholder": "Choose a state",
+      "contactedOn": "Day of contact",
+      "note": "Note",
+      "expectedDate": "Expected date",
+      "save": "Save availability",
+      "saving": "Saving…",
+      "problems": {
+        "required": "This is required.",
+        "tooLate": "The day can't be after today.",
+        "tooLong": "Keep this to 500 characters.",
+        "phone": "Remove the phone number.",
+        "invalid": "This text can't be saved."
+      }
+    },
+    "preview": {
+      "title": "Preview",
+      "loading": "Reading the preview",
+      "owner": "Owner",
+      "ownerConfirmed": "Confirmed and checked",
+      "ownerUnconfirmed": "Not confirmed",
+      "account": "Account",
+      "property": "Property",
+      "code": "Code",
+      "codeAtCompletion": "Set at completion",
+      "propertyTitle": "Title",
+      "assetType": "Type",
+      "layout": "Layout",
+      "address": "Address",
+      "ward": "Ward",
+      "source": "Survey decided",
+      "units": "Units",
+      "location": "Location",
+      "area": "Area",
+      "areaValue": "{value} m²",
+      "bedrooms": "Bedrooms",
+      "bathrooms": "Private bathrooms",
+      "condition": "Condition",
+      "amenities": "Amenities",
+      "availability": "Availability",
+      "notRecorded": "Not recorded",
+      "sources": "Sources",
+      "terms": "Unconfirmed reference, not accepted terms",
+      "noValue": "No value",
+      "notCarried": "Not carried into inventory",
+      "warnings": "Warnings",
+      "note": "Completing adds this to inventory. It is not a listing, and it does not verify the owner.",
+      "complete": "Complete the intake",
+      "completing": "Completing…",
+      "completed": "The intake is completed.",
+      "retry": "Try again"
+    },
+    "result": {
+      "title": "Result",
+      "property": "Property",
+      "units": "Units",
+      "completedAt": "Completed",
+      "readiness": "Readiness",
+      "unitsHeading": "Units that can't be used",
+      "missing": "Still needed before brokerage",
+      "notListing": "This is inventory only: not a listing, and not a verified owner."
+    },
+    "restoration": {
+      "title": "Restore the result",
+      "intro": "The owner has confirmed again and the owner check is done.",
+      "submit": "Restore",
+      "saving": "Restoring…"
+    },
+    "text": {
+      "required": "This is required.",
+      "tooLong": "This is too long.",
+      "phone": "Remove the phone number.",
+      "invalid": "This text can't be saved."
+    },
+    "ownerCheckPanel": {
+      "title": "Owner check by a manager",
+      "loading": "Reading the owner check",
+      "account": "Account",
+      "accountAge": "Account age",
+      "accountAgeDays": "{count, plural, one {# day} other {# days}}",
+      "confirmedAt": "Confirmed",
+      "startBasis": "Basis of the last start",
+      "signalsTitle": "Signals",
+      "signals": {
+        "accountProofs": "Live confirmations of this account",
+        "accountRefusals": "Refusals of this account",
+        "creatorProofs": "This account's confirmations from this Sale's requests",
+        "creatorRefusals": "Refusals on this Sale's requests",
+        "otherOpenLeadsOfPhone": "Other open leads on this phone",
+        "otherOwnersOnPhone": "Other owners on this phone"
+      },
+      "refusalsTitle": "Earlier refusals on this lead",
+      "how": "Call the phone on the lead, read the phrase out, and ask the person to enter it on their own account page. No answer records nothing.",
+      "leadLink": "Open the lead for its phone",
+      "basis": "Basis",
+      "basisHint": "Why this check goes on, written before the call.",
+      "basisOtherOwners": "Another owner sits on this phone: say why you go on.",
+      "start": "Start the check",
+      "refuse": "Record a refusal",
+      "refuseHint": "A stranger answered: a refusal ends this confirmation.",
+      "phraseTitle": "Read this phrase to the person who answers",
+      "phraseEnds": "It ends {date}.",
+      "script": "Please enter this code yourself on your Sunvibe account page. Don't give it to anyone, including the Sale. If you have no account or can't find where to enter it, tell me.",
+      "scriptNote": "Say this in Vietnamese, from the script managers hold. Never ask for anything back.",
+      "phraseDone": "I've read it out",
+      "refresh": "Read the check again",
+      "done": "The owner check is done.",
+      "saving": "Saving…"
+    },
+    "suspensions": {
+      "title": "Suspensions",
+      "none": "No active suspension.",
+      "wholeLead": "Whole lead",
+      "recorded": "Recorded {date}",
+      "appliesTo": "Applies to",
+      "reason": "Reason",
+      "add": "Suspend",
+      "adding": "Saving…",
+      "release": "Release",
+      "releaseReason": "Why it ends",
+      "releasing": "Releasing…"
+    },
+    "cases": {
+      "title": "Inventory cases",
+      "tabs": {
+        "OPEN": "Open",
+        "DECIDED": "Decided"
+      },
+      "statusLabel": "Show",
+      "loading": "Loading the cases",
+      "empty": "No cases here.",
+      "unavailable": "Inventory cases are not available.",
+      "loadFailed": "The cases could not be read.",
+      "retry": "Try again",
+      "opened": "Opened {date}",
+      "pageOf": "Page {page} of {total}",
+      "previous": "Previous page",
+      "next": "Next page",
+      "detail": {
+        "title": "Inventory case",
+        "back": "Back to cases",
+        "loading": "Loading the case",
+        "unavailable": "This case is not available.",
+        "signal": "Signal",
+        "status": "Status",
+        "thisIntake": "This intake",
+        "lead": "Lead",
+        "ward": "Ward",
+        "parts": "Parts",
+        "candidate": "Candidate",
+        "candidateProperty": "Property {code}",
+        "candidateIntake": "Intake of lead {code}",
+        "assetType": "Type",
+        "layout": "Layout",
+        "address": "Address",
+        "units": "Units",
+        "ownerMatches": "Same owner",
+        "ownerYes": "Yes",
+        "ownerNo": "No",
+        "ownerUnknown": "No checked confirmation yet",
+        "outcome": "Outcome",
+        "basis": "Basis",
+        "decidedAt": "Decided",
+        "none": "Not recorded"
+      },
+      "decision": {
+        "title": "Decision",
+        "outcome": "Outcome",
+        "outcomePlaceholder": "Choose an outcome",
+        "proceeding": "The intake that goes on",
+        "proceedingPlaceholder": "Choose an intake",
+        "proceedingOption": "Lead {code}",
+        "basis": "Basis",
+        "submit": "Save the decision",
+        "saving": "Saving…",
+        "required": "This is required."
+      }
+    },
+    "account": {
+      "title": "Property confirmations",
+      "intro": "Sunvibe staff can ask you to confirm that a property is yours. Only you can confirm it, here on your own account.",
+      "back": "Back to your account",
+      "loading": "Loading your requests",
+      "loadFailed": "Your requests could not be read.",
+      "retry": "Try again",
+      "empty": "You have no requests.",
+      "pendingTitle": "A request to confirm a property",
+      "ends": "It ends {date}.",
+      "confirmedTitle": "A property you confirmed",
+      "code": "Confirmation code",
+      "codeHint": "Staff read this code to you by phone.",
+      "readDetails": "See the details",
+      "reading": "Reading…",
+      "lead": "Request",
+      "ward": "Ward",
+      "assetType": "Type",
+      "address": "Address",
+      "parts": "Parts",
+      "statement": "What you confirm",
+      "password": "Your password",
+      "confirm": "Confirm",
+      "decline": "This is not mine",
+      "phraseTitle": "Enter the phrase from your call",
+      "phraseIntro": "A Sunvibe manager is calling you with a phrase. Enter it here yourself, and don't give it to anyone.",
+      "phrase": "Phrase",
+      "submitPhrase": "Enter the phrase",
+      "entering": "Saving…",
+      "withdrawTitle": "Withdraw this confirmation",
+      "withdrawIntro": "This ends your confirmation. Enter your password to go on.",
+      "withdraw": "Withdraw",
+      "withdrawing": "Withdrawing…",
+      "done": {
+        "confirmed": "Thank you. Your confirmation is saved.",
+        "declined": "Saved. This request has ended.",
+        "checked": "Thank you. The phrase is saved.",
+        "withdrawn": "Your confirmation is withdrawn."
+      },
+      "problems": {
+        "required": "This is required.",
+        "invalid": "This doesn't look right.",
+        "wrongPassword": "That password isn't right."
+      },
+      "errors": {
+        "invalid": "This isn't valid, or the request has ended.",
+        "locked": "Your account is locked for a while. Try again later.",
+        "rateLimited": "Too many attempts. Please wait a while and try again.",
+        "stale": "This request changed. The page has been reloaded.",
+        "gone": "This request is no longer here. The page has been reloaded.",
+        "retry": "Something went wrong. Please try again.",
+        "supportCode": "Support code: {correlationId}"
+      },
+      "backToCode": "Back",
+      "checkAgain": "Check again",
+      "phraseWaiting": "If a Sunvibe manager calls you with a phrase, press Check again and enter it here.",
+      "saving": "Saving…"
     }
   }
 }

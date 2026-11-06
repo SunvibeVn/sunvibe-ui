@@ -10,7 +10,7 @@ const BASE_URL = "http://localhost:3000";
  * fixture leads and a territory) and the four E2E passwords exported (see e2e/workspace/support/staff.ts).
  *
  * One project per spec file, in the order the fixtures need: access, sale, leader, admin, survey, survey-checklist,
- * survey-media, survey-checklist-review, requalification.
+ * survey-media, survey-checklist-review, inventory-intake, requalification.
  * Each project depends on the one before it, so Playwright runs them in that order whatever the file names
  * (admin.spec.ts sorts first) and skips the later ones when an earlier one fails (they would start on fixture data the earlier spec did not leave).
  */
@@ -55,10 +55,18 @@ export default defineConfig({
       use: { ...devices["Desktop Chrome"], trace: "off", video: "off", screenshot: "off" },
     },
     {
+      // From L15's QUALIFIED end state, while it still holds its PASSED. The code, the phrase and the password are on
+      // screen: none may land in a trace, video, screenshot or report.
+      name: "inventory-intake",
+      testMatch: "inventory-intake.spec.ts",
+      dependencies: ["survey-checklist-review"],
+      use: { ...devices["Desktop Chrome"], trace: "off", video: "off", screenshot: "off" },
+    },
+    {
       // From L15's QUALIFIED end state. Photos on screen as in survey-media.
       name: "requalification",
       testMatch: "requalification.spec.ts",
-      dependencies: ["survey-checklist-review"],
+      dependencies: ["inventory-intake"],
       use: { ...devices["Desktop Chrome"], trace: "off", video: "off", screenshot: "off" },
     },
   ],

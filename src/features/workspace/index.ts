@@ -4,5 +4,5 @@ export { WorkspaceAccountCard } from "./components/workspace-account-card";
 export { WorkspaceDocument } from "./components/workspace-document";
 export { WorkspaceLink } from "./components/workspace-link";
 export { WorkspaceShell } from "./components/workspace-shell";
-export { STAFF_WORKSPACE_ROLES, SURVEYS_PATH, WORKSPACE_HOME } from "./lib/routes";
+export { INVENTORY_CASE_ROLES, INVENTORY_CASES_PATH, STAFF_WORKSPACE_ROLES, SURVEYS_PATH, WORKSPACE_HOME } from "./lib/routes";
 export { type Scope, type Viewer, viewerOf } from "./lib/viewer";

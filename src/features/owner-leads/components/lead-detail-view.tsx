@@ -8,6 +8,7 @@ import { ArrowLeftIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
+import { IntakeSection } from "@/features/inventory-intake";
 import { type ChecklistStarted, type SurveyCommandResult, toSurveyUiError } from "@/features/surveys";
 
 import { add, isBusy, remove } from "../lib/command-lock";
@@ -339,6 +340,7 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
           <LeadAsset lead={current.lead} />
         </div>
         <SurveySection />
+        <IntakeSection leadId={leadId} refreshKey={current.lead.version} />
         <LeadHistory activities={current.lead.activities ?? NO_ITEMS} />
       </div>
     </LeadDetailProvider>

@@ -128,7 +128,7 @@ test.describe("ADMIN in the workspace", () => {
     await expect(await findLeadLink(page, L10)).toBeVisible();
 
     const menu = page.getByRole("navigation", { name: T.menuLabel });
-    await expect(menu.getByRole("link")).toHaveText([T.menuOwnerLeads, T.menuSurveys, T.menuTerritories]);
+    await expect(menu.getByRole("link")).toHaveText([T.menuOwnerLeads, T.menuSurveys, T.menuInventoryCases, T.menuTerritories]);
     await menu.getByRole("link", { name: T.menuTerritories }).click();
     await expect(page.getByRole("heading", { level: 1, name: T.territoriesTitle })).toBeVisible();
     await expect(page).toHaveURL(/\/workspace\/settings\/territories$/);

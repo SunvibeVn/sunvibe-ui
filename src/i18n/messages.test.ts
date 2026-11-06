@@ -162,7 +162,7 @@ function keyPaths(node: unknown): string[] {
 }
 
 const VIETNAMESE_LETTER = /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
-const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys"];
+const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys", "InventoryIntake"];
 
 describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
   it("en.json has no Vietnamese letters", () => {
@@ -210,7 +210,7 @@ describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
 
 describe("no workspace file reads vi.json (W14-20)", () => {
   const root = fileURLToPath(new URL("..", import.meta.url));
-  const dirs = ["features/owner-leads", "features/workspace", "app/(workspace)"];
+  const dirs = ["features/owner-leads", "features/workspace", "features/inventory-intake", "app/(workspace)"];
   const allowed = new Set([path.join("features", "workspace", "components", "workspace-link.tsx")]);
 
   function files(dir: string): string[] {
@@ -305,6 +305,9 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
       CHECKLIST_REVISION_STARTED: "Revision started",
       CHECKLIST_REVIEWED: "Checklist reviewed",
       REQUALIFICATION_MARKED: "Survey requalified",
+      INVENTORY_INTAKE_COMPLETED: "Inventory intake completed",
+      INVENTORY_INTAKE_SUSPENDED: "Inventory intake suspended",
+      INVENTORY_INTAKE_RESTORED: "Inventory intake restored",
     });
   });
 
