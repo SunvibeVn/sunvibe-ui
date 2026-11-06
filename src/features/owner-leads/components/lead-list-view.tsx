@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
@@ -12,6 +12,7 @@ import { Tabs } from "@/components/ui/tabs";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
 import { type LeadSummary, LIST_PATH } from "@/features/lead-shared";
 import { lastListUrl, listFlash, type ListFlashKind } from "@/features/lead-shared/client";
+import { type ListOutcome, useUrlList } from "@/lib/use-url-list";
 
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import {
@@ -21,6 +22,7 @@ import {
   parseListState,
   serializeListState,
   toApiQuery,
+  withFilter,
 } from "../lib/list-url-state";
 import { type Viewer, viewerOf } from "../lib/viewer";
 import { listLeads } from "../services/owner-leads-api";
@@ -31,15 +33,13 @@ import { LeadFilters } from "./lead-filters";
 import { LeadTable } from "./lead-table";
 import { listHref } from "./list-href";
 
-/** What one list call came back with, for one user and one normalized URL. */
-type Loaded = {
-  userId: string;
-  /** The normalized query string of the call. */
-  key: string;
-  outcome: { kind: "page"; page: LeadPage } | { kind: "error"; error: LeadUiError };
-};
-
 const NO_LEADS: readonly LeadSummary[] = [];
+
+async function loadLeads(state: ListState): Promise<ListOutcome<LeadPage, LeadUiError>> {
+  const result = await listLeads(toApiQuery(state));
+  const error = toLeadUiError(result);
+  return error === null && result.ok ? { kind: "page", page: result.data } : { kind: "error", error: error ?? { kind: "retry" } };
+}
 
 function ListSkeleton() {
   const t = useTranslations("OwnerLeads");
@@ -74,30 +74,27 @@ function ListError({ error, onRetry }: { error: LeadUiError; onRetry: () => void
 function LeadListContent() {
   const t = useTranslations("OwnerLeads");
   const { user } = useSession();
-  const router = useRouter();
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const userId = user?.userId ?? null;
   // The session store replaces `roles` (a new array) on every token refresh: key on the values, or each refresh
   // would rebuild the state and make a second list call.
   const rolesKey = (user?.roles ?? []).join(",");
 
   const viewer = useMemo(() => viewerOf(rolesKey === "" ? [] : rolesKey.split(",")), [rolesKey]);
-  const query = searchParams.toString();
-  // The only source of state for a call: the URL read for THIS viewer (a SALE always lands on "mine", W11-23).
-  const state = useMemo(() => parseListState(new URLSearchParams(query), viewer), [query, viewer]);
-  const canonical = serializeListState(state);
-  const normalized = query === canonical;
+  // The URL is read for THIS viewer (a SALE always lands on "mine", W11-23).
+  const parse = useCallback((params: URLSearchParams) => parseListState(params, viewer), [viewer]);
+  const { state, canonical, normalized, page, status, retry, setFilter } = useUrlList({
+    path: LIST_PATH,
+    userId,
+    parse,
+    serialize: serializeListState,
+    withFilter,
+    load: loadLeads,
+  });
 
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
-  const [reloads, setReloads] = useState(0);
   const [notice, setNotice] = useState<ListFlashKind | null>(null);
-  const userIdRef = useRef(userId);
-  useEffect(() => {
-    userIdRef.current = userId;
-  }, [userId]);
 
-  // 0. The one-shot notice the detail left before sending the user here (C-37, e.g. "lead not found"). Taken once; it
+  // The one-shot notice the detail left before sending the user here (C-37, e.g. "lead not found"). Taken once; it
   // runs again when the route is shown after being hidden (Activity), which is when a redirect from the detail lands.
   // Hiding the route drops the notice on screen, so it never comes back with the route (CR-5).
   useEffect(() => {
@@ -119,45 +116,11 @@ function LeadListContent() {
     lastListUrl.set(userId, canonical === "" ? LIST_PATH : `${LIST_PATH}?${canonical}`);
   }, [userId, normalized, pathname, canonical]);
 
-  // 1. A URL that is not the normalized one is replaced first; nothing is requested for it.
-  useEffect(() => {
-    if (userId === null || normalized || pathname !== LIST_PATH) return;
-    router.replace(`${LIST_PATH}?${canonical}`, { scroll: false });
-  }, [userId, normalized, pathname, canonical, router]);
-
-  // 2. One call per user and normalized URL. It runs again when the route is shown after being hidden (Activity), and
-  // an answer for another URL or another user is dropped.
-  useEffect(() => {
-    if (userId === null || !normalized || pathname !== LIST_PATH) return;
-    let cancelled = false;
-    const startedFor = userId;
-    void listLeads(toApiQuery(state)).then((result) => {
-      if (cancelled || userIdRef.current !== startedFor) return;
-      const error = toLeadUiError(result);
-      setLoaded({
-        userId: startedFor,
-        key: canonical,
-        outcome:
-          error === null && result.ok
-            ? { kind: "page", page: result.data }
-            : { kind: "error", error: error ?? { kind: "retry" } },
-      });
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, normalized, pathname, canonical, state, reloads]);
-
   if (userId === null) return null;
 
-  const current = loaded !== null && loaded.userId === userId && loaded.key === canonical ? loaded : null;
-  const go = (href: string): void => router.replace(href, { scroll: false });
-  const rows = current?.outcome.kind === "page" ? (current.outcome.page.items ?? NO_LEADS) : NO_LEADS;
+  const rows = page?.items ?? NO_LEADS;
   // The short status line read out by screen readers when a page of results arrives (CR-13).
-  const totalLine =
-    normalized && current?.outcome.kind === "page" && rows.length > 0
-      ? t("list.total", { count: current.outcome.page.totalElements ?? 0 })
-      : "";
+  const totalLine = status.kind === "ready" && rows.length > 0 ? t("list.total", { count: status.page.totalElements ?? 0 }) : "";
 
   const tabs = viewer.tabs.map((tab) => ({
     href: listHref(state, { scope: tab }, viewer),
@@ -180,30 +143,19 @@ function LeadListContent() {
         </div>
       )}
       <Tabs items={tabs} label={t("tabs.label")} />
-      <LeadFilters state={state} viewer={viewer} rows={rows} onNavigate={go} />
+      <LeadFilters state={state} viewer={viewer} rows={rows} onFilter={setFilter} />
       <p aria-live="polite" className={totalLine === "" ? "sr-only" : "text-sm text-slate-600"}>
         {totalLine}
       </p>
       <div>
-        {!normalized || current === null ? (
+        {status.kind === "loading" ? (
           <ListSkeleton />
-        ) : current.outcome.kind === "error" ? (
-          current.outcome.error.kind === "signed-out" || current.outcome.error.kind === "unavailable" ? null : (
-            <ListError
-              error={current.outcome.error}
-              onRetry={() => {
-                setLoaded(null);
-                setReloads((count) => count + 1);
-              }}
-            />
+        ) : status.kind === "error" ? (
+          status.error.kind === "signed-out" || status.error.kind === "unavailable" ? null : (
+            <ListError error={status.error} onRetry={retry} />
           )
         ) : (
-          <ListResults
-            page={current.outcome.page}
-            state={state}
-            viewer={viewer}
-            filtered={hasActiveFilter(state)}
-          />
+          <ListResults page={status.page} state={state} viewer={viewer} filtered={hasActiveFilter(state)} />
         )}
       </div>
     </div>
@@ -263,8 +215,7 @@ function ListResults({ page, state, viewer, filtered }: ListResultsProps) {
 }
 
 /**
- * The staff lead list (spec 5.3). Staff data is read in the browser only: the URL is normalized for the viewer first
- * (`router.replace`), then one `GET` per user and URL. `useSearchParams` needs the Suspense boundary.
+ * The staff lead list (spec 5.3), read through `useUrlList`, which needs the Suspense boundary.
  */
 export function LeadListView() {
   return (

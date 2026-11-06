@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { LIST_PATH } from "@/features/lead-shared";
+import { nextListState } from "@/lib/use-url-list";
 
-import { parseListState } from "../lib/list-url-state";
-import { viewerOf } from "../lib/viewer";
+import { type ListFilterChange, type ListState, parseListState, serializeListState, withFilter } from "../lib/list-url-state";
+import { type Viewer, viewerOf } from "../lib/viewer";
 import { assigneeListHref, leadDetailHref, listHref } from "./list-href";
 
 const sale = viewerOf(["SALE"]);
@@ -70,5 +71,25 @@ describe("assigneeListHref (territories notice and detail assignee link, A-6, W1
 
   it("gives a viewer without the all tab the default tab without the holder", () => {
     expect(assigneeListHref("U1", sale)).toBe(`${LIST_PATH}?scope=mine`);
+  });
+});
+
+describe("a filter change of useUrlList goes where listHref goes (W11-23)", () => {
+  const filterHref = (state: ListState, change: ListFilterChange, viewer: Viewer): string => {
+    const url = { parse: (params: URLSearchParams) => parseListState(params, viewer), serialize: serializeListState };
+    return `${LIST_PATH}?${serializeListState(nextListState(withFilter(state, change), url))}`;
+  };
+
+  it.each<[string, Viewer, ListFilterChange]>([
+    ["scope=mine", sale, { scope: "all", assignee: "U1" }],
+    ["scope=mine", sale, { ward: "20243" }],
+    ["scope=all", admin, { scope: "mine" }],
+    ["scope=all&ward=20242&page=3", leader, { ward: "20243" }],
+    ["scope=all&ward=20242&assignee=U1&page=2", leader, { assignee: null }],
+    ["scope=all&assignee=U1", leader, { statuses: ["REJECTED"] }],
+    ["scope=all&ward=20242", leader, { ward: null }],
+  ])("filterChange_sameUrlAsListHref: %s", (query, viewer, change) => {
+    const state = stateOf(query, viewer);
+    expect(filterHref(state, change, viewer)).toBe(listHref(state, change, viewer));
   });
 });
