@@ -995,7 +995,7 @@ export interface paths {
         };
         /**
          * Read the survey block of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
-         * @description Appointments with places, access notes and on-site contacts, revisions, events, the visit and the resumptions. Every call is recorded in the survey access log.
+         * @description Appointments with places, access notes and on-site contacts, revisions, events, the visit and the resumptions, and the block's checklist fields: checklistStart, revisionStart, resume and survey. Every call is recorded in the survey access log.
          */
         get: operations["block"];
         put?: never;
@@ -1057,7 +1057,7 @@ export interface paths {
         put?: never;
         /**
          * Resume the survey work of a held owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
-         * @description ON_HOLD with a current visit goes back to SURVEY_SCHEDULED, with a reason and the owner's confirmation (basis) dated from the day the lead went on hold.
+         * @description ON_HOLD with a current visit goes to QUALIFIED with a usable PASSED revision, else back to SURVEY_SCHEDULED when the survey record can still be completed, with a reason and the owner's confirmation (basis) dated from the day the lead went on hold.
          */
         post: operations["resume"];
         delete?: never;
@@ -1138,7 +1138,7 @@ export interface paths {
         put?: never;
         /**
          * Cancel a scheduled survey appointment (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
-         * @description The lead stays SURVEY_SCHEDULED when it has a current visit, else goes back to CONTACTED. An overdue appointment can be cancelled; the surveyor need not be eligible.
+         * @description The lead stays SURVEY_SCHEDULED while the survey record of its current visit can still be completed, else goes back to CONTACTED. An overdue appointment can be cancelled; the surveyor need not be eligible.
          */
         post: operations["cancel"];
         delete?: never;
@@ -1607,7 +1607,7 @@ export interface paths {
         post?: never;
         delete?: never;
         options?: never;
-        head: operations["head"];
+        head?: never;
         patch?: never;
         trace?: never;
     };
@@ -1730,7 +1730,7 @@ export interface components {
              * Format: int64
              * @example 15000000
              */
-            amount?: string;
+            amount?: number;
             /**
              * @example VND
              * @enum {string}
@@ -3344,15 +3344,15 @@ export interface components {
              */
             value: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
         };
-        /** @description The gaps known so far, computed on every read; submission is not available in this slice */
+        /** @description The gaps known so far, computed on every read */
         ChecklistReadiness: {
             missing?: components["schemas"]["ChecklistMissingItem"][];
             submissionAvailable?: boolean;
             /**
-             * @description EVIDENCE_NOT_AVAILABLE while the checklist's photos are not available, else SUBMISSION_NOT_AVAILABLE
-             * @enum {string}
+             * @description Null when submission is available, else the first gate that fails: EVIDENCE_NOT_AVAILABLE (photos are not available or uploads are off), SUBMISSION_NOT_AVAILABLE (the submission switch is off), APPOINTMENT_SCHEDULED, MISSING_ITEMS, PHOTOS_NOT_FINISHED, PHOTO_LIMIT, PHOTO_UNAVAILABLE
+             * @enum {string|null}
              */
-            submissionUnavailableReason?: "EVIDENCE_NOT_AVAILABLE" | "SUBMISSION_NOT_AVAILABLE";
+            submissionUnavailableReason?: "EVIDENCE_NOT_AVAILABLE" | "SUBMISSION_NOT_AVAILABLE" | "APPOINTMENT_SCHEDULED" | "MISSING_ITEMS" | "PHOTOS_NOT_FINISHED" | "PHOTO_LIMIT" | "PHOTO_UNAVAILABLE" | null;
             unconfirmedTerms?: components["schemas"]["ChecklistUnconfirmedTerm"][];
             warnings?: components["schemas"]["ChecklistWarning"][];
         };
@@ -3597,7 +3597,7 @@ export interface components {
         ChecklistReviewResponse: {
             canReview?: boolean;
             /** @description The errors[].field of every PASSED rule that fails now: hazards, evidence.unavailable, appointment, evidence.coverage. Empty unless the revision is SUBMITTED */
-            decisionBlockedBy?: string[];
+            decisionBlockedBy?: ("hazards" | "evidence.unavailable" | "appointment" | "evidence.coverage")[];
             /**
              * @description The first reason, in the order of the decision command
              * @enum {string|null}
@@ -4520,18 +4520,18 @@ export interface components {
             /** @description Full name of the staff member; null for the system or the owner, or when the id has no user row */
             actorName?: string | null;
             /** @description User id of the staff member; null for the system or the owner */
-            actorUserId?: string;
-            fromAssigneeId?: string;
+            actorUserId?: string | null;
+            fromAssigneeId?: string | null;
             /** @description Full name of the previous assignee; null when there was none or the id has no user row */
             fromAssigneeName?: string | null;
-            /** @enum {string} */
-            fromStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /** @enum {string|null} */
+            fromStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN" | null;
             /** Format: date-time */
-            nextActionAt?: string;
-            note?: string;
+            nextActionAt?: string | null;
+            note?: string | null;
             /** Format: date-time */
             occurredAt?: string;
-            /** @description The checklist group of a CHECKLIST_SAVED entry, or the evidence category of a CHECKLIST_MEDIA_ADDED or CHECKLIST_MEDIA_REMOVED entry; null otherwise */
+            /** @description The checklist group of a CHECKLIST_SAVED entry, the evidence category of a CHECKLIST_MEDIA_ADDED or CHECKLIST_MEDIA_REMOVED entry, or the decision of a CHECKLIST_REVIEWED entry (PASSED, or NEEDS_CHANGES or FAILED with its kind after a colon); null otherwise */
             referenceDetail?: string | null;
             /** @description The survey appointment (survey types) or survey checklist (checklist types) the entry concerns; null when none */
             referenceId?: string | null;
@@ -4540,11 +4540,11 @@ export interface components {
              * @description That appointment's or checklist's number within the lead; null when none
              */
             referenceNo?: number | null;
-            toAssigneeId?: string;
+            toAssigneeId?: string | null;
             /** @description Full name of the new assignee; null when there is none or the id has no user row */
             toAssigneeName?: string | null;
-            /** @enum {string} */
-            toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN";
+            /** @enum {string|null} */
+            toStatus?: "NEW" | "VALIDATING" | "ASSIGNED" | "CONTACTED" | "SURVEY_SCHEDULED" | "QUALIFIED" | "AGREEMENT_PENDING" | "ONBOARDED" | "ON_HOLD" | "DUPLICATE" | "REJECTED" | "WITHDRAWN" | null;
             /** @enum {string} */
             type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED" | "REQUALIFICATION_MARKED" | "INVENTORY_INTAKE_COMPLETED" | "INVENTORY_INTAKE_SUSPENDED" | "INVENTORY_INTAKE_RESTORED";
         };
@@ -4860,14 +4860,14 @@ export interface components {
             activities?: components["schemas"]["LeadActivityResponse"][];
             addressDetail?: string;
             /** @description Null when the owner gave no price */
-            askingPrice?: components["schemas"]["AskingPriceResponse"];
+            askingPrice?: components["schemas"]["AskingPriceResponse"] | null;
             /** @description User id of the assignee; null when nobody holds the lead */
-            assignedUserId?: string;
+            assignedUserId?: string | null;
             /** @description Full name of the assignee; null when nobody holds the lead or the id has no user row */
             assignedUserName?: string | null;
             /** Format: date */
-            availableFrom?: string;
-            closeReason?: string;
+            availableFrom?: string | null;
+            closeReason?: string | null;
             consent?: components["schemas"]["ConsentResponse"];
             contactName?: string;
             /** Format: date-time */
@@ -4875,28 +4875,28 @@ export interface components {
             /** @description Possible duplicates the caller can see, in either direction */
             duplicateCandidates?: components["schemas"]["DuplicateCandidateResponse"][];
             /** @description Lead this one repeats; null unless the caller can see that lead */
-            duplicateOfLeadId?: string;
-            email?: string;
+            duplicateOfLeadId?: string | null;
+            email?: string | null;
             id?: string;
             /** @enum {string} */
             intent?: "SHORT_TERM_RENT" | "LONG_TERM_RENT" | "SALE";
             /** @description Requirement changes recorded by staff, oldest first (survey-schedule US-5) */
             intentChanges?: components["schemas"]["LeadIntentChange"][];
             /** @description Null when the owner gave no position */
-            latitude?: number;
+            latitude?: number | null;
             /** @description Null when the owner gave no position */
-            longitude?: number;
+            longitude?: number | null;
             /** Format: date-time */
-            nextActionAt?: string;
-            notes?: string;
+            nextActionAt?: string | null;
+            notes?: string | null;
             /**
              * @description Normalized phone number
-             * @example 0909123456
+             * @example +84909123456
              */
             phone?: string;
             /** @description True when the lead has at least one possible duplicate the caller can see */
             possibleDuplicate?: boolean;
-            preferredCallbackTime?: string;
+            preferredCallbackTime?: string | null;
             /**
              * @description Kind of property the owner describes (not the unit layout of the property create API)
              * @enum {string|null}
@@ -4922,7 +4922,7 @@ export interface components {
         /** @description Owner lead in the staff queue (no phone, email, address or coordinates) */
         OwnerLeadSummaryResponse: {
             /** @description User id of the assignee; null when nobody holds the lead */
-            assignedUserId?: string;
+            assignedUserId?: string | null;
             /** @description Full name of the assignee; null when nobody holds the lead or the id has no user row */
             assignedUserName?: string | null;
             contactName?: string;
@@ -4937,7 +4937,7 @@ export interface components {
              */
             lastActivityAt: string;
             /** Format: date-time */
-            nextActionAt?: string;
+            nextActionAt?: string | null;
             /** @description True when the lead has at least one possible duplicate the caller can see */
             possibleDuplicate?: boolean;
             /**
@@ -5058,11 +5058,15 @@ export interface components {
             /** Format: int32 */
             bedrooms?: number;
             city?: string;
-            /** Format: date-time */
+            /**
+             * Format: local-date-time
+             * @description The server's local time, with no offset
+             * @example 2026-11-05T19:59:18.1712426
+             */
             createdAt?: string;
             createdBy?: string;
             depositPrice?: number;
-            description?: string;
+            description?: string | null;
             district?: string;
             id?: string;
             /** Format: int32 */
@@ -5072,14 +5076,16 @@ export interface components {
             minRentMonths?: number;
             monthlyPrice?: number;
             ownerId?: string;
-            postalCode?: string;
+            postalCode?: string | null;
             propertyCode?: string;
-            propertyType?: string;
+            /** @enum {string} */
+            propertyType?: "STUDIO" | "ONE_BEDROOM" | "TWO_BEDROOM" | "THREE_BEDROOM" | "FOUR_BEDROOM" | "DUPLEX" | "PENTHOUSE";
             /** Format: int32 */
             ruleCount?: number;
             /** Format: double */
             squareMeters?: number;
-            status?: string;
+            /** @enum {string} */
+            status?: "AVAILABLE" | "UNAVAILABLE" | "RENTED" | "SOLD" | "UNDER_MAINTENANCE" | "PENDING_APPROVAL" | "DRAFT";
             street?: string;
             title?: string;
             ward?: string;
@@ -5160,9 +5166,9 @@ export interface components {
              * Format: date-time
              * @description Null when nobody looks after the ward
              */
-            assignedAt?: string;
+            assignedAt?: string | null;
             /** @description User id of the person; null when nobody looks after the ward */
-            userId?: string;
+            userId?: string | null;
             /** @description Full name of the person; null when nobody looks after the ward or the id has no user row */
             userName?: string | null;
             /** @example 20242 */
@@ -5231,17 +5237,17 @@ export interface components {
         };
         /** @description A survey appointment of a lead */
         SurveyAppointmentResponse: {
-            accessNote?: string;
+            accessNote?: string | null;
             /** Format: int32 */
             appointmentNo?: number;
-            cancellation?: components["schemas"]["SurveyCancellationResponse"];
+            cancellation?: components["schemas"]["SurveyCancellationResponse"] | null;
             cannotBePerformed?: boolean;
             /** @description The survey checklists of a VISITED appointment, newest first; empty otherwise (survey-checklist spec 7.2) */
             checklists?: components["schemas"]["ChecklistSummaryResponse"][];
             confirmation?: components["schemas"]["SurveyConfirmationResponse"];
             /** Format: date-time */
             createdAt?: string;
-            createdByName?: string;
+            createdByName?: string | null;
             createdByUserId?: string;
             /** Format: int32 */
             durationMinutes?: number;
@@ -5257,22 +5263,22 @@ export interface components {
             kind?: "FIRST" | "RESURVEY";
             leadId?: string;
             leadLocation?: components["schemas"]["SurveyLocationResponse"];
-            locationReason?: string;
+            locationReason?: string | null;
             meetingLocation?: components["schemas"]["SurveyLocationResponse"];
-            onSiteContactName?: string;
-            onSiteContactRole?: string;
-            previousVisitId?: string;
-            resurveyReason?: string;
+            onSiteContactName?: string | null;
+            onSiteContactRole?: string | null;
+            previousVisitId?: string | null;
+            resurveyReason?: string | null;
             revisions?: components["schemas"]["SurveyRevisionResponse"][];
             /** Format: date-time */
             startAt?: string;
             /** @enum {string} */
             status?: "SCHEDULED" | "VISITED" | "CANCELLED";
-            surveyorName?: string;
+            surveyorName?: string | null;
             surveyorUserId?: string;
             /** Format: int64 */
             version?: number;
-            visit?: components["schemas"]["SurveyVisitResponse"];
+            visit?: components["schemas"]["SurveyVisitResponse"] | null;
         };
         /** @description The basis of a proxy record or a resumption */
         SurveyBasisResponse: {
@@ -5286,7 +5292,7 @@ export interface components {
             booking?: components["schemas"]["SurveyBookingResponse"];
             /** @description Whether the viewer can start a survey checklist on the current visit (survey-checklist spec 7.2) */
             checklistStart?: components["schemas"]["ChecklistStartStateResponse"];
-            currentVisitId?: string;
+            currentVisitId?: string | null;
             /** Format: int32 */
             intentCycle?: number;
             leadId?: string;
@@ -5300,11 +5306,11 @@ export interface components {
         /** @description Whether and how the lead can get a survey booking now */
         SurveyBookingResponse: {
             allowed?: boolean;
-            /** @enum {string} */
-            blockedBy?: "ALREADY_SCHEDULED" | "NO_ASSIGNEE" | "CHECKLIST_SUBMITTED" | "CHECKLIST_PASSED" | "LEAD_STATUS" | "INTENT" | "SURVEYOR_INELIGIBLE";
-            /** @enum {string} */
-            kind?: "FIRST" | "RESURVEY";
-            previousVisitId?: string;
+            /** @enum {string|null} */
+            blockedBy?: "ALREADY_SCHEDULED" | "NO_ASSIGNEE" | "CHECKLIST_SUBMITTED" | "CHECKLIST_PASSED" | "LEAD_STATUS" | "INTENT" | "SURVEYOR_INELIGIBLE" | null;
+            /** @enum {string|null} */
+            kind?: "FIRST" | "RESURVEY" | null;
+            previousVisitId?: string | null;
         };
         /** @description The cancellation of the appointment */
         SurveyCancellationResponse: {
@@ -5312,68 +5318,68 @@ export interface components {
             cancelReason?: "OWNER_CANCELLED" | "STAFF_CANCELLED" | "OWNER_ABSENT" | "NO_ACCESS" | "OTHER" | "LEAD_ON_HOLD" | "LEAD_CLOSED" | "INTENT_CHANGED";
             /** Format: date-time */
             cancelledAt?: string;
-            cancelledByName?: string;
+            cancelledByName?: string | null;
             cancelledByUserId?: string;
-            description?: string;
+            description?: string | null;
         };
         /** @description The answer of a survey command */
         SurveyCommandResponse: {
-            historyEntry?: components["schemas"]["SurveyHistoryEntryResponse"];
+            historyEntry?: components["schemas"]["SurveyHistoryEntryResponse"] | null;
             lead?: components["schemas"]["SurveyLeadStateResponse"];
             overlaps?: components["schemas"]["SurveyOverlapResponse"][];
             survey?: components["schemas"]["SurveyBlockResponse"];
         };
         /** @description The owner's confirmation of the appointment */
         SurveyConfirmationResponse: {
-            /** @enum {string} */
-            cause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER";
+            /** @enum {string|null} */
+            cause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER" | null;
             /** Format: date-time */
             changedAt?: string;
-            changedByName?: string;
+            changedByName?: string | null;
             changedByUserId?: string;
             everConfirmed?: boolean;
-            note?: string;
+            note?: string | null;
             /** @enum {string} */
             state?: "CONFIRMED" | "UNCONFIRMED";
         };
         /** @description One event of the appointment */
         SurveyEventResponse: {
-            actorName?: string;
-            actorUserId?: string;
-            /** @enum {string} */
-            confirmationCause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER";
-            fromSurveyorName?: string;
-            fromSurveyorUserId?: string;
-            note?: string;
+            actorName?: string | null;
+            actorUserId?: string | null;
+            /** @enum {string|null} */
+            confirmationCause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER" | null;
+            fromSurveyorName?: string | null;
+            fromSurveyorUserId?: string | null;
+            note?: string | null;
             /** Format: date-time */
             occurredAt?: string;
             /** Format: int32 */
-            revisionNo?: number;
-            toSurveyorName?: string;
-            toSurveyorUserId?: string;
+            revisionNo?: number | null;
+            toSurveyorName?: string | null;
+            toSurveyorUserId?: string | null;
             /** @enum {string} */
             type?: "BOOKED" | "CHANGED" | "CONFIRMED" | "UNCONFIRMED" | "SURVEYOR_CHANGED" | "CANCELLED" | "VISITED";
         };
         /** @description The lead History entry written by a survey command */
         SurveyHistoryEntryResponse: {
-            actorName?: string;
+            actorName?: string | null;
             actorUserId?: string;
-            fromAssigneeId?: string;
-            fromAssigneeName?: string;
+            fromAssigneeId?: string | null;
+            fromAssigneeName?: string | null;
             /** @description Null when the lead kept its status */
-            fromStatus?: string;
+            fromStatus?: string | null;
             /** Format: date-time */
-            nextActionAt?: string;
-            note?: string;
+            nextActionAt?: string | null;
+            note?: string | null;
             /** Format: date-time */
             occurredAt?: string;
             referenceId?: string;
             /** Format: int32 */
             referenceNo?: number;
-            toAssigneeId?: string;
-            toAssigneeName?: string;
+            toAssigneeId?: string | null;
+            toAssigneeName?: string | null;
             /** @description Null when the lead kept its status */
-            toStatus?: string;
+            toStatus?: string | null;
             /** @enum {string} */
             type?: "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED";
         };
@@ -5381,9 +5387,9 @@ export interface components {
         SurveyHolderResponse: {
             /** Format: date-time */
             from?: string;
-            name?: string;
+            name?: string | null;
             /** Format: date-time */
-            to?: string;
+            to?: string | null;
             userId?: string;
         };
         /** @description The owner lead after a survey command */
@@ -5398,8 +5404,8 @@ export interface components {
         };
         /** @description The owner's confirmation in the survey list */
         SurveyListConfirmation: {
-            /** @enum {string} */
-            cause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER";
+            /** @enum {string|null} */
+            cause?: "NEW" | "TIME_CHANGED" | "LOCATION_CHANGED" | "REASSIGNED" | "USER" | null;
             everConfirmed?: boolean;
             /** @enum {string} */
             state?: "CONFIRMED" | "UNCONFIRMED";
@@ -5422,15 +5428,15 @@ export interface components {
             startAt?: string;
             /** @enum {string} */
             status?: "SCHEDULED" | "VISITED" | "CANCELLED";
-            surveyorName?: string;
+            surveyorName?: string | null;
             surveyorUserId?: string;
             wardName?: string;
         };
         /** @description A place: address, province and ward with names, optional pin */
         SurveyLocationResponse: {
             addressText?: string;
-            latitude?: number;
-            longitude?: number;
+            latitude?: number | null;
+            longitude?: number | null;
             provinceCode?: string;
             provinceName?: string;
             wardCode?: string;
@@ -5594,7 +5600,7 @@ export interface components {
         };
         /** @description A resumption of the lead's survey work */
         SurveyResumptionResponse: {
-            actorName?: string;
+            actorName?: string | null;
             actorUserId?: string;
             basis?: components["schemas"]["SurveyBasisResponse"];
             /** Format: date-time */
@@ -5606,15 +5612,15 @@ export interface components {
         };
         /** @description One revision of the appointment's values */
         SurveyRevisionResponse: {
-            accessNote?: string;
-            actorName?: string;
+            accessNote?: string | null;
+            actorName?: string | null;
             actorUserId?: string;
             /** Format: int32 */
             durationMinutes?: number;
             meetingLocation?: components["schemas"]["SurveyLocationResponse"];
-            onSiteContactName?: string;
-            onSiteContactRole?: string;
-            reason?: string;
+            onSiteContactName?: string | null;
+            onSiteContactRole?: string | null;
+            reason?: string | null;
             /** Format: int32 */
             revisionNo?: number;
             /** Format: date-time */
@@ -5627,14 +5633,14 @@ export interface components {
             /** Format: date-time */
             arrivedAt?: string;
             note?: string;
-            performedByName?: string;
+            performedByName?: string | null;
             performedByUserId?: string;
-            proxy?: components["schemas"]["SurveyProxyResponse"];
+            proxy?: components["schemas"]["SurveyProxyResponse"] | null;
             /** @enum {string} */
             recordKind?: "OWN" | "PROXY";
             /** Format: date-time */
             recordedAt?: string;
-            recordedByName?: string;
+            recordedByName?: string | null;
             recordedByUserId?: string;
             /** Format: int32 */
             revisionNo?: number;
@@ -6900,6 +6906,15 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
+            /** @description NOT_FOUND: the intake switch is off */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
         };
     };
     check: {
@@ -7532,7 +7547,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not SALE, SALE_LEADER, SALES_MANAGER, ADMIN or SUPER_ADMIN */
@@ -7541,7 +7556,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: direct create is switched off */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Property code already exists */
@@ -7740,6 +7764,15 @@ export interface operations {
             };
             /** @description The caller holds no manager role */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the intake switch is off */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -9373,7 +9406,7 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion), SURVEY_ALREADY_SCHEDULED, SURVEY_NOT_ALLOWED (field status or intent, with the allowed values) or INVALID_STATE_TRANSITION */
+            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion), SURVEY_ALREADY_SCHEDULED, SURVEY_NOT_ALLOWED (field status or intent, with the allowed values, or field checklist while the current visit's latest revision is SUBMITTED or the cycle has a PASSED not withdrawn from use) or INVALID_STATE_TRANSITION */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -9518,7 +9551,7 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion), INVALID_STATE_TRANSITION (field status, allowed ON_HOLD) or NO_CURRENT_VISIT */
+            /** @description CONCURRENT_MODIFICATION (field expectedLeadVersion), INVALID_STATE_TRANSITION (field status, allowed ON_HOLD), NO_CURRENT_VISIT or SURVEY_NOT_ALLOWED (field checklist: the survey record allows neither target) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -11791,24 +11824,6 @@ export interface operations {
             };
         };
     };
-    head: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-        };
-    };
     holdSurveyMedia: {
         parameters: {
             query?: never;
@@ -12075,7 +12090,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not ADMIN or SUPER_ADMIN */
@@ -12084,7 +12099,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description No such account */
@@ -12133,7 +12148,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller may not change this role (ADMIN changing ADMIN), changes their own roles, or is ADMIN and the account holds ADMIN or SUPER_ADMIN */
@@ -12142,7 +12157,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description No such account */
@@ -12200,7 +12215,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller may not change this role (ADMIN changing ADMIN), changes their own roles, or is ADMIN and the account holds ADMIN or SUPER_ADMIN */
@@ -12209,7 +12224,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": Record<string, never>;
+                    "application/json": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description No such account */
