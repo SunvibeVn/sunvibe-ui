@@ -53,7 +53,7 @@ export function TermsPanel() {
     <FieldControl panel={panel} unitKey={key} field={field} sourced="terms" unconfirmed kind={kind} problems={problems} />
   );
   return (
-    <GroupPanel panel={panel} no={8}>
+    <GroupPanel panel={panel} groupNumber={8}>
       {(problems: ChecklistProblems) => (
         <div className="space-y-4">
           <p className="rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-900">{t("checklist.terms.notAgreed")}</p>

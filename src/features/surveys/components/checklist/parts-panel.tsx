@@ -13,7 +13,7 @@ import { usePanel } from "./use-panel";
 export function PartsPanel() {
   const panel = usePanel("parts");
   return (
-    <GroupPanel panel={panel} no={2}>
+    <GroupPanel panel={panel} groupNumber={2}>
       {(problems: ChecklistProblems) => (
         <div className="space-y-4">
           <UnsourcedReminder />

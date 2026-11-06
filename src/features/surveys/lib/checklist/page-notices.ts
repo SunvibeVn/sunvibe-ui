@@ -34,12 +34,12 @@ export function earlierChecklist(
   block: BlockLike,
   view: { checklistNo?: number; visit?: { appointmentNo?: number; intentCycle?: number } },
 ): EarlierChecklist | null {
-  const no = view.visit?.appointmentNo ?? 0;
+  const visitNo = view.visit?.appointmentNo ?? 0;
   let found: EarlierChecklist | null = null;
   for (const entry of block.appointments ?? []) {
     if (!entry || entry.status !== "VISITED" || entry.intentCycle !== view.visit?.intentCycle) continue;
     const appointmentNo = entry.appointmentNo ?? 0;
-    if (appointmentNo >= no || (found !== null && appointmentNo <= found.appointmentNo)) continue;
+    if (appointmentNo >= visitNo || (found !== null && appointmentNo <= found.appointmentNo)) continue;
     const numbers = (entry.checklists ?? [])
       .map((checklist) => checklist?.checklistNo ?? 0)
       .filter((value) => value > 0 && value < (view.checklistNo ?? 0));

@@ -54,7 +54,7 @@ export function SafetyPanel() {
   };
 
   return (
-    <GroupPanel panel={panel} no={5}>
+    <GroupPanel panel={panel} groupNumber={5}>
       {(problems: ChecklistProblems) => (
         <div className="space-y-4">
           <UnsourcedReminder />

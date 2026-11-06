@@ -27,17 +27,17 @@ const ADD =
   "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-brand-gradient text-lg font-semibold leading-none text-white shadow-md shadow-orange-700/25 hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600";
 
 /** One earlier entry: read-only, the history cannot be edited (D-4). */
-function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: number; withAction: boolean }) {
+function HistoryRow({ activity, rowNumber, withAction }: { activity: LeadActivity; rowNumber: number; withAction: boolean }) {
   const t = useTranslations("OwnerLeads");
   const actor = historyActor(activity);
-  const pic = actor.kind === "name" ? actor.name : t(HISTORY_ACTOR_KEY[actor.kind]);
+  const actorName = actor.kind === "name" ? actor.name : t(HISTORY_ACTOR_KEY[actor.kind]);
   const when = activity.occurredAt === undefined ? "" : formatDateTime(activity.occurredAt);
   const status = historyStatus(activity);
   const label = (column: "no" | "updated" | "activity" | "pic" | "status") => t(`history.columns.${column}`);
   return (
     <tr role="row" className={HISTORY_ROW}>
       <td role="cell" data-label={label("no")} className={`${HISTORY_CELL} text-slate-500`}>
-        {no}
+        {rowNumber}
       </td>
       <td role="cell" data-label={label("updated")} className={`${HISTORY_CELL} whitespace-nowrap`}>
         {when}
@@ -46,7 +46,7 @@ function HistoryRow({ activity, no, withAction }: { activity: LeadActivity; no: 
         <span className="min-w-0">{historyActivityText(activity, t)}</span>
       </td>
       <td role="cell" data-label={label("pic")} className={HISTORY_CELL}>
-        {pic}
+        {actorName}
       </td>
       <td role="cell" data-label={label("status")} className={HISTORY_CELL}>
         {status === undefined ? (
@@ -105,7 +105,7 @@ function SavesRow({ row, withAction }: { row: Extract<HistoryRowModel, { kind: "
           <HistoryRow
             key={`${entry.occurredAt ?? ""}-${index}`}
             activity={entry}
-            no={row.firstNo + index}
+            rowNumber={row.firstNo + index}
             withAction={withAction}
           />
         ))}
@@ -204,16 +204,16 @@ export function LeadHistory({ activities }: { activities: readonly LeadActivity[
                 <SavesRow key={`saves-${row.firstNo}`} row={row} withAction={canAdd} />
               ) : (
                 <HistoryRow
-                  key={`${row.entry.occurredAt ?? ""}-${row.entry.type ?? ""}-${row.no}`}
+                  key={`${row.entry.occurredAt ?? ""}-${row.entry.type ?? ""}-${row.rowNumber}`}
                   activity={row.entry}
-                  no={row.no}
+                  rowNumber={row.rowNumber}
                   withAction={canAdd}
                 />
               ),
             )}
             {rowOpen && (
               <HistoryEntryForm
-                no={activities.length + 1}
+                rowNumber={activities.length + 1}
                 message={message}
                 onMessage={setMessage}
                 onSaved={() => {

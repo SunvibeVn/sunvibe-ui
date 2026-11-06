@@ -80,7 +80,7 @@ const support = (outcome: { correlationId?: string }) =>
 
 type HistoryEntryFormProps = {
   /** Number of the row in the table. */
-  no: number;
+  rowNumber: number;
   /**
    * The last message of this row, held by the history so it stays when the row closes (a reload brought a closed
    * lead, M-3). Shown again inside the confirmation while it is open, since the page under it is inert.
@@ -102,7 +102,7 @@ type HistoryEntryFormProps = {
  * version of the last answer; a 2xx is applied, then the detail reloads (C-36). The inputs of the row belong to the
  * form in the ACTION cell through their `form` attribute, since a form cannot span table cells.
  */
-export function HistoryEntryForm({ no, message, onMessage, onSaved, onClosedRefused }: HistoryEntryFormProps) {
+export function HistoryEntryForm({ rowNumber, message, onMessage, onSaved, onClosedRefused }: HistoryEntryFormProps) {
   const t = useTranslations("OwnerLeads");
   const controller = useLeadDetail();
   const { userId, leadId, lead, viewer, survey, busy, setBusy } = controller;
@@ -314,7 +314,7 @@ export function HistoryEntryForm({ no, message, onMessage, onSaved, onClosedRefu
   // Locked while this row or another part of the page has a command on its way (CR-2).
   const locked = pending || busy;
   const confirmStep = state.step === "confirm" && state.prepared !== null ? state.prepared : null;
-  const pic = user?.fullName?.trim() || t("history.actorUnknown");
+  const actorName = user?.fullName?.trim() || t("history.actorUnknown");
 
   return (
     <>
@@ -323,7 +323,7 @@ export function HistoryEntryForm({ no, message, onMessage, onSaved, onClosedRefu
         className="border-t border-slate-200 bg-violet-50/60 max-xl:mt-2 max-xl:block max-xl:rounded-lg max-xl:px-3 max-xl:py-3"
       >
         <td role="cell" data-label={t("history.columns.no")} className={`${HISTORY_CELL} font-semibold text-violet-700`}>
-          {no}
+          {rowNumber}
         </td>
         <td role="cell" data-label={t("history.columns.updated")} className={`${HISTORY_CELL} whitespace-nowrap text-slate-500`}>
           {t("history.now")}
@@ -359,7 +359,7 @@ export function HistoryEntryForm({ no, message, onMessage, onSaved, onClosedRefu
           <span
             className="block min-w-0 cursor-not-allowed break-words rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-slate-500"
           >
-            {pic}
+            {actorName}
           </span>
         </td>
         <td role="cell" data-label={t("history.columns.status")} className={HISTORY_CELL}>

@@ -47,12 +47,12 @@ export type PhotoRef = { mediaNo?: number | null; carriedFromChecklistNo?: numbe
 
 /** "Photo #4 · Space P1 · Kitchen"; the pair alone for a photo the list on screen does not hold. */
 export function photoTitle(ref: PhotoRef | null, pair: string, t: OwnerLeadsTranslate): string {
-  const no = ref?.mediaNo;
-  if (no === null || no === undefined) return pair;
+  const mediaNo = ref?.mediaNo;
+  if (mediaNo === null || mediaNo === undefined) return pair;
   const from = ref?.carriedFromChecklistNo;
   return from === null || from === undefined
-    ? t("checklist.decision.photoNo", { no, pair })
-    : t("checklist.decision.photoNoFrom", { no, from, pair });
+    ? t("checklist.decision.photoNo", { no: mediaNo, pair })
+    : t("checklist.decision.photoNoFrom", { no: mediaNo, from, pair });
 }
 
 /** The outcome of a decision; a decision that names none takes it from the status, never a default of Passed. */

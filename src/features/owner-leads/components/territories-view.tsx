@@ -93,7 +93,7 @@ function NoticeView({
  */
 function TerritoriesContent() {
   const t = useTranslations("SaleTerritories");
-  const o = useTranslations("OwnerLeads");
+  const tLeads = useTranslations("OwnerLeads");
   const { user } = useSession();
   const roles = user?.roles;
   const viewer = useMemo(() => viewerOf(roles ?? []), [roles]);
@@ -256,7 +256,7 @@ function TerritoriesContent() {
       header: t("table.type"),
       cell: (row) => {
         const key = wardTypeLabelKey(row.wardType);
-        return key === null ? "" : o(key);
+        return key === null ? "" : tLeads(key);
       },
     },
     {

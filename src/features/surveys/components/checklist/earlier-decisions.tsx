@@ -38,7 +38,7 @@ export function EarlierDecisions({ chain, onRetry }: { chain: ChainLoad; onRetry
     chain.state === "ready"
       ? chain.revisions.flatMap((revision) => {
           const model = decisionPanelModel(revision, t, photoOf);
-          return model === null ? [] : [{ no: revision.checklistNo ?? "", id: revision.id ?? "", model }];
+          return model === null ? [] : [{ checklistNo: revision.checklistNo ?? "", id: revision.id ?? "", model }];
         })
       : [];
   return (
@@ -55,10 +55,10 @@ export function EarlierDecisions({ chain, onRetry }: { chain: ChainLoad; onRetry
           {decided.length === 0 && chain.complete && <p className="text-sm text-slate-600">{t("checklist.review.earlier.none")}</p>}
           {decided.length > 0 && (
             <ul className="space-y-3 text-sm">
-              {decided.map(({ id, no, model }) => (
+              {decided.map(({ id, checklistNo, model }) => (
                 <li key={id} className="space-y-0.5 rounded-lg bg-slate-50 px-3 py-2">
                   <p className="break-words font-medium text-slate-900">
-                    {t("checklist.review.earlier.line", { no, outcome: model.outcome, name: model.reviewer, when: model.when })}
+                    {t("checklist.review.earlier.line", { no: checklistNo, outcome: model.outcome, name: model.reviewer, when: model.when })}
                   </p>
                   {model.reason !== null && (
                     <p className="whitespace-pre-wrap break-words text-slate-700">{t("checklist.review.earlier.reason", { text: model.reason })}</p>

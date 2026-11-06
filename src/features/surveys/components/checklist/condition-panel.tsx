@@ -34,7 +34,7 @@ export function ConditionPanel() {
   const formDate = ownerFormOffer("availableFrom", page.ctx.scope, page.view.ownerForm);
   const late = threeYearsAfter(page.rules.today);
   return (
-    <GroupPanel panel={panel} no={4}>
+    <GroupPanel panel={panel} groupNumber={4}>
       {(problems: ChecklistProblems) => (
         <div className="space-y-4">
           <UnsourcedReminder />

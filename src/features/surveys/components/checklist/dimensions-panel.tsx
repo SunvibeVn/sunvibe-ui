@@ -17,7 +17,7 @@ export function DimensionsPanel() {
   const panel = usePanel("dimensions");
   const yesNo = (["YES", "NO"] as const).map((value) => ({ value, label: t(`checklist.values.yesNo.${value}`) }));
   return (
-    <GroupPanel panel={panel} no={3}>
+    <GroupPanel panel={panel} groupNumber={3}>
       {(problems: ChecklistProblems) => (
         <SpaceSections>
           {(spaceId) => (

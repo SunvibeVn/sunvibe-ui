@@ -77,7 +77,7 @@ export function IdentificationPanel() {
     });
 
   return (
-    <GroupPanel panel={panel} no={1}>
+    <GroupPanel panel={panel} groupNumber={1}>
       {(problems: ChecklistProblems) => (
         <div className="space-y-4">
           <UnsourcedReminder />

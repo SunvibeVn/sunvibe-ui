@@ -38,25 +38,25 @@ function checklistText(
   activity: Pick<LeadActivity, "type" | "referenceNo" | "referenceDetail">,
   t: OwnerLeadsTranslate,
 ): string | null {
-  const no = activity.referenceNo;
-  if (typeof no !== "number") return null;
-  if (activity.type === "CHECKLIST_STARTED") return t("history.checklistStarted", { no });
-  if (activity.type === "CHECKLIST_TAKEN_OVER") return t("history.checklistTakenOver", { no });
-  if (activity.type === "CHECKLIST_SUBMITTED") return t("history.checklistSubmitted", { no });
-  if (activity.type === "CHECKLIST_REVISION_STARTED") return t("history.revisionStarted", { no });
-  if (activity.type === "REQUALIFICATION_MARKED") return t("history.requalified", { no });
-  if (activity.type === "INVENTORY_INTAKE_COMPLETED") return t("history.intakeCompleted", { no });
-  if (activity.type === "INVENTORY_INTAKE_SUSPENDED") return t("history.intakeSuspended", { no });
-  if (activity.type === "INVENTORY_INTAKE_RESTORED") return t("history.intakeRestored", { no });
+  const { referenceNo } = activity;
+  if (typeof referenceNo !== "number") return null;
+  if (activity.type === "CHECKLIST_STARTED") return t("history.checklistStarted", { no: referenceNo });
+  if (activity.type === "CHECKLIST_TAKEN_OVER") return t("history.checklistTakenOver", { no: referenceNo });
+  if (activity.type === "CHECKLIST_SUBMITTED") return t("history.checklistSubmitted", { no: referenceNo });
+  if (activity.type === "CHECKLIST_REVISION_STARTED") return t("history.revisionStarted", { no: referenceNo });
+  if (activity.type === "REQUALIFICATION_MARKED") return t("history.requalified", { no: referenceNo });
+  if (activity.type === "INVENTORY_INTAKE_COMPLETED") return t("history.intakeCompleted", { no: referenceNo });
+  if (activity.type === "INVENTORY_INTAKE_SUSPENDED") return t("history.intakeSuspended", { no: referenceNo });
+  if (activity.type === "INVENTORY_INTAKE_RESTORED") return t("history.intakeRestored", { no: referenceNo });
   if (activity.type === "CHECKLIST_REVIEWED") {
     // `<OUTCOME>[:<KIND>]`: the row names the outcome only (survey-checklist 6.2).
     const outcome = (activity.referenceDetail ?? "").split(":")[0];
     if (!REVIEW_OUTCOMES.has(outcome)) return null;
-    return t("history.checklistReviewed", { no, outcome: t(`checklist.review.outcome.${outcome as "PASSED"}`) });
+    return t("history.checklistReviewed", { no: referenceNo, outcome: t(`checklist.review.outcome.${outcome as "PASSED"}`) });
   }
   if (activity.type === "CHECKLIST_SAVED") {
     const group = checklistGroupLabelKey(activity.referenceDetail);
-    return group === null ? null : t("history.checklistSaved", { no, group: t(group) });
+    return group === null ? null : t("history.checklistSaved", { no: referenceNo, group: t(group) });
   }
   return null;
 }

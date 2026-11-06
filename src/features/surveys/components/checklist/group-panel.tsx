@@ -37,7 +37,7 @@ const REASON_KEY: Record<NotSavedReason, ReasonKey> = {
 type GroupPanelProps = {
   panel: Panel;
   /** G-number of the group (1..8). */
-  no: number;
+  groupNumber: number;
   children: (problems: ChecklistProblems) => ReactNode;
 };
 
@@ -47,7 +47,7 @@ type GroupPanelProps = {
  * or the server's 400 names `correction`, and the compare view after a 409 ("Save mine on top", "Discard mine"). Only
  * this panel waits for its save, except a G1 save that removes a space or switches the scope (A-12).
  */
-export function GroupPanel({ panel, no, children }: GroupPanelProps) {
+export function GroupPanel({ panel, groupNumber, children }: GroupPanelProps) {
   const t = useTranslations("OwnerLeads");
   const page = useChecklistPage();
   const { view, userId } = page;
@@ -150,7 +150,7 @@ export function GroupPanel({ panel, no, children }: GroupPanelProps) {
     >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id={`cl-group-${panel.group}-title`} className="text-base font-semibold text-slate-900">
-          {t("checklist.panel.groupTitle", { no, name: t(`checklist.groups.${name}`) })}
+          {t("checklist.panel.groupTitle", { no: groupNumber, name: t(`checklist.groups.${name}`) })}
         </h2>
         <p role="status" aria-live="polite" className={`text-sm ${failed || state.status === "correction" ? "text-rose-700" : "text-slate-600"}`}>
           {status}

@@ -17,8 +17,9 @@ Hub workflow and cross-repo rules below; their paths (docs/...) are relative to 
   feature-implementer is optional (legacy): only for one self-contained task the owner asks to delegate.
 - Read the brief, never edit it; a missing or unclear one goes to the owner.
 - Stop and report the exact conflict when handoff, spec, contract, plan, ADR or code disagree in a way that changes
-  behavior, or when a task needs a business decision. After two evidence-backed failed attempts on one task, raise
-  the effort once (`/effort xhigh`) with the evidence, then ask the owner.
+  behavior, when a plan breaks a rule file, an ADR or the naming standard (even with no behavior change), or when a
+  task needs a business decision. After two evidence-backed failed attempts on one task, raise the effort once
+  (`/effort xhigh`) with the evidence, then ask the owner.
 - In a flow run (`claude -p` started by the hub scripts/flow): after two evidence-backed failed attempts stop and
   report both instead of raising the effort; the runner's review stage replaces the final review below; skip
   superpowers:finishing-a-development-branch and end with the report (the runner verifies, the owner pushes).

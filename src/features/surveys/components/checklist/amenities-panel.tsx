@@ -140,7 +140,7 @@ export function AmenitiesPanel() {
   const panel = usePanel("amenities");
   const input = panel.input as ChecklistInput["amenities"];
   return (
-    <GroupPanel panel={panel} no={6}>
+    <GroupPanel panel={panel} groupNumber={6}>
       {(problems: ChecklistProblems) => (
         <div className="space-y-4">
           <p className="text-xs text-slate-600">{t("checklist.amenities.notListed")}</p>
