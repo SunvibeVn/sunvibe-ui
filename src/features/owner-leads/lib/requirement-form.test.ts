@@ -68,7 +68,7 @@ describe("toIntentBody (A-17)", () => {
     expect(toIntentBody(form(), { leadVersion: 3 })).toEqual({
       expectedVersion: 3,
       newIntent: "SHORT_TERM_RENT",
-      askingPrice: { amount: "800000", currency: "VND", unit: "NIGHT" },
+      askingPrice: { amount: 800000, currency: "VND", unit: "NIGHT" },
       reason: "Owner wants short stays",
       basis: { confirmedOn: "2026-10-24", text: "Owner said so on the phone" },
     });
@@ -80,10 +80,27 @@ describe("toIntentBody (A-17)", () => {
 
   it("reads an amount typed with separators", () => {
     expect(toIntentBody(form({ newIntent: "LONG_TERM_RENT", amount: "12.000.000" }), { leadVersion: 3 }).askingPrice).toEqual({
-      amount: "12000000",
+      amount: 12000000,
       currency: "VND",
       unit: "MONTH",
     });
+  });
+});
+
+describe("toIntentBody amount (SV-021, W25 U-3)", () => {
+  const amountSent = (amount: string) => toIntentBody(form({ amount }), { leadVersion: 3 }).askingPrice?.amount;
+
+  it("toIntentBody_amountIsANumber: separators and leading zeros give the same JSON number", () => {
+    expect(amountSent("12.000.000")).toBe(12000000);
+    expect(amountSent("0012000000")).toBe(12000000);
+    expect(JSON.stringify(toIntentBody(form({ amount: "12.000.000" }), { leadVersion: 3 }))).toContain('"amount":12000000,');
+  });
+
+  it("toIntentBody_fifteenDigits_stayExact: the largest price the form takes loses no digit", () => {
+    expect(amountSent("999.999.999.999.999")).toBe(999999999999999);
+    expect(JSON.stringify(toIntentBody(form({ amount: "999.999.999.999.999" }), { leadVersion: 3 }))).toContain(
+      '"amount":999999999999999,',
+    );
   });
 });
 

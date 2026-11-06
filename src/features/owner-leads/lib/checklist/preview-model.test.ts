@@ -1,5 +1,6 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { ChecklistReadiness } from "@/features/surveys";
 import en from "@/i18n/messages/en.json";
 
 import type { OwnerLeadsKey } from "../labels";
@@ -146,13 +147,13 @@ describe("previewModel EVIDENCE_UNAVAILABLE (survey-checklist submission 4.4)", 
 });
 
 describe("previewModel submission line (survey-checklist submission B4)", () => {
-  const line = (reason: string | undefined, status: "DRAFT" | "SUBMITTED" = "DRAFT") =>
+  const line = (reason: ChecklistReadiness["submissionUnavailableReason"], status: "DRAFT" | "SUBMITTED" = "DRAFT") =>
     previewModel(
       viewOf(emptyContent(), 1, {
         status,
         readiness: {
           submissionAvailable: false,
-          submissionUnavailableReason: reason as "SUBMISSION_NOT_AVAILABLE",
+          submissionUnavailableReason: reason,
           missing: [],
           unconfirmedTerms: [],
           warnings: [],
@@ -160,6 +161,10 @@ describe("previewModel submission line (survey-checklist submission B4)", () => 
       }),
       t,
     ).submission;
+
+  it("has no line for the null the server sends when submission is available", () => {
+    expect(line(null)).toBeNull();
+  });
 
   it("appears only while a switch keeps submission closed", () => {
     expect(line("SUBMISSION_NOT_AVAILABLE")).toBe(

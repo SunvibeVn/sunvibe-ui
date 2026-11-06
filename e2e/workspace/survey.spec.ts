@@ -36,7 +36,7 @@ import {
 // Fixtures changed, in this order (the tests depend on it): on L11 (CONTACTED, long-term rent, E2E Sale) survey #1 is
 // booked, edited, confirmed and visited, re-survey #2 booked; L12 (ASSIGNED, sale intent, E2E Sale) changes its
 // requirement to long-term rent and gets survey #1 at the time of L11 #2 (overlap); the leader records #2 for the
-// SALE (proxy), books #3, takes L11 over, puts it on hold (#3 cancelled) and resumes it; the leader cancels L12 #1. Run both seeds again before
+// SALE (proxy), books #3, takes L11 over, puts it on hold (#3 cancelled) and resumes it; the leader cancels L12 #1, and L12, back at Contacted, changes its requirement with a price. Run both seeds again before
 // every `npm run e2e:workspace`. This project runs after admin.spec.ts (playwright.workspace.config.ts).
 
 test.describe.configure({ mode: "serial", timeout: 150_000 });
@@ -451,5 +451,25 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
     // No visit in the cycle: the lead goes back to Contacted (C-3a).
     await expect(detailHeader(leader)).toContainText(T.status.CONTACTED);
     await expect(section.getByRole("button", { name: S.book, exact: true })).toBeVisible();
+  });
+
+  test("W25 U-3: L12 changes its requirement with a price: the amount goes out as a JSON number and the change shows it", async () => {
+    const section = surveySection(leader);
+    await mainArea(leader).getByRole("button", { name: S.requirementButton }).click();
+    const change = dialog(leader, S.requirementTitle);
+    await field(change, S.newIntent).selectOption({ label: "Short-term rental" });
+    await field(change, S.perNight).fill("1.250.000");
+    await field(change, S.requirementReason).fill("Owner wants short stays");
+    await field(change, S.agreedOn).fill(vietnamToday());
+    await field(change, S.agreedHow).fill("Owner said so on the phone");
+    const sent = leader.waitForRequest((request) => request.method() === "POST" && request.url().endsWith("/intent-changes"));
+    await change.getByRole("button", { name: S.save, exact: true }).click();
+    // SV-021: the server still takes a numeric string, so only the request itself can show the number.
+    expect((await sent).postDataJSON().askingPrice).toEqual({ amount: 1250000, currency: "VND", unit: "NIGHT" });
+    await expect(change).toHaveCount(0, { timeout: 20_000 });
+    await expect(byText(leader, S.requirementSaved)).toBeVisible();
+    await expect(section).toContainText("Long-term rental → Short-term rental");
+    await expect(section).toContainText("Requirement cycle 3");
+    await expect(section).toContainText("1.250.000 ₫/night");
   });
 });

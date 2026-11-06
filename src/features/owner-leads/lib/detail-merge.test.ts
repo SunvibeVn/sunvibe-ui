@@ -108,7 +108,7 @@ describe("applySurveyCommandResult (A-23: the answer updates the page, no reload
   });
 
   it("keeps status and version when the answer has none", () => {
-    const merged = applySurveyCommandResult(detail, { lead: null, historyEntry: booked });
+    const merged = applySurveyCommandResult(detail, { historyEntry: booked });
     expect(merged.status).toBe("ASSIGNED");
     expect(merged.version).toBe(3);
   });

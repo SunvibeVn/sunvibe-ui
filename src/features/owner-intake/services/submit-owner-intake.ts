@@ -1,4 +1,3 @@
-import type { components } from "@/api/generated/schema";
 import { createPublicClient, toPublicResult, type PublicApiResult } from "@/lib/api";
 
 import type { IdempotencyKeys } from "../lib/idempotency";
@@ -17,9 +16,7 @@ export function sendOwnerIntake(
 ): Promise<PublicApiResult<OwnerIntakeAccepted>> {
   return toPublicResult(
     client.POST("/api/v1/public/owner-intake-requests", {
-      // The OpenAPI file types askingPrice.amount as a string (int64 format) but the server wants a JSON number
-      // (handoff section 6); OwnerIntakeRequestBody overrides that one field, so cast at this call only.
-      body: body as unknown as components["schemas"]["OwnerIntakeRequest"],
+      body,
       headers: { "Idempotency-Key": idempotencyKey },
     }),
   );

@@ -82,7 +82,7 @@ describe("scheduledAppointment and earlierAppointments (spec 6.1)", () => {
 
   it("lists the others newest first, as the API sends them", () => {
     expect(earlierAppointments(block).map((entry) => entry.id)).toEqual(["A2", "A1"]);
-    expect(earlierAppointments({ appointments: null })).toEqual([]);
+    expect(earlierAppointments({})).toEqual([]);
   });
 
   it("gives an open dialog its appointment only while that one is still scheduled (a reload after a conflict)", () => {
@@ -112,7 +112,7 @@ describe("holderOptions", () => {
   });
 
   it("is empty without holders", () => {
-    expect(holderOptions(appointment({ holders: null, surveyorUserId: null }))).toEqual([]);
+    expect(holderOptions({ surveyorName: "Sale One" })).toEqual([]);
   });
 });
 

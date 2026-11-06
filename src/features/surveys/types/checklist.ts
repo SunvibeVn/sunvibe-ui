@@ -2,8 +2,8 @@ import type { components } from "@/api/generated/schema";
 
 type Schemas = components["schemas"];
 
-// Survey checklists (survey-checklist spec 7). The W16 contract marks every nullable field and reference as such, so
-// these are the generated types as they are (no `ApiShape`): a field the contract leaves optional may still be absent.
+// Survey checklists (survey-checklist spec 7): the generated types as they are. A field the contract leaves optional may
+// still be absent.
 
 /** The checklist as one viewer reads it: groups, readiness, computed parts and who may edit (spec 7.2). */
 export type ChecklistView = Schemas["ChecklistResponse"];

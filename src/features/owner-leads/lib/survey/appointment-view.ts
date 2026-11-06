@@ -1,6 +1,5 @@
 import type { BadgeTone } from "@/components/ui/badge";
 import type {
-  ApiShape,
   BookingBlock,
   ChecklistOutcome,
   ChecklistSummary,
@@ -135,8 +134,8 @@ export function passedNoteKey(block: Pick<NonNullable<SurveyBlock>, "survey">): 
   return passed?.usable === false && passed.reason ? `checklist.decision.passedReason.${passed.reason}` : null;
 }
 
-/** A checklist line of the survey block, which may leave any field out or send `null`. */
-type ChecklistLine = ApiShape<Pick<ChecklistSummary, "status" | "outcome" | "readOnlyReason" | "editable" | "requalified">>;
+/** A checklist line of the survey block. */
+type ChecklistLine = Pick<ChecklistSummary, "status" | "outcome" | "readOnlyReason" | "editable" | "requalified">;
 
 const CHIP_TONE: Record<ChecklistOutcome, BadgeTone> = { PASSED: "success", NEEDS_CHANGES: "warning", FAILED: "danger" };
 

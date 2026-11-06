@@ -252,7 +252,7 @@ describe("changeIntent (survey-schedule US-5, spec 7.1)", () => {
     const body = {
       expectedVersion: 1,
       newIntent: "LONG_TERM_RENT" as const,
-      askingPrice: { amount: "12000000", currency: "VND" as const, unit: "MONTH" as const },
+      askingPrice: { amount: 12000000, currency: "VND" as const, unit: "MONTH" as const },
       reason: "Owner wants long stays",
       basis,
     };

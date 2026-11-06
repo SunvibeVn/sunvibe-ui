@@ -1,6 +1,7 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 
+import type { ChecklistReadiness } from "@/features/surveys";
 import en from "@/i18n/messages/en.json";
 
 import { emptyContent, viewOf } from "./fixtures.test-support";
@@ -39,6 +40,19 @@ describe("submitPanelState (survey-checklist submission spec 6.1, U-1)", () => {
       expect(state.kind).toBe("unavailable");
       expect(state.kind === "unavailable" && t(state.text)).toBe(text);
     }
+  });
+
+  it("gateTextKey_eachOfTheSeven_hasItsText: every value of the contract's enum has its own text, never the general one", () => {
+    const seven: Record<NonNullable<ChecklistReadiness["submissionUnavailableReason"]>, true> = {
+      EVIDENCE_NOT_AVAILABLE: true,
+      SUBMISSION_NOT_AVAILABLE: true,
+      APPOINTMENT_SCHEDULED: true,
+      MISSING_ITEMS: true,
+      PHOTOS_NOT_FINISHED: true,
+      PHOTO_LIMIT: true,
+      PHOTO_UNAVAILABLE: true,
+    };
+    for (const reason of Object.keys(seven)) expect(gateTextKey(reason)).toBe(`checklist.submit.gate.${reason}`);
   });
 
   it("has a text for a reason this UI does not know, and for none", () => {

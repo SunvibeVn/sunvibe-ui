@@ -78,7 +78,7 @@ export function toIntentBody(form: RequirementForm, ctx: { leadVersion: number }
   return {
     expectedVersion: ctx.leadVersion,
     newIntent: form.newIntent as RentalIntent,
-    askingPrice: form.noPrice || unit === null || amount === null ? null : { amount, currency: "VND", unit },
+    askingPrice: form.noPrice || unit === null || amount === null ? null : { amount: Number(amount), currency: "VND", unit },
     reason: cleanText(form.reason),
     basis: { confirmedOn: form.basisDate, text: cleanText(form.basisText) },
   };
