@@ -10,8 +10,8 @@ import { fieldAnchor } from "../../lib/checklist/readiness-view";
 import { problemsUnder } from "../../lib/checklist/unit-path";
 import { unitKey } from "../../lib/checklist/units";
 import type { ChecklistProblems } from "../../schemas/checklist";
-
 import type { ChecklistHazardInput, ChecklistInput } from "../../types";
+
 import { useChecklistPage } from "./checklist-context";
 import { checklistProblemText } from "./checklist-copy";
 import { FieldControl } from "./field-control";

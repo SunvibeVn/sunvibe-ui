@@ -68,7 +68,7 @@ src/
 ├── config/                 # site.ts, navigation.ts, public-env.ts (NEXT_PUBLIC_*), env.ts (server env)
 ├── i18n/                   # next-intl setup; Vietnamese messages in messages/vi.json
 └── lib/                    # Framework-agnostic helpers
-    ├── api/                # createPublicClient/toPublicResult (openapi-fetch); server.ts: server-only createHttpClient, used only by server-only services such as property.service.ts
+    ├── api/                # createPublicClient/toPublicResult (openapi-fetch); server.ts: server-only createHttpClient, used only by server-only services such as property-api.ts
     └── utils/
 public/images/brand/        # Logo and share-banner source files
 ```
@@ -79,7 +79,7 @@ public/images/brand/        # Logo and share-banner source files
 
 **One feature per business domain.** A feature owns everything for its domain: `components/`, `lib/`, `schemas/`, `session/` or `services/` as needed. Inside a feature, use relative imports.
 
-**Import features only through their entry points.** ESLint blocks deep imports such as `@/features/property/services/...`. Use `@/features/<name>` from pages and layouts, `@/features/<name>/client` from Client Components, and `@/features/<name>/proxy` from `src/proxy.ts`. Each feature's internals stay free to change.
+**Import features only through their entry points.** ESLint blocks deep imports such as `@/features/property/services/...`. Use `@/features/<name>` from pages and layouts, `@/features/<name>/client` from Client Components (a page may import a Client Component from there too), and `@/features/<name>/proxy` from `src/proxy.ts`. Each feature's internals stay free to change.
 
 **API calls use openapi-fetch typed from `src/api/generated/schema.d.ts`.** Never hand-write an endpoint that is not in `sunvibe-server/api/openapi.json`. Anonymous calls use `createPublicClient` + `toPublicResult` from `@/lib/api` with `credentials: "omit"`; map errors by their `code`, never show raw server text. Signed-in calls use `callApi` / `apiClient` from `@/features/auth/client`.
 

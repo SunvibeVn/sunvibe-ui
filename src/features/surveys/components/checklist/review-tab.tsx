@@ -23,8 +23,8 @@ import {
   withMark,
 } from "../../lib/checklist/review-model";
 import { createInFlightGuard } from "../../lib/checklist/submission-model";
-
 import { reviewReasonKey } from "../../lib/review-queue";
+
 import { useChecklistPage } from "./checklist-context";
 import { ChecklistSections } from "./checklist-sections";
 import { DecisionForm } from "./decision-form";

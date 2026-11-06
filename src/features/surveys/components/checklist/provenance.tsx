@@ -3,8 +3,8 @@
 import { useTranslations } from "next-intl";
 
 import { formatProvenance, provenanceLine, type ProvenanceUnit } from "../../lib/checklist/provenance-line";
-
 import type { ChecklistUnitMeta } from "../../types";
+
 import { useChecklistPage } from "./checklist-context";
 
 /** The provenance lines of a stored unit (survey-checklist spec 6.2); nothing for a unit never filled. */

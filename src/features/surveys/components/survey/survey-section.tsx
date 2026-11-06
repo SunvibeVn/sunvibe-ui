@@ -17,8 +17,8 @@ import {
   scheduledAppointment,
 } from "../../lib/survey/appointment-view";
 import { requalifyTarget } from "../../lib/survey/requalify-form";
-
 import type { SurveyCommandResult, SurveyOverlap } from "../../types";
+
 import { type AppointmentAction, AppointmentCard } from "./appointment-card";
 import { AppointmentHistory } from "./appointment-history";
 import { ChecklistAction } from "./checklist-action";

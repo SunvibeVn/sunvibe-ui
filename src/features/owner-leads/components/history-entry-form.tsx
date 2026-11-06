@@ -34,8 +34,8 @@ import {
   type StatusRequest,
 } from "../lib/status-flow";
 import { isClosing } from "../lib/transitions";
-
 import type { DuplicateCandidate } from "../types";
+
 import { CommandMessageView } from "./command-message";
 import {
   DuplicatePicker,

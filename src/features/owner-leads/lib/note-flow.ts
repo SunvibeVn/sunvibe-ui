@@ -2,8 +2,8 @@ import type { ApiResult } from "@/features/auth/client";
 import { localInputToInstant } from "@/features/lead-shared";
 
 import { addNote, type AddNoteInput } from "../services/owner-leads-api";
-
 import type { LeadNoteResult } from "../types";
+
 import { toLeadUiError, withCorrelation } from "./lead-ui-error";
 import { noteProblem, type NoteProblem } from "./note-length";
 

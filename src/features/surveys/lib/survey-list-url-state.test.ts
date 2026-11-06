@@ -105,6 +105,14 @@ describe("withSurveyFilter", () => {
 });
 
 describe("a surveyor change of useUrlList", () => {
+  it("surveyorChange_aSale_staysOnMine: a SALE never reaches a URL with scope all (spec 6.5)", () => {
+    const url = { parse: (params: URLSearchParams) => parseSurveyListState(params, sale), serialize: serializeSurveyListState };
+    const state = parseSurveyListState(q("scope=mine"), sale);
+    for (const change of [{ scope: "all" as const }, { surveyor: "U1" }, { scope: "all" as const, surveyor: "U1" }]) {
+      expect(serializeSurveyListState(nextListState(withSurveyFilter(state, change), url))).toBe("scope=mine");
+    }
+  });
+
   const url = { parse: (params: URLSearchParams) => parseSurveyListState(params, leader), serialize: serializeSurveyListState };
 
   it.each(["scope=all", "scope=all&surveyor=U1", "scope=all&surveyor=U1&page=3"])(

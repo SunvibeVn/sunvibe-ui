@@ -6,8 +6,8 @@ import { readFormDraft, writeFormDraft } from "@/features/lead-shared/client";
 import en from "@/i18n/messages/en.json";
 
 import { problemText } from "../../components/survey/survey-copy";
-
 import type { ChecklistRequalified } from "../../types";
+
 import {
   createSubmitGate,
   firstRequalifyField,

@@ -9,8 +9,8 @@ import { Dialog } from "@/components/ui/dialog";
 
 import { mediaErrorText } from "../../lib/checklist/media-messages";
 import type { PhotoCard } from "../../lib/checklist/media-panel-model";
-
 import type { MediaUiError } from "../../lib/media-ui-error";
+
 import { useChecklistPage } from "./checklist-context";
 import { useChecklistMedia } from "./media-context";
 import { PhotoHoldControls } from "./photo-hold-controls";

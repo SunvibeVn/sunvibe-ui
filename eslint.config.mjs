@@ -16,12 +16,12 @@ const FEATURE_PUBLIC_API = {
 };
 
 const NOT_OWNER_LEADS = {
-  group: ["@/features/owner-leads*", "**/owner-leads/**"],
+  group: ["@/features/owner-leads*", "**/owner-leads", "**/owner-leads/**"],
   message: "This feature sits below owner-leads and never imports it: the lead page passes in what is needed.",
 };
 
 const NOT_SURVEYS = {
-  group: ["@/features/surveys*", "**/surveys/**"],
+  group: ["@/features/surveys*", "**/surveys", "**/surveys/**"],
   message: "lead-shared sits below surveys and never imports it.",
 };
 

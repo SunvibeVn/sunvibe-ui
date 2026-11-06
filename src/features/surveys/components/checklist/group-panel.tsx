@@ -16,8 +16,8 @@ import { spaceCodes } from "../../lib/checklist/readiness-view";
 import { sameUnit } from "../../lib/checklist/unit-equality";
 import { unitPath } from "../../lib/checklist/unit-path";
 import { type ChecklistProblems, checkGroupInput } from "../../schemas/checklist";
-
 import { CHECKLIST_GROUP_NAME, type ChecklistCorrectionInput, type ChecklistInput } from "../../types";
+
 import { useChecklistPage } from "./checklist-context";
 import { CorrectionBox } from "./correction-box";
 import type { Panel } from "./use-panel";

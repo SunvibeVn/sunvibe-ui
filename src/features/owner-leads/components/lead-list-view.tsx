@@ -26,8 +26,8 @@ import {
 } from "../lib/list-url-state";
 import { type Viewer, viewerOf } from "../lib/viewer";
 import { listLeads } from "../services/owner-leads-api";
-
 import type { LeadPage } from "../types";
+
 import { LeadCards } from "./lead-cards";
 import { LeadFilters } from "./lead-filters";
 import { LeadTable } from "./lead-table";

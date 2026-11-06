@@ -6,8 +6,8 @@ import type { ApiResult } from "@/features/auth/client";
 import { type SurveyErrorMessage, surveyFailure } from "../../lib/survey/survey-failure";
 import { runSurveyCommand } from "../../lib/survey/survey-flow";
 import type { SurveyProblem } from "../../schemas/survey/survey-text";
-
 import type { SurveyCommandResult } from "../../types";
+
 import type { SurveyDialogMessage } from "./survey-message";
 import { useSurveyPanel } from "./survey-panel-context";
 import { useSurveyLock } from "./use-survey-lock";

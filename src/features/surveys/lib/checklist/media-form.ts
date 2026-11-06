@@ -1,6 +1,6 @@
 import { cleanText, optionalText, type SurveyProblem } from "../../schemas/survey/survey-text";
-
 import type { MediaCategory } from "../../types";
+
 import { type CoverageRow, MEDIA_CATEGORIES } from "./media-panel-model";
 
 // The upload form's rules (survey-media spec 6.2 Upload): the categories allowed at a placement come from the list's

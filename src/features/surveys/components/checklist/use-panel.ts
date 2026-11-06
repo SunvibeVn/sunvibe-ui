@@ -10,8 +10,8 @@ import { type GroupEdits, inputOfContent, toGroupInput, type UnitValue, unitsOfI
 import { withRelayRule } from "../../lib/checklist/receiver-options";
 import { sameUnit } from "../../lib/checklist/unit-equality";
 import { isPanelLocked } from "../../lib/checklist/page-state";
-
 import type { ChecklistContent, ChecklistGroupPath, ChecklistInput, ChecklistUnitMeta } from "../../types";
+
 import { useChecklistPage } from "./checklist-context";
 
 /** One group's editing state: the stored input, the user's edits (tab-memory draft) and the body they make. */

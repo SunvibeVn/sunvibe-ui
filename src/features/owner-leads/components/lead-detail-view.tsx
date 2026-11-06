@@ -20,15 +20,15 @@ import { applyChecklistStart, applySurveyCommandResult, mergeNoteResult, mergeSu
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import { viewerOf } from "../lib/viewer";
 import { getLead, getLeadSurvey } from "../services/owner-leads-api";
-
 import type { LeadNoteResult } from "../types";
+
 import { LeadAsset } from "./lead-asset";
 import { LeadContact } from "./lead-contact";
 import { LeadDetailHeader } from "./lead-detail-header";
 import { type CommandSource, type LeadDetailController, LeadDetailProvider } from "./lead-detail-context";
 import { LeadDuplicates } from "./lead-duplicates";
 import { LeadHistory } from "./lead-history";
-import { LeadSurveyContext } from "./lead-survey-context";
+import { LeadSurveyProvider } from "./lead-survey-provider";
 
 /** A detail answer, for one user and one lead. */
 type Loaded = { userId: string; leadId: string; lead: LeadDetail };
@@ -337,9 +337,9 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
           <LeadAsset lead={current.lead} />
         </div>
         <SurveyPanelProvider value={controller}>
-          <LeadSurveyContext>
+          <LeadSurveyProvider>
             <SurveySection />
-          </LeadSurveyContext>
+          </LeadSurveyProvider>
         </SurveyPanelProvider>
         <IntakeSection leadId={leadId} refreshKey={current.lead.version} />
         <LeadHistory activities={current.lead.activities ?? NO_ITEMS} />

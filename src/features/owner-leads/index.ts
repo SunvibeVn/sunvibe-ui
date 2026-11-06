@@ -3,5 +3,5 @@
 // feature imports a Client Component API from it.
 export { LeadDetailView } from "./components/lead-detail-view";
 export { LeadListView } from "./components/lead-list-view";
-export { LeadSurveyContext } from "./components/lead-survey-context";
+export { LeadSurveyProvider } from "./components/lead-survey-provider";
 export { TerritoriesView } from "./components/territories-view";

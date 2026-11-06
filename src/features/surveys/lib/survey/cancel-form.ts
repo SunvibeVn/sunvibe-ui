@@ -10,8 +10,8 @@ import {
   requiredText,
   type SurveyProblems,
 } from "../../schemas/survey/survey-text";
-
 import { type CancelAppointmentInput, USER_CANCEL_REASONS, type UserCancelReason } from "../../types";
+
 import { putText } from "./booking-form";
 
 /** The cancel dialog (spec 6.2): one of the five user reasons and a description (required for Other, A-26). */

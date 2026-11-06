@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { LeadSurveyContext } from "@/features/owner-leads";
+import { LeadSurveyProvider } from "@/features/owner-leads";
 import { ChecklistPage } from "@/features/surveys/client";
 
 // The title is generic: never the request code, an address or a name (survey-checklist spec 4.10).
@@ -16,9 +16,9 @@ async function SurveyChecklist({ params }: { params: Promise<{ leadId: string; c
   // Only the ids go to the client view; the checklist is read in the browser after hydration, so the server HTML holds
   // no survey data or staff name. `key` starts a clean view when the checklist changes.
   return (
-    <LeadSurveyContext>
+    <LeadSurveyProvider>
       <ChecklistPage key={checklistId} leadId={leadId} checklistId={checklistId} />
-    </LeadSurveyContext>
+    </LeadSurveyProvider>
   );
 }
 

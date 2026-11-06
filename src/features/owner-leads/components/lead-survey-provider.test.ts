@@ -5,16 +5,16 @@ import { type SurveyCalls, useSurveyCalls } from "@/features/surveys/client";
 
 import { getLeadSurvey, listWards } from "../services/owner-leads-api";
 
-import { LeadSurveyContext } from "./lead-survey-context";
+import { LeadSurveyProvider } from "./lead-survey-provider";
 
 describe("the survey calls of a lead (W32 F1)", () => {
-  it("leadSurveyContext_givesTheCallsOfThisFeature: the survey UI reads them, it never imports them", () => {
+  it("leadSurveyProvider_givesTheCallsOfThisFeature: the survey UI reads them, it never imports them", () => {
     let calls: SurveyCalls | null = null;
     function Reader() {
       calls = useSurveyCalls();
       return null;
     }
-    renderToStaticMarkup(createElement(LeadSurveyContext, null, createElement(Reader)));
+    renderToStaticMarkup(createElement(LeadSurveyProvider, null, createElement(Reader)));
     expect(calls).toEqual({ getLeadSurvey, listWards });
   });
 

@@ -8,8 +8,8 @@ import { formatDateTime } from "@/lib/format/vietnam-time";
 
 import { checklistHref } from "../../lib/checklist/routes";
 import { checklistLineReason, revisionChip } from "../../lib/survey/appointment-view";
-
 import type { SurveyAppointment } from "../../types";
+
 import { useSurveyPanel } from "./survey-panel-context";
 
 /**

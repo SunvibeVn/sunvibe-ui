@@ -10,8 +10,8 @@ import {
   requiredText,
   type SurveyProblems,
 } from "../../schemas/survey/survey-text";
-
 import type { ChangeAppointmentInput, SurveyAppointment } from "../../types";
+
 import { type Place, placeOf, samePlace } from "./appointment-view";
 import { checkTimeAndPlace, detailTexts, toMeetingLocation } from "./booking-form";
 

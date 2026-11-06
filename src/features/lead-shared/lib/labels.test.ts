@@ -141,7 +141,7 @@ describe("survey activity labels (survey-schedule spec 6.6)", () => {
   });
 });
 
-describe("checklist activity labels and groups (survey-checklist spec 6.4)", () => {
+describe("checklist activity labels (survey-checklist spec 6.4)", () => {
   it("labels the three checklist types", () => {
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_STARTED)).toBe("Checklist started");
     expect(resolve(ACTIVITY_LABEL.CHECKLIST_TAKEN_OVER)).toBe("Checklist taken over");
