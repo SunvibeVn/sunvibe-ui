@@ -8,7 +8,7 @@ export const siteConfig = {
   title: "Sunvibe | AI-Powered Property Rentals",
   description:
     "Effortless property rentals, powered by intelligent automation. Sunvibe uses AI matchmaking, workflow automation, and a 24/7 virtual leasing assistant to make renting seamless.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://sunvibe.vn",
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.sunvibe.vn",
   locale: "en_US",
   logo: "/images/brand/sunvibe-logo.png",
   contactEmail: CONTACT_EMAIL,
