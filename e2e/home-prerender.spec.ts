@@ -3,16 +3,17 @@ import { expect, test } from "@playwright/test";
 // W33 Task G2 (auth-browser-session 4.4): / keeps a prerendered shell, and the parts that read the sign-in hint cookie
 // stay inside Suspense, so the first response still carries the right header button. Needs no API.
 //
-// Only a build prerenders, so these run against one: E2E_SERVER=production npm run e2e -- --grep @production
+// Both run against a build: E2E_SERVER=production npm run e2e -- --grep @production. The first is @build-only, because
+// only a build prerenders: playwright.config.ts leaves it out of a run on `next dev`. The second runs in both modes.
 
-/** The hint cookie of a production build (browser-cookies.ts); its value is never checked on the server. */
-const HINT_COOKIE = "__Host-sv_signed_in=throwaway-generation";
+/** The hint cookie (browser-cookies.ts): `__Host-` only on a production build. Its value is never checked on the server. */
+const HINT_COOKIE = `${process.env.E2E_SERVER === "production" ? "__Host-" : ""}sv_signed_in=throwaway-generation`;
 const LOG_IN = 'aria-label="Log in"';
 const ACCOUNT = '<span class="sr-only">Account</span>';
 
 test.use({ trace: "off" });
 
-test("/ is served from its prerendered shell @production", async ({ request }) => {
+test("/ is served from its prerendered shell @production @build-only", async ({ request }) => {
   const response = await request.get("/");
 
   expect(response.status()).toBe(200);

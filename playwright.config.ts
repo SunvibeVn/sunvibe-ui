@@ -13,6 +13,9 @@ export default defineConfig({
   // The staff workspace specs run only through playwright.workspace.config.ts (npm run e2e:workspace), and the phone
   // specs only through playwright.phone.config.ts and playwright.legacy.config.ts (npm run e2e:phone, e2e:legacy).
   testIgnore: ["workspace/**", "phone/**"],
+  // A spec tagged @build-only checks what only a build does (a prerendered shell): left out of a run on `next dev`, so it
+  // is neither run nor counted as a skip there.
+  grepInvert: productionServer ? undefined : /@build-only/,
   fullyParallel: false,
   // The specs send real POSTs; stay well under the API rate limit (10 per window).
   workers: 1,
