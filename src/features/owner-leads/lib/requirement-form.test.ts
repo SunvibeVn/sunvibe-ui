@@ -116,6 +116,13 @@ describe("validateRequirement amount (SV-176)", () => {
     },
   );
 
+  it.each(["0,500", "0.500", "000.500", "0,001", "012.000"])(
+    "validateRequirement_groupsAfterALeadingZeroAreRefused: %s may be a decimal, so it is not a whole amount",
+    (amount) => {
+      expect(validateRequirement(form({ amount }), ctx).amount).toBe("invalid");
+    },
+  );
+
   it.each(["12.000.000", "12,000,000", "12 000 000", "1.500", "800000", "0012000000", " 12.000.000 "])(
     "validateRequirement_cleanGroupsPass: %s is a whole amount",
     (amount) => {
