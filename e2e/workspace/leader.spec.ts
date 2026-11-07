@@ -4,6 +4,7 @@ import { API_URL } from "../support/api";
 import { corsHeaders, expectSignedInAccount, REFRESH_PATH, TEXT } from "../support/auth";
 import {
   assigneeOption,
+  busy,
   clickStatusBox,
   closeConfirmDialog,
   dialog,
@@ -19,6 +20,7 @@ import {
   goToTab,
   header,
   historySection,
+  holdNextRead,
   leadLink,
   mainArea,
   newStaffContext,
@@ -43,7 +45,7 @@ import {
 
 // The SALE_LEADER in the staff workspace: W11-24, W11-32, W11-33, W11-34, W11-35, W11-36 and the leader's 403 on the
 // territories URL (W11-38) in English, and W14-25, W14-26, W14-27, W14-28 (Review Focus 1), W14-30 (no assignee column)
-// and the expired session inside the workspace (Review Focus 3). Spec 5.8 budget: 1 sign-in (the second page of W11-35
+// and the expired session inside the workspace (Review Focus 3); W32 S-10: Back to a filtered list. Spec 5.8 budget: 1 sign-in (the second page of W11-35
 // and W11-36 is the same user in a new page of the same browser: it restores its session with the refresh cookie, no
 // second sign-in); full loads of protected pages: 7 of 10 (/account, a crafted list URL, its reload, a former-holder
 // URL, the second page twice, the territories URL); intake POSTs: 0.
@@ -467,6 +469,32 @@ test.describe("SALE_LEADER in the workspace", () => {
     await allLeadsDefault(page);
     await expect(await findLeadLink(page, L10)).toBeVisible();
     await expect(await findLeadLink(page, L1), "L1 on no page of the Unassigned filter").toHaveCount(0);
+  });
+
+  test("S-10 and Review Focus 2 (W32): Back from a lead shows the filtered list with its rows while it reads again; Back to leads keeps the filter", async () => {
+    const filtered = `?scope=all&assignee=${fixture.sale.id}`;
+    await allLeadsDefault(page);
+    await assigneeFilter(page).selectOption(fixture.sale.id);
+    await expect(page).toHaveURL((url) => url.search === filtered);
+    await openLead(page, L2);
+
+    // The browser's Back: the list shows again at once with the rows it had, while its new read is held.
+    const read = await holdNextRead(page, "/api/v1/staff/owner-leads");
+    await page.goBack();
+    await expect(page).toHaveURL((url) => url.pathname === "/workspace/owner-leads" && url.search === filtered);
+    await expect.poll(read.reached, { message: "the list reads again when it shows" }).toBe(true);
+    await expect(leadLink(page, L2)).toBeVisible();
+    await expect(busy(page), "no skeleton over the rows").toHaveCount(0);
+    await read.release();
+    await expectListSettled(page);
+    await expect(leadLink(page, L2)).toBeVisible();
+
+    // The page's own link goes back to the same filtered list.
+    await openLead(page, L2);
+    await page.getByRole("link", { name: T.back }).click();
+    await expectListPage(page);
+    await expect(page).toHaveURL((url) => url.search === filtered);
+    await expect(leadLink(page, L2)).toBeVisible({ timeout: 20_000 });
   });
 
   test("W11-35: a stale status change shows the concurrency message and keeps the typed reason", async () => {

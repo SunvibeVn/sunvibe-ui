@@ -1,4 +1,13 @@
-import { type Browser, type BrowserContext, expect, type Locator, type Page, type Request, test } from "@playwright/test";
+import {
+  type Browser,
+  type BrowserContext,
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+  type Route,
+  test,
+} from "@playwright/test";
 
 import { API_URL } from "../../support/api";
 import {
@@ -271,6 +280,38 @@ export const isDetailCall = (call: ApiCall, leadId?: string): boolean =>
     ? /^\/api\/v1\/staff\/owner-leads\/[^/]+$/.test(call.url.pathname)
     : call.url.pathname === `${LEADS_PATH}/${leadId}`);
 
+/** A list read held by holdNextRead: `reached()` is true once it is waiting; `release()` lets it go to the API. */
+export type HeldRead = { reached(): boolean; release(): Promise<void> };
+
+/**
+ * Holds the next `GET <path>` of the page (the read a list starts when it shows again), so a test can look at the
+ * page while that read runs. The request then goes to the API unchanged; later requests pass at once.
+ */
+export async function holdNextRead(page: Page, path: string): Promise<HeldRead> {
+  let reached = false;
+  let open = (): void => undefined;
+  const gate = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+  let passed = Promise.resolve();
+  const matches = (url: URL): boolean => url.origin === API_URL && url.pathname === path;
+  const handler = async (route: Route): Promise<void> => {
+    if (reached || route.request().method() !== "GET") return route.continue();
+    reached = true;
+    passed = gate.then(() => route.continue());
+    await passed;
+  };
+  await page.route(matches, handler);
+  return {
+    reached: () => reached,
+    release: async () => {
+      open();
+      await passed;
+      await page.unroute(matches, handler);
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Page helpers
 
@@ -369,7 +410,7 @@ export async function tickedStatusLabels(page: Page): Promise<string[]> {
  * detail whose lead was never found (404, back to the list) keeps its skeleton for good, by design: it loads again
  * when it is shown. Only a visible skeleton means the page on screen is still loading.
  */
-const busy = (page: Page): Locator => page.locator('[aria-busy="true"]').filter({ visible: true });
+export const busy = (page: Page): Locator => page.locator('[aria-busy="true"]').filter({ visible: true });
 
 /** Waits until a list has loaded (the "N lead(s)" count is shown; "1,000 leads" from a thousand on). */
 async function expectListLoaded(page: Page): Promise<void> {
