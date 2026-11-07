@@ -151,8 +151,15 @@ function watchMediaRequests(page: Page): () => Promise<MediaRequest[]> {
     seen.push({ method: request.method(), path: url.pathname, cookie: request.allHeaders().then((headers) => "cookie" in headers) });
   });
   return async () => {
-    const late = new Promise<null>((resolve) => setTimeout(resolve, 10_000, null));
-    return Promise.all(seen.map(async ({ cookie, ...request }) => ({ ...request, cookie: await Promise.race([cookie, late]) })));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const late = new Promise<null>((resolve) => {
+      timer = setTimeout(resolve, 10_000, null);
+    });
+    const requests = await Promise.all(
+      seen.map(async ({ cookie, ...request }) => ({ ...request, cookie: await Promise.race([cookie, late]) })),
+    );
+    clearTimeout(timer);
+    return requests;
   };
 }
 
@@ -477,8 +484,15 @@ test.describe("Survey photos (survey-media media-b)", () => {
   test("SM-FE-10: no photo request of the run sent a cookie (credentials omitted)", async () => {
     // Every photo request of the three pages, the content PUT by XMLHttpRequest included, went without a Cookie header,
     // although the browser holds cookies it would send to the API's host if a request included them.
-    // Each kind below is proved by a request whose headers came; one that never got them is left out.
-    const requests = (await Promise.all(mediaRequests.map((all) => all()))).flat().filter((request) => request.cookie !== null);
+    // Each kind below is proved by a request whose headers came. One that never got them is left out, and only a read
+    // (or its preflight) may be one: every write stays checked.
+    const seen = (await Promise.all(mediaRequests.map((all) => all()))).flat();
+    const unsettled = seen.filter((request) => request.cookie === null);
+    expect(
+      unsettled.filter((request) => request.method !== "GET" && request.method !== "OPTIONS"),
+      `writes among the ${unsettled.length} requests whose headers never came`,
+    ).toEqual([]);
+    const requests = seen.filter((request) => request.cookie !== null);
     const kinds = new Set(requests.map((request) => `${request.method} ${request.path.replace(/[0-9A-Z]{26}/g, "{id}")}`));
     for (const kind of [
       "GET /api/v1/staff/survey-checklists/{id}/media",

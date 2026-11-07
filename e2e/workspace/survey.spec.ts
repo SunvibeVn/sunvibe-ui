@@ -3,7 +3,6 @@ import { type BrowserContext, expect, type Locator, type Page, test } from "@pla
 import { expectSignedInAccount } from "../support/auth";
 import {
   assigneeOption,
-  busy,
   byText,
   detailHeader,
   DESKTOP,
@@ -15,7 +14,7 @@ import {
   fixture,
   findLeadLink,
   historySection,
-  holdNextRead,
+  holdReads,
   isDetailCall,
   mainArea,
   newStaffContext,
@@ -98,6 +97,7 @@ const S = {
   reviews: "Reviews",
   surveyor: "Surveyor",
   emptyFiltered: "No scheduled surveys for this surveyor.",
+  loading: "Loading surveys…",
 } as const;
 
 /** Vietnam is UTC+7 all year. */
@@ -443,8 +443,8 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
     await view(L12.code).first().click();
     await expectLeadDetail(leader, L12);
 
-    // The survey list forgets its rows when it is hidden: on Back its skeleton shows until the held read answers.
-    const read = await holdNextRead(leader, "/api/v1/staff/survey-appointments");
+    // The survey list forgets its rows when it is hidden: on Back its skeleton shows until the held reads answer.
+    const reads = await holdReads(leader, "/api/v1/staff/survey-appointments");
     await leader.goBack();
     await expect(leader).toHaveURL(
       (url) =>
@@ -452,10 +452,11 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
         url.searchParams.get("scope") === "all" &&
         url.searchParams.get("surveyor") === fixture.sale.id,
     );
-    await expect.poll(read.reached, { message: "the list reads again when it shows" }).toBe(true);
-    await expect(busy(leader).first(), "the skeleton of the list").toBeVisible();
+    await expect.poll(reads.count, { message: "the list reads again when it shows" }).toBeGreaterThan(0);
+    await expect(mainArea(leader).getByRole("status").filter({ hasText: S.loading }), "the skeleton of the list").toBeVisible();
     await expect(view(/^View the survey of lead /), "no row of before").toHaveCount(0);
-    await read.release();
+    test.info().annotations.push({ type: "list reads held on Back", description: String(reads.count()) });
+    await reads.release();
     await expect(view(L12.code).first()).toBeVisible({ timeout: 20_000 });
   });
 

@@ -117,7 +117,7 @@ describe("validateRequirement amount (SV-176)", () => {
   );
 
   it.each(["0,500", "0.500", "000.500", "0,001", "012.000"])(
-    "validateRequirement_groupsAfterALeadingZeroAreRefused: %s may be a decimal, so it is not a whole amount",
+    "validateRequirement_firstGroupStartingWith0IsRefused: %s (0,500 may be a decimal; 012.000 goes with it)",
     (amount) => {
       expect(validateRequirement(form({ amount }), ctx).amount).toBe("invalid");
     },
