@@ -24,4 +24,4 @@ alwaysApply: false
   tokens never go into any storage; the single-use registration and reset tokens may be kept in sessionStorage.
 - API errors: map the `code` of a PublicApiResult (toPublicResult in src/lib/api) to UI messages; never by `message`,
   never show raw server text. The server-only createHttpClient (src/lib/api/server.ts), used only by server-only
-  services such as property.service.ts, throws ApiError (src/lib/api) for public server fetches.
+  services such as property-api.ts, throws ApiError (src/lib/api) for public server fetches.

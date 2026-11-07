@@ -14,6 +14,7 @@ import {
   fixture,
   findLeadLink,
   historySection,
+  holdReads,
   isDetailCall,
   mainArea,
   newStaffContext,
@@ -29,7 +30,8 @@ import {
   WORKSPACE_E2E_SKIP_REASON,
 } from "./support/staff";
 
-// Survey appointments in the staff workspace (survey-schedule spec 6.9): W15-31..W15-38 and Review Focus 3 and 5.
+// Survey appointments in the staff workspace (survey-schedule spec 6.9): W15-31..W15-38 and Review Focus 3 and 5;
+// W32 S-10: Back to the survey list.
 // The SALE works in a browser set to New York time: every time is typed and shown as Vietnam time. Budget: 2 sign-ins
 // (SALE, SALE_LEADER), full loads: the SALE's L11 URL after the reassignment.
 //
@@ -95,6 +97,7 @@ const S = {
   reviews: "Reviews",
   surveyor: "Surveyor",
   emptyFiltered: "No scheduled surveys for this surveyor.",
+  loading: "Loading surveys…",
 } as const;
 
 /** Vietnam is UTC+7 all year. */
@@ -432,6 +435,29 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
     await expect(mainArea(leader).getByRole("link", { name: `View the survey of lead ${L12.code}` }).first()).toBeVisible({
       timeout: 20_000,
     });
+  });
+
+  test("S-10 (W32): Back from a lead to the filtered survey list shows no old rows while the list reads again", async () => {
+    const view = (lead: string | RegExp): Locator =>
+      mainArea(leader).getByRole("link", { name: typeof lead === "string" ? `View the survey of lead ${lead}` : lead });
+    await view(L12.code).first().click();
+    await expectLeadDetail(leader, L12);
+
+    // The survey list forgets its rows when it is hidden: on Back its skeleton shows until the held reads answer.
+    const reads = await holdReads(leader, "/api/v1/staff/survey-appointments");
+    await leader.goBack();
+    await expect(leader).toHaveURL(
+      (url) =>
+        url.pathname === "/workspace/surveys" &&
+        url.searchParams.get("scope") === "all" &&
+        url.searchParams.get("surveyor") === fixture.sale.id,
+    );
+    await expect.poll(reads.count, { message: "the list reads again when it shows" }).toBeGreaterThan(0);
+    await expect(mainArea(leader).getByRole("status").filter({ hasText: S.loading }), "the skeleton of the list").toBeVisible();
+    await expect(view(/^View the survey of lead /), "no row of before").toHaveCount(0);
+    await reads.release();
+    test.info().annotations.push({ type: "list reads held on Back", description: String(reads.count()) });
+    await expect(view(L12.code).first()).toBeVisible({ timeout: 20_000 });
   });
 
   test("W15-32: the leader cancels L12's survey from the list's View (Other, with a description); L12 goes back to Contacted", async () => {

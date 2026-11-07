@@ -4,12 +4,18 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  formatDate,
+  formatDateTime,
+  formatPrice,
+  intentLabelKey,
+  type LeadDetail,
+  mapDirectionsUrl,
+  propertyTypeLabelKey,
+  sourceLabelKey,
+} from "@/features/lead-shared";
 
-import { formatDate, formatDateTime, formatPrice } from "../lib/format";
-import { intentLabelKey, propertyTypeLabelKey, sourceLabelKey } from "../lib/labels";
-import { mapDirectionsUrl } from "../lib/map-link";
 import { canChangeRequirement } from "../lib/requirement-form";
-import type { LeadDetail } from "../types";
 
 import { DetailCell, DetailGrid, DetailSection } from "./detail-layout";
 import { surveyRecordOf, useLeadDetail } from "./lead-detail-context";

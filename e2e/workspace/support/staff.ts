@@ -1,4 +1,13 @@
-import { type Browser, type BrowserContext, expect, type Locator, type Page, type Request, test } from "@playwright/test";
+import {
+  type Browser,
+  type BrowserContext,
+  expect,
+  type Locator,
+  type Page,
+  type Request,
+  type Route,
+  test,
+} from "@playwright/test";
 
 import { API_URL } from "../../support/api";
 import {
@@ -271,6 +280,38 @@ export const isDetailCall = (call: ApiCall, leadId?: string): boolean =>
     ? /^\/api\/v1\/staff\/owner-leads\/[^/]+$/.test(call.url.pathname)
     : call.url.pathname === `${LEADS_PATH}/${leadId}`);
 
+/** List reads held by holdReads: `count()` of them so far; `release()` lets every one go to the API. */
+export type HeldReads = { count(): number; release(): Promise<void> };
+
+/**
+ * Holds every `GET <path>` of the page until released, so a test can look at the page while the list reads. A list
+ * shown again starts two reads under `next dev` (Strict Mode runs the effects of a route shown again twice), and only
+ * the last one fills the list: holding the first alone would prove nothing. They then go to the API unchanged.
+ */
+export async function holdReads(page: Page, path: string): Promise<HeldReads> {
+  let open = (): void => undefined;
+  const gate = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+  const held: Promise<void>[] = [];
+  const matches = (url: URL): boolean => url.origin === API_URL && url.pathname === path;
+  const handler = async (route: Route): Promise<void> => {
+    if (route.request().method() !== "GET") return route.continue();
+    const passed = gate.then(() => route.continue());
+    held.push(passed);
+    await passed;
+  };
+  await page.route(matches, handler);
+  return {
+    count: () => held.length,
+    release: async () => {
+      open();
+      await Promise.all(held);
+      await page.unroute(matches, handler);
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------------------------------------------
 // Page helpers
 
@@ -369,7 +410,7 @@ export async function tickedStatusLabels(page: Page): Promise<string[]> {
  * detail whose lead was never found (404, back to the list) keeps its skeleton for good, by design: it loads again
  * when it is shown. Only a visible skeleton means the page on screen is still loading.
  */
-const busy = (page: Page): Locator => page.locator('[aria-busy="true"]').filter({ visible: true });
+export const busy = (page: Page): Locator => page.locator('[aria-busy="true"]').filter({ visible: true });
 
 /** Waits until a list has loaded (the "N lead(s)" count is shown; "1,000 leads" from a thousand on). */
 async function expectListLoaded(page: Page): Promise<void> {

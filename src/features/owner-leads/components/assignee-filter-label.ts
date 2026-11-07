@@ -1,4 +1,4 @@
-import type { EligibleAssignee, LeadSummary } from "../types";
+import type { EligibleAssignee, LeadSummary } from "@/features/lead-shared";
 
 export type AssigneeFilterLabel = {
   name: string;

@@ -2,10 +2,9 @@
 
 import Link from "next/link";
 import { useTranslations } from "next-intl";
+import { formatDateTime } from "@/features/lead-shared";
 
-import { formatDateTime } from "../lib/format";
 import type { DuplicateCandidate } from "../types";
-
 import { DetailSection } from "./detail-layout";
 import { LeadStatusBadge } from "./lead-status-badge";
 import { leadDetailHref } from "./list-href";

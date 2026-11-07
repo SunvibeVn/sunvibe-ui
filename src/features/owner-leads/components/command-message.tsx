@@ -3,9 +3,9 @@
 import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { ForbiddenNotice } from "@/features/auth/client";
+import { statusLabelKey } from "@/features/lead-shared";
 
 import type { CommandMessage } from "../lib/command-flow";
-import { statusLabelKey } from "../lib/labels";
 
 /**
  * Shows a command message (spec 5.2): stale, refused transition with the allowed statuses, ineligible assignee, 400

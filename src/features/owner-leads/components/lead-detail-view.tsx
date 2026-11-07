@@ -9,30 +9,26 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
 import { IntakeSection } from "@/features/inventory-intake";
+import { type LeadDetail, type LeadSummary, LIST_PATH } from "@/features/lead-shared";
+import { lastListUrl, listFlash } from "@/features/lead-shared/client";
 import { type ChecklistStarted, type SurveyCommandResult, toSurveyUiError } from "@/features/surveys";
+import { SurveyPanelProvider, SurveySection, type SurveyState } from "@/features/surveys/client";
 
 import { add, isBusy, remove } from "../lib/command-lock";
 import { detailFailureAction } from "../lib/detail-failure";
 import { applyChecklistStart, applySurveyCommandResult, mergeNoteResult, mergeSummary } from "../lib/detail-merge";
-import { lastListUrl, listFlash } from "../lib/drafts";
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import { viewerOf } from "../lib/viewer";
 import { getLead, getLeadSurvey } from "../services/owner-leads-api";
-import type { LeadDetail, LeadNoteResult, LeadSummary } from "../types";
+import type { LeadNoteResult } from "../types";
 
 import { LeadAsset } from "./lead-asset";
 import { LeadContact } from "./lead-contact";
 import { LeadDetailHeader } from "./lead-detail-header";
-import {
-  type CommandSource,
-  type LeadDetailController,
-  LeadDetailProvider,
-  type SurveyState,
-} from "./lead-detail-context";
+import { type CommandSource, type LeadDetailController, LeadDetailProvider } from "./lead-detail-context";
 import { LeadDuplicates } from "./lead-duplicates";
 import { LeadHistory } from "./lead-history";
-import { LIST_PATH } from "./list-href";
-import { SurveySection } from "./survey/survey-section";
+import { LeadSurveyProvider } from "./lead-survey-provider";
 
 /** A detail answer, for one user and one lead. */
 type Loaded = { userId: string; leadId: string; lead: LeadDetail };
@@ -76,7 +72,8 @@ function LoadProblem({ error, onRetry }: { error: LeadUiError; onRetry: () => vo
  * again when the route is shown after being hidden (Activity) and an answer for another user, another lead, a hidden
  * page or an older call is dropped. A 404 goes back to the list with a one-shot notice (C-37); a 403 shows the
  * forbidden notice in place, without lead data (spec 5.2). "Back to leads" returns to the list URL this user last
- * saw in this tab (CR-10). The parts below get the lead and the commands through `useLeadDetail()`.
+ * saw in this tab (CR-10). The parts below get the lead and the commands through `useLeadDetail()`, the Survey section
+ * through `useSurveyPanel()`.
  */
 export function LeadDetailView({ leadId }: { leadId: string }) {
   const t = useTranslations("OwnerLeads");
@@ -339,7 +336,11 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
           <LeadContact lead={current.lead} />
           <LeadAsset lead={current.lead} />
         </div>
-        <SurveySection />
+        <SurveyPanelProvider value={controller}>
+          <LeadSurveyProvider>
+            <SurveySection />
+          </LeadSurveyProvider>
+        </SurveyPanelProvider>
         <IntakeSection leadId={leadId} refreshKey={current.lead.version} />
         <LeadHistory activities={current.lead.activities ?? NO_ITEMS} />
       </div>

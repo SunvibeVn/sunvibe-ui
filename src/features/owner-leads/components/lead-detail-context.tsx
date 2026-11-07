@@ -1,55 +1,20 @@
 "use client";
 
 import { createContext, useContext } from "react";
-import type { ChecklistStarted, SurveyBlock, SurveyCommandResult, SurveyUiError } from "@/features/surveys";
+import type { LeadSummary } from "@/features/lead-shared";
+import type { SurveyPanelController, SurveyState } from "@/features/surveys/client";
 
 import type { CommandSource } from "../lib/command-lock";
 import type { SurveyRecordFacts } from "../lib/transitions";
-import type { Viewer } from "../lib/viewer";
-import type { LeadDetail, LeadNoteResult, LeadSummary } from "../types";
+import type { LeadNoteResult } from "../types";
 
 export type { CommandSource } from "../lib/command-lock";
 
-/** The survey block of the lead as the page holds it (spec 6.1). */
-export type SurveyState =
-  | { state: "loading" }
-  | { state: "ready"; block: NonNullable<SurveyBlock> }
-  | { state: "error"; error: SurveyUiError };
-
 /**
- * What the detail page offers to the parts inside it (the history entry and the assign dialog). Only exists while a
- * lead of the signed-in user is loaded.
+ * What the detail page offers to the parts inside it (the history entry and the assign dialog): what the Survey section
+ * gets, and the lead's own commands. Only exists while a lead of the signed-in user is loaded.
  */
-export type LeadDetailController = {
-  /** Signed-in user the lead was loaded for; the key of the drafts. */
-  userId: string;
-  leadId: string;
-  /** The lead as last loaded or updated. */
-  lead: LeadDetail;
-  /** `lead.version`: send it as `expectedVersion` with an assign or status change. Taken from every 2xx. */
-  version: number | undefined;
-  viewer: Viewer;
-  /** The survey block, read with the detail (one GET each, in parallel). */
-  survey: SurveyState;
-  /** Reads the survey block again (its retry). */
-  reloadSurvey(): Promise<void>;
-  /**
-   * Applies a survey command answer (A-23): the survey block is replaced, the lead takes its status and version, the
-   * History row is appended. No reload.
-   */
-  applySurveyResult(result: SurveyCommandResult): void;
-  /**
-   * Applies a checklist start (survey-checklist spec 6.1): the History row is appended, the lead row is untouched. No
-   * reload; the page then opens the checklist.
-   */
-  applyChecklistStarted(result: ChecklistStarted): void;
-  /**
-   * Loads the detail and the survey block again (C-36, A-23: after an assign, a status or requirement change, or a
-   * refused survey command). Resolves to true when the detail answer was applied;
-   * false for a failure (the page shows it and keeps the old data), an answer made stale by a newer call, a user
-   * change or a hidden page. A 404 or 403 leaves for the list by itself.
-   */
-  reload(): Promise<boolean>;
+export type LeadDetailController = Omit<SurveyPanelController, "setBusy"> & {
   /** Applies the 201 of a note: appends `activity`, takes the lead fields, no reload. */
   applyNoteResult(result: LeadNoteResult): void;
   /**
@@ -57,15 +22,8 @@ export type LeadDetailController = {
    * follows fails (spec 5.2). Call it before `reload()`.
    */
   applyCommandResult(summary: LeadSummary): void;
-  /**
-   * True while a command (assign, status change, note, survey command or requirement change) is on its way: the
-   * others are locked meanwhile (CR-2, Review Focus 5).
-   */
-  busy: boolean;
   /** Reports whether `source` has a command on its way. */
   setBusy(source: CommandSource, busy: boolean): void;
-  /** Back to the list with the "not found or no longer allowed" notice (C-37); keeps no lead id in the URL. */
-  leaveToList(): void;
 };
 
 /** The survey record of the loaded block; none while the block is loading or failed, so nothing is hidden on a guess. */

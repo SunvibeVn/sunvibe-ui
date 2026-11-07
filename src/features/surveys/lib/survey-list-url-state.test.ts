@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { viewerOf } from "@/features/workspace";
+import { nextListState } from "@/lib/use-url-list";
 
 import {
   parseSurveyListState,
@@ -101,4 +102,27 @@ describe("withSurveyFilter", () => {
     expect(withSurveyFilter({ scope: "all", surveyor: "U1", page: 3 }, { scope: "mine" })).toEqual({ scope: "mine", page: 1 });
     expect(withSurveyFilter({ scope: "all", surveyor: "U1", page: 3 }, { surveyor: null })).toEqual({ scope: "all", page: 1 });
   });
+});
+
+describe("a surveyor change of useUrlList", () => {
+  it("surveyorChange_aSale_staysOnMine: a SALE never reaches a URL with scope all (spec 6.5)", () => {
+    const url = { parse: (params: URLSearchParams) => parseSurveyListState(params, sale), serialize: serializeSurveyListState };
+    const state = parseSurveyListState(q("scope=mine"), sale);
+    for (const change of [{ scope: "all" as const }, { surveyor: "U1" }, { scope: "all" as const, surveyor: "U1" }]) {
+      expect(serializeSurveyListState(nextListState(withSurveyFilter(state, change), url))).toBe("scope=mine");
+    }
+  });
+
+  const url = { parse: (params: URLSearchParams) => parseSurveyListState(params, leader), serialize: serializeSurveyListState };
+
+  it.each(["scope=all", "scope=all&surveyor=U1", "scope=all&surveyor=U1&page=3"])(
+    "surveyorChange_sameUrlAsWithSurveyFilter: %s",
+    (query) => {
+      const state = parseSurveyListState(q(query), leader);
+      for (const surveyor of ["U2", null]) {
+        const changed = withSurveyFilter(state, { surveyor });
+        expect(serializeSurveyListState(nextListState(changed, url))).toBe(serializeSurveyListState(changed));
+      }
+    },
+  );
 });

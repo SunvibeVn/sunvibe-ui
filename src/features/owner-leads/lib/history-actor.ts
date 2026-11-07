@@ -1,6 +1,4 @@
-import type { LeadActivity } from "../types";
-
-import type { OwnerLeadsKey } from "./labels";
+import type { LeadActivity, OwnerLeadsKey } from "@/features/lead-shared";
 
 /** Who a history entry shows as its actor (spec 5.4). The UI shows the name, or the label of `HISTORY_ACTOR_KEY`. */
 export type HistoryActor =

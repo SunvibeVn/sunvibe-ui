@@ -1,9 +1,9 @@
 "use client";
 
 import { useTranslations } from "next-intl";
+import type { EligibleAssignee } from "@/features/lead-shared";
 
 import { assigneeOption } from "../lib/assignee-option";
-import type { EligibleAssignee } from "../types";
 
 /**
  * The text of an assignee option, "<name> · <role>" (C-29), from `assigneeOption`: the lead filter, the assign

@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import type { EligibleAssignee } from "../types";
+import type { EligibleAssignee } from "@/features/lead-shared";
 
 import { selectedAssignee } from "./assignee-pick";
 

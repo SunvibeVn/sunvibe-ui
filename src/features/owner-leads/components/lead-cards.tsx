@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
-
-import type { LeadSummary } from "../types";
+import type { LeadSummary } from "@/features/lead-shared";
 
 import { LeadStatusBadge } from "./lead-status-badge";
 import { toLeadRow } from "./lead-row";

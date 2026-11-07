@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import { CLOSED_STATUSES, OPEN_STATUSES } from "../types";
+import { CLOSED_STATUSES, OPEN_STATUSES } from "@/features/lead-shared";
 
 import { allowedTargets, isClosing } from "./transitions";
 

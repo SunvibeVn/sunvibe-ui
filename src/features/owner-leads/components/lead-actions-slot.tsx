@@ -3,16 +3,16 @@
 import { useTranslations } from "next-intl";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { isClosedLeadStatus, isLeadStatus } from "@/features/lead-shared";
 
 import type { CommandMessage } from "../lib/command-flow";
-import { isClosedLeadStatus, isLeadStatus } from "../types";
 
 import { AssignDialog } from "./assign-dialog";
 import { CommandMessageView } from "./command-message";
 import { useLeadDetail } from "./lead-detail-context";
 
 /** The open assign dialog, with the lead status it was opened for and its instance number. */
-type OpenDialog = { status: string | undefined; no: number };
+type OpenDialog = { status: string | undefined; instance: number };
 
 /**
  * The assign button of the lead block (BR-1): "Assign / Reassign" for `ALL` viewers on open leads; a closed lead has
@@ -30,7 +30,7 @@ export function LeadActionsSlot() {
   const [dialog, setDialog] = useState<OpenDialog | null>(null);
   const [message, setMessage] = useState<CommandMessage | null>(null);
   /** Instance number of the dialog whose command is on its way; null when none. */
-  const [busyNo, setBusyNo] = useState<number | null>(null);
+  const [busyInstance, setBusyInstance] = useState<number | null>(null);
   /** Number of the current dialog instance; bumped on every open and when the route is hidden. Read in callbacks. */
   const current = useRef(0);
 
@@ -52,35 +52,35 @@ export function LeadActionsSlot() {
 
   // The page-wide lock follows the command of this slot.
   useEffect(() => {
-    setBusy("assign", busyNo !== null);
-  }, [busyNo, setBusy]);
+    setBusy("assign", busyInstance !== null);
+  }, [busyInstance, setBusy]);
 
   const open = isLeadStatus(lead.status) && !isClosedLeadStatus(lead.status);
   const canAssign = open && viewer.access === "ALL";
-  const ready = version !== undefined && busyNo === null && !busy;
+  const ready = version !== undefined && busyInstance === null && !busy;
 
   const show = () => {
-    if (busyNo !== null || busy) return;
+    if (busyInstance !== null || busy) return;
     current.current += 1;
     setMessage(null);
-    setDialog({ status: lead.status, no: current.current });
+    setDialog({ status: lead.status, instance: current.current });
   };
   // Dialog contract: every close request closes; a pending call goes on and reports through `message`.
   const close = () => setDialog(null);
 
-  /** The callbacks of dialog instance `no`: ignored once it is not the current instance. */
-  const callbacksOf = (no: number) => ({
+  /** The callbacks of dialog `instance`: ignored once it is not the current one. */
+  const callbacksOf = (instance: number) => ({
     onMessage(next: CommandMessage | null) {
-      if (current.current === no) setMessage(next);
+      if (current.current === instance) setMessage(next);
     },
     onDone(next: CommandMessage | null) {
-      if (current.current !== no) return;
+      if (current.current !== instance) return;
       setDialog(null);
       setMessage(next);
     },
     onBusy(isBusy: boolean) {
       // Only the instance that locked the button unlocks it.
-      setBusyNo((locked) => (isBusy ? no : locked === no ? null : locked));
+      setBusyInstance((locked) => (isBusy ? instance : locked === instance ? null : locked));
     },
   });
 
@@ -106,7 +106,7 @@ export function LeadActionsSlot() {
       )}
 
       {dialog !== null && (
-        <AssignDialog key={dialog.no} message={message} onClose={close} {...callbacksOf(dialog.no)} />
+        <AssignDialog key={dialog.instance} message={message} onClose={close} {...callbacksOf(dialog.instance)} />
       )}
     </>
   );

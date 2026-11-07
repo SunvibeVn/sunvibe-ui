@@ -5,10 +5,9 @@ import { useId } from "react";
 import { Button } from "@/components/ui/button";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
+import { formatDateTime, statusLabelKey } from "@/features/lead-shared";
 
 import { parseDuplicateInput } from "../lib/duplicate-input";
-import { formatDateTime } from "../lib/format";
-import { statusLabelKey } from "../lib/labels";
 import type { OriginalPreview, OriginalProblem, OriginalResolution } from "../lib/status-flow";
 import type { DuplicateCandidate } from "../types";
 

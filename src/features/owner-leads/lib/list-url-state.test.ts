@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { LEAD_STATUSES } from "@/features/lead-shared";
 
 import { assigneeListHref } from "../components/list-href";
-import { LEAD_STATUSES } from "../types";
 import {
   clearFilters,
   closedToggle,

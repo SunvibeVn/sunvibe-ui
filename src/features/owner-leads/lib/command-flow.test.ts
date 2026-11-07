@@ -1,9 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import type { ApiResult } from "@/features/auth/client";
+import type { LeadSummary } from "@/features/lead-shared";
 import type { FieldError } from "@/lib/api";
-
-import type { LeadSummary } from "../types";
 
 import { failureMessage, toCommandOutcome } from "./command-flow";
 

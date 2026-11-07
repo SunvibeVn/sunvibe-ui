@@ -1,0 +1,38 @@
+---
+description: Names and folders of the UI code
+globs: src/**/*.ts, src/**/*.tsx
+alwaysApply: false
+---
+A plan that breaks this file is a conflict, whether or not behaviour changes: stop the dependent work and report it.
+src/naming-layout.test.ts checks what a file listing can decide.
+
+| Under `src/features/<feature>/` | Holds | File names |
+|---|---|---|
+| `index.ts`, `client.ts` | public API, for Server Components and for Client Components | as named |
+| `proxy.ts`, `phone.ts`, `public.ts`, `session-sync.ts`, `constants.ts` | narrow entries, each for a stated reason | as named; a new entry needs a row here first |
+| `components/[<area>/]` | React components, and the hooks and helpers only they use | `<thing>-<kind>.tsx`, one component per file, exported under the PascalCase of the file name |
+| `lib/[<area>/]` | logic with no JSX | the words below |
+| `schemas/[<area>/]` | zod schemas and the rules they share | `<thing>.schema.ts`, `<thing>-policy.ts` |
+| `services/` | calls to the API, and transports | `<thing>-api.ts`; a transport is named for what it does |
+| `types/` | types over the generated client | `index.ts`, or `<thing>.ts` |
+| `session/` | the session, in auth only | |
+| `data/` | static page content, in marketing only | |
+
+| Word | Means |
+|---|---|
+| `-flow.ts` | the steps of one user action, dependencies injected, no JSX |
+| `-form.ts` | one form without JSX: values, checks, request body |
+| `-form.tsx` | the component of a form |
+| `-model.ts` | turns API data into what a screen shows. Existing `-view.ts` files do the same and keep their names; new code uses `-model.ts`, so that `-view` means a component |
+| `-state.ts` | a state shape and the pure steps that change it, URL state included |
+| `-text.ts` | turns a code or a value into display text |
+| `-api.ts` | the calls of one API group |
+| `-context.tsx` | a React context and its hook |
+| `-provider.tsx` | a component that gives a context its value |
+| `-view.tsx` | the client root of a page |
+| `-dialog`, `-panel`, `-section`, `-step`, `-card`, `-notice`, `-list` | what the user sees |
+| `use-<thing>.ts` | one hook, beside the components that use it, or in `lib/` when more than one folder does; no `hooks/` folder |
+| `*.test.ts`, `*.test-support.ts` | a test beside the file it tests, and helpers for tests |
+| `*.server.ts` | server-only code |
+
+A new word needs a row here first. Existing names outside these tables stay; new code follows them.

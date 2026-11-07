@@ -31,8 +31,15 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - src/app: routes in groups (auth), (marketing), (onboarding), (platform), (workspace). Pages stay thin.
 - src/features/<feature>/{components,lib,schemas,services,session,types}.
   Public API: index.ts (Server Components), client.ts (Client Components), proxy.ts (src/proxy.ts only);
-  auth also has phone.ts, for the phone routes only, because it reaches the phone parser.
+  auth also has phone.ts, for the phone routes only, because it reaches the phone parser; lead-shared also has
+  session-sync.ts, for the root layout only: DraftSessionSync and nothing else.
   ESLint blocks deep imports like @/features/auth/components/... ; import from the feature root.
+  Names and folders: .cursor/rules/naming-layout.mdc, checked by src/naming-layout.test.ts.
+- Lead and survey code, in three layers: owner-leads (the lead list and page) over surveys (the survey and checklist
+  UI and /workspace/surveys) over lead-shared (lead types, labels, formats, tab memory). ESLint keeps the direction: a
+  feature never imports one above it, so the lead page passes in what the survey UI needs (SurveyPanelContext,
+  SurveyCallsContext). A route loads every client component of the entry it imports: the survey UI of a lead stays in
+  surveys/client.ts, off /workspace/surveys.
 - src/components/{ui,layout,brand,icons}: shared components. src/lib/api: typed fetch client.
   src/config: env.ts (server env), public-env.ts (NEXT_PUBLIC_*), site.ts, navigation.ts.
   src/proxy.ts: Next 16 proxy (redirects from the sign-in hint cookie only; no refresh, no token, no API call).
@@ -95,9 +102,9 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
   Agents run no command of the hub flow runner except `status` and `--dry-run`; they give the owner the command.
 - Branch and commits: the run's branch (feature/<feature>, fix/<desc>; rebuild/sunvibe-rebuild during the rebuild),
   Conventional Commits, never push to main, merge only through a PR. In a flow run the agent commits each task
-  locally and the owner pushes. By hand during the rebuild, deliver per G2 D-27: task commits are combined into one
-  wave commit after green checks and reviews, then pushed; work that touches secrets, populated-data migrations or
-  deletes substantial code stops before the push for the owner.
+  locally and the owner pushes. By hand during the rebuild, deliver per G2 D-49: the task commits stay and are pushed
+  after green checks and reviews, one PR per wave or several above its size limit; work that touches secrets,
+  populated-data migrations or deletes substantial code stops before the push for the owner.
 
 ## Before saying "done"
 Each step is its own evidence; report skipped or unrun steps as such.

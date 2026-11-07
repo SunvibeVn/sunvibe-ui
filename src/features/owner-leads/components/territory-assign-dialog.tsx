@@ -4,10 +4,10 @@ import { useTranslations } from "next-intl";
 import { useActionState, useId, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
+import type { Territory } from "@/features/lead-shared";
 
 import { selectedAssignee } from "../lib/assignee-pick";
 import { holderId, prepareTerritoryAssign, type TerritoryProblem } from "../lib/territory-flags";
-import type { Territory } from "../types";
 
 import { type AssigneePickerLabels, AssigneePicker, type AssigneesLoad } from "./assignee-picker";
 import { ProblemAlert, SupportCode } from "./territory-problem";

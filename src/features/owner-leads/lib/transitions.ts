@@ -1,4 +1,4 @@
-import { CLOSED_STATUSES, type LeadStatus } from "../types";
+import { CLOSED_STATUSES, type LeadStatus } from "@/features/lead-shared";
 
 /** The survey record of the lead's current cycle, as the survey block sends it; none while the block is not loaded. */
 export type SurveyRecordFacts = { hasPassed?: boolean | null; hasSubmitted?: boolean | null };

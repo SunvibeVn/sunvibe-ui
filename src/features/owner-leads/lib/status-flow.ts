@@ -1,11 +1,11 @@
 import type { ApiResult } from "@/features/auth/client";
+import { type LeadStatus, type LeadSummary, localInputToInstant } from "@/features/lead-shared";
 
 import { changeStatus, type ChangeStatusInput, findLeadByRequestCode } from "../services/owner-leads-api";
-import type { DuplicateCandidate, LeadPage, LeadStatus, LeadSummary } from "../types";
+import type { DuplicateCandidate, LeadPage } from "../types";
 
 import { type CommandOutcome, toCommandOutcome } from "./command-flow";
 import { parseDuplicateInput } from "./duplicate-input";
-import { localInputToInstant } from "./format";
 import { toLeadUiError } from "./lead-ui-error";
 import { NOTE_MAX, utf16Length } from "./note-length";
 import { isClosing } from "./transitions";

@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog } from "@/components/ui/dialog";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Textarea } from "@/components/ui/textarea";
+import { useDraft } from "@/features/lead-shared/client";
 
 import { assignFollowUp, type AssignProblems, prepareAssign, sendAssign } from "../lib/assign-flow";
 import { selectedAssignee } from "../lib/assignee-pick";
 import type { CommandMessage } from "../lib/command-flow";
-import { useDraft } from "../lib/drafts";
 import { toLeadUiError } from "../lib/lead-ui-error";
 import { NOTE_MAX, utf16Length } from "../lib/note-length";
 import { listAssignees } from "../services/owner-leads-api";

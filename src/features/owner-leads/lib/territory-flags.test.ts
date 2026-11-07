@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import type { EligibleAssignee, Territory } from "../types";
+import type { EligibleAssignee, Territory } from "@/features/lead-shared";
 
 import { holderFlag, holderId, prepareTerritoryAssign, territoryProblem } from "./territory-flags";
 

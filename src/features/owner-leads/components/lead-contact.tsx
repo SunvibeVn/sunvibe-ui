@@ -1,8 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-
-import type { LeadDetail } from "../types";
+import type { LeadDetail } from "@/features/lead-shared";
 
 import { CopyValue } from "./copy-value";
 import { DetailFields, DetailRow, DetailSection } from "./detail-layout";

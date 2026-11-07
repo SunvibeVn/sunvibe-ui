@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
-
-import type { LeadSummary } from "../types";
+import type { LeadSummary } from "@/features/lead-shared";
 
 import { type LeadRow, toLeadRow } from "./lead-row";
 

@@ -1,6 +1,4 @@
-import type { EligibleAssignee } from "../types";
-
-import { type OwnerLeadsKey, ROLE_LABEL } from "./labels";
+import { type EligibleAssignee, type OwnerLeadsKey, ROLE_LABEL } from "@/features/lead-shared";
 
 /** The parts of an assignee option; the UI renders them with `assignDialog.assigneeOption` ("<name> · <role>"). */
 export type AssigneeOption = {

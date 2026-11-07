@@ -5,10 +5,18 @@ import { useTranslations } from "next-intl";
 import { useEffect, useId, useRef, useState } from "react";
 import { Select } from "@/components/ui/select";
 import { useSession } from "@/features/auth/client";
+import {
+  type EligibleAssignee,
+  type LeadStatus,
+  type LeadSummary,
+  STATUS_LABEL,
+  type Ward,
+  wardTypeLabelKey,
+} from "@/features/lead-shared";
 
 import { listAssignees, listWards } from "../services/owner-leads-api";
-import { STATUS_LABEL, wardTypeLabelKey } from "../lib/labels";
 import {
+  type ListFilterChange,
   type ListState,
   clearFilters,
   closedToggle,
@@ -17,12 +25,6 @@ import {
   toggleClosed,
 } from "../lib/list-url-state";
 import type { Viewer } from "../lib/viewer";
-import {
-  type EligibleAssignee,
-  type LeadStatus,
-  type LeadSummary,
-  type Ward,
-} from "../types";
 
 import { assigneeFilterLabel } from "./assignee-filter-label";
 import { listHref } from "./list-href";
@@ -33,8 +35,8 @@ type LeadFiltersProps = {
   viewer: Viewer;
   /** Rows of the page on screen: the source of a former holder's name (C-34). */
   rows: readonly LeadSummary[];
-  /** Replaces the URL with `href` (always built by `listHref`, so it holds only what the viewer may open). */
-  onNavigate: (href: string) => void;
+  /** Applies a change to the URL: page 1, and only what the viewer may open. */
+  onFilter: (change: ListFilterChange) => void;
 };
 
 type Loaded<T> = { userId: string; status: "ok"; items: T[] } | { userId: string; status: "failed" };
@@ -51,7 +53,7 @@ const LABEL = "mb-1 block text-sm font-semibold text-white";
 const LOAD_FAILED = "mt-1 inline-block rounded bg-white px-2 py-0.5 text-xs text-rose-800";
 
 /** Ward and assignee filters of "All Leads". Mounted only there, so a SALE or another tab never loads either list. */
-function AllTabFilters({ state, viewer, rows, onNavigate }: LeadFiltersProps) {
+function AllTabFilters({ state, viewer, rows, onFilter }: LeadFiltersProps) {
   const t = useTranslations("OwnerLeads");
   const { user } = useSession();
   const userId = user?.userId ?? "";
@@ -116,7 +118,7 @@ function AllTabFilters({ state, viewer, rows, onNavigate }: LeadFiltersProps) {
         <Select
           id={wardId}
           value={state.ward ?? ""}
-          onChange={(event) => onNavigate(listHref(state, { ward: event.target.value || null }, viewer))}
+          onChange={(event) => onFilter({ ward: event.target.value || null })}
         >
           <option value="">{t("filters.wardAny")}</option>
           {!wardKnown && state.ward !== undefined && <option value={state.ward}>{state.ward}</option>}
@@ -143,9 +145,7 @@ function AllTabFilters({ state, viewer, rows, onNavigate }: LeadFiltersProps) {
           <Select
             id={assigneeId}
             value={state.assignee ?? ""}
-            onChange={(event) =>
-              onNavigate(listHref(state, { assignee: event.target.value || null }, viewer))
-            }
+            onChange={(event) => onFilter({ assignee: event.target.value || null })}
           >
             <option value="">{t("filters.assigneeAny")}</option>
             {!assigneeKnown && state.assignee !== undefined && (
@@ -176,11 +176,10 @@ function AllTabFilters({ state, viewer, rows, onNavigate }: LeadFiltersProps) {
 
 /**
  * Status checkboxes of the tab (C-45), "Show closed leads" and (on "All Leads") ward and assignee (spec 5.3). The
- * boxes mirror the effective filter. Every change navigates to a URL built by `listHref`: page 1, only what the
- * viewer may open.
+ * boxes mirror the effective filter. Every change goes through `onFilter`: page 1, only what the viewer may open.
  */
 export function LeadFilters(props: LeadFiltersProps) {
-  const { state, viewer, onNavigate } = props;
+  const { state, viewer, onFilter } = props;
   const t = useTranslations("OwnerLeads");
   const closedBox = useRef<HTMLInputElement>(null);
   const closed = closedToggle(state);
@@ -194,7 +193,7 @@ export function LeadFilters(props: LeadFiltersProps) {
     const next = state.statuses.includes(status)
       ? state.statuses.filter((s) => s !== status)
       : [...state.statuses, status];
-    onNavigate(listHref(state, { statuses: next }, viewer));
+    onFilter({ statuses: next });
   };
 
   return (
@@ -221,7 +220,7 @@ export function LeadFilters(props: LeadFiltersProps) {
                 ref={closedBox}
                 type="checkbox"
                 checked={closed === "checked"}
-                onChange={() => onNavigate(listHref(state, { statuses: toggleClosed(state).statuses }, viewer))}
+                onChange={() => onFilter({ statuses: toggleClosed(state).statuses })}
                 className={BOX}
               />
               {t("filters.showClosed")}

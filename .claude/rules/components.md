@@ -5,7 +5,7 @@ paths:
 <!-- Generated from .cursor/rules/components.mdc by scripts/ai-config (sync); edit the source, then run sync. -->
 - Use the shared components in src/components/ui (Button, Input, PasswordInput, OtpInput, FormField,
   Alert, SubmitButton) before writing custom ones. Style with Tailwind CSS v4 utility classes.
-- One component per file, kebab-case file names; props typed with an explicit type or interface.
+- One component per file, named as naming-layout.mdc says; props typed with an explicit type or interface.
 - Feature components live in src/features/<feature>/components and are exported via the feature's
   index.ts (Server Components) or client.ts (Client Components). No deep imports across features.
 - Server Components by default; add "use client" only when state, effects or browser APIs are needed.

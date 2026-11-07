@@ -1,11 +1,9 @@
 import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
+import type { LeadActivity, OwnerLeadsKey } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
 
-import type { LeadActivity } from "../types";
-
 import { collapseChecklistSaves, collapsedSavesText } from "./history-collapse";
-import type { OwnerLeadsKey } from "./labels";
 
 const translator = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads" });
 const t = (key: OwnerLeadsKey, values?: Record<string, string | number>) => translator(key, values);
@@ -33,7 +31,7 @@ describe("collapseChecklistSaves (survey-checklist A-21)", () => {
     ];
     const rows = collapseChecklistSaves(entries);
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toEqual({ kind: "entry", entry: entries[0], no: 1 });
+    expect(rows[0]).toEqual({ kind: "entry", entry: entries[0], rowNumber: 1 });
     expect(rows[1]).toMatchObject({
       kind: "saves",
       checklistNo: 2,
@@ -73,7 +71,7 @@ describe("collapseChecklistSaves (survey-checklist A-21)", () => {
       { type: "NOTE_ADDED", actorUserId: "u-sale", note: "Called" } as LeadActivity,
       save(),
     ]);
-    expect(rows.map((row) => (row.kind === "saves" ? `saves:${row.count}:${row.firstNo}` : `entry:${row.no}`))).toEqual([
+    expect(rows.map((row) => (row.kind === "saves" ? `saves:${row.count}:${row.firstNo}` : `entry:${row.rowNumber}`))).toEqual([
       "saves:2:1",
       "entry:3",
       "saves:2:4",
@@ -85,9 +83,9 @@ describe("collapseChecklistSaves (survey-checklist A-21)", () => {
   it("leaves a single save and every other entry as they are, numbered in order", () => {
     const entries = [{ type: "SUBMITTED" } as LeadActivity, save(), { type: "ASSIGNED" } as LeadActivity];
     expect(collapseChecklistSaves(entries)).toEqual([
-      { kind: "entry", entry: entries[0], no: 1 },
-      { kind: "entry", entry: entries[1], no: 2 },
-      { kind: "entry", entry: entries[2], no: 3 },
+      { kind: "entry", entry: entries[0], rowNumber: 1 },
+      { kind: "entry", entry: entries[1], rowNumber: 2 },
+      { kind: "entry", entry: entries[2], rowNumber: 3 },
     ]);
   });
 });

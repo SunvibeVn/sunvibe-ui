@@ -1,4 +1,4 @@
-import type { EligibleAssignee, Territory } from "../types";
+import type { EligibleAssignee, Territory } from "@/features/lead-shared";
 
 import type { LeadUiError } from "./lead-ui-error";
 

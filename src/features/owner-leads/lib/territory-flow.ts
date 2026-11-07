@@ -1,7 +1,7 @@
 import type { ApiResult } from "@/features/auth/client";
+import type { Territory } from "@/features/lead-shared";
 
 import { assignTerritory, unassignTerritory } from "../services/territories-api";
-import type { Territory } from "../types";
 
 import { toLeadUiError } from "./lead-ui-error";
 import { type TerritoryProblem, territoryProblem } from "./territory-flags";

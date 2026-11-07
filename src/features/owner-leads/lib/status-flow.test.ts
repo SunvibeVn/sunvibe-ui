@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import type { ApiResult } from "@/features/auth/client";
+import type { LeadSummary } from "@/features/lead-shared";
 
 import type { ChangeStatusInput } from "../services/owner-leads-api";
-import type { DuplicateCandidate, LeadPage, LeadSummary } from "../types";
+import type { DuplicateCandidate, LeadPage } from "../types";
 
 import {
   prepareStatusChange,

@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Select } from "@/components/ui/select";
 import { ForbiddenNotice } from "@/features/auth/client";
+import type { EligibleAssignee } from "@/features/lead-shared";
 
 import type { LeadUiError } from "../lib/lead-ui-error";
-import type { EligibleAssignee } from "../types";
 
 import { useAssigneeOptionLabel } from "./use-assignee-option-label";
 

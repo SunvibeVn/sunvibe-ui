@@ -1,19 +1,19 @@
 import type { components } from "@/api/generated/schema";
 import { callApi, type ApiResult, type CallApi } from "@/features/auth/client";
+import {
+  type EligibleAssignee,
+  type LeadDetail,
+  type LeadStatus,
+  type LeadSummary,
+  PROVINCE_CODE,
+  type Ward,
+} from "@/features/lead-shared";
 import { getSurvey, type SurveyBlock } from "@/features/surveys";
 import { createPublicClient, toPublicResult, type PublicApiResult } from "@/lib/api";
 
 import { dedupeInflight } from "../lib/inflight";
 import type { ListApiQuery, Scope } from "../lib/list-url-state";
-import type {
-  EligibleAssignee,
-  LeadDetail,
-  LeadNoteResult,
-  LeadPage,
-  LeadStatus,
-  LeadSummary,
-  Ward,
-} from "../types";
+import type { LeadNoteResult, LeadPage } from "../types";
 
 type Schemas = components["schemas"];
 
@@ -21,9 +21,6 @@ type Schemas = components["schemas"];
 export type OwnerLeadsDeps = { callApi: CallApi };
 
 const DEFAULT_DEPS: OwnerLeadsDeps = { callApi };
-
-/** The only province of the pilot (Đà Nẵng). */
-export const PROVINCE_CODE = "48";
 
 /** A request-code lookup finds at most one lead; a small page is enough. */
 const CODE_LOOKUP_SIZE = 5;

@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import type { ApiResult } from "@/features/auth/client";
-
-import type { Territory } from "../types";
+import type { Territory } from "@/features/lead-shared";
 
 import { sendTerritoryChange, type TerritoryFlowDeps } from "./territory-flow";
 

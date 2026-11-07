@@ -1,12 +1,10 @@
-import type { LeadActivity } from "../types";
+import { formatDateTime, type LeadActivity, type OwnerLeadsTranslate } from "@/features/lead-shared";
 
-import { formatDateTime } from "./format";
 import { HISTORY_ACTOR_KEY } from "./history-actor";
-import type { OwnerLeadsTranslate } from "./history-activity-text";
 
 /** One row of the history table: an entry as it is, or a run of checklist saves shown as one expandable line. */
 export type HistoryRow =
-  | { kind: "entry"; entry: LeadActivity; no: number }
+  | { kind: "entry"; entry: LeadActivity; rowNumber: number }
   | {
       kind: "saves";
       checklistNo: number;
@@ -57,7 +55,7 @@ export function collapseChecklistSaves(entries: readonly LeadActivity[]): Histor
         entries: run,
       });
     } else {
-      rows.push({ kind: "entry", entry: first, no: index + 1 });
+      rows.push({ kind: "entry", entry: first, rowNumber: index + 1 });
     }
     index = end;
   }

@@ -4,7 +4,6 @@ import type { ApiResult } from "@/features/auth/client";
 import type { FieldError } from "@/lib/api";
 
 import type { LeadNoteResult } from "../types";
-
 import { submitNote, type NoteFlowDeps } from "./note-flow";
 
 const http = (status: number, code?: string, fieldErrors: FieldError[] = [], correlationId?: string): ApiResult<LeadNoteResult> => ({
