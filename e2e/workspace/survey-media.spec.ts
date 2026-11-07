@@ -133,21 +133,27 @@ function jpegHasMetadata(bytes: Buffer): boolean {
   return false;
 }
 
-type MediaRequest = { method: string; path: string; cookie: boolean };
+/** `cookie` is null when the headers of the request never came (see watchMediaRequests). */
+type MediaRequest = { method: string; path: string; cookie: boolean | null };
 
 /**
  * Records every request of a page to the photo endpoints of the API (list, create, content PUT by XMLHttpRequest,
- * images, removal, hold): its method, path and whether the browser sent a Cookie header (SM-FE-10).
+ * images, removal, hold): its method, path and whether the browser sent a Cookie header (SM-FE-10). A list poll in
+ * flight when its page reloads can end with no response and no failure, so its headers never come: after 10 s it
+ * counts with cookie null instead of holding the test for its whole timeout.
  */
 function watchMediaRequests(page: Page): () => Promise<MediaRequest[]> {
-  const seen: Promise<MediaRequest>[] = [];
+  const seen: Array<{ method: string; path: string; cookie: Promise<boolean> }> = [];
   page.on("request", (request) => {
     const url = new URL(request.url());
     if (url.origin !== new URL(API_URL).origin) return;
     if (!/^\/api\/v1\/staff\/(survey-media\/|survey-checklists\/[^/]+\/media)/.test(url.pathname)) return;
-    seen.push(request.allHeaders().then((headers) => ({ method: request.method(), path: url.pathname, cookie: "cookie" in headers })));
+    seen.push({ method: request.method(), path: url.pathname, cookie: request.allHeaders().then((headers) => "cookie" in headers) });
   });
-  return () => Promise.all(seen);
+  return async () => {
+    const late = new Promise<null>((resolve) => setTimeout(resolve, 10_000, null));
+    return Promise.all(seen.map(async ({ cookie, ...request }) => ({ ...request, cookie: await Promise.race([cookie, late]) })));
+  };
 }
 
 async function correct(scope: Locator, reason: string): Promise<void> {
@@ -471,7 +477,8 @@ test.describe("Survey photos (survey-media media-b)", () => {
   test("SM-FE-10: no photo request of the run sent a cookie (credentials omitted)", async () => {
     // Every photo request of the three pages, the content PUT by XMLHttpRequest included, went without a Cookie header,
     // although the browser holds cookies it would send to the API's host if a request included them.
-    const requests = (await Promise.all(mediaRequests.map((all) => all()))).flat();
+    // Each kind below is proved by a request whose headers came; one that never got them is left out.
+    const requests = (await Promise.all(mediaRequests.map((all) => all()))).flat().filter((request) => request.cookie !== null);
     const kinds = new Set(requests.map((request) => `${request.method} ${request.path.replace(/[0-9A-Z]{26}/g, "{id}")}`));
     for (const kind of [
       "GET /api/v1/staff/survey-checklists/{id}/media",
