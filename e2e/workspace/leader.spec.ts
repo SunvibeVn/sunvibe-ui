@@ -485,8 +485,8 @@ test.describe("SALE_LEADER in the workspace", () => {
     await expect.poll(reads.count, { message: "the list reads again when it shows" }).toBeGreaterThan(0);
     await expect(leadLink(page, L2)).toBeVisible();
     await expect(busy(page), "no skeleton over the rows").toHaveCount(0);
-    test.info().annotations.push({ type: "list reads held on Back", description: String(reads.count()) });
     await reads.release();
+    test.info().annotations.push({ type: "list reads held on Back", description: String(reads.count()) });
     await expectListSettled(page);
     await expect(leadLink(page, L2)).toBeVisible();
 

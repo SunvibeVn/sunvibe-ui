@@ -138,9 +138,9 @@ type MediaRequest = { method: string; path: string; cookie: boolean | null };
 
 /**
  * Records every request of a page to the photo endpoints of the API (list, create, content PUT by XMLHttpRequest,
- * images, removal, hold): its method, path and whether the browser sent a Cookie header (SM-FE-10). A list poll in
- * flight when its page reloads can end with no response and no failure, so its headers never come: after 10 s it
- * counts with cookie null instead of holding the test for its whole timeout.
+ * images, removal, hold): its method, path and whether the browser sent a Cookie header (SM-FE-10). A read (a list
+ * poll or an image) in flight when its page reloads can end with no response and no failure, so its headers never
+ * come: after 10 s it counts with cookie null instead of holding the test for its whole timeout.
  */
 function watchMediaRequests(page: Page): () => Promise<MediaRequest[]> {
   const seen: Array<{ method: string; path: string; cookie: Promise<boolean> }> = [];

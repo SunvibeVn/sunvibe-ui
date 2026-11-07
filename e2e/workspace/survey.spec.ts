@@ -455,8 +455,8 @@ test.describe("Survey appointments (survey-schedule W15b)", () => {
     await expect.poll(reads.count, { message: "the list reads again when it shows" }).toBeGreaterThan(0);
     await expect(mainArea(leader).getByRole("status").filter({ hasText: S.loading }), "the skeleton of the list").toBeVisible();
     await expect(view(/^View the survey of lead /), "no row of before").toHaveCount(0);
-    test.info().annotations.push({ type: "list reads held on Back", description: String(reads.count()) });
     await reads.release();
+    test.info().annotations.push({ type: "list reads held on Back", description: String(reads.count()) });
     await expect(view(L12.code).first()).toBeVisible({ timeout: 20_000 });
   });
 
