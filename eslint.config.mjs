@@ -9,11 +9,25 @@ const FEATURE_PUBLIC_API = {
     "!@/features/*/proxy",
     "!@/features/*/client",
     "!@/features/auth/phone",
+    "!@/features/auth/public",
+    "!@/features/workspace/public",
     "!@/features/lead-shared/session-sync",
   ],
   message:
-    "Import from the feature's public API (e.g. '@/features/property'), not its internals. src/proxy.ts may use '@/features/<name>/proxy'; Client Components may use '@/features/<name>/client'; only phone routes may use '@/features/auth/phone'; only the root layout may use '@/features/lead-shared/session-sync'.",
+    "Import from the feature's public API (e.g. '@/features/property'), not its internals. src/proxy.ts may use '@/features/<name>/proxy'; Client Components may use '@/features/<name>/client'; only phone routes may use '@/features/auth/phone'; only the root layout and (marketing) may use '@/features/auth/public' and '@/features/workspace/public'; only the root layout may use '@/features/lead-shared/session-sync'.",
 };
+
+// The root layout and the public pages load no auth form, zod or staff screen through a barrel (W33, S-11).
+const PUBLIC_PAGE_BARRELS = [
+  {
+    name: "@/features/auth",
+    message: "The root layout and (marketing) import '@/features/auth/public': the barrel brings the auth forms and zod.",
+  },
+  {
+    name: "@/features/workspace",
+    message: "The root layout and (marketing) import '@/features/workspace/public': the barrel brings the staff screens.",
+  },
+];
 
 const NOT_OWNER_LEADS = {
   group: ["@/features/owner-leads*", "**/owner-leads", "**/owner-leads/**"],
@@ -33,6 +47,12 @@ const eslintConfig = defineConfig([
     files: ["src/**/*.{ts,tsx}"],
     rules: {
       "no-restricted-imports": ["error", { patterns: [FEATURE_PUBLIC_API] }],
+    },
+  },
+  {
+    files: ["src/app/layout.tsx", "src/app/(marketing)/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": ["error", { paths: PUBLIC_PAGE_BARRELS, patterns: [FEATURE_PUBLIC_API] }],
     },
   },
   {

@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   allowedDevOrigins: devOriginsFromApiUrl(process.env.NEXT_PUBLIC_API_URL, process.env.NODE_ENV),
   cacheComponents: true,
   partialPrefetching: true,
-  // The staff workspace is never framed (SEC-M3): see src/config/security-headers.ts.
+  // No page is framed, and the workspace has its own image policy (SEC-M3, SV-023): see src/config/security-headers.ts.
   async headers() {
     return securityHeaders();
   },

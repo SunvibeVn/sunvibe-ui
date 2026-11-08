@@ -1,4 +1,4 @@
-import { GuestOnly } from "@/features/auth";
+import { GuestOnly } from "@/features/auth/public";
 import {
   CtaSection,
   FeaturesSection,

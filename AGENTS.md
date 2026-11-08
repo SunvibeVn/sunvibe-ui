@@ -32,7 +32,9 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - src/features/<feature>/{components,lib,schemas,services,session,types}.
   Public API: index.ts (Server Components), client.ts (Client Components), proxy.ts (src/proxy.ts only);
   auth also has phone.ts, for the phone routes only, because it reaches the phone parser; lead-shared also has
-  session-sync.ts, for the root layout only: DraftSessionSync and nothing else.
+  session-sync.ts, for the root layout only: DraftSessionSync and nothing else. auth and workspace also have
+  public.ts, for the root layout and (marketing) only, because their barrels bring the auth forms, zod and the staff
+  screens: SessionProvider, UserMenu, GuestOnly and WorkspaceLink, nothing else. ESLint bans the two barrels there.
   ESLint blocks deep imports like @/features/auth/components/... ; import from the feature root.
   Names and folders: .cursor/rules/naming-layout.mdc, checked by src/naming-layout.test.ts.
 - Lead and survey code, in three layers: owner-leads (the lead list and page) over surveys (the survey and checklist

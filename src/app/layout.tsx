@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
 import { siteConfig } from "@/config/site";
-import { SessionProvider } from "@/features/auth";
+import { SessionProvider } from "@/features/auth/public";
 import { DraftSessionSync } from "@/features/lead-shared/session-sync";
 import "./globals.css";
 

@@ -30,12 +30,12 @@ export function HeroSection() {
             AI-native property rental platform
           </span>
 
-          <h1 className="mt-6 text-4xl font-semibold leading-[1.1] tracking-tight text-navy-950 sm:text-5xl lg:text-6xl">
+          <h2 className="mt-6 text-4xl font-semibold leading-[1.1] tracking-tight text-navy-950 sm:text-5xl lg:text-6xl">
             Effortless property rentals,{" "}
             <span className="bg-brand-gradient bg-clip-text text-transparent">
               powered by intelligent automation.
             </span>
-          </h1>
+          </h2>
 
           <p className="mx-auto mt-6 max-w-xl text-base leading-relaxed text-slate-600 sm:text-lg lg:mx-0">
             The next-generation platform for leasing apartments, houses, and
