@@ -39,6 +39,8 @@ paths:
 - Adapted from ECC skills/e2e-testing (commit 76aaa77, MIT, Copyright (c) 2026 Affaan Mustafa); its parallel
   workers, retries and trace-on-retry examples do not apply here. Its CI upload applies to one job only: the CI job
   `e2e-production` runs the @production specs and uploads the Playwright report of a failed run (short retention). That
-  report is public, and the job forces trace off, but a failed assertion still records the page around it with its form
-  values: a @production spec signs nobody in and types only throwaway values, never a credential or personal data.
-  Open that artifact only from a run of reviewed code of this repo, never from a fork's pull request. See hub-docs/setup/AI_FLOW.md, "External sources".
+  report is public. The job's --trace off covers a spec that sets no trace, but a spec's own test.use wins over it, so
+  a @production spec never sets trace to anything but off, sets no screenshot or video and starts no tracing itself.
+  A failed assertion still records the page around it with its form values: a @production spec signs nobody in and
+  types only throwaway values, never a credential or personal data. Open that artifact only from a run of reviewed code
+  of this repo, never from a fork's pull request. See hub-docs/setup/AI_FLOW.md, "External sources".
