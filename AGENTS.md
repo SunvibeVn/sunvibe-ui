@@ -16,7 +16,7 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Build: npm run build
 - Lint: npm run lint
 - Typecheck: npm run typecheck
-- Test: npm test (Vitest, src/**/*.test.ts)
+- Test: npm test (Vitest: src/**/*.test.ts in node, src/**/*.test.tsx render tests in jsdom)
 - Generate API types: npm run gen:api (reads ../sunvibe-server/api/openapi.json -> src/api/generated/schema.d.ts and
   records the contract's sha256 and server commit in src/api/generated/contract-source.json; commit both). Generate
   from a committed contract; CI cannot verify a client made from uncommitted changes.
