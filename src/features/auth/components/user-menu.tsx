@@ -15,7 +15,8 @@ export function UserMenu() {
   );
 }
 
-async function UserMenuLink() {
+/** Exported for its render test only (W34 Task I2): jsdom cannot render an async component, the test awaits it. */
+export async function UserMenuLink() {
   return (await hasSignInHint()) ? (
     <Link href={AUTH_ROUTES.account} className={linkClass}>
       <UserIcon size={22} />
