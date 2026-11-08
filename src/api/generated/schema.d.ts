@@ -6990,7 +6990,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -7077,7 +7077,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -7155,7 +7155,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -7226,7 +7226,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -7313,7 +7313,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
         };
@@ -7759,7 +7759,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description The caller holds no manager role */
@@ -7808,7 +7808,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description CASE_NOT_ALLOWED, or the caller holds no manager role */
@@ -7870,7 +7870,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description CASE_NOT_ALLOWED, or the caller holds no manager role */
@@ -8304,7 +8304,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description Caller is not staff */
@@ -8366,7 +8366,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -8437,7 +8437,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -8509,7 +8509,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -8567,7 +8567,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
@@ -8638,7 +8638,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
@@ -8709,7 +8709,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
@@ -8780,7 +8780,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -8847,7 +8847,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -8909,7 +8909,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -8980,7 +8980,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
@@ -9051,7 +9051,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
@@ -9123,7 +9123,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description OWNER_CHECK_NOT_ALLOWED, or the caller holds no manager role */
@@ -9194,7 +9194,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": Record<string, never>;
+                    "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
             /** @description INTAKE_NOT_ASSIGNEE */
