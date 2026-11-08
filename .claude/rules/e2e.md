@@ -37,5 +37,7 @@ paths:
 - Each spec owns its data (seed fixture ids or data it creates); specs depend on each other only through the
   workspace projects' order.
 - Adapted from ECC skills/e2e-testing (commit 76aaa77, MIT, Copyright (c) 2026 Affaan Mustafa); its parallel
-  workers, retries, trace-on-retry and CI upload examples do not apply here. See hub-docs/setup/AI_FLOW.md,
-  "External sources".
+  workers, retries and trace-on-retry examples do not apply here. Its CI upload applies to one job only: the CI job
+  `e2e-production` runs the @production specs and uploads the Playwright report of a failed run (short retention),
+  because neither @production spec signs in and both keep trace off; a new @production spec keeps both. See
+  hub-docs/setup/AI_FLOW.md, "External sources".
