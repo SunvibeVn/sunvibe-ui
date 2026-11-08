@@ -67,8 +67,11 @@ export async function submitAndReadCode(page: Page): Promise<{ response: Respons
   );
   await submitButton(page).click();
   const response = await responsePromise;
-  // Fail on the answer itself, not on a missing success heading.
-  expect(response.status(), `POST ${SUBMIT_PATH} answered ${response.status()}: ${await response.text()}`).toBe(202);
+  // Fail on the answer itself, not on a missing success heading. The body is read for a wrong answer only, and a failed
+  // read never fails the test: once the page shows its success screen, Playwright may no longer hold the body (SV-273).
+  const status = response.status();
+  const body = status === 202 ? "" : `: ${await response.text().catch(() => "(body not readable)")}`;
+  expect(status, `POST ${SUBMIT_PATH} answered ${status}${body}`).toBe(202);
   await expect(page.getByRole("heading", { name: "Đã gửi yêu cầu" })).toBeVisible();
   const code = (await page.locator("output").textContent())?.trim() ?? "";
   return { response, code };
