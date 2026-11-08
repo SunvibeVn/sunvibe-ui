@@ -68,3 +68,36 @@ jobs:
         working-directory: sunvibe-ui
       - run: npm run check:api-client
         working-directory: sunvibe-ui
+
+  # The @production specs (SV-135): what only a production server does, which `next dev` hides. playwright.config.ts
+  # builds and starts the app itself. They need no API and sign nobody in. The report of a failed run is public, so the
+  # run forces trace off for every spec that does not set its own (a spec's test.use wins over --trace, so a @production
+  # spec never sets trace to anything but off); a failed assertion still records the page around it, form values
+  # included, so a @production spec types only throwaway values (e2e rule). Not a required check yet: it joins them
+  # after two weeks without a false failure (SV-135).
+  e2e-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # npm ci and the build run third-party code after this step: leave no token in .git/config.
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e -- --grep @production --trace off
+        env:
+          E2E_SERVER: production
+      - name: Keep the report of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-report-production
+          path: playwright-report/
+          retention-days: 5

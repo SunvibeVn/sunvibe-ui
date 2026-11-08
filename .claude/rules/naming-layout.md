@@ -33,7 +33,7 @@ src/naming-layout.test.ts checks what a file listing can decide.
 | `-view.tsx` | the client root of a page |
 | `-dialog`, `-panel`, `-section`, `-step`, `-card`, `-notice`, `-list` | what the user sees |
 | `use-<thing>.ts` | one hook, beside the components that use it, or in `lib/` when more than one folder does; no `hooks/` folder |
-| `*.test.ts`, `*.test-support.ts` | a test beside the file it tests, and helpers for tests |
+| `*.test.ts`, `*.test.tsx`, `*.test-support.ts` | a test beside the file it tests (`.test.tsx` renders a component in jsdom), and helpers for tests |
 | `*.server.ts` | server-only code |
 
 A new word needs a row here first. Existing names outside these tables stay; new code follows them.
