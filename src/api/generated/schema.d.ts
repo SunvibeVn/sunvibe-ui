@@ -5535,11 +5535,8 @@ export interface components {
             /** Format: date-time */
             at?: string;
             byName?: string | null;
-            /**
-             * Format: int64
-             * @description The G1 save of a CASCADE removal
-             */
-            bySaveId?: number | null;
+            /** @description Opaque id of the G1 save of a CASCADE removal; equals saveId of that save's checklist correction when it recorded one */
+            bySaveId?: string | null;
             byUserId?: string;
             /** @description The correction BR-12 asked for when another uploader's photo was removed */
             correction?: components["schemas"]["SurveyMediaCorrection"] | null;
