@@ -20,9 +20,13 @@ Hub workflow and cross-repo rules below; their paths (docs/...) are relative to 
   behavior, when a plan breaks a rule file, an ADR or the naming standard (even with no behavior change), or when a
   task needs a business decision. After two evidence-backed failed attempts on one task, raise the effort once
   (`/effort xhigh`) with the evidence, then ask the owner.
-- In a flow run (`claude -p` started by the hub scripts/flow): after two evidence-backed failed attempts stop and
-  report both instead of raising the effort; the runner's review stage replaces the final review below; skip
-  superpowers:finishing-a-development-branch and end with the report (the runner verifies, the owner pushes).
+- In a flow run (`claude -p` started by the hub scripts/flow, or by Autoflow, which sets `SUNVIBE_AUTOFLOW_WORKER=1`
+  and hands over a work order): after two evidence-backed failed attempts stop and report both instead of raising
+  the effort; the review stage of the runner or of Autoflow replaces the final review below; skip
+  superpowers:finishing-a-development-branch and end with the report (the runner verifies, the owner pushes; under
+  Autoflow its orchestrator verifies, pushes the task branch and opens the pull request into `staging`, never into
+  `main`: ../docs/setup/AI_FLOW.md section 17). Under Autoflow nobody answers in the chat: a point that needs a
+  business decision goes back in the structured report as `blocked`.
   Outside a flow run, finishing-a-development-branch never merges into the base locally; push and PR follow the repo
   rules (rebuild: G2 D-27 to D-29).
 - Before "done": AGENTS.md "Before saying done" with superpowers:verification-before-completion.

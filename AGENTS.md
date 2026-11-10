@@ -101,6 +101,9 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
 - Briefs (hub-docs/features/**/brief/) are the owner's business truth. FE work has no task that edits a brief and
   never decides a business rule: a missing decision goes to the owner as a question, a brief change to a hub session.
 - Gates are the owner's: an agent saying "done", an exit code 0, a commit or green CI never passes gate 1, 2 or 3.
+  One exception, by the owner's delegation DEL-8: for a task that Autoflow runs, the gates of its pull request into
+  `staging` are decided by the hub orchestrator from reviews, CI and E2E it reads itself (../docs/setup/AI_FLOW.md
+  section 17); a pull request into `main` stays the owner's.
   Agents run no command of the hub flow runner except `status` and `--dry-run`; they give the owner the command.
 - Branch and commits: the run's branch (feature/<feature>, fix/<desc>; rebuild/sunvibe-rebuild during the rebuild),
   Conventional Commits, never push to main, merge only through a PR. In a flow run the agent commits each task
