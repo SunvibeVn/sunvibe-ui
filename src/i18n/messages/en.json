@@ -2107,5 +2107,8 @@
       "phraseWaiting": "If a Sunvibe manager calls you with a phrase, press Check again and enter it here.",
       "saving": "Saving…"
     }
+  },
+  "TestEnvironment": {
+    "notice": "Sunvibe test environment. Use fake data only; data may be deleted at any time."
   }
 }

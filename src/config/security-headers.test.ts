@@ -19,9 +19,9 @@ function matches(source: string, pathname: string): boolean {
   return match(pathname) !== false;
 }
 
-function effectiveHeaders(pathname: string): Record<string, string> {
+function effectiveHeaders(pathname: string, siteUrl?: string): Record<string, string> {
   const result: Record<string, string> = {};
-  for (const rule of securityHeaders()) {
+  for (const rule of securityHeaders(siteUrl)) {
     if (!matches(rule.source, pathname)) continue;
     for (const { key, value } of rule.headers) result[key.toLowerCase()] = value;
   }
@@ -68,4 +68,33 @@ describe("securityHeaders (SEC-M3, SV-023, W33 Task G4)", () => {
       expect(csp).not.toMatch(/(script-src|default-src)/);
     }
   });
+});
+
+// W35a Task U1 (plan D-10): every host but www (test.sunvibe.vn, a preview, a local build) asks not to be indexed. The
+// rule compares origins, so a trailing slash or a capital letter in the variable changes nothing.
+const NOINDEX = "noindex, nofollow";
+const PATHS = ["/", "/login", "/list-with-us", "/workspace/x", "/robots.txt", "/sitemap.xml"];
+
+describe("securityHeaders by site (W35a Task U1, D-10)", () => {
+  it.each(["https://test.sunvibe.vn", "https://sunvibe.vn", "http://www.sunvibe.vn", "http://localhost:3000"])(
+    "securityHeaders_nonProductionSite_addsNoindex (%s)",
+    (siteUrl) => {
+      for (const pathname of PATHS) {
+        expect(effectiveHeaders(pathname, siteUrl), pathname).toEqual({
+          ...effectiveHeaders(pathname),
+          "x-robots-tag": NOINDEX,
+        });
+      }
+    },
+  );
+
+  it.each([undefined, "https://www.sunvibe.vn", "https://www.sunvibe.vn/", "https://WWW.Sunvibe.vn"])(
+    "securityHeaders_productionSite_hasNoNoindex (%s)",
+    (siteUrl) => {
+      expect(securityHeaders(siteUrl)).toEqual(securityHeaders());
+      for (const pathname of PATHS) {
+        expect(effectiveHeaders(pathname, siteUrl), pathname).not.toHaveProperty("x-robots-tag");
+      }
+    },
+  );
 });

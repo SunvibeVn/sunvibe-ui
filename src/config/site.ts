@@ -1,3 +1,4 @@
+import { PRODUCTION_SITE_URL } from "@/config/production-site";
 import { mailto } from "@/lib/utils/mailto";
 
 const CONTACT_EMAIL = "admin@sunvibe.vn";
@@ -11,7 +12,8 @@ export const siteConfig = {
   // 2026-10-18); moving it is SV-155's copy work.
   title: "Sunvibe | Thuê và cho thuê bất động sản",
   description: "Sunvibe dành cho chủ nhà muốn cho thuê bất động sản và người đang tìm nơi để thuê.",
-  url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.sunvibe.vn",
+  // Any origin but www's is a test host: noindex, an empty sitemap and the test banner (W35a Task U1).
+  url: process.env.NEXT_PUBLIC_SITE_URL ?? PRODUCTION_SITE_URL,
   locale: "vi_VN",
   logo: "/images/brand/sunvibe-logo.png",
   contactEmail: CONTACT_EMAIL,

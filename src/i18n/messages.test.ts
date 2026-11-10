@@ -164,6 +164,21 @@ function keyPaths(node: unknown): string[] {
 const VIETNAMESE_LETTER = /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
 const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys", "InventoryIntake"];
 
+describe("TestEnvironment, the banner of every host but www (W35a Task U1)", () => {
+  it("vi.json has the D-10 text verbatim", () => {
+    expect(vi.TestEnvironment.notice).toBe(
+      "Môi trường thử nghiệm của Sunvibe. Chỉ dùng dữ liệu giả; dữ liệu có thể bị xóa bất cứ lúc nào.",
+    );
+  });
+
+  it("en.json has its plain English equivalent for the English screens (G2 D-48)", () => {
+    expect(en.TestEnvironment.notice).toBe(
+      "Sunvibe test environment. Use fake data only; data may be deleted at any time.",
+    );
+    expect(keyPaths(en.TestEnvironment)).toEqual(keyPaths(vi.TestEnvironment));
+  });
+});
+
 describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
   it("en.json has no Vietnamese letters", () => {
     const vietnamese = leaves(en).filter(([, text]) => VIETNAMESE_LETTER.test(text));
@@ -175,7 +190,7 @@ describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
   });
 
   it("workspace namespaces only in en", () => {
-    expect(Object.keys(en).sort()).toEqual([...WORKSPACE_NAMESPACES, "Session"].sort());
+    expect(Object.keys(en).sort()).toEqual([...WORKSPACE_NAMESPACES, "Session", "TestEnvironment"].sort());
     for (const namespace of WORKSPACE_NAMESPACES) expect(vi).not.toHaveProperty(namespace);
   });
 

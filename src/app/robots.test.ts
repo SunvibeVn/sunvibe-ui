@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { siteConfig } from "@/config/site";
 
@@ -22,5 +22,21 @@ describe("robots (W33 Task G3, S-11)", () => {
     // siteConfig.url defaults to https://www.sunvibe.vn (site.test.ts).
     expect(result.sitemap).toBe(new URL("/sitemap.xml", siteConfig.url).href);
     expect(result.host).toBeUndefined();
+  });
+});
+
+describe("robots on another host than www (W35a Task U1, D-10)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("robots_nonProductionSite_allowsCrawlNoSitemap", async () => {
+    // siteConfig reads NEXT_PUBLIC_SITE_URL when it loads, so robots is loaded again. Crawling stays allowed, the
+    // workspace and the account included, so that crawlers read the X-Robots-Tag noindex of every answer.
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://test.sunvibe.vn");
+    vi.resetModules();
+    const { default: testSiteRobots } = await import("./robots");
+
+    expect(testSiteRobots()).toEqual({ rules: { userAgent: "*", allow: "/" } });
   });
 });

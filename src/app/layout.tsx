@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale } from "next-intl/server";
+import { TestEnvironmentNotice } from "@/components/layout/test-environment-notice";
 import { siteConfig } from "@/config/site";
 import { SessionProvider } from "@/features/auth/public";
 import { DraftSessionSync } from "@/features/lead-shared/session-sync";
@@ -57,6 +58,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </SessionProvider>
         </NextIntlClientProvider>
+        {/* Every host but www: the test-environment banner, after the page and stuck to the bottom of the window (W35a
+            Task U1). Nothing on www. */}
+        <TestEnvironmentNotice siteUrl={siteConfig.url} />
       </body>
     </html>
   );
