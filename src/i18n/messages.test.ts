@@ -171,7 +171,7 @@ describe("TestEnvironment, the banner of every host but www (W35a Task U1)", () 
     );
   });
 
-  it("en.json has its plain English equivalent for the workspace (C-41)", () => {
+  it("en.json has its plain English equivalent for the English screens (G2 D-48)", () => {
     expect(en.TestEnvironment.notice).toBe(
       "Sunvibe test environment. Use fake data only; data may be deleted at any time.",
     );

@@ -51,8 +51,6 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        {/* Every host but www: the test-environment banner (W35a Task U1). Nothing on www. */}
-        <TestEnvironmentNotice siteUrl={siteConfig.url} />
         <NextIntlClientProvider>
           <SessionProvider>
             {/* Drops the workspace drafts on any sign-out or user change, wherever it happens (SEC-M2). */}
@@ -60,6 +58,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             {children}
           </SessionProvider>
         </NextIntlClientProvider>
+        {/* Every host but www: the test-environment banner, after the page and stuck to the bottom of the window (W35a
+            Task U1). Nothing on www. */}
+        <TestEnvironmentNotice siteUrl={siteConfig.url} />
       </body>
     </html>
   );
