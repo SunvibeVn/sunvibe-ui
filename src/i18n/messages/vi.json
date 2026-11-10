@@ -207,5 +207,8 @@
   },
   "WorkspaceEntry": {
     "link": "Khu làm việc"
+  },
+  "TestEnvironment": {
+    "notice": "Môi trường thử nghiệm của Sunvibe. Chỉ dùng dữ liệu giả; dữ liệu có thể bị xóa bất cứ lúc nào."
   }
 }

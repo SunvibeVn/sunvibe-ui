@@ -25,7 +25,7 @@ Sign-up, login and the account page need [sunvibe-server](../sunvibe-server) run
 
 | Variable               | Where it's used | Purpose                                                                                  |
 | ---------------------- | --------------- | ---------------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SITE_URL` | Server + client | Public site URL; makes share-preview image links absolute                                |
+| `NEXT_PUBLIC_SITE_URL` | Server + client | Public site URL (default `https://www.sunvibe.vn`); makes share-preview image links absolute. Any other origin (`https://test.sunvibe.vn`, a preview, a local build) is a test host: every answer gets `X-Robots-Tag: noindex, nofollow`, the sitemap is empty, `robots.txt` names none, and every page shows the test banner (W35a) |
 | `NEXT_PUBLIC_API_URL`  | Server + client | Origin of sunvibe-server that the browser calls (required and `https://` in production)  |
 | `API_BASE_URL`         | Server only     | Base URL of sunvibe-server for the server-only property service (default `http://localhost:8081`) |
 
