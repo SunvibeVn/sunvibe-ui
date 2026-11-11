@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { Suspense, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Pagination } from "@/components/ui/pagination";
@@ -14,6 +14,20 @@ import { type LeadSummary, LIST_PATH } from "@/features/lead-shared";
 import { lastListUrl, listFlash, type ListFlashKind } from "@/features/lead-shared/client";
 import { type ListOutcome, useUrlList } from "@/lib/use-url-list";
 
+import type { BulkAssignEnd } from "../lib/bulk-assign-flow";
+import { toBulkAssignModel } from "../lib/bulk-assign-model";
+import {
+  clear,
+  type LeadSelection,
+  NO_SELECTION,
+  type OwnedSelection,
+  pageCheck,
+  type RowSelection,
+  selectable,
+  selectionOf,
+  toggle,
+  toggleAllOnPage,
+} from "../lib/lead-selection-state";
 import { type LeadUiError, toLeadUiError } from "../lib/lead-ui-error";
 import {
   LIST_PAGE_SIZE,
@@ -28,12 +42,19 @@ import { type Viewer, viewerOf } from "../lib/viewer";
 import { listLeads } from "../services/owner-leads-api";
 import type { LeadPage } from "../types";
 
+import { BulkAssignDialog } from "./bulk-assign-dialog";
+import { BulkAssignPanel } from "./bulk-assign-panel";
+import { BulkAssignResultPanel } from "./bulk-assign-result-panel";
 import { LeadCards } from "./lead-cards";
 import { LeadFilters } from "./lead-filters";
 import { LeadTable } from "./lead-table";
 import { listHref } from "./list-href";
 
 const NO_LEADS: readonly LeadSummary[] = [];
+const NOTHING_OWNED: OwnedSelection = { of: null, leads: NO_SELECTION };
+
+/** How a bulk assignment ended, for the user and the list URL current when its answer was handled (P-4). */
+type BulkEnded = { userId: string | null; key: string; end: BulkAssignEnd };
 
 async function loadLeads(state: ListState): Promise<ListOutcome<LeadPage, LeadUiError>> {
   const result = await listLeads(toApiQuery(state));
@@ -116,9 +137,55 @@ function LeadListContent() {
     lastListUrl.set(userId, canonical === "" ? LIST_PATH : `${LIST_PATH}?${canonical}`);
   }, [userId, normalized, pathname, canonical]);
 
+  // Bulk assignment on "All Leads" (acquisition-owner-lead-bulk-assign spec 6.2). The selection belongs to the answer
+  // it was made on (`selectionOf`): a reload, another URL or another user shows none, with no effect that clears it.
+  const [owned, setOwned] = useState<OwnedSelection>(NOTHING_OWNED);
+  /** The rows the open dialog was given; null while no dialog is open. */
+  const [dialogLeads, setDialogLeads] = useState<LeadSelection | null>(null);
+  /** From "Assign" until its answer was handled, also after Esc closed the dialog (D-12). */
+  const [busy, setBusy] = useState(false);
+  const [ended, setEnded] = useState<BulkEnded | null>(null);
+  // A change of tab, filter or page drops the selection and the last result, also when the URL comes back to an
+  // earlier one before a new answer arrived (spec 6.2). Adjusted while rendering, as React advises for a reset on a
+  // changed value, so no frame shows the old ones.
+  const [shownKey, setShownKey] = useState(canonical);
+  if (shownKey !== canonical) {
+    setShownKey(canonical);
+    setOwned(NOTHING_OWNED);
+    setEnded(null);
+  }
+  // The answer of a bulk assignment is handled after it returns: it is shown for the user and the URL current then.
+  const current = useRef({ userId, canonical });
+  useLayoutEffect(() => {
+    current.current = { userId, canonical };
+  });
+
   if (userId === null) return null;
 
   const rows = page?.items ?? NO_LEADS;
+  const bulkOn = state.scope === "all";
+  const selection = bulkOn ? selectionOf(owned, page) : NO_SELECTION;
+  const showPanel = bulkOn && status.kind === "ready" && rows.some((row) => selectable(row) !== null);
+  const rowSelection: RowSelection | undefined = bulkOn
+    ? {
+        selected: selection,
+        disabled: busy,
+        onToggle: (leadId) => setOwned({ of: page, leads: toggle(selection, rows, leadId) }),
+      }
+    : undefined;
+  const end = ended !== null && ended.userId === userId && ended.key === canonical ? ended.end : null;
+
+  const openDialog = () => {
+    // A new action drops the previous result (spec 6.2).
+    setEnded(null);
+    setDialogLeads(selection);
+  };
+  const onEnd = (bulkEnd: BulkAssignEnd) => {
+    setEnded({ userId: current.current.userId, key: current.current.canonical, end: bulkEnd });
+    setDialogLeads(null);
+    // One list read (D-10): the new answer also empties the selection.
+    retry();
+  };
   // The short status line read out by screen readers when a page of results arrives (CR-13).
   const totalLine = status.kind === "ready" && rows.length > 0 ? t("list.total", { count: status.page.totalElements ?? 0 }) : "";
 
@@ -147,6 +214,34 @@ function LeadListContent() {
       <p aria-live="polite" className={totalLine === "" ? "sr-only" : "text-sm text-slate-600"}>
         {totalLine}
       </p>
+      {end?.kind === "result" && (
+        <BulkAssignResultPanel model={toBulkAssignModel(end.sent, end.result)} onDismiss={() => setEnded(null)} />
+      )}
+      {end !== null && end.kind !== "result" && (
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1">
+            <Alert tone="info">
+              <p>{t(end.kind === "conflict" ? "bulkAssign.conflict" : "bulkAssign.unknownResult")}</p>
+              {end.correlationId !== null && (
+                <p className="mt-1 text-xs">{t("errors.supportCode", { correlationId: end.correlationId })}</p>
+              )}
+            </Alert>
+          </div>
+          <Button variant="ghost" onClick={() => setEnded(null)}>
+            {t("notice.dismiss")}
+          </Button>
+        </div>
+      )}
+      {showPanel && (
+        <BulkAssignPanel
+          check={pageCheck(selection, rows)}
+          count={selection.length}
+          busy={busy}
+          onToggleAll={() => setOwned({ of: page, leads: toggleAllOnPage(selection, rows) })}
+          onAssign={openDialog}
+          onClear={() => setOwned({ of: page, leads: clear() })}
+        />
+      )}
       <div>
         {status.kind === "loading" ? (
           <ListSkeleton />
@@ -155,9 +250,24 @@ function LeadListContent() {
             <ListError error={status.error} onRetry={retry} />
           )
         ) : (
-          <ListResults page={status.page} state={state} viewer={viewer} filtered={hasActiveFilter(state)} />
+          <ListResults
+            page={status.page}
+            state={state}
+            viewer={viewer}
+            filtered={hasActiveFilter(state)}
+            selection={rowSelection}
+          />
         )}
       </div>
+      {dialogLeads !== null && (
+        <BulkAssignDialog
+          userId={userId}
+          selection={dialogLeads}
+          onClose={() => setDialogLeads(null)}
+          onBusy={setBusy}
+          onEnd={onEnd}
+        />
+      )}
     </div>
   );
 }
@@ -167,9 +277,11 @@ type ListResultsProps = {
   state: ListState;
   viewer: Viewer;
   filtered: boolean;
+  /** "All Leads" only: the row boxes of the bulk assignment. */
+  selection: RowSelection | undefined;
 };
 
-function ListResults({ page, state, viewer, filtered }: ListResultsProps) {
+function ListResults({ page, state, viewer, filtered, selection }: ListResultsProps) {
   const t = useTranslations("OwnerLeads");
   const items = page.items ?? NO_LEADS;
   const range = paginationRange(state.page, LIST_PAGE_SIZE, page.totalElements ?? 0);
@@ -199,8 +311,8 @@ function ListResults({ page, state, viewer, filtered }: ListResultsProps) {
 
   return (
     <div className="space-y-4">
-      <LeadTable leads={items} />
-      <LeadCards leads={items} />
+      <LeadTable leads={items} selection={selection} />
+      <LeadCards leads={items} selection={selection} />
       <Pagination
         page={state.page}
         totalPages={range.totalPages}

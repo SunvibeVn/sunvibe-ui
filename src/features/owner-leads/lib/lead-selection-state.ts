@@ -18,6 +18,14 @@ export type LeadSelection = readonly SelectedLead[];
 
 export const NO_SELECTION: LeadSelection = Object.freeze([]);
 
+/** What the rows of "All Leads" need to show their boxes (acquisition-owner-lead-bulk-assign D-7, D-12). */
+export type RowSelection = {
+  selected: LeadSelection;
+  onToggle(leadId: string): void;
+  /** True while a bulk assignment runs. */
+  disabled: boolean;
+};
+
 /**
  * The selection with the list answer it was made on. It counts only while that answer is the one on screen
  * (`selectionOf`), so a reload, another URL or another user starts with nothing selected (acquisition-owner-lead-bulk-

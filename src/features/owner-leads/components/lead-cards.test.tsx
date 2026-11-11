@@ -1,8 +1,10 @@
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import type { LeadSummary } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
+
+import { type LeadSelection, selectable } from "../lib/lead-selection-state";
 
 import { LeadCards } from "./lead-cards";
 
@@ -64,5 +66,45 @@ describe("LeadCards", () => {
     renderCards([ASSIGNED, REJECTED]);
 
     expect(screen.queryByRole("checkbox")).toBeNull();
+  });
+});
+
+// "All Leads" passes a selection (acquisition-owner-lead-bulk-assign AC-14, D-7): a box in the header of each open card.
+describe("LeadCards with a selection", () => {
+  function renderSelectable(selected: LeadSelection, disabled = false) {
+    const onToggle = vi.fn<(leadId: string) => void>();
+    render(
+      <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
+        <LeadCards leads={[ASSIGNED, REJECTED]} selection={{ selected, onToggle, disabled }} />
+      </NextIntlClientProvider>,
+    );
+    return onToggle;
+  }
+
+  it("puts a box named for the code in the header of the open card only, before the code", () => {
+    renderSelectable([]);
+
+    const [openCard, closedCard] = screen.getAllByRole("listitem");
+    const box = within(openCard).getByRole("checkbox", { name: "Select SV-AAAA-0007" }) as HTMLInputElement;
+    expect(box.checked).toBe(false);
+    const code = within(openCard).getByText(ASSIGNED.requestCode ?? "");
+    expect(box.compareDocumentPosition(code) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(closedCard).queryByRole("checkbox")).toBeNull();
+    expect(within(openCard).getByText(en.OwnerLeads.status.ASSIGNED)).toBeTruthy();
+  });
+
+  it("shows the selected card checked and tells which card was clicked", () => {
+    const onToggle = renderSelectable([selectable(ASSIGNED)!]);
+
+    const box = screen.getByRole("checkbox", { name: "Select SV-AAAA-0007" }) as HTMLInputElement;
+    expect(box.checked).toBe(true);
+    fireEvent.click(box);
+    expect(onToggle).toHaveBeenCalledWith(ASSIGNED.id);
+  });
+
+  it("disables the boxes while an assignment runs", () => {
+    renderSelectable([], true);
+
+    expect((screen.getByRole("checkbox", { name: "Select SV-AAAA-0007" }) as HTMLInputElement).disabled).toBe(true);
   });
 });
