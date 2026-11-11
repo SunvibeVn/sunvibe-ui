@@ -648,6 +648,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/owner-leads/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Assign several owner leads to one person (SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
+         * @description Each lead is assigned like POST .../{leadId}/assign, independently of the others; results come back in request order. The assignee is checked once for the whole request. Writes no access-log row.
+         */
+        post: operations["assignLeads"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-leads/{leadId}": {
         parameters: {
             query?: never;
@@ -1758,6 +1778,20 @@ export interface components {
             expectedVersion: number;
             /** @description Optional; kept in the history entry of the assignment */
             note?: string;
+        };
+        /** @description Give several owner leads to one SALE or SALE_LEADER */
+        AssignLeadsRequest: {
+            /** @description User id (ULID) of the new assignee */
+            assigneeUserId: string;
+            /** @description 1 to 20 leads, none of them twice */
+            leads: components["schemas"]["LeadVersionInput"][];
+            /** @description Optional; kept in the history entry of every lead that is assigned */
+            note?: string;
+        };
+        /** @description One outcome per lead of the request, in request order */
+        AssignLeadsResponse: {
+            /** @description One item per item of leads, same order and length */
+            results: components["schemas"]["LeadAssignOutcomeResponse"][];
         };
         /** @description Give a ward to a SALE or SALE_LEADER */
         AssignTerritoryRequest: {
@@ -4548,6 +4582,16 @@ export interface components {
             /** @enum {string} */
             type?: "SUBMITTED" | "AUTO_ASSIGNED" | "ASSIGNED" | "REASSIGNED" | "STATUS_CHANGED" | "NOTE_ADDED" | "SURVEY_BOOKED" | "SURVEY_CHANGED" | "SURVEY_CONFIRMED" | "SURVEY_UNCONFIRMED" | "SURVEY_CANCELLED" | "SURVEY_VISITED" | "SURVEY_RESUMED" | "INTENT_CHANGED" | "CHECKLIST_STARTED" | "CHECKLIST_TAKEN_OVER" | "CHECKLIST_SAVED" | "CHECKLIST_MEDIA_ADDED" | "CHECKLIST_MEDIA_REMOVED" | "CHECKLIST_SUBMITTED" | "CHECKLIST_REVIEWED" | "CHECKLIST_REVISION_STARTED" | "REQUALIFICATION_MARKED" | "INVENTORY_INTAKE_COMPLETED" | "INVENTORY_INTAKE_SUSPENDED" | "INVENTORY_INTAKE_RESTORED";
         };
+        /** @description The outcome of one lead of a bulk assignment */
+        LeadAssignOutcomeResponse: {
+            /** @description The leadId of that request item, as sent */
+            leadId: string;
+            /**
+             * @description ASSIGNED: given to the assignee; ALREADY_ASSIGNED: already theirs, nothing written; STALE: changed since the caller saw it, nothing written; CLOSED: the lead is closed; NOT_FOUND: no such lead, or the caller may not see it
+             * @enum {string}
+             */
+            outcome: "ASSIGNED" | "ALREADY_ASSIGNED" | "STALE" | "CLOSED" | "NOT_FOUND";
+        };
         /** @description A staff member an owner lead may be assigned to */
         LeadAssigneeResponse: {
             /**
@@ -4619,6 +4663,16 @@ export interface components {
              * @description Leads over all pages that the caller can see
              */
             totalElements?: number;
+        };
+        /** @description One lead of a bulk assignment and the version the caller saw */
+        LeadVersionInput: {
+            /**
+             * Format: int64
+             * @description The lead version the caller last saw (the version of the list item)
+             */
+            expectedVersion: number;
+            /** @description Lead id (ULID) */
+            leadId: string;
         };
         LoginRequest: {
             email?: string;
@@ -7995,6 +8049,84 @@ export interface operations {
             };
             /** @description Caller is not sale staff or ADMIN, or a SALE asked for scope unassigned or all */
             403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    assignLeads: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignLeadsRequest"];
+            };
+        };
+        responses: {
+            /** @description One outcome per lead of the request, in request order */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AssignLeadsResponse"];
+                };
+            };
+            /** @description VALIDATION_FAILED on assigneeUserId, note, leads (missing, empty, more than 20, a lead twice, not an array) or an item (leads[<i>], leads[<i>].leadId, leads[<i>].expectedVersion; a value of the wrong JSON type on leads.<i>.leadId or leads.<i>.expectedVersion); MALFORMED_REQUEST. No lead changed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not SALE_LEADER, SALES_MANAGER or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description CONCURRENT_MODIFICATION: the database refused the transaction; no lead changed. Clients read only the code */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INELIGIBLE_ASSIGNEE (field assigneeUserId): unknown user, deleted, cannot sign in, or neither SALE nor SALE_LEADER; checked once, also when every lead is already theirs. No lead changed */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: no lead changed */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
