@@ -319,6 +319,31 @@
       "loading": "Loading staff…",
       "saved": "Lead assigned."
     },
+    "bulkAssign": {
+      "selectAll": "Select all open leads on this page",
+      "selectLead": "Select {code}",
+      "selected": "{count, plural, one {# lead selected} other {# leads selected}}",
+      "assign": "Assign selected",
+      "clear": "Clear selection",
+      "title": "{count, plural, one {Assign # lead} other {Assign # leads}}",
+      "noteHint": "Optional. Saved in the history of each lead that is assigned.",
+      "summary": "{count, plural, one {# lead} other {# leads}} will be assigned to {name}.",
+      "heldByOthers": "{count, plural, =0 {None of them is held by someone else.} one {# of them is held by someone else now, who loses access to it at once.} other {# of them are held by someone else now. Those people lose access at once.}}",
+      "surveyMoves": "{count, plural, one {# of them is in Survey Scheduled: if its survey is still scheduled, the survey moves to {name} and any owner confirmation is removed.} other {# of them are in Survey Scheduled: a survey still scheduled moves to {name} and any owner confirmation is removed.}}",
+      "resultTitle": "Assignment result",
+      "totals": "{assigned} assigned · {unchanged} unchanged · {notAssigned} not assigned",
+      "outcome": {
+        "ASSIGNED": "Assigned",
+        "ALREADY_ASSIGNED": "No change: already held by this person",
+        "STALE": "Not assigned: someone else just updated this lead",
+        "CLOSED": "Not assigned: the lead is closed",
+        "NOT_FOUND": "Not assigned: lead not found, or you can no longer see it",
+        "other": "Not assigned"
+      },
+      "retryHint": "To try again, select the leads that were not assigned in the reloaded list.",
+      "unknownResult": "We could not tell whether the leads were assigned. The list has been reloaded: check it before you try again. Your note is kept.",
+      "conflict": "The leads changed while they were being assigned, so none was assigned. The list has been reloaded. Your note is kept."
+    },
     "errors": {
       "generic": "Something went wrong. Please try again.",
       "network": "Could not reach Sunvibe. Check your connection and try again.",
