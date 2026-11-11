@@ -5,12 +5,16 @@ import { useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import type { LeadSummary } from "@/features/lead-shared";
 
+import { isSelected, type RowSelection, selectable } from "../lib/lead-selection-state";
+
 import { LeadStatusBadge } from "./lead-status-badge";
 import { toLeadRow } from "./lead-row";
 import { leadDetailHref } from "./list-href";
 
 type LeadTableProps = {
   leads: readonly LeadSummary[];
+  /** "All Leads" only: a box in the CODE cell of each row that may be selected. Without it the table is as before. */
+  selection?: RowSelection;
 };
 
 const HEAD = "whitespace-nowrap px-3 py-3 text-[11px] font-bold tracking-wider text-slate-500";
@@ -19,9 +23,11 @@ const CELL = "px-3 py-3 align-top text-slate-800";
 /**
  * The lead list from `md` up (C-46): at least 1200px wide, scrolls sideways when its box is narrower, no sort
  * control. CODE is plain text; the ACTION "View" link opens the detail without prefetch. No phone, email, address,
- * next action or assignee (BR-7, C-47).
+ * next action or assignee (BR-7, C-47). With `selection`, each open row with an id and a version has a box before its
+ * code, named "Select <code>", so the cell's text stays the code and no column is added (acquisition-owner-lead-bulk-
+ * assign D-7).
  */
-export function LeadTable({ leads }: LeadTableProps) {
+export function LeadTable({ leads, selection }: LeadTableProps) {
   const t = useTranslations("OwnerLeads");
   return (
     <div className="hidden overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm md:block">
@@ -44,9 +50,22 @@ export function LeadTable({ leads }: LeadTableProps) {
         <tbody>
           {leads.map((lead, index) => {
             const row = toLeadRow(lead);
+            const pick = selection === undefined ? null : selectable(lead);
             return (
               <tr key={row.id ?? `${row.code}-${index}`} className="border-b border-slate-100 last:border-0">
-                <td className={`${CELL} whitespace-nowrap font-mono text-[13px] font-bold`}>{row.code}</td>
+                <td className={`${CELL} whitespace-nowrap font-mono text-[13px] font-bold`}>
+                  {selection !== undefined && pick !== null && (
+                    <input
+                      type="checkbox"
+                      aria-label={t("bulkAssign.selectLead", { code: row.code })}
+                      checked={isSelected(selection.selected, pick.id)}
+                      disabled={selection.disabled}
+                      onChange={() => selection.onToggle(pick.id)}
+                      className="mr-2 h-4 w-4 cursor-pointer align-[-2px] accent-violet-600 disabled:cursor-not-allowed"
+                    />
+                  )}
+                  {row.code}
+                </td>
                 <td className={CELL}>{row.owner}</td>
                 <td className={CELL}>{row.ward}</td>
                 <td className={CELL}>{row.requirementKey === null ? "" : t(row.requirementKey)}</td>

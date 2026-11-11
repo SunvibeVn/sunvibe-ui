@@ -13,7 +13,7 @@ import { createPublicClient, toPublicResult, type PublicApiResult } from "@/lib/
 
 import { dedupeInflight } from "../lib/inflight";
 import type { ListApiQuery, Scope } from "../lib/list-url-state";
-import type { LeadNoteResult, LeadPage } from "../types";
+import type { AssignLeadsResult, LeadNoteResult, LeadPage } from "../types";
 
 type Schemas = components["schemas"];
 
@@ -31,6 +31,8 @@ export type WardsDeps = { client?: ReturnType<typeof createPublicClient> };
 export type AddNoteInput = Pick<Schemas["AddLeadNoteRequest"], "note" | "nextActionAt">;
 export type ChangeStatusInput = Omit<Schemas["ChangeLeadStatusRequest"], "toStatus"> & { toStatus: LeadStatus };
 export type AssignLeadInput = Schemas["AssignLeadRequest"];
+/** The bulk assignment body: the person, the optional note and 1 to 20 leads with the versions of the list rows. */
+export type AssignLeadsInput = Schemas["AssignLeadsRequest"];
 /** A rental price in the unit of the new intent (NIGHT for short-term, MONTH for long-term); amount in whole VND. */
 export type RentalPriceInput = { amount: number; currency: "VND"; unit: "NIGHT" | "MONTH" };
 /** The requirement change body (survey-schedule A-17): `askingPrice` always present, `null` for no price. */
@@ -135,6 +137,17 @@ export function assignLead(
   return deps.callApi((client) =>
     client.POST("/api/v1/staff/owner-leads/{leadId}/assign", { params: { path: { leadId } }, body: input }),
   );
+}
+
+/**
+ * POST /api/v1/staff/owner-leads/assignments (acquisition-owner-lead-bulk-assign): several leads to one person in one
+ * call, 200 with one outcome per lead. Never retried here: the caller reports a lost answer as an unknown outcome.
+ */
+export function assignLeads(
+  input: AssignLeadsInput,
+  deps: OwnerLeadsDeps = DEFAULT_DEPS,
+): Promise<ApiResult<AssignLeadsResult>> {
+  return deps.callApi((client) => client.POST("/api/v1/staff/owner-leads/assignments", { body: input }));
 }
 
 /** POST /api/v1/staff/owner-leads/{leadId}/intent-changes (survey-schedule US-5): the new requirement with its basis. */

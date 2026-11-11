@@ -10,6 +10,7 @@ import { toApiQuery, type ListState } from "../lib/list-url-state";
 import {
   addNote,
   assignLead,
+  assignLeads,
   changeIntent,
   changeStatus,
   findLeadByRequestCode,
@@ -206,6 +207,30 @@ describe("writes", () => {
     expect(sent[0].method).toBe("POST");
     expect(sent[0].url.pathname).toBe("/api/v1/staff/owner-leads/L1/assign");
     expect(sent[0].body).toEqual({ assigneeUserId: "U1", expectedVersion: 2 });
+  });
+
+  it("assignLeads POSTs the body to assignments and returns the answer (acquisition-owner-lead-bulk-assign)", async () => {
+    const answer = {
+      results: [
+        { leadId: "L7", outcome: "ASSIGNED" },
+        { leadId: "L9", outcome: "STALE" },
+      ],
+    };
+    const { sent, deps } = fakeServer(() => json(answer));
+    const body = {
+      assigneeUserId: "U1",
+      note: "Chuyển lead",
+      leads: [
+        { leadId: "L7", expectedVersion: 1 },
+        { leadId: "L9", expectedVersion: 2 },
+      ],
+    };
+    const result = await assignLeads(body, deps);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].method).toBe("POST");
+    expect(sent[0].url.pathname).toBe("/api/v1/staff/owner-leads/assignments");
+    expect(sent[0].body).toEqual(body);
+    expect(result).toEqual({ ok: true, status: 200, replayed: false, data: answer });
   });
 });
 
