@@ -1,6 +1,6 @@
-import { fireEvent, render, screen, within } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 import type { LeadSummary } from "@/features/lead-shared";
 import en from "@/i18n/messages/en.json";
 
@@ -71,14 +71,18 @@ describe("LeadCards", () => {
 
 // "All Leads" passes a selection (acquisition-owner-lead-bulk-assign AC-14, D-7): a box in the header of each open card.
 describe("LeadCards with a selection", () => {
+  /** Renders "All Leads" cards; the returned list records the ids `onToggle` was called with. */
   function renderSelectable(selected: LeadSelection, disabled = false) {
-    const onToggle = vi.fn<(leadId: string) => void>();
+    const toggled: string[] = [];
+    const onToggle = (leadId: string) => {
+      toggled.push(leadId);
+    };
     render(
       <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
         <LeadCards leads={[ASSIGNED, REJECTED]} selection={{ selected, onToggle, disabled }} />
       </NextIntlClientProvider>,
     );
-    return onToggle;
+    return toggled;
   }
 
   it("puts a box named for the code in the header of the open card only, before the code", () => {
@@ -94,12 +98,12 @@ describe("LeadCards with a selection", () => {
   });
 
   it("shows the selected card checked and tells which card was clicked", () => {
-    const onToggle = renderSelectable([selectable(ASSIGNED)!]);
+    const toggled = renderSelectable([selectable(ASSIGNED)!]);
 
     const box = screen.getByRole("checkbox", { name: "Select SV-AAAA-0007" }) as HTMLInputElement;
     expect(box.checked).toBe(true);
-    fireEvent.click(box);
-    expect(onToggle).toHaveBeenCalledWith(ASSIGNED.id);
+    box.click();
+    expect(toggled).toEqual([ASSIGNED.id]);
   });
 
   it("disables the boxes while an assignment runs", () => {
