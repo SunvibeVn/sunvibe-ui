@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { Activity } from "react";
 import { describe, expect, it, vi } from "vitest";
 import en from "@/i18n/messages/en.json";
 
@@ -69,6 +70,28 @@ describe("BulkAssignResultPanel (acquisition-owner-lead-bulk-assign AC-21)", () 
     expect(screen.getByText("Not assigned: the lead is closed")).toBeTruthy();
     expect(screen.getByText("Not assigned: lead not found, or you can no longer see it")).toBeTruthy();
     expect(screen.getByText("Not assigned")).toBeTruthy();
+  });
+
+  it("takes the focus when it shows, and not again when its route is shown again", () => {
+    const model: BulkAssignModel = { lines: [], totals: { assigned: 0, unchanged: 0, notAssigned: 0 }, showRetryHint: false };
+    const view = (mode: "visible" | "hidden") => (
+      <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
+        <button type="button">Elsewhere</button>
+        <Activity mode={mode}>
+          <BulkAssignResultPanel model={model} onDismiss={() => undefined} />
+        </Activity>
+      </NextIntlClientProvider>
+    );
+    const { rerender } = render(view("visible"));
+    expect(document.activeElement).toBe(screen.getByRole("region", { name: "Assignment result" }));
+
+    // Next keeps a route left by a client-side navigation mounted but hidden, and runs its effects again when shown.
+    rerender(view("hidden"));
+    const elsewhere = screen.getByRole("button", { name: "Elsewhere" });
+    elsewhere.focus();
+    rerender(view("visible"));
+
+    expect(document.activeElement).toBe(elsewhere);
   });
 
   it("calls onDismiss on Dismiss", () => {

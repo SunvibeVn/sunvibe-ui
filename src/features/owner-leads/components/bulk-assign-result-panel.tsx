@@ -20,8 +20,12 @@ export function BulkAssignResultPanel({ model, onDismiss }: BulkAssignResultPane
   const t = useTranslations("OwnerLeads");
   const titleId = useId();
   const region = useRef<HTMLElement>(null);
+  const focused = useRef(false);
 
+  // Once: the effect runs again when a route Next kept hidden is shown again, and must not take the focus then.
   useEffect(() => {
+    if (focused.current) return;
+    focused.current = true;
     region.current?.focus();
   }, []);
 
