@@ -214,6 +214,26 @@ describe("createTabMemory (SEC-M2: the app-level sync drops everything with no f
     expect(memory.drafts.get(key("u1", "L2"))).toBe("note u1");
     expect(memory.lastListUrl.get("u1")).toBe("/workspace/owner-leads?scope=mine");
   });
+
+  it("keeps the bulk assignment note of the list for its user only (acquisition-owner-lead-bulk-assign 6.2, AC-26)", () => {
+    const bulkNote = (userId: string): DraftKey => ({ userId, leadId: "", form: "bulkAssignNote" });
+    const memory = createTabMemory();
+    memory.guard.observe(signedIn("u1"));
+    memory.drafts.set(bulkNote("u1"), "Chuyển lead");
+
+    memory.guard.observe(signedIn("u1"));
+    expect(memory.drafts.get(bulkNote("u1"))).toBe("Chuyển lead");
+    // A list draft has no lead: it is apart from the assign note of any lead.
+    expect(memory.drafts.get(key("u1", "", "assignNote"))).toBeUndefined();
+
+    memory.drafts.resetFor("u2");
+    expect(memory.drafts.get(bulkNote("u1"))).toBeUndefined();
+
+    memory.guard.observe(signedIn("u2"));
+    memory.drafts.set(bulkNote("u2"), "của u2");
+    memory.guard.observe({ status: "signed-out", user: null });
+    expect(memory.drafts.get(bulkNote("u2"))).toBeUndefined();
+  });
 });
 
 describe("multi-field drafts of the survey dialogs (spec 6.2)", () => {
