@@ -1817,6 +1817,7 @@
       "save": "Save the selection",
       "saving": "Saving…",
       "changeWarning": "Saving a new selection ends the owner's request or confirmation, and clears the target and availability.",
+      "unchanged": "These parts are already saved.",
       "separate": "Several separate assets, a co-owner or a representative stay on this lead: add a lead note.",
       "problems": {
         "required": "Choose at least one part.",
