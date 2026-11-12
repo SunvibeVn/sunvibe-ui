@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiResult } from "@/features/auth/client";
@@ -140,5 +140,59 @@ describe("SelectionStep (property-create intake spec 4.5)", () => {
     rerender(view(controllerFor({ ...partsConfirmed, selection: { spaceIds: ["S3"] } }, { epoch: 1 })));
 
     expect(["P101", "P102", "P103"].map((code) => box(code).checked)).toEqual([false, false, true]);
+  });
+});
+
+describe("SelectionStep with the stored parts chosen again (property-create SV-202)", () => {
+  const UNCHANGED = en.InventoryIntake.selection.unchanged;
+  const wholeAwaiting: IntakeBlock = { ...wholeNew, status: "AWAITING_OWNER", version: 1, selection: { spaceIds: ["S1"] } };
+
+  beforeEach(() => {
+    vi.mocked(putSelection).mockReset();
+  });
+
+  it("on a stored selection with the same parts, Save is disabled and says the parts are already saved, with no warning", () => {
+    render(view(controllerFor(partsConfirmed)));
+
+    const line = screen.getByText(UNCHANGED);
+    expect(saveButton().disabled).toBe(true);
+    expect(line.id).not.toBe("");
+    expect(saveButton().getAttribute("aria-describedby")).toBe(line.id);
+    expect(screen.queryByText(WARNING)).toBeNull();
+  });
+
+  it("a whole source with a stored selection is not offered an enabled Save", () => {
+    render(view(controllerFor(wholeAwaiting)));
+
+    expect(saveButton().disabled).toBe(true);
+    expect(screen.getByText(UNCHANGED)).toBeTruthy();
+    expect(screen.queryByText(WARNING)).toBeNull();
+  });
+
+  it("choosing back to the stored parts disables Save again", () => {
+    render(view(controllerFor(partsConfirmed)));
+
+    fireEvent.click(box("P103"));
+    expect(saveButton().disabled).toBe(false);
+    expect(screen.getByText(WARNING)).toBeTruthy();
+    expect(screen.queryByText(UNCHANGED)).toBeNull();
+
+    fireEvent.click(box("P103"));
+    expect(saveButton().disabled).toBe(true);
+    expect(screen.getByText(UNCHANGED)).toBeTruthy();
+    expect(screen.queryByText(WARNING)).toBeNull();
+  });
+
+  it("the same parts submitted from the keyboard send nothing", async () => {
+    vi.mocked(putSelection).mockResolvedValue(answered(partsConfirmed));
+    render(view(controllerFor(partsConfirmed)));
+    const form = saveButton().closest("form");
+    if (form === null) throw new Error("the step has no form");
+
+    await act(async () => {
+      form.requestSubmit();
+    });
+
+    expect(putSelection).not.toHaveBeenCalled();
   });
 });
