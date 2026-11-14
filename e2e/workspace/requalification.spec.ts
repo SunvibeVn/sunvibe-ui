@@ -10,6 +10,7 @@ import {
   detailHeader,
   dialog,
   entryStatus,
+  expectLeadAbsent,
   expectLeadDetail,
   expectListPage,
   expectListSettled,
@@ -554,7 +555,7 @@ test.describe("Bulk assignment of owner leads (acquisition-owner-lead-bulk-assig
     await expect(bulk).toContainText("None of them is held by someone else.");
     await confirm(bulk);
     await expect(resultPanel(page)).toContainText("1 assigned · 0 unchanged · 0 not assigned");
-    await expect(await findLeadLink(page, L10), "L10 on no page of the Unassigned filter").toHaveCount(0);
+    await expectLeadAbsent(page, L10, "L10 on no page of the Unassigned filter");
 
     await allLeads(page, fixture.sale.id);
     await expect(await findLeadLink(page, L10)).toBeVisible();
