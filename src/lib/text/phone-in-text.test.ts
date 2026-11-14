@@ -75,4 +75,27 @@ describe("containsPhoneNumber (survey BR-4, spec A-14)", () => {
   ])("keeps today's answer: a number %s", (text) => {
     expect(containsPhoneNumber(text)).toBe(true);
   });
+
+  // Rows R-1 to R-10 of the vector table (phone detector spec 2026-11-15, section 5; SV-212).
+  it.each([
+    "Gặp chủ 06.11.2026 09:00",
+    "Gặp chủ 06.11.2026 09h00",
+    "Gặp chủ 06-11-2026 10 giờ",
+    "Gặp chủ 06. 11. 2026 09:00",
+  ])("does not flag a date with a time: %j", (text) => {
+    expect(containsPhoneNumber(text)).toBe(false);
+  });
+
+  it.each([
+    "Tầng 3 0905 123 456",
+    "0905 123 456 15 phút",
+    "06.11.2026 0905 123 456",
+    "Gặp chủ 06.11.2026 09:00, gọi 0905123456",
+  ])("finds a number right after another number: %s", (text) => {
+    expect(containsPhoneNumber(text)).toBe(true);
+  });
+
+  it.each(["SĐT1:0905123456", "0905123456:15"])("finds a number next to a colon: %s", (text) => {
+    expect(containsPhoneNumber(text)).toBe(true);
+  });
 });
