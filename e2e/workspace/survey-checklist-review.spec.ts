@@ -20,10 +20,10 @@ import {
 } from "./support/staff";
 
 // Submission and review of a survey checklist (survey-checklist submission spec 6.4; U-1..U-5), the flow in one line: the
-// SALE fills and submits, the leader returns it for documents, the SALE starts revision #2, removes every carried
-// kitchen photo (however many the server carried over), uploads a new kitchen photo and submits again, the leader passes
-// it and the lead is Qualified. U-5 never counts the carried photos: it holds on a server that carries the refused
-// photo into revision #2 and on one that does not (SV-211 P-1). NOT_INDEPENDENT is covered by the server tests
+// SALE fills and submits, the leader returns it for documents and does not accept one of the two kitchen photos, the
+// SALE starts revision #2, which does not carry the refused photo, removes the one carried kitchen photo, uploads a new
+// kitchen photo and submits again, the leader passes it and the lead is Qualified. U-5 counts the carried photos: four,
+// one of them in the kitchen group (survey-checklist SV-211, RU-1). NOT_INDEPENDENT is covered by the server tests
 // (S-5). Two answers are changed in the browser: a refusal whose read ends the review, and a 500 after the real decision
 // committed (spec 9.5). Budget: 2 sign-ins (SALE, SALE_LEADER), navigation by links but for one crafted URL and one
 // reload. No trace, video or screenshot in this project (playwright.workspace.config.ts): no photo may land in a file of
@@ -384,7 +384,7 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     await expect(historySection(leader)).not.toContainText(R.markReason);
   });
 
-  test("U-5: revision #2 keeps the values and photos; a carried photo leaves this revision only", async () => {
+  test("U-5, RU-1: revision #2 keeps the values and the accepted photos; a carried photo leaves this revision only", async () => {
     await sale.getByRole("link", { name: "Back to the lead" }).click();
     await expectLeadDetail(sale, L15);
     await surveySection(sale).getByRole("button", { name: R.startRevision, exact: true }).click();
@@ -396,14 +396,16 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     const g3 = panel(sale, "G3 Size and layout");
     await expect(group(g3, "Area (m2)")).toContainText(`Measured at survey #1 by ${fixture.sale.name}`);
 
-    // The kitchen group holds as many carried cards as the server copied (two, or one when it leaves the refused photo
-    // behind): take them out one by one, until the group holds none. How many there were is not asserted.
+    // The leader did not accept one of the two kitchen photos, so revision #2 carries the other four and one kitchen
+    // card (survey-checklist SV-211, RU-1). Taking that card out leaves the kitchen pair without a photo.
     const g7 = panel(sale, "G7 Photos");
     const kitchenCarried = g7
       .getByRole("heading", { level: 4, name: KITCHEN_PAIR, exact: true })
       .locator("xpath=..")
       .getByRole("button", { name: R.removeCarried, exact: true });
     await expect(kitchenCarried.first()).toBeVisible({ timeout: 30_000 });
+    await expect(g7.getByText(R.carried, { exact: true })).toHaveCount(4, { timeout: 30_000 });
+    await expect(kitchenCarried).toHaveCount(1);
     const confirm = sale.getByRole("dialog", { name: /from this revision\?$/ });
     for (let left = await kitchenCarried.count(); left > 0; left = await kitchenCarried.count()) {
       await kitchenCarried.first().click();
