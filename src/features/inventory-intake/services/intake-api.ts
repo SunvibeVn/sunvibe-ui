@@ -160,7 +160,10 @@ export function getIntakeBlock(leadId: string, deps: IntakeDeps = DEFAULT_DEPS):
   );
 }
 
-/** PUT the selection: voids any request and proof, and clears the target and availability (spec 4.2). */
+/**
+ * PUT the selection: a different selection voids any request and proof and clears the target and availability; the
+ * same parts again change nothing (spec 4.2, property-create SV-202).
+ */
 export function putSelection(
   leadId: string,
   input: SelectionInput,

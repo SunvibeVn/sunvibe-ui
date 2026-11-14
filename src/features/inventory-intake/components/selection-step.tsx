@@ -9,7 +9,7 @@ import { formatDate } from "@/lib/format/vietnam-time";
 
 import type { StepMode } from "../lib/intake-steps";
 import { RENTAL_SCOPE_LABEL } from "../lib/labels";
-import { initialSelection, selectionBody, selectionProblem, toggleSpace } from "../lib/selection-form";
+import { initialSelection, selectionBody, selectionChanged, selectionProblem, toggleSpace } from "../lib/selection-form";
 import { codeText } from "../lib/code-text";
 import { termValueText } from "../lib/term-text";
 import { putSelection } from "../services/intake-api";
@@ -35,8 +35,11 @@ function SelectionForm({ mode }: { mode: StepMode }) {
   const run = useIntakeCommand();
   const [selected, setSelected] = useState(() => initialSelection(block));
   const errorId = useId();
+  const unchangedId = useId();
 
   const [state, dispatch, pending] = useActionState(async (): Promise<SelectionState> => {
+    // property-create SV-202: the stored parts again change nothing, so they are not sent, also from the keyboard.
+    if (!selectionChanged(selected, block)) return INITIAL;
     const problem = selectionProblem(selected);
     if (problem !== null) return { ...COMMAND_IDLE, problem };
     const outcome = await run(() => putSelection(leadId, selectionBody(selected, block)), apply);
@@ -48,6 +51,7 @@ function SelectionForm({ mode }: { mode: StepMode }) {
   const acting = mode === "act";
   const whole = source?.rentalScope === "WHOLE";
   const replaces = block.status !== undefined && block.status !== null && block.status !== "DRAFT";
+  const changed = selectionChanged(selected, block);
 
   return (
     <StepCard title={t("selection.title")}>
@@ -102,8 +106,19 @@ function SelectionForm({ mode }: { mode: StepMode }) {
         {acting && (
           <>
             <p className="text-xs text-slate-500">{t("selection.separate")}</p>
-            {replaces && <Alert>{t("selection.changeWarning")}</Alert>}
-            <Button type="submit" variant="secondary" pending={pending} disabled={busy}>
+            {replaces && changed && <Alert>{t("selection.changeWarning")}</Alert>}
+            {!changed && (
+              <p id={unchangedId} className="text-xs text-slate-500">
+                {t("selection.unchanged")}
+              </p>
+            )}
+            <Button
+              type="submit"
+              variant="secondary"
+              pending={pending}
+              disabled={busy || !changed}
+              aria-describedby={changed ? undefined : unchangedId}
+            >
               {pending ? t("selection.saving") : t("selection.save")}
             </Button>
           </>

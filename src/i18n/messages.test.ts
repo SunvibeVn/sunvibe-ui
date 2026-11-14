@@ -1,6 +1,7 @@
 import { readFileSync, readdirSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createTranslator } from "next-intl";
 import { describe, expect, it } from "vitest";
 import { englishSessionTexts } from "@/features/auth/client";
 import en from "./messages/en.json";
@@ -353,6 +354,86 @@ describe("en.json OwnerLeads texts of spec 5.5", () => {
 
   it("has the price unit suffixes (A-10)", () => {
     expect(m.priceUnit).toEqual({ NIGHT: "/night", MONTH: "/month", TOTAL: " (sale price)" });
+  });
+});
+
+describe("en.json OwnerLeads.bulkAssign texts (acquisition-owner-lead-bulk-assign spec 6.4)", () => {
+  const t = createTranslator({ locale: "en", messages: en, namespace: "OwnerLeads.bulkAssign" });
+
+  it("has every text of the table, word for word", () => {
+    expect(en.OwnerLeads.bulkAssign).toEqual({
+      selectAll: "Select all open leads on this page",
+      selectLead: "Select {code}",
+      selected: "{count, plural, one {# lead selected} other {# leads selected}}",
+      assign: "Assign selected",
+      clear: "Clear selection",
+      title: "{count, plural, one {Assign # lead} other {Assign # leads}}",
+      noteHint: "Optional. Saved in the history of each lead that is assigned.",
+      summary: "{count, plural, one {# lead} other {# leads}} will be assigned to {name}.",
+      heldByOthers:
+        "{count, plural, =0 {None of them is held by someone else.} one {# of them is held by someone else now, who loses access to it at once.} other {# of them are held by someone else now. Those people lose access at once.}}",
+      surveyMoves:
+        "{count, plural, one {# of them is in Survey Scheduled: if its survey is still scheduled, the survey moves to {name} and any owner confirmation is removed.} other {# of them are in Survey Scheduled: a survey still scheduled moves to {name} and any owner confirmation is removed.}}",
+      resultTitle: "Assignment result",
+      totals: "{assigned} assigned · {unchanged} unchanged · {notAssigned} not assigned",
+      outcome: {
+        ASSIGNED: "Assigned",
+        ALREADY_ASSIGNED: "No change: already held by this person",
+        STALE: "Not assigned: someone else just updated this lead",
+        CLOSED: "Not assigned: the lead is closed",
+        NOT_FOUND: "Not assigned: lead not found, or you can no longer see it",
+        other: "Not assigned",
+      },
+      retryHint: "To try again, select the leads that were not assigned in the reloaded list.",
+      unknownResult:
+        "We could not tell whether the leads were assigned. The list has been reloaded: check it before you try again. Your note is kept.",
+      conflict:
+        "The leads changed while they were being assigned, so none was assigned. The list has been reloaded. Your note is kept.",
+    });
+  });
+
+  it("formats the survey line in the singular and the plural, with the Survey Scheduled label (D-9)", () => {
+    const one = t("surveyMoves", { count: 1, name: "Lan Nguyen" });
+    const three = t("surveyMoves", { count: 3, name: "Lan Nguyen" });
+    expect(one).toBe(
+      "1 of them is in Survey Scheduled: if its survey is still scheduled, the survey moves to Lan Nguyen and any owner confirmation is removed.",
+    );
+    expect(three).toBe(
+      "3 of them are in Survey Scheduled: a survey still scheduled moves to Lan Nguyen and any owner confirmation is removed.",
+    );
+    for (const text of [one, three]) expect(text).toContain(en.OwnerLeads.status.SURVEY_SCHEDULED);
+  });
+
+  it("formats the counts, the summary and the totals", () => {
+    expect(t("selected", { count: 1 })).toBe("1 lead selected");
+    expect(t("selected", { count: 2 })).toBe("2 leads selected");
+    expect(t("title", { count: 2 })).toBe("Assign 2 leads");
+    expect(t("summary", { count: 2, name: "Lan Nguyen" })).toBe("2 leads will be assigned to Lan Nguyen.");
+    expect(t("heldByOthers", { count: 0 })).toBe("None of them is held by someone else.");
+    expect(t("heldByOthers", { count: 2 })).toBe(
+      "2 of them are held by someone else now. Those people lose access at once.",
+    );
+    expect(t("totals", { assigned: 1, unchanged: 0, notAssigned: 1 })).toBe("1 assigned · 0 unchanged · 1 not assigned");
+  });
+
+  it("has no text that reads like the list total, which the E2E helpers wait for", () => {
+    const listTotal = /^[\d,]+ leads?$/;
+    const keys = leaves(en.OwnerLeads.bulkAssign).map(([key]) => key);
+    const offenders = [1, 2, 21].flatMap((count) =>
+      keys
+        .map((key) =>
+          t(key as Parameters<typeof t>[0], {
+            count,
+            name: "Lan Nguyen",
+            code: "SV-E2EA-AA2A",
+            assigned: count,
+            unchanged: count,
+            notAssigned: count,
+          }),
+        )
+        .filter((text) => listTotal.test(text)),
+    );
+    expect(offenders).toEqual([]);
   });
 });
 

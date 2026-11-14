@@ -1,6 +1,6 @@
 {
   "contract": "sunvibe-server/api/openapi.json",
-  "sha256": "012d7eaf6cbf12eb8de9a857c7b8ba67224dd6bcb021112268b1e9fb94bcbf64",
-  "serverCommit": "80a984e57346b5c80ef6b9177527bcc5cae6eaac",
+  "sha256": "13daca8cadf0614db2995506d5f3d30c1fc3ee12dbe8f6e7acefd65e82bb1be9",
+  "serverCommit": "7bfe3a30de3a4f556ae5a0fb5c2e76cf24635c75",
   "serverContractCommitted": true
 }

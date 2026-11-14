@@ -31,6 +31,18 @@ export function selectionBody(selected: readonly string[], block: Pick<IntakeBlo
   return { spaceIds: [...selected], expectedVersion: block.version ?? null };
 }
 
+/**
+ * Whether the chosen parts differ from the stored selection: always on a first save, otherwise when they are not the
+ * same set in any order. The server answers the same parts again with no change (property-create SV-202).
+ */
+export function selectionChanged(selected: readonly string[], block: Pick<IntakeBlock, "selection">): boolean {
+  const stored = block.selection?.spaceIds;
+  if (stored === undefined) return true;
+  const chosen = new Set(selected);
+  const kept = new Set(stored);
+  return chosen.size !== kept.size || [...kept].some((spaceId) => !chosen.has(spaceId));
+}
+
 /** The selected spaces of the source, in its order. */
 export function selectedSpaces(block: IntakeBlock): IntakeSpace[] {
   const selected = new Set(block.selection?.spaceIds ?? []);

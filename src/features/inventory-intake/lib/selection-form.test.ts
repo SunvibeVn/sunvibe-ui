@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { IntakeBlock } from "../types";
 
-import { initialSelection, selectedSpaces, selectionBody, selectionProblem, spaceLabel, toggleSpace } from "./selection-form";
+import { initialSelection, selectedSpaces, selectionBody, selectionChanged, selectionProblem, spaceLabel, toggleSpace } from "./selection-form";
 
 const whole: IntakeBlock = { source: { rentalScope: "WHOLE", spaces: [{ spaceId: "S1" }] } };
 const parts: IntakeBlock = { source: { rentalScope: "PARTS", spaces: [{ spaceId: "S1" }, { spaceId: "S2" }, { spaceId: "S3" }] } };
@@ -47,5 +47,26 @@ describe("the selection form", () => {
     expect(spaceLabel({ code: "P101", location: "Floor 1" })).toBe("P101 · Floor 1");
     expect(spaceLabel({ code: "P101", location: null })).toBe("P101");
     expect(spaceLabel({})).toBe("");
+  });
+});
+
+describe("a changed selection (property-create SV-202)", () => {
+  const stored = { selection: { spaceIds: ["S1", "S2"] } };
+
+  it("a first save always counts as a change", () => {
+    expect(selectionChanged(["S1"], {})).toBe(true);
+    expect(selectionChanged(["S1"], { selection: null })).toBe(true);
+  });
+
+  it("the stored parts in any order are no change", () => {
+    expect(selectionChanged(["S2", "S1"], stored)).toBe(false);
+    expect(selectionChanged(["S1", "S2"], stored)).toBe(false);
+  });
+
+  it("another set is a change", () => {
+    expect(selectionChanged(["S1"], stored)).toBe(true);
+    expect(selectionChanged(["S1", "S2", "S3"], stored)).toBe(true);
+    expect(selectionChanged(["S1", "S3"], stored)).toBe(true);
+    expect(selectionChanged([], stored)).toBe(true);
   });
 });

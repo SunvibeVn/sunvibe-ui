@@ -15,6 +15,8 @@ import { createListFlash } from "./list-flash";
  * `activity`, `entryStatus` (the chosen STATUS) and `duplicate` (pasted link or code of the original): the new history
  * entry (owner 2026-10-23, D-4).
  * `assignNote`: the assign dialog.
+ * `bulkAssignNote`: the note of the bulk assignment of the list, a list draft with `leadId` "" (acquisition-owner-lead-
+ * bulk-assign spec 6.2).
  * `survey*` and `requirement`: the survey dialogs and the requirement change; each keeps all its fields as one JSON
  * text (`writeFormDraft`), the change dialog with the appointment version it was typed for.
  * `checklistIntake`: the intake declaration of a checklist start by someone other than the performer.
@@ -25,6 +27,7 @@ export type DraftForm =
   | "entryStatus"
   | "duplicate"
   | "assignNote"
+  | "bulkAssignNote"
   | "surveyBook"
   | "surveyChange"
   | "surveyConfirm"

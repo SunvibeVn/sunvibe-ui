@@ -457,6 +457,23 @@ export async function findLeadLink(page: Page, lead: FixtureLead): Promise<Locat
   return leadLink(page, lead);
 }
 
+/**
+ * Expects `lead` to be on no page of the list on screen. An empty list shows no "N leads" count (only its empty
+ * message), so this waits for either of the two, then searches every page as findLeadLink does when a count is shown.
+ * Still fails when the lead is listed: the lead's link must then have a count of 0 on every page.
+ */
+export async function expectLeadAbsent(page: Page, lead: FixtureLead, message?: string): Promise<void> {
+  await expectListSettled(page);
+  const count = byText(page, /^[\d,]+ leads?$/);
+  const empty = byText(page, /^There are no .*leads\.$|^No leads match the filters\.$/);
+  await expect(count.or(empty).first()).toBeVisible({ timeout: 20_000 });
+  if ((await empty.count()) > 0) {
+    await expect(leadLink(page, lead), message).toHaveCount(0);
+    return;
+  }
+  await expect(await findLeadLink(page, lead), message).toHaveCount(0);
+}
+
 /** Opens a lead from the list on screen by a click (turning pages to find it) and waits for its detail. */
 export async function openLead(page: Page, lead: FixtureLead): Promise<void> {
   await (await findLeadLink(page, lead)).click();
