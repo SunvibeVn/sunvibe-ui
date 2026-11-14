@@ -20,8 +20,9 @@ import {
 } from "./support/staff";
 
 // Submission and review of a survey checklist (survey-checklist submission spec 6.4; U-1..U-5), the flow in one line: the
-// SALE fills and submits, the leader returns it for documents, the SALE starts revision #2, removes one carried photo
-// and submits again, the leader passes it and the lead is Qualified. NOT_INDEPENDENT is covered by the server tests
+// SALE fills and submits, the leader returns it for documents with one kitchen photo not accepted, the SALE starts
+// revision #2, removes every carried kitchen photo (SV-211 P-1: the count that came over is not asserted, two on the
+// server before SV-211 and one after it), uploads a new one and submits again, the leader passes it and the lead is Qualified. NOT_INDEPENDENT is covered by the server tests
 // (S-5). Two answers are changed in the browser: a refusal whose read ends the review, and a 500 after the real decision
 // committed (spec 9.5). Budget: 2 sign-ins (SALE, SALE_LEADER), navigation by links but for one crafted URL and one
 // reload. No trace, video or screenshot in this project (playwright.workspace.config.ts): no photo may land in a file of
@@ -392,14 +393,30 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     const g3 = panel(sale, "G3 Size and layout");
     await expect(group(g3, "Area (m2)")).toContainText(`Measured at survey #1 by ${fixture.sale.name}`);
 
+    // How many photos come over is the server's business (SV-211 stops copying the refused one): the test counts none. It
+    // takes every carried card out of the Kitchen group of Space P1, one by one, until the group holds none.
     const g7 = panel(sale, "G7 Photos");
-    await expect(g7.getByText(R.carried, { exact: true })).toHaveCount(5, { timeout: 30_000 });
-    const kitchen = g7.getByRole("listitem").filter({ hasText: R.carried }).filter({ has: sale.getByRole("button", { name: R.removeCarried }) });
-    await kitchen.nth(2).getByRole("button", { name: R.removeCarried, exact: true }).click();
+    // The group is a div of its heading and its cards, with no role of its own: the heading's parent is the group.
+    const kitchenGroup = g7.getByRole("heading", { level: 4, name: "Space P1 · Kitchen", exact: true }).locator("xpath=..");
+    const carriedKitchen = kitchenGroup.getByRole("listitem").filter({ hasText: R.carried });
     const confirm = sale.getByRole("dialog", { name: /from this revision\?$/ });
-    await expect(confirm.getByText("The photo leaves this revision only. It stays in revision #1 and its file is kept.", { exact: true })).toBeVisible();
-    await confirm.getByRole("button", { name: R.removeCarried, exact: true }).click();
-    await expect(g7.getByText(R.carried, { exact: true })).toHaveCount(4, { timeout: 30_000 });
+    await expect(carriedKitchen.first()).toBeVisible({ timeout: 30_000 });
+    for (let left = await carriedKitchen.count(); left > 0; left = await carriedKitchen.count()) {
+      await carriedKitchen.first().getByRole("button", { name: R.removeCarried, exact: true }).click();
+      await expect(confirm.getByText("The photo leaves this revision only. It stays in revision #1 and its file is kept.", { exact: true })).toBeVisible();
+      await confirm.getByRole("button", { name: R.removeCarried, exact: true }).click();
+      await expect(carriedKitchen).toHaveCount(left - 1, { timeout: 30_000 });
+      await expect(confirm).toHaveCount(0);
+    }
+
+    // No kitchen photo is left, so the required pair is missing: the panel names the gate and offers no Submit.
+    await expect(submitPanel(sale).getByText(R.firstGate, { exact: true })).toBeVisible({ timeout: 30_000 });
+    await expect(submitPanel(sale).getByRole("button", { name: R.submit, exact: true })).toHaveCount(0);
+
+    // A new kitchen photo fills the pair again once its upload row reads Ready.
+    await expect(uploadForm(g7)).toBeVisible({ timeout: 90_000 });
+    await upload(g7, "Space P1", "Kitchen", await drawnJpeg(sale, "kitchen three", 250));
+    await expect(uploadRows(g7).filter({ hasText: "Ready" })).toHaveCount(1, { timeout: 180_000 });
 
     await expect(submitPanel(sale).getByRole("button", { name: R.submit, exact: true })).toBeVisible({ timeout: 30_000 });
     await submitRevision(sale);
@@ -421,6 +438,8 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     const earlier = panel(leader, "Earlier decisions");
     await expect(earlier).toContainText("Checklist #1: Needs changes (documents)", { timeout: 20_000 });
     await expect(earlier).toContainText(R.reason);
+    // RU-2: revision #2 does not hold the refused photo, so the mark reads by its pair alone, with no photo number.
+    await expect(earlier.getByText(`Space P1 · Kitchen: ${R.markReason}`, { exact: true })).toBeVisible();
 
     const form = panel(leader, "Decision");
     await group(form, "Outcome").getByRole("radio", { name: "Passed", exact: true }).check();
