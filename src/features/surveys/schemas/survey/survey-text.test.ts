@@ -30,6 +30,12 @@ describe("requiredText and optionalText (BR-4, A-14, A-24)", () => {
     expect(first(requiredText(100).safeParse("call 0905 123 456"))).toBe("phone");
     expect(first(optionalText(100).safeParse("call 0905 123 456"))).toBe("phone");
   });
+
+  it("keeps a note with a date and time and refuses a mobile after a floor number", () => {
+    // Phone detector spec 2026-11-15, AC-1 and AC-2 (SV-212).
+    expect(first(requiredText(2000).safeParse("Gặp chủ 06.11.2026 09:00"))).toBeNull();
+    expect(first(requiredText(2000).safeParse("Tầng 3 0905 123 456"))).toBe("phone");
+  });
 });
 
 describe("durations (BR-4)", () => {
