@@ -344,6 +344,15 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(step(sale, I.section)).toContainText("Completed");
     await expect(historySection(sale)).toContainText("Intake #1 completed");
   });
+
+  test("eligibility_afterCompletion_unitCanGetAnAgreement (UI-5, brokerage-agreement US-1 AC-1)", async () => {
+    // The fixture's Sale is the assignee; the owner is a non-staff account with the OWNER/UNVERIFIED row the completion writes.
+    const eligibility = mainArea(sale).getByRole("region", { name: "Agreement eligibility", exact: true });
+    await expect(eligibility).toBeVisible({ timeout: 20_000 });
+    await expect(eligibility.getByRole("listitem")).toHaveCount(1, { timeout: 20_000 });
+    await expect(eligibility.getByRole("listitem")).toContainText("Can get an agreement");
+    await expect(eligibility).not.toContainText("Only the Sale assigned to this lead drafts an agreement.");
+  });
 });
 
 // No fixture reaches a case, so the answers are stubbed: this is about what the pages do with them. Budget: 1 login.

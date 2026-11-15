@@ -1688,7 +1688,9 @@
       },
       "unitReasons": {
         "RESTRICTED": "Restricted by a manager",
-        "AVAILABILITY_DIFFERS": "Availability differs"
+        "AVAILABILITY_DIFFERS": "Availability differs",
+        "PROPERTY_STOP": "Stopped for the whole property",
+        "UNIT_STOP": "Stopped for this unit"
       },
       "missing": {
         "AGREEMENT": "Brokerage agreement",
@@ -2132,6 +2134,26 @@
       "checkAgain": "Check again",
       "phraseWaiting": "If a Sunvibe manager calls you with a phrase, press Check again and enter it here.",
       "saving": "Saving…"
+    }
+  },
+  "BrokerageAgreement": {
+    "eligibility": {
+      "title": "Agreement eligibility",
+      "loading": "Loading the agreement eligibility…",
+      "loadFailed": "The agreement eligibility could not be read.",
+      "retry": "Try again",
+      "supportCode": "Support code: {correlationId}",
+      "eligible": "Can get an agreement",
+      "notEligible": "Cannot get an agreement yet",
+      "noCode": "A unit with no code",
+      "assignedOnly": "Only the Sale assigned to this lead drafts an agreement.",
+      "reasons": {
+        "BASIS": "The intake result of this lead is not usable now.",
+        "PROPERTY": "Stopped for the whole property.",
+        "UNIT": "Stopped for this unit.",
+        "OWNER": "The owner on record does not meet the conditions: one current owner, the declared owner, an individual whose account can sign in and holds no staff role.",
+        "OTHER": "Another reason stops it."
+      }
     }
   },
   "TestEnvironment": {

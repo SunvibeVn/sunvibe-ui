@@ -8,6 +8,7 @@ import { ArrowLeftIcon } from "@/components/icons";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { ForbiddenNotice, useSession } from "@/features/auth/client";
+import { EligibilitySection } from "@/features/brokerage-agreement";
 import { IntakeSection } from "@/features/inventory-intake";
 import { type LeadDetail, type LeadSummary, LIST_PATH } from "@/features/lead-shared";
 import { lastListUrl, listFlash } from "@/features/lead-shared/client";
@@ -342,6 +343,7 @@ export function LeadDetailView({ leadId }: { leadId: string }) {
           </LeadSurveyProvider>
         </SurveyPanelProvider>
         <IntakeSection leadId={leadId} refreshKey={current.lead.version} />
+        <EligibilitySection leadId={leadId} refreshKey={current.lead.version} />
         <LeadHistory activities={current.lead.activities ?? NO_ITEMS} />
       </div>
     </LeadDetailProvider>
