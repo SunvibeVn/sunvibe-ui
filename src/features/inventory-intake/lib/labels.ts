@@ -72,6 +72,8 @@ export const READINESS_REASON_LABEL: Record<ReadinessReason, IntakeKey> = {
 export const UNIT_REASON_LABEL: Record<UnitReason, IntakeKey> = {
   RESTRICTED: "readiness.unitReasons.RESTRICTED",
   AVAILABILITY_DIFFERS: "readiness.unitReasons.AVAILABILITY_DIFFERS",
+  PROPERTY_STOP: "readiness.unitReasons.PROPERTY_STOP",
+  UNIT_STOP: "readiness.unitReasons.UNIT_STOP",
 };
 
 export const MISSING_FOR_BROKERAGE_LABEL: Record<MissingForBrokerage, IntakeKey> = {
