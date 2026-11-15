@@ -163,7 +163,7 @@ function keyPaths(node: unknown): string[] {
 }
 
 const VIETNAMESE_LETTER = /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
-const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys", "InventoryIntake"];
+const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys", "InventoryIntake", "BrokerageAgreement"];
 
 describe("TestEnvironment, the banner of every host but www (W35a Task U1)", () => {
   it("vi.json has the D-10 text verbatim", () => {
@@ -226,7 +226,7 @@ describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
 
 describe("no workspace file reads vi.json (W14-20)", () => {
   const root = fileURLToPath(new URL("..", import.meta.url));
-  const dirs = ["features/owner-leads", "features/surveys", "features/lead-shared", "features/workspace", "features/inventory-intake", "app/(workspace)"];
+  const dirs = ["features/owner-leads", "features/surveys", "features/lead-shared", "features/workspace", "features/inventory-intake", "features/brokerage-agreement", "app/(workspace)"];
   const allowed = new Set([path.join("features", "workspace", "components", "workspace-link.tsx")]);
 
   function files(dir: string): string[] {
