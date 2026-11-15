@@ -21,9 +21,11 @@ import {
 
 // Submission and review of a survey checklist (survey-checklist submission spec 6.4; U-1..U-5), the flow in one line: the
 // SALE fills and submits, the leader returns it for documents and does not accept one of the two kitchen photos, the
-// SALE starts revision #2, which does not carry the refused photo, removes the one carried kitchen photo, uploads a new
-// kitchen photo and submits again, the leader passes it and the lead is Qualified. U-5 counts the carried photos: four,
-// one of them in the kitchen group (survey-checklist SV-211, RU-1). NOT_INDEPENDENT is covered by the server tests
+// SALE starts revision #2, which does not carry the refused photo and names it, removes the one carried kitchen photo,
+// uploads both kitchen files of revision #1 again and submits again, the leader sees which of them repeats the refused
+// image, passes it and the lead is Qualified. U-5 counts the carried photos: four, one of them in the kitchen group
+// (survey-checklist SV-211, RU-1). Revision #2 names the refused photo it did not carry, and the leader's Review tab
+// flags the file that repeats it (survey-checklist SV-310, RU-3). NOT_INDEPENDENT is covered by the server tests
 // (S-5). Two answers are changed in the browser: a refusal whose read ends the review, and a 500 after the real decision
 // committed (spec 9.5). Budget: 2 sign-ins (SALE, SALE_LEADER), navigation by links but for one crafted URL and one
 // reload. No trace, video or screenshot in this project (playwright.workspace.config.ts): no photo may land in a file of
@@ -54,6 +56,7 @@ const R = {
   startRevision: "Start revision #2",
   carried: "From revision #1",
   removeCarried: "Remove from this revision",
+  notCarried: "Not carried into this revision",
   passedScope: "Internal site record only. It is not a legal, ownership, photo-permission or advertising approval.",
   keptText: "What you typed is kept here, read-only.",
   leaveReview: "Your review is not sent yet and leaving drops it. Leave this page?",
@@ -66,6 +69,10 @@ const CHECKLIST_READ = /\/api\/v1\/staff\/survey-checklists\/[0-9A-Z]{26}$/;
 const KITCHEN_MARK = /^Not accepted: Photo #\d+ · Space P1 · Kitchen$/;
 /** The pair of the kitchen photos: the heading of their group in the grid, and the mark of a photo revision #2 does not hold (RU-2). */
 const KITCHEN_PAIR = "Space P1 · Kitchen";
+/** The line of the refused kitchen photo in revision #2's notice of photos not carried (survey-checklist SV-310, RU-3). */
+const NOT_CARRIED_LINE = `${KITCHEN_PAIR}: ${R.markReason} (revision #1)`;
+/** The Review tab's flag under the re-uploaded file that repeats the refused image (survey-checklist SV-310, RU-3). */
+const SAME_CONTENT_LINE = `Same image as a photo not accepted in revision #1 (${KITCHEN_PAIR}): ${R.markReason}`;
 
 const panel = (page: Page, title: string): Locator => mainArea(page).getByRole("region", { name: title, exact: true });
 const group = (scope: Locator, name: string): Locator => scope.getByRole("group", { name, exact: true });
@@ -173,6 +180,8 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
   let leaderContext: BrowserContext;
   let leader: Page;
   let firstChecklistUrl = "";
+  /** The two kitchen files of revision #1, uploaded again in revision #2 (U-5). */
+  const kitchenFiles: Payload[] = [];
 
   test.beforeAll(async ({ browser }) => {
     test.skip(!(await workspaceE2eReady()), WORKSPACE_E2E_SKIP_REASON);
@@ -262,7 +271,9 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
       ["Space P1", "Kitchen", "kitchen two"],
       ["Space P1", "Bathroom", "bathroom"],
     ] as const) {
-      await upload(g7, placement, category, await drawnJpeg(sale, label, (hue += 40)));
+      const file = await drawnJpeg(sale, label, (hue += 40));
+      if (category === "Kitchen") kitchenFiles.push(file);
+      await upload(g7, placement, category, file);
     }
     await expect(uploadRows(g7).filter({ hasText: "Ready" })).toHaveCount(5, { timeout: 180_000 });
 
@@ -384,7 +395,7 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     await expect(historySection(leader)).not.toContainText(R.markReason);
   });
 
-  test("U-5, RU-1: revision #2 keeps the values and the accepted photos; a carried photo leaves this revision only", async () => {
+  test("U-5, RU-1, RU-3: revision #2 keeps the values and the accepted photos; a carried photo leaves this revision only", async () => {
     await sale.getByRole("link", { name: "Back to the lead" }).click();
     await expectLeadDetail(sale, L15);
     await surveySection(sale).getByRole("button", { name: R.startRevision, exact: true }).click();
@@ -406,6 +417,10 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     await expect(kitchenCarried.first()).toBeVisible({ timeout: 30_000 });
     await expect(g7.getByText(R.carried, { exact: true })).toHaveCount(4, { timeout: 30_000 });
     await expect(kitchenCarried).toHaveCount(1);
+    // RU-3: the Photos group names the refused photo this revision does not hold (survey-checklist SV-310).
+    const notCarried = g7.getByRole("region", { name: R.notCarried, exact: true }).getByRole("listitem");
+    await expect(notCarried).toHaveCount(1);
+    await expect(notCarried).toHaveText(NOT_CARRIED_LINE);
     const confirm = sale.getByRole("dialog", { name: /from this revision\?$/ });
     for (let left = await kitchenCarried.count(); left > 0; left = await kitchenCarried.count()) {
       await kitchenCarried.first().click();
@@ -419,10 +434,12 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     await expect(submitPanel(sale).getByText(R.firstGate, { exact: true })).toBeVisible({ timeout: 30_000 });
     await expect(submitPanel(sale).getByRole("button", { name: R.submit, exact: true })).toHaveCount(0);
 
-    // A new kitchen photo completes the pair again.
+    // Both kitchen files of revision #1 complete the pair again: one is the refused image, uploaded as a new photo
+    // (survey-checklist SV-211 D3), the other the accepted one the SALE just removed from this revision.
     await expect(uploadForm(g7)).toBeVisible({ timeout: 90_000 });
-    await upload(g7, "Space P1", "Kitchen", await drawnJpeg(sale, "kitchen three", 250));
-    await expect(uploadRows(g7).filter({ hasText: "Ready" })).toHaveCount(1, { timeout: 180_000 });
+    expect(kitchenFiles).toHaveLength(2);
+    for (const file of kitchenFiles) await upload(g7, "Space P1", "Kitchen", file);
+    await expect(uploadRows(g7).filter({ hasText: "Ready" })).toHaveCount(2, { timeout: 180_000 });
 
     await expect(submitPanel(sale).getByRole("button", { name: R.submit, exact: true })).toBeVisible({ timeout: 30_000 });
     await submitRevision(sale);
@@ -437,7 +454,7 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     await expect(mainArea(sale).getByText("Ready", { exact: true })).toHaveCount(5, { timeout: 30_000 });
   });
 
-  test("U-3, U-4: the leader sees the earlier decision, passes revision #2 and the lead is Qualified in detail and list", async () => {
+  test("U-3, U-4, RU-3: the leader sees the earlier decision, passes revision #2 and the lead is Qualified in detail and list", async () => {
     await openReviews(leader);
     await queueRow(leader).getByRole("link", { name: "Review checklist #2", exact: true }).click();
     await expect(leader).toHaveURL(/\?tab=review$/, { timeout: 20_000 });
@@ -446,6 +463,8 @@ test.describe("Checklist submission and review (survey-checklist submission W18b
     await expect(earlier).toContainText(R.reason);
     // RU-2: revision #2 does not hold the refused photo, so its mark reads by the pair alone, with no photo number.
     await expect(earlier.getByText(`${KITCHEN_PAIR}: ${R.markReason}`, { exact: true })).toBeVisible();
+    // RU-3: one of the two re-uploaded kitchen files repeats the refused image; the flag blocks nothing (survey-checklist SV310-D1).
+    await expect(panel(leader, "Submitted photos").getByText(SAME_CONTENT_LINE, { exact: true })).toHaveCount(1, { timeout: 30_000 });
 
     const form = panel(leader, "Decision");
     await group(form, "Outcome").getByRole("radio", { name: "Passed", exact: true }).check();
