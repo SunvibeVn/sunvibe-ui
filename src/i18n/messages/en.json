@@ -1688,7 +1688,9 @@
       },
       "unitReasons": {
         "RESTRICTED": "Restricted by a manager",
-        "AVAILABILITY_DIFFERS": "Availability differs"
+        "AVAILABILITY_DIFFERS": "Availability differs",
+        "PROPERTY_STOP": "Stopped for the whole property",
+        "UNIT_STOP": "Stopped for this unit"
       },
       "missing": {
         "AGREEMENT": "Brokerage agreement",

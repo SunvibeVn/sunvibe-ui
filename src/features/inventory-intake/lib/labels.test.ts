@@ -44,7 +44,7 @@ describe("intake labels", () => {
     ];
     expect(Object.keys(READINESS_REASON_LABEL).sort()).toEqual([...reasons].sort());
     expect(Object.keys(READINESS_STATE_LABEL).sort()).toEqual(["ENDED", "NONE", "SUSPENDED", "USABLE"]);
-    expect(Object.keys(UNIT_REASON_LABEL).sort()).toEqual(["AVAILABILITY_DIFFERS", "RESTRICTED"]);
+    expect(Object.keys(UNIT_REASON_LABEL).sort()).toEqual(["AVAILABILITY_DIFFERS", "PROPERTY_STOP", "RESTRICTED", "UNIT_STOP"]);
     expect(Object.keys(MISSING_FOR_BROKERAGE_LABEL).sort()).toEqual([
       "ADVERTISING_PERMISSION",
       "AGREEMENT",

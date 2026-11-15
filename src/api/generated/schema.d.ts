@@ -728,6 +728,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/owner-leads/{leadId}/brokerage-eligibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Whether each unit of the lead's latest completed intake can get a brokerage agreement, and the reason groups when not */
+        get: operations["getBrokerageEligibility"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-leads/{leadId}/intent-changes": {
         parameters: {
             query?: never;
@@ -997,7 +1014,7 @@ export interface paths {
         put?: never;
         /**
          * Change the status of an owner lead (SALE: own leads only; SALE_LEADER, SALES_MANAGER, ADMIN, SUPER_ADMIN)
-         * @description Closing (DUPLICATE, REJECTED, WITHDRAWN) needs a reason; DUPLICATE also needs duplicateOfLeadId, a lead the caller can see.
+         * @description Closing (DUPLICATE, REJECTED, WITHDRAWN) needs a reason; DUPLICATE also needs duplicateOfLeadId, a lead the caller can see. A lead that another lead names as its original cannot become DUPLICATE (409 INVALID_STATE_TRANSITION).
          */
         post: operations["changeStatus"];
         delete?: never;
@@ -1845,6 +1862,25 @@ export interface components {
              * @description Whole minute, from the current minute to 90 days ahead
              */
             startAt: string;
+        };
+        BrokerageEligibility: {
+            /**
+             * @description The readiness state of the lead's latest completed intake; NONE without one
+             * @enum {string}
+             */
+            basisState?: "NONE" | "USABLE" | "SUSPENDED" | "ENDED";
+            /** @description One per unit the intake maps, in the readiness order; empty with NONE */
+            units?: components["schemas"]["BrokerageEligibilityUnit"][];
+            /** @description The caller is the lead's current assignee and holds SALE or SALE_LEADER */
+            viewerIsAssignedSale?: boolean;
+        };
+        BrokerageEligibilityUnit: {
+            eligible?: boolean;
+            /** @description BASIS: the lead's intake result is not usable now; PROPERTY: a stop for the whole property; UNIT: a stop of this unit; OWNER: the owner on record does not meet brokerage-agreement BR-4. No group names a lead. */
+            reasonGroups?: ("BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /** @description Null when the unit row is missing */
+            unitCode?: string | null;
+            unitId?: string;
         };
         /** @description Cancel a scheduled survey appointment */
         CancelAppointmentRequest: {
@@ -4438,7 +4474,8 @@ export interface components {
             units?: components["schemas"]["IntakeReadinessUnit"][];
         };
         IntakeReadinessUnit: {
-            reasons?: ("RESTRICTED" | "AVAILABILITY_DIFFERS")[];
+            /** @description PROPERTY_STOP: a whole-asset stop of brokerage-agreement BR-3 from another lead or from the property; UNIT_STOP: a stop of this unit from another lead. Neither names the lead. */
+            reasons?: ("RESTRICTED" | "AVAILABILITY_DIFFERS" | "PROPERTY_STOP" | "UNIT_STOP")[];
             unitCode?: string | null;
             unitId?: string;
             usable?: boolean;
@@ -8336,6 +8373,55 @@ export interface operations {
             };
         };
     };
+    getBrokerageEligibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                leadId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The eligibility of every unit */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageEligibility"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not staff */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     changeIntent: {
         parameters: {
             query?: never;
@@ -9415,7 +9501,7 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description INVALID_STATE_TRANSITION (field toStatus, allowedValues lists the statuses allowed now) or CONCURRENT_MODIFICATION (field expectedVersion) */
+            /** @description INVALID_STATE_TRANSITION (field toStatus; allowedValues lists the statuses the lead's status may move to, except that DUPLICATE may be listed for a lead that other leads name as their original and is still refused: closing such a lead as DUPLICATE answers this code without DUPLICATE in allowedValues) or CONCURRENT_MODIFICATION (field expectedVersion) */
             409: {
                 headers: {
                     [name: string]: unknown;
