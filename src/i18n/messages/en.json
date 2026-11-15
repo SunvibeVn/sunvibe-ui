@@ -732,7 +732,8 @@
           "loadFailed": "The photos could not be loaded.",
           "held": "On hold: no image for now.",
           "notAccepted": "Not accepted",
-          "reason": "Why it is not accepted"
+          "reason": "Why it is not accepted",
+          "sameContent": "Same image as a photo not accepted in revision #{no} ({pair}): {reason}"
         },
         "form": {
           "title": "Decision",
@@ -1455,6 +1456,11 @@
           "text": "The photo leaves this revision only. It stays in revision #{from} and its file is kept.",
           "correction": "Someone else uploaded this photo. Removing it from this revision needs a correction.",
           "rateLimited": "Too many tries on this photo. Try again in {minutes, plural, one {# minute} other {# minutes}}."
+        },
+        "notCarried": {
+          "title": "Not carried into this revision",
+          "text": "A reviewer did not accept these photos, so this revision does not hold them. They stay in their earlier revision.",
+          "line": "{pair}: {reason} (revision #{no})"
         },
         "remove": {
           "title": "Remove photo #{no}?",

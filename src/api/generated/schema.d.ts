@@ -2977,10 +2977,12 @@ export interface components {
             /** @description Present exactly when state is VALUE */
             value: components["schemas"]["ChecklistObservedLocation"] | null;
         };
-        /** @description Whether the checklist's photos are available and this viewer could upload now */
+        /** @description Whether the checklist's photos are available and this viewer could upload now, and the refused photos of the previous revision that this revision does not hold */
         ChecklistMedia: {
             /** @description Uploads are on or the checklist already has photos; readiness then lists evidence per required pair */
             available?: boolean;
+            /** @description The photos of the previous revision's frozen set that a decision on an earlier revision of the visit did not accept and that this revision does not hold, one per photo with its newest refusal, newest revision first; empty when none */
+            refusedNotCarried?: components["schemas"]["ChecklistRefusedPhoto"][];
             /**
              * Format: int64
              * @description The set version the evidence items of readiness were computed from; 0 without photos
@@ -3426,6 +3428,27 @@ export interface components {
             unconfirmedTerms?: components["schemas"]["ChecklistUnconfirmedTerm"][];
             warnings?: components["schemas"]["ChecklistWarning"][];
         };
+        /** @description A photo a decision on an earlier revision of the visit did not accept */
+        ChecklistRefusedPhoto: {
+            /**
+             * @description The photo's category in that revision's frozen evidence
+             * @enum {string}
+             */
+            category?: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL";
+            /** @description The revision whose decision did not accept the photo */
+            checklistId?: string;
+            /**
+             * Format: int32
+             * @description The number of that revision
+             */
+            checklistNo?: number;
+            mediaId?: string;
+            /** @description The reviewer's reason for not accepting the photo */
+            reason?: string;
+            spaceCode?: string | null;
+            /** @description The photo's space in that revision's frozen evidence; null for the asset */
+            spaceId?: string | null;
+        };
         /** @description A frozen photo the reviewer does not accept */
         ChecklistRejectedEvidenceRequest: {
             mediaId: string | null;
@@ -3864,6 +3887,8 @@ export interface components {
             category?: "EXTERIOR_ACCESS" | "MAIN_SPACE" | "KITCHEN" | "BATHROOM" | "SHARED_KITCHEN" | "SHARED_BATHROOM" | "SHARED_AMENITY" | "DETAIL";
             fullSha256?: string;
             mediaId?: string;
+            /** @description The photos that a decision on an earlier revision of the visit did not accept and whose source content is the same as this photo's, one per refusing decision, newest revision first; empty when none. It informs the reviewer and blocks no decision */
+            refusedSameContent?: components["schemas"]["ChecklistRefusedPhoto"][];
             rejectionReason?: string | null;
             spaceCode?: string | null;
             spaceId?: string | null;

@@ -45,6 +45,8 @@ export type ChecklistRequalified = Schemas["ChecklistRequalifiedResponse"];
 export type ChecklistRequalification = Schemas["ChecklistRequalificationResponse"];
 export type ChecklistSubmission = Schemas["ChecklistSubmissionResponse"];
 export type ChecklistSubmittedEvidence = Schemas["ChecklistSubmittedEvidence"];
+/** A photo a decision on an earlier revision of the visit did not accept (survey-checklist SV-310). */
+export type ChecklistRefusedPhoto = Schemas["ChecklistRefusedPhoto"];
 export type ChecklistDecision = Schemas["ChecklistDecisionResponse"];
 export type ChecklistReview = Schemas["ChecklistReviewResponse"];
 export type ChecklistPassed = Schemas["ChecklistPassedResponse"];
