@@ -7,6 +7,7 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { mediaErrorText } from "../../lib/checklist/media-messages";
+import type { RefusedPhotoLine } from "../../lib/checklist/refused-photo-model";
 import { type EvidenceRow, type PhotoMark, REJECTION_REASON_MAX } from "../../lib/checklist/review-model";
 import { photoTitle } from "../../lib/checklist/status-model";
 import type { SurveyProblem } from "../../schemas/survey/survey-text";
@@ -19,20 +20,24 @@ import { PhotoViewer } from "./photo-viewer";
 import { usePairText } from "./use-pair-text";
 
 const NO_MARK: PhotoMark = { rejected: false, reason: "" };
+const NO_REFUSED: readonly RefusedPhotoLine[] = [];
 
 type RowProps = {
   row: EvidenceRow;
   mark: PhotoMark;
+  /** The photos an earlier revision of the visit refused with this photo's image (survey-checklist SV-310). */
+  refused: readonly RefusedPhotoLine[];
   problem: SurveyProblem | undefined;
   disabled: boolean;
   onMark(mark: PhotoMark): void;
   onOpen(): void;
 };
 
-function Row({ row, mark, problem, disabled, onMark, onOpen }: RowProps) {
+function Row({ row, mark, refused, problem, disabled, onMark, onOpen }: RowProps) {
   const t = useTranslations("OwnerLeads");
   const pair = usePairText();
   const reasonId = useId();
+  const refusedId = useId();
   // The number tells two photos of one pair apart, here and in the decision the Sale reads.
   const title = photoTitle(row.card, pair(row.spaceCode, row.category), t);
   return (
@@ -52,6 +57,16 @@ function Row({ row, mark, problem, disabled, onMark, onOpen }: RowProps) {
         </div>
       )}
       <p className="break-words font-medium text-slate-900">{title}</p>
+      {/* A flag for the reviewer, not a rule: it blocks no decision (survey-checklist SV310-D1). */}
+      {refused.length > 0 && (
+        <div id={refusedId} className="space-y-1">
+          {refused.map((line) => (
+            <p key={line.key} className="break-words text-amber-800">
+              {line.text}
+            </p>
+          ))}
+        </div>
+      )}
       <label className="flex min-h-9 items-center gap-2 text-slate-800">
         <input
           type="checkbox"
@@ -59,6 +74,7 @@ function Row({ row, mark, problem, disabled, onMark, onOpen }: RowProps) {
           checked={mark.rejected}
           disabled={disabled}
           aria-label={`${t("checklist.review.evidence.notAccepted")}: ${title}`}
+          aria-describedby={refused.length > 0 ? refusedId : undefined}
           onChange={(event) => onMark({ ...mark, rejected: event.target.checked })}
         />
         {t("checklist.review.evidence.notAccepted")}
@@ -83,6 +99,8 @@ function Row({ row, mark, problem, disabled, onMark, onOpen }: RowProps) {
 type EvidenceReviewListProps = {
   rows: readonly EvidenceRow[];
   marks: Readonly<Record<string, PhotoMark>>;
+  /** The flag lines per frozen photo id: an earlier revision of the visit refused the same image (survey-checklist SV-310 RU-1). */
+  refused: Readonly<Record<string, readonly RefusedPhotoLine[]>>;
   /** Shown once the reviewer tried to send: the first problem per photo. */
   problems: Readonly<Record<string, SurveyProblem>>;
   disabled: boolean;
@@ -93,7 +111,7 @@ type EvidenceReviewListProps = {
  * The frozen photos with "Not accepted" and a reason per photo (survey-checklist submission spec 6.1, A-5): every photo
  * left unmarked counts as accepted. An ADMIN can still hold a photo from the viewer.
  */
-export function EvidenceReviewList({ rows, marks, problems, disabled, onMark }: EvidenceReviewListProps) {
+export function EvidenceReviewList({ rows, marks, refused, problems, disabled, onMark }: EvidenceReviewListProps) {
   const t = useTranslations("OwnerLeads");
   const media = useChecklistMedia();
   const [viewingId, setViewingId] = useState<string | null>(null);
@@ -120,6 +138,7 @@ export function EvidenceReviewList({ rows, marks, problems, disabled, onMark }: 
             key={row.mediaId}
             row={row}
             mark={Object.hasOwn(marks, row.mediaId) ? marks[row.mediaId] : NO_MARK}
+            refused={Object.hasOwn(refused, row.mediaId) ? refused[row.mediaId] : NO_REFUSED}
             problem={Object.hasOwn(problems, row.mediaId) ? problems[row.mediaId] : undefined}
             disabled={disabled}
             onMark={(mark) => onMark(row.mediaId, mark)}
