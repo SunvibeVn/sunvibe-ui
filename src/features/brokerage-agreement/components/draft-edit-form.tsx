@@ -29,10 +29,18 @@ import {
   withFeeRemoved,
   withValue,
 } from "../lib/draft-edit-form";
+import {
+  checkFeePolicy,
+  type FeePolicyErrors,
+  type FeePolicyValues,
+  feePolicyBody,
+  feePolicyValuesOf,
+} from "../lib/fee-policy-form";
 import type { EligibilityKey } from "../lib/reason-text";
 import { advertisingScopeText, chargeUnitText } from "../lib/terms-text";
 import type { BrokerageAgreementVersion, ChargeUnit } from "../types";
 
+import { FeePolicySection } from "./fee-policy-section";
 import { SurveyTermsPanel } from "./survey-terms-panel";
 
 type DraftEditFormProps = {
@@ -49,10 +57,10 @@ type DraftEditFormProps = {
   onReload: () => void;
 };
 
-/** What the last save left on screen: the client checks' problems, or the server's answer. */
-type EditState = { problems: DraftEditProblems; outcome: DraftEditOutcome | null; round: number };
+/** What the last save left on screen: the client checks' problems (the fee section's apart), or the server's answer. */
+type EditState = { problems: DraftEditProblems; feeErrors: FeePolicyErrors; outcome: DraftEditOutcome | null; round: number };
 
-const INITIAL: EditState = { problems: {}, outcome: null, round: 0 };
+const INITIAL: EditState = { problems: {}, feeErrors: {}, outcome: null, round: 0 };
 
 const REFUSAL_TEXT = {
   notDraft: "edit.errors.notDraft",
@@ -74,15 +82,16 @@ const CHARGE_UNITS = [
 type NumberKey = "monthlyRent" | "depositMonths" | "depositAmount" | "minimumTermMonths" | "paymentPeriodMonths";
 
 /**
- * "Edit the draft" (brokerage-agreement US-1 AC-3, AC-5, S3-D18): the dates, the public photo consent and the confirmed
- * terms of the draft, beside the survey reference whose values the Sale may copy. The values live in this component's
- * state only, never in storage or the URL (BR-17). The checks run here as the server runs them and nothing is sent while
- * one fails. "Save the draft" sends the whole draft once with the page's data version: a click while it runs sends
- * nothing. Every refusal is shown by its code and keeps the values typed.
+ * "Edit the draft" (brokerage-agreement US-1 AC-3, AC-5, S3-D18): the dates, the public photo consent, the confirmed
+ * terms and the brokerage fee (E05-S4, BR-7) of the draft, beside the survey reference whose values the Sale may copy.
+ * The values live in this component's state only, never in storage or the URL (BR-17). The checks run here as the server
+ * runs them and nothing is sent while one fails. "Save the draft" sends the whole draft once with the page's data
+ * version: a click while it runs sends nothing. Every refusal is shown by its code and keeps the values typed.
  */
 export function DraftEditForm({ agreementId, dataVersion, version, onSaved, onCancel, onReload }: DraftEditFormProps) {
   const t = useTranslations("BrokerageAgreement");
   const [form, setForm] = useState<DraftEditValues>(() => formFromVersion(version));
+  const [fee, setFee] = useState<FeePolicyValues>(() => feePolicyValuesOf(version.feePolicy));
 
   /** Set when a save is pressed, cleared when its action ends: a click meanwhile is not even queued. */
   const sending = useRef(false);
@@ -93,12 +102,17 @@ export function DraftEditForm({ agreementId, dataVersion, version, onSaved, onCa
     const round = prev.round + 1;
     try {
       const problems = draftEditProblems(form);
-      if (Object.keys(problems).length > 0) return { problems, outcome: null, round };
-      const outcome = await saveDraft(agreementId, draftEditBody(form, dataVersion));
+      const feeErrors = checkFeePolicy(fee);
+      if (Object.keys(problems).length > 0 || Object.keys(feeErrors).length > 0) {
+        return { problems, feeErrors, outcome: null, round };
+      }
+      // The fee policy is one more part of the whole draft (brokerage-agreement S4-D1).
+      const body = { ...draftEditBody(form, dataVersion), feePolicy: feePolicyBody(fee) };
+      const outcome = await saveDraft(agreementId, body);
       if (outcome.kind === "saved") onSaved();
-      return { problems: {}, outcome, round };
+      return { problems: {}, feeErrors: {}, outcome, round };
     } catch {
-      return { problems: {}, outcome: { kind: "failed" }, round };
+      return { problems: {}, feeErrors: {}, outcome: { kind: "failed" }, round };
     } finally {
       sending.current = false;
     }
@@ -114,7 +128,7 @@ export function DraftEditForm({ agreementId, dataVersion, version, onSaved, onCa
   useEffect(() => {
     if (state.round === 0) return;
     if (state.outcome !== null && state.outcome.kind !== "saved") messageRef.current?.focus();
-    else if (Object.keys(state.problems).length > 0) {
+    else if (Object.keys(state.problems).length > 0 || Object.keys(state.feeErrors).length > 0) {
       formRef.current?.querySelector<HTMLElement>('[aria-invalid="true"]')?.focus();
     }
   }, [state]);
@@ -450,6 +464,12 @@ export function DraftEditForm({ agreementId, dataVersion, version, onSaved, onCa
                 )}
               </div>
             </fieldset>
+            <FeePolicySection
+              values={fee}
+              onChange={setFee}
+              errors={state.feeErrors}
+              rejected={rejected.includes("feePolicy")}
+            />
           </fieldset>
           <div className="flex flex-wrap gap-3">
             <SubmitButton fullWidth={false} disabled={pending}>

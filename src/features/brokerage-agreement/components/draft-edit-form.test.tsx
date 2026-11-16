@@ -371,3 +371,92 @@ describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-
     expect(sent().terms.monthlyRent?.amount).toBe(7000000);
   });
 });
+
+describe("DraftEditForm, the brokerage fee (brokerage-agreement E05-S4, S4-D1, S4-D14, UF-2)", () => {
+  const f = e.feePolicy;
+
+  beforeEach(() => {
+    vi.mocked(updateDraft).mockReset();
+    vi.mocked(getSurveyTerms).mockReset();
+    vi.mocked(getSurveyTerms).mockResolvedValue({ ok: true, status: 200, replayed: false, data: EMPTY_PROPOSAL });
+  });
+
+  it("draftEditForm_save_sendsFeePolicyBesideTheTerms: one PUT of the E05-S3 body plus feePolicy; a client problem in the section sends nothing; a server 400 on a feePolicy path says to check the fee", async () => {
+    vi.mocked(updateDraft).mockResolvedValue(http(409, "AGREEMENT_NOT_DRAFT"));
+    renderForm({
+      ...BARE,
+      feePolicy: {
+        payer: "OWNER",
+        chargedWhen: "LEASE_SIGNED",
+        formula: null,
+        dueDays: 7,
+        renewal: null,
+        earlyLeaseEnd: null,
+        protectionDays: null,
+      },
+    });
+
+    // The section sits after the mandatory fees and starts from the version's fee policy.
+    const section = screen.getByRole("group", { name: f.title });
+    const fees = field(e.fees);
+    expect(fees.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(field(f.dueDays).value).toBe("7");
+
+    await saveOnce();
+    expect(sent(0)).toEqual({
+      expectedDataVersion: 4,
+      transactionType: "LONG_TERM_RENT",
+      startDate: "2027-01-01",
+      endDate: "2027-12-31",
+      photoConsent: null,
+      exteriorPhotoConsent: false,
+      terms: { monthlyRent: null, deposit: null, minimumTermMonths: null, paymentPeriodMonths: null, mandatoryFees: null },
+      feePolicy: { formula: null, dueDays: 7, renewal: null, earlyLeaseEnd: null, protectionDays: null },
+    });
+
+    type(field(f.formula), "PERCENT_OF_RENT");
+    type(fields(f.tierPercent)[0] as HTMLInputElement, "301");
+    type(field(f.protectionDays), "181");
+    fireEvent.click(saveButton());
+    expect(await screen.findByText(f.errors.percent)).toBeTruthy();
+    expect(screen.getByText(f.errors.protectionDays)).toBeTruthy();
+    await waitFor(() => expect(document.activeElement).toBe(fields(f.tierPercent)[0]));
+    expect(updateDraft).toHaveBeenCalledTimes(1);
+
+    type(fields(f.tierPercent)[0] as HTMLInputElement, "50");
+    fireEvent.click(screen.getByRole("button", { name: f.addTier }));
+    type(fields(f.tierFrom)[1] as HTMLInputElement, "12");
+    type(fields(f.tierPercent)[1] as HTMLInputElement, "100");
+    type(field(f.renewal), "NOT_CHARGED");
+    type(field(f.earlyLeaseEnd), "PARTIAL_REFUND");
+    type(field(f.refundPercent), "50");
+    type(field(f.withinMonths), "3");
+    type(field(f.protectionDays), "90");
+    vi.mocked(updateDraft).mockResolvedValueOnce(
+      http(400, "VALIDATION_FAILED", { fields: ["feePolicy.renewal.tiers[2].percent"], correlationId: "c-5" }),
+    );
+    await saveOnce();
+    expect(sent(1).feePolicy).toEqual({
+      formula: {
+        type: "PERCENT_OF_RENT",
+        tiers: [
+          { fromMonths: 1, percent: 50 },
+          { fromMonths: 12, percent: 100 },
+        ],
+        amount: null,
+        currency: null,
+        freeReason: null,
+      },
+      dueDays: 7,
+      renewal: { type: "NOT_CHARGED", tiers: null, amount: null, currency: null, freeReason: null },
+      earlyLeaseEnd: { type: "PARTIAL_REFUND", refundPercent: 50, withinMonths: 3 },
+      protectionDays: 90,
+    });
+    expect(screen.getByText(f.errors.server)).toBeTruthy();
+    expect(screen.getByText(e.errors.failed)).toBeTruthy();
+    expect(screen.getByText("Support code: c-5")).toBeTruthy();
+    expect(screen.queryByText("server text")).toBeNull();
+    // The typed values stay.
+    expect(fields(f.tierPercent).map((input) => input.value)).toEqual(["50", "100"]);
+  });
+});

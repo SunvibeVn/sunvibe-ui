@@ -66,7 +66,9 @@ export type DraftEditField =
   | "minimumTermMonths"
   | "paymentPeriodMonths"
   | "fees"
-  | `fees.${number}.${FeeField}`;
+  | `fees.${number}.${FeeField}`
+  /** The brokerage fee section (E05-S4): a server 400 on any `feePolicy...` path marks the section as a whole. */
+  | "feePolicy";
 
 export type DraftEditProblem =
   | DraftProblem
@@ -343,10 +345,12 @@ const SERVER_FIELD: Readonly<Record<string, DraftEditField>> = {
 
 /**
  * The form field of a `VALIDATION_FAILED` entry (spec section 4: paths relative to the body, Spring's form). A currency
- * marks its amount. Another path marks nothing.
+ * marks its amount. Every `feePolicy...` path marks the fee section (brokerage-agreement E05-S4, S4-D14). Another path
+ * marks nothing.
  */
 export function fieldOfServerPath(path: string): DraftEditField | null {
   if (Object.hasOwn(SERVER_FIELD, path)) return SERVER_FIELD[path] as DraftEditField;
+  if (path === "feePolicy" || path.startsWith("feePolicy.")) return "feePolicy";
   const fee = FEE_PATH.exec(path);
   if (fee === null) return null;
   const field = fee[2] === "currency" ? "amount" : (fee[2] as FeeField);
