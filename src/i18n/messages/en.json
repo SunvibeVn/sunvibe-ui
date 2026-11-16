@@ -2280,6 +2280,45 @@
       }
     },
     "edit": {
+      "open": "Edit the draft",
+      "title": "Editing the draft",
+      "transactionType": "Transaction type",
+      "interior": "Interior and common areas",
+      "consent": {
+        "yes": "Yes",
+        "no": "No",
+        "unanswered": "Not answered yet"
+      },
+      "exterior": "Exterior (front, entrance, street view)",
+      "monthlyRent": "Monthly rent (VND)",
+      "deposit": "Deposit",
+      "depositNone": "Not entered",
+      "depositMonths": "Months of rent",
+      "depositAmount": "Amount (VND)",
+      "depositValue": "Value",
+      "minimumTerm": "Minimum term (months)",
+      "paymentPeriod": "Pay every (months)",
+      "fees": "Mandatory fees",
+      "feesNotStated": "Not stated yet",
+      "feesNone": "No mandatory fee besides the rent",
+      "feesList": "These fees",
+      "feeName": "Fee name",
+      "feeBasis": "Basis",
+      "feeBasisOption": {
+        "AMOUNT": "An amount",
+        "INCLUDED": "Included in the rent",
+        "PROVIDER_TARIFF": "Provider's rate"
+      },
+      "feeAmount": "Amount (VND)",
+      "feeUnit": "Unit",
+      "feeUnitNone": "Choose a unit",
+      "addFee": "Add a fee",
+      "removeFee": "Remove",
+      "save": "Save the draft",
+      "cancel": "Cancel",
+      "reload": "Reload",
+      "fromSurvey": "From the survey: {source}, {date}",
+      "supportCode": "Support code: {code}",
       "errors": {
         "amount": "Enter a whole number of VND from 1, without separators.",
         "depositMonths": "Enter a number of months from 0 to 12.",
@@ -2299,6 +2338,12 @@
       }
     },
     "survey": {
+      "title": "Survey reference",
+      "loading": "Reading the survey values.",
+      "empty": "The survey holds no value for these terms.",
+      "loadFailed": "The survey values could not be read.",
+      "retry": "Try again",
+      "use": "Use the survey values",
       "source": {
         "OBSERVED_ON_SITE": "Seen on site",
         "OWNER_STATED": "Said by the owner",

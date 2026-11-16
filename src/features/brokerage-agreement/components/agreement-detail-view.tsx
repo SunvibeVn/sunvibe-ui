@@ -11,19 +11,23 @@ import { agreementAfter, type AgreementModel } from "../lib/agreement-model";
 import { getAgreement } from "../services/agreement-api";
 
 import { AgreementVersionList } from "./agreement-version-list";
+import { DraftEditForm } from "./draft-edit-form";
 
 const LOADING: AgreementModel = { kind: "loading" };
 
 /**
  * The workspace page of one brokerage agreement (brokerage-agreement US-4 AC-3 part, S2-D14): its state, transaction
- * type, unit, creation time and versions, and a way back to its basis lead. No owner, intake, property or person
- * (BR-17). Every read is one opening that the server logs (S2-D9): one on mount, one per "Try again".
+ * type, unit, creation time and versions with their content, and a way back to its basis lead. No owner, intake,
+ * property or person (BR-17). The assigned Sale edits the draft in place (E05-S3, S3-D18): "Edit the draft" shows the
+ * form and the survey reference instead of the draft's content. Every read is one opening that the server logs
+ * (S2-D9): one on mount, one per "Try again", one after a save or a "Reload".
  */
 export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const t = useTranslations("BrokerageAgreement");
   const format = useFormatter();
   const [model, setModel] = useState<AgreementModel>(LOADING);
   const [attempt, setAttempt] = useState(0);
+  const [editing, setEditing] = useState(false);
   const versionsId = useId();
 
   useEffect(() => {
@@ -36,12 +40,24 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     };
   }, [agreementId, attempt]);
 
-  // Next keeps this route hidden (Activity): nothing of the agreement stays in it, and the next read starts as the first.
-  useLayoutEffect(() => () => setModel(LOADING), []);
+  // Next keeps this route hidden (Activity): nothing of the agreement stays in it, the edit form and its values
+  // included, and the next read starts as the first.
+  useLayoutEffect(
+    () => () => {
+      setModel(LOADING);
+      setEditing(false);
+    },
+    [],
+  );
 
   const retry = () => {
     setModel(LOADING);
     setAttempt((count) => count + 1);
+  };
+  // A saved draft or a "Reload": leave edit mode and read the agreement again.
+  const reread = () => {
+    setEditing(false);
+    retry();
   };
 
   switch (model.kind) {
@@ -74,7 +90,23 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
         </div>
       );
     case "ready": {
-      const { agreement, versions } = model;
+      const { agreement, versions, canEditDraft, draft, dataVersion } = model;
+      const draftEditor =
+        editing && canEditDraft && draft !== null && dataVersion !== null
+          ? {
+              versionNo: draft.versionNo ?? 0,
+              node: (
+                <DraftEditForm
+                  agreementId={agreementId}
+                  dataVersion={dataVersion}
+                  version={draft}
+                  onSaved={reread}
+                  onCancel={() => setEditing(false)}
+                  onReload={reread}
+                />
+              ),
+            }
+          : undefined;
       return (
         <div className="space-y-4">
           <div className="space-y-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
@@ -115,10 +147,17 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
             aria-labelledby={versionsId}
             className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
           >
-            <h2 id={versionsId} className="text-base font-semibold text-slate-900">
-              {t("detail.versions")}
-            </h2>
-            <AgreementVersionList versions={versions} />
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id={versionsId} className="text-base font-semibold text-slate-900">
+                {t("detail.versions")}
+              </h2>
+              {canEditDraft && draftEditor === undefined && (
+                <Button variant="secondary" className="px-4 py-2" onClick={() => setEditing(true)}>
+                  {t("edit.open")}
+                </Button>
+              )}
+            </div>
+            <AgreementVersionList versions={versions} draftEditor={draftEditor} />
           </section>
         </div>
       );
