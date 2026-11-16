@@ -111,9 +111,19 @@ describe("versionContent (brokerage-agreement E05-S3, BR-8, BR-9, S3-D6 to S3-D8
     }
   });
 
-  it("versionContent_draftOnly_proposedLine: only a DRAFT version reads as proposed terms", () => {
+  it("versionContent_notYetAnswered_proposedLine: a DRAFT or AWAITING_OWNER version reads as proposed terms", () => {
     expect(versionContent(FULL).proposed).toBe(true);
-    for (const status of ["AWAITING_OWNER", "OWNER_CONFIRMED", "EFFECTIVE", "CANCELLED"] as const) {
+    expect(versionContent({ ...FULL, status: "AWAITING_OWNER" }).proposed).toBe(true);
+    for (const status of [
+      "OWNER_CONFIRMED",
+      "ACTIVATED",
+      "EFFECTIVE",
+      "SUPERSEDED",
+      "OWNER_REJECTED",
+      "LAPSED",
+      "ACTIVATION_REFUSED",
+      "CANCELLED",
+    ] as const) {
       expect(versionContent({ ...FULL, status }).proposed).toBe(false);
     }
     expect(versionContent({ ...FULL, status: undefined }).proposed).toBe(false);

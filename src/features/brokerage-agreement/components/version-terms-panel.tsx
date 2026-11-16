@@ -4,10 +4,11 @@ import type { ReactNode } from "react";
 import { type Phrase, phraseText, type VersionContent } from "../lib/version-terms-model";
 
 /**
- * The read-only content of one version (brokerage-agreement BR-8, BR-9, S3-D6, S3-D13, S3-D14): for a DRAFT version
- * first the line that these are proposed terms; then the advertising permission, the public photo consent and the
- * rental terms. It holds no action and no staff-only value, so the owner's account screen of E05-S5 reuses it. It
- * repeats no text the page shows (status, type, version number, dates), so those stay unique on the page.
+ * The read-only content of one version (brokerage-agreement BR-8, BR-9, S3-D6, S3-D13, S3-D14, S4-D15): for a version
+ * the owner has not answered yet first the line that these are proposed terms; then the advertising permission, the
+ * public photo consent and the rental terms. It holds no action and no staff-only value, so the owner's account screen
+ * of E05-S5 reuses it. It repeats no text the page shows (status, type, version number, dates), so those stay unique on
+ * the page.
  */
 export function VersionTermsPanel({ content }: { content: VersionContent }) {
   const t = useTranslations("BrokerageAgreement");

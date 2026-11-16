@@ -117,14 +117,15 @@ function feesContent(fees: BrokerageAgreementFee[] | null | undefined): FeesCont
 }
 
 /**
- * The content of one version as the panel shows it (brokerage-agreement BR-8, BR-9, S3-D13): a DRAFT version is
- * proposed terms the owner has not confirmed; photo consent of the interior answered or not, the exterior yes or no
- * (no by default, BR-12); each term or "Not entered yet"; the fees not stated, none, or one line each.
+ * The content of one version as the panel shows it (brokerage-agreement BR-8, BR-9, S3-D13, S4-D15): a version the
+ * owner has not answered yet (DRAFT, or AWAITING_OWNER once sent) is proposed terms the owner has not confirmed; photo
+ * consent of the interior answered or not, the exterior yes or no (no by default, BR-12); each term or "Not entered
+ * yet"; the fees not stated, none, or one line each.
  */
 export function versionContent(version: BrokerageAgreementVersion): VersionContent {
   const terms = version.terms ?? {};
   return {
-    proposed: version.status === "DRAFT",
+    proposed: version.status === "DRAFT" || version.status === "AWAITING_OWNER",
     advertising: version.advertisingScope === undefined ? null : { key: advertisingScopeText(version.advertisingScope) },
     interior: consentPhrase(version.photoConsent),
     exterior: { key: version.exteriorPhotoConsent === true ? "terms.yes" : "terms.no" },

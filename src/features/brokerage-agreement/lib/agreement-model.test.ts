@@ -65,7 +65,7 @@ describe("agreementAfter (brokerage-agreement E05-S2, spec section 6)", () => {
           statusKey: "versionStatus.AWAITING_OWNER",
           startText: "1 Feb 2027",
           endText: "31 Jan 2028",
-          content: { ...NOTHING_ENTERED, proposed: false },
+          content: { ...NOTHING_ENTERED, proposed: true },
         },
       ],
       dataVersion: null,
