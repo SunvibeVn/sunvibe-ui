@@ -2429,6 +2429,39 @@
         "failed": "The draft could not be saved."
       }
     },
+    "send": {
+      "open": "Send to the owner",
+      "title": "Send this version to the owner",
+      "body": "Version {number} goes to the owner of this unit. After sending, it can no longer be edited. The owner gets an email that asks them to sign in and read it.",
+      "submit": "Send",
+      "keepEditing": "Keep editing",
+      "reload": "Reload",
+      "supportCode": "Support code: {code}",
+      "part": {
+        "photoConsent": "Public photos of the interior",
+        "monthlyRent": "Monthly rent",
+        "deposit": "Deposit",
+        "minimumTerm": "Minimum term",
+        "paymentPeriod": "Payment period",
+        "mandatoryFees": "Mandatory fees",
+        "formula": "How the fee is set",
+        "dueDays": "Payment due",
+        "renewal": "Lease renewed with the same tenant",
+        "earlyLeaseEnd": "If the lease ends early",
+        "protectionDays": "Protection period",
+        "OTHER": "Another part"
+      },
+      "errors": {
+        "incomplete": "This version cannot be sent yet. Missing:",
+        "notEligible": "This version cannot be sent now:",
+        "notDraft": "This version is no longer a draft.",
+        "stale": "This draft changed since you opened it.",
+        "sendingOff": "Sending to owners is switched off on this server.",
+        "notAssignee": "Only the Sale assigned to this lead sends the draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The version could not be sent."
+      }
+    },
     "survey": {
       "title": "Survey reference",
       "loading": "Reading the survey values.",
