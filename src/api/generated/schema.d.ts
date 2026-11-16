@@ -608,6 +608,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/draft/submission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send the agreement's complete draft to the owner, against the data version read */
+        post: operations["submitBrokerageAgreementDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/brokerage-agreements/{agreementId}/survey-terms": {
         parameters: {
             query?: never;
@@ -2020,6 +2037,8 @@ export interface components {
             expectedDataVersion: number;
             /** @description Public photos of the exterior (front, entrance, street view); true only with photoConsent true */
             exteriorPhotoConsent: boolean;
+            /** @description The brokerage fee policy; absent or null = nothing entered yet */
+            feePolicy?: components["schemas"]["BrokerageAgreementFeePolicyInput"] | null;
             /** @description Public photos of the interior and common areas; null = not answered yet */
             photoConsent?: boolean | null;
             /**
@@ -2033,6 +2052,41 @@ export interface components {
              * @enum {string}
              */
             transactionType: "LONG_TERM_RENT";
+        };
+        BrokerageAgreementDraftSubmissionRequest: {
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+        };
+        BrokerageAgreementEarlyLeaseEnd: {
+            /**
+             * Format: int32
+             * @description Set for PARTIAL_REFUND: percent of the fee refunded
+             */
+            refundPercent?: number | null;
+            /** @enum {string} */
+            type?: "NO_REFUND" | "PARTIAL_REFUND";
+            /**
+             * Format: int32
+             * @description Set for PARTIAL_REFUND: when the lease ends within this many months
+             */
+            withinMonths?: number | null;
+        };
+        BrokerageAgreementEarlyLeaseEndInput: {
+            /**
+             * Format: int32
+             * @description For PARTIAL_REFUND
+             */
+            refundPercent?: number | null;
+            /** @enum {string} */
+            type: "NO_REFUND" | "PARTIAL_REFUND";
+            /**
+             * Format: int32
+             * @description For PARTIAL_REFUND
+             */
+            withinMonths?: number | null;
         };
         BrokerageAgreementFee: {
             /**
@@ -2054,6 +2108,45 @@ export interface components {
             currency?: "VND" | null;
             name?: string;
         };
+        BrokerageAgreementFeeFormula: {
+            /**
+             * Format: int64
+             * @description Set for FIXED_AMOUNT: whole VND
+             */
+            amount?: number | null;
+            /**
+             * @description VND with an amount, else null
+             * @enum {string|null}
+             */
+            currency?: "VND" | null;
+            /** @description Set for FREE: why the brokerage is free of charge */
+            freeReason?: string | null;
+            /** @description Empty unless PERCENT_OF_RENT */
+            tiers?: components["schemas"]["BrokerageAgreementFeeTier"][];
+            /** @enum {string} */
+            type?: "PERCENT_OF_RENT" | "FIXED_AMOUNT" | "FREE" | "NOT_CHARGED";
+        };
+        BrokerageAgreementFeeFormulaInput: {
+            /**
+             * Format: int64
+             * @description For FIXED_AMOUNT: whole VND
+             */
+            amount?: number | null;
+            /**
+             * @description VND with an amount
+             * @enum {string|null}
+             */
+            currency?: "VND" | null;
+            /** @description For FREE: why; 1 to 500 characters after trimming, no control or bidirectional formatting character */
+            freeReason?: string | null;
+            /** @description For PERCENT_OF_RENT: 1 to 5 tiers, the first from 1 month, the starts strictly increasing; else null or [] */
+            tiers?: components["schemas"]["BrokerageAgreementFeeTierInput"][] | null;
+            /**
+             * @description formula takes PERCENT_OF_RENT, FIXED_AMOUNT, FREE; renewal takes NOT_CHARGED, PERCENT_OF_RENT, FIXED_AMOUNT
+             * @enum {string}
+             */
+            type: "PERCENT_OF_RENT" | "FIXED_AMOUNT" | "FREE" | "NOT_CHARGED";
+        };
         BrokerageAgreementFeeInput: {
             /** Format: int64 */
             amount?: number | null;
@@ -2064,6 +2157,71 @@ export interface components {
             /** @enum {string|null} */
             currency?: "VND" | null;
             name: string;
+        };
+        BrokerageAgreementFeePolicy: {
+            /**
+             * @description When the fee arises: when a lease is signed
+             * @enum {string}
+             */
+            chargedWhen?: "LEASE_SIGNED";
+            /**
+             * Format: int32
+             * @description Days after the lease is signed; 0 = on the signing day
+             */
+            dueDays?: number | null;
+            earlyLeaseEnd?: components["schemas"]["BrokerageAgreementEarlyLeaseEnd"] | null;
+            formula?: components["schemas"]["BrokerageAgreementFeeFormula"] | null;
+            /**
+             * @description Who pays the fee: the owner
+             * @enum {string}
+             */
+            payer?: "OWNER";
+            /**
+             * Format: int32
+             * @description Days after the agreement ends
+             */
+            protectionDays?: number | null;
+            /** @description The fee of a renewal with the same tenant */
+            renewal?: components["schemas"]["BrokerageAgreementFeeFormula"] | null;
+        };
+        BrokerageAgreementFeePolicyInput: {
+            /**
+             * Format: int32
+             * @description Days after the lease is signed; 0 = on the signing day
+             */
+            dueDays?: number | null;
+            earlyLeaseEnd?: components["schemas"]["BrokerageAgreementEarlyLeaseEndInput"] | null;
+            formula?: components["schemas"]["BrokerageAgreementFeeFormulaInput"] | null;
+            /**
+             * Format: int32
+             * @description Days after the agreement ends
+             */
+            protectionDays?: number | null;
+            renewal?: components["schemas"]["BrokerageAgreementFeeFormulaInput"] | null;
+        };
+        BrokerageAgreementFeeTier: {
+            /**
+             * Format: int32
+             * @description The lease term in months the tier starts at
+             */
+            fromMonths?: number;
+            /**
+             * Format: int32
+             * @description Percent of one month's rent of the signed lease
+             */
+            percent?: number;
+        };
+        BrokerageAgreementFeeTierInput: {
+            /**
+             * Format: int32
+             * @description The lease term in months the tier starts at
+             */
+            fromMonths: number;
+            /**
+             * Format: int32
+             * @description Percent of one month's rent of the signed lease
+             */
+            percent: number;
         };
         BrokerageAgreementRent: {
             /** Format: int64 */
@@ -2135,8 +2293,14 @@ export interface components {
             endDate?: string;
             /** @description Public photos of the exterior; true only with photoConsent true */
             exteriorPhotoConsent?: boolean;
+            feePolicy?: components["schemas"]["BrokerageAgreementFeePolicy"];
             /** @description Public photos of the interior and common areas; null = not answered yet */
             photoConsent?: boolean | null;
+            /**
+             * Format: date-time
+             * @description When the version was sent to the owner; null for a version never sent
+             */
+            sentAt?: string | null;
             /**
              * Format: date
              * @description A calendar date in Vietnam time
@@ -8264,7 +8428,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            /** @description VALIDATION_FAILED (one entry per field: expectedDataVersion, transactionType with its allowedValues, startDate, endDate, exteriorPhotoConsent or a terms path such as terms.mandatoryFees[2].amount) or MALFORMED_REQUEST (the body, a date or a number cannot be read; a fraction is not a whole number) */
+            /** @description VALIDATION_FAILED (one entry per field: expectedDataVersion, transactionType with its allowedValues, startDate, endDate, exteriorPhotoConsent, a terms path such as terms.mandatoryFees[2].amount, or a feePolicy path such as feePolicy.formula.tiers[1].fromMonths; feePolicy.formula.type, feePolicy.renewal.type and feePolicy.earlyLeaseEnd.type outside their place come with the place's allowedValues) or MALFORMED_REQUEST (the body, a date or a number cannot be read; a fraction is not a whole number) */
             400: {
                 headers: {
                     [name: string]: unknown;
@@ -8301,6 +8465,84 @@ export interface operations {
                 };
             };
             /** @description AGREEMENT_NOT_DRAFT (the agreement has no draft to edit), AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) or CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submitBrokerageAgreementDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementDraftSubmissionRequest"];
+            };
+        };
+        responses: {
+            /** @description The draft was sent: the version waits for the owner and its content is locked; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry expectedDataVersion) or MALFORMED_REQUEST (the body or the number cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff; AGREEMENT_NOT_ASSIGNEE: the caller is not the basis lead's assigned Sale */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_DRAFT (the agreement has no draft), CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between), AGREEMENT_VERSION_INCOMPLETE (one entry per missing part, in the order photoConsent, terms.monthlyRent, terms.deposit, terms.minimumTermMonths, terms.paymentPeriodMonths, terms.mandatoryFees, feePolicy.formula, feePolicy.dueDays, feePolicy.renewal, feePolicy.earlyLeaseEnd, feePolicy.protectionDays), AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) or AGREEMENT_SENDING_NOT_AVAILABLE (sending to owners is not open on this server; no entry) */
             409: {
                 headers: {
                     [name: string]: unknown;

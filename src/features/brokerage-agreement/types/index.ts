@@ -42,3 +42,24 @@ export type FeeBasis = NonNullable<BrokerageAgreementFee["basis"]>;
 export type ChargeUnit = NonNullable<BrokerageAgreementFee["chargeUnit"]>;
 export type TermSourceCode = NonNullable<BrokerageAgreementTermSource["source"]>;
 export type AdvertisingScope = NonNullable<BrokerageAgreementVersion["advertisingScope"]>;
+
+// The brokerage fee policy of a version, and sending the draft to the owner (brokerage-agreement E05-S4, BR-7).
+
+/**
+ * The fee policy of a version as the detail answers it (S4-D10): the payer and the moment are fixed statements; every
+ * other part is null until entered. The property is optional in the contract, so an answer may leave it out.
+ */
+export type BrokerageAgreementFeePolicy = Schemas["BrokerageAgreementFeePolicy"];
+/** How a fee is set: a percentage of one month's rent by tiers, a fixed amount, free of charge, or (renewal) no fee. */
+export type BrokerageAgreementFeeFormula = Schemas["BrokerageAgreementFeeFormula"];
+export type BrokerageAgreementFeeTier = Schemas["BrokerageAgreementFeeTier"];
+export type BrokerageAgreementEarlyLeaseEnd = Schemas["BrokerageAgreementEarlyLeaseEnd"];
+/** The fee policy part of the whole-draft PUT (S4-D1): each part null when not entered. */
+export type BrokerageAgreementFeePolicyInput = Schemas["BrokerageAgreementFeePolicyInput"];
+export type BrokerageAgreementFeeFormulaInput = Schemas["BrokerageAgreementFeeFormulaInput"];
+export type BrokerageAgreementFeeTierInput = Schemas["BrokerageAgreementFeeTierInput"];
+export type BrokerageAgreementEarlyLeaseEndInput = Schemas["BrokerageAgreementEarlyLeaseEndInput"];
+/** Sending the draft: only the data version the page read (S4-D2). */
+export type BrokerageAgreementDraftSubmissionRequest = Schemas["BrokerageAgreementDraftSubmissionRequest"];
+export type FeeFormulaType = NonNullable<BrokerageAgreementFeeFormula["type"]>;
+export type EarlyLeaseEndType = NonNullable<BrokerageAgreementEarlyLeaseEnd["type"]>;
