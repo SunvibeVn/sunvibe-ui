@@ -2159,7 +2159,37 @@
         "UNIT": "Stopped for this unit.",
         "OWNER": "The owner on record does not meet the conditions: one current owner, the declared owner, an individual whose account can sign in and holds no staff role.",
         "OTHER": "Another reason stops it."
+      },
+      "draft": "Draft an agreement",
+      "inProgress": "Agreement in progress",
+      "inProgressNote": "This unit already has an agreement in progress.",
+      "openAgreement": "Open the agreement"
+    },
+    "draft": {
+      "title": "Draft an agreement",
+      "unit": "Unit: {code}",
+      "transactionType": "Transaction type: {type}",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "periodHint": "The end date is at most 12 months after the start date.",
+      "submit": "Create the draft",
+      "cancel": "Cancel",
+      "errors": {
+        "required": "Enter a date.",
+        "endBeforeStart": "The end date cannot be before the start date.",
+        "tooLong": "The end date is more than 12 months after the start date.",
+        "outOfRange": "Use a date from 2000 to 2099.",
+        "notEligible": "This unit cannot get an agreement now:",
+        "exists": "This unit already has an agreement in progress.",
+        "notAssignee": "Only the Sale assigned to this lead drafts an agreement.",
+        "notFound": "This lead is no longer available to you.",
+        "conflict": "Something changed at the same time. Try again.",
+        "failed": "The draft could not be created."
       }
+    },
+    "transactionType": {
+      "LONG_TERM_RENT": "Long-term rental",
+      "OTHER": "Another transaction type"
     }
   },
   "TestEnvironment": {
