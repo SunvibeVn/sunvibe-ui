@@ -24,6 +24,8 @@ export type EligibilityRow = {
 export type EligibilityModel =
   /** Nothing of the eligibility shows. */
   | { kind: "hidden" }
+  /** The lead has no completed intake (brokerage-agreement E-1, PLAN5-D2): the region says so instead of vanishing. */
+  | { kind: "none" }
   | { kind: "loading" }
   | { kind: "error"; correlationId?: string }
   /** `assignedOnly`: the viewer is not the assigned Sale, who alone drafts an agreement (brokerage-agreement BR-16). */
@@ -33,14 +35,16 @@ export type EligibilityModel =
 const HIDDEN_STATUSES = new Set([403, 404]);
 
 /**
- * A lead with no completed intake (`basisState` NONE) hides the section, and so do a 404 (the page says nothing about
- * why), a 403 and the session states, which the session screens answer. Any other failure offers a retry. Failures are
- * read by kind and status, never by message.
+ * A lead with no completed intake (`basisState` NONE) has its own state (brokerage-agreement E-1, S3-D19). An answer
+ * without `basisState` hides the section, and so do a 404 (the page says nothing about why), a 403 and the session
+ * states, which the session screens answer. Any other failure offers a retry. Failures are read by kind and status,
+ * never by message.
  */
 export function eligibilityAfter(result: ApiResult<BrokerageEligibility>): EligibilityModel {
   if (result.ok) {
     const { basisState, viewerIsAssignedSale, units } = result.data;
-    if (basisState === undefined || basisState === "NONE") return { kind: "hidden" };
+    if (basisState === undefined) return { kind: "hidden" };
+    if (basisState === "NONE") return { kind: "none" };
     const rows = (units ?? []).map((unit): EligibilityRow => {
       const eligible = unit.eligible === true;
       const agreementInProgress = unit.unfinishedAgreement === true;

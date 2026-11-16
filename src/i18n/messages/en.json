@@ -2163,7 +2163,10 @@
       "draft": "Draft an agreement",
       "inProgress": "Agreement in progress",
       "inProgressNote": "This unit already has an agreement in progress.",
-      "openAgreement": "Open the agreement"
+      "openAgreement": "Open the agreement",
+      "notListed": "Units created by the old direct property form, and survey parts left out of an intake, are not listed here. They need an intake or unit management first.",
+      "noBasis": "This lead has no completed intake yet.",
+      "noUnits": "The intake result of this lead lists no unit."
     },
     "draft": {
       "title": "Draft an agreement",

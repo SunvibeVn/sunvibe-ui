@@ -24,10 +24,13 @@ const LOADING: EligibilityModel = { kind: "loading" };
 
 /**
  * Whether each unit of the lead's latest completed intake can get an agreement now, and why not (brokerage-agreement
- * US-1). The first read shows a loading line; a later read keeps what is shown until its answer arrives. No basis, a
- * 404, a 403 and the session states remove the section. The assigned Sale drafts an agreement on an eligible unit
- * without one; a unit with an agreement in progress says so, with a link when the agreement rests on this lead
- * (brokerage-agreement E05-S2, S2-D14). The section itself calls no router hook.
+ * US-1). The first read shows a loading line; a later read keeps what is shown until its answer arrives. A lead with no
+ * completed intake keeps the region with its own line; an intake that lists no unit says so. A 404, a 403, the session
+ * states and an answer without `basisState` remove the section. Every state the region shows ends with brief E-1: units
+ * of the old direct property form and survey parts left out of an intake are not listed (brokerage-agreement E-1,
+ * S3-D19). The assigned Sale drafts an agreement on an eligible unit without one; a unit with an agreement in progress
+ * says so, with a link when the agreement rests on this lead (brokerage-agreement E05-S2, S2-D14). The section itself
+ * calls no router hook.
  */
 export function EligibilitySection({ leadId, refreshKey }: SectionProps) {
   const t = useTranslations("BrokerageAgreement");
@@ -68,6 +71,7 @@ export function EligibilitySection({ leadId, refreshKey }: SectionProps) {
           {t("eligibility.loading")}
         </p>
       )}
+      {model.kind === "none" && <p className="text-sm text-slate-700">{t("eligibility.noBasis")}</p>}
       {model.kind === "error" && (
         <div className="space-y-3">
           <Alert tone="error">
@@ -81,7 +85,10 @@ export function EligibilitySection({ leadId, refreshKey }: SectionProps) {
           </Button>
         </div>
       )}
-      {model.kind === "ready" && (
+      {model.kind === "ready" && model.rows.length === 0 && (
+        <p className="text-sm text-slate-700">{t("eligibility.noUnits")}</p>
+      )}
+      {model.kind === "ready" && model.rows.length > 0 && (
         <>
           <ul className="divide-y divide-slate-100">
             {model.rows.map((row, index) => (
@@ -133,6 +140,7 @@ export function EligibilitySection({ leadId, refreshKey }: SectionProps) {
           {model.assignedOnly && <p className="text-sm text-slate-600">{t("eligibility.assignedOnly")}</p>}
         </>
       )}
+      <p className="text-sm text-slate-600">{t("eligibility.notListed")}</p>
       {draftFor !== null && (
         <AgreementDraftDialog
           leadId={leadId}

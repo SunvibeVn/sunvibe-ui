@@ -92,12 +92,8 @@ describe("EligibilitySection (brokerage-agreement E05-S1, spec section 6)", () =
     expect(getEligibility).toHaveBeenCalledWith("L1");
   });
 
-  it("eligibilitySection_hiddenAnswers_renderNothing: no basis, a 404 and a 403 leave no region", async () => {
-    for (const answer of [
-      answered({ basisState: "NONE", viewerIsAssignedSale: true, units: [] }),
-      http(404, "NOT_FOUND", "c-1"),
-      http(403, "FORBIDDEN", "c-2"),
-    ]) {
+  it("eligibilitySection_hiddenAnswers_renderNothing: a 404 and a 403 leave no region", async () => {
+    for (const answer of [http(404, "NOT_FOUND", "c-1"), http(403, "FORBIDDEN", "c-2")]) {
       vi.mocked(getEligibility).mockResolvedValue(answer);
       const { unmount } = render(view());
 
@@ -158,5 +154,108 @@ describe("EligibilitySection (brokerage-agreement E05-S1, spec section 6)", () =
       }),
     );
     expect(await within(region()).findByText(m.reasons.BASIS)).toBeTruthy();
+  });
+});
+
+// Brief E-1 as a standing line of the region, and the region's NONE and empty-list states (brokerage-agreement E05-S3,
+// S3-D19, spec section 3.5).
+const E1 =
+  "Units created by the old direct property form, and survey parts left out of an intake, are not listed here. They need an intake or unit management first.";
+const NO_BASIS = "This lead has no completed intake yet.";
+const NO_UNITS = "The intake result of this lead lists no unit.";
+const none = answered({ basisState: "NONE", viewerIsAssignedSale: true, units: [] });
+
+describe("EligibilitySection, brief E-1 and the states without units (brokerage-agreement E05-S3, S3-D19)", () => {
+  beforeEach(() => {
+    vi.mocked(getEligibility).mockReset();
+  });
+
+  it("eligibilitySection_noneBasis_regionWithItsLineAndE1: no completed intake keeps the region with its line and E-1, no list", async () => {
+    vi.mocked(getEligibility).mockResolvedValue(none);
+    render(view());
+
+    expect(await within(region()).findByText(NO_BASIS)).toBeTruthy();
+    expect(within(region()).getByRole("heading", { name: TITLE })).toBeTruthy();
+    expect(within(region()).getByText(E1)).toBeTruthy();
+    expect(within(region()).queryAllByRole("listitem")).toHaveLength(0);
+    expect(within(region()).queryByText(m.loading)).toBeNull();
+  });
+
+  it("eligibilitySection_everyShownState_holdsTheE1Line: loading, none, ready and error each hold the E-1 line once, with no link and no number", async () => {
+    const e1Once = () => {
+      const lines = within(region()).getAllByText(E1);
+      expect(lines).toHaveLength(1);
+      const line = lines[0] as HTMLElement;
+      expect(line.tagName).toBe("P");
+      expect(within(line).queryByRole("link")).toBeNull();
+      expect(line.textContent).not.toMatch(/\d/);
+      expect(line.closest("li")).toBeNull();
+    };
+
+    const first = pending();
+    vi.mocked(getEligibility).mockReturnValueOnce(first.promise);
+    const { unmount } = render(view());
+    expect(within(region()).getByText(m.loading)).toBeTruthy();
+    e1Once();
+    first.resolve(none);
+    await within(region()).findByText(NO_BASIS);
+    e1Once();
+    unmount();
+
+    vi.mocked(getEligibility).mockResolvedValueOnce(usable(true));
+    const ready = render(view());
+    await waitFor(() => expect(within(region()).getAllByRole("listitem")).toHaveLength(2));
+    e1Once();
+    ready.unmount();
+
+    vi.mocked(getEligibility).mockResolvedValueOnce(http(500, "INTERNAL_ERROR", "c-9"));
+    render(view());
+    await within(region()).findByText(m.loadFailed);
+    e1Once();
+  });
+
+  it("eligibilitySection_readyWithoutUnits_noUnitsSentence: a basis whose intake lists no unit says so, with no list", async () => {
+    vi.mocked(getEligibility).mockResolvedValue(answered({ basisState: "USABLE", viewerIsAssignedSale: true, units: [] }));
+    render(view());
+
+    expect(await within(region()).findByText(NO_UNITS)).toBeTruthy();
+    expect(within(region()).getByText(E1)).toBeTruthy();
+    expect(within(region()).queryByRole("list")).toBeNull();
+    expect(within(region()).queryByText(NO_BASIS)).toBeNull();
+  });
+
+  it("eligibilitySection_firstReadOfNone_regionStaysInPlace: the region shows from the first render and stays when NONE arrives", async () => {
+    const first = pending();
+    vi.mocked(getEligibility).mockReturnValue(first.promise);
+    render(view());
+
+    const before = region();
+    expect(within(before).getByText(m.loading)).toBeTruthy();
+    expect(within(before).getByText(E1)).toBeTruthy();
+    first.resolve(none);
+
+    expect(await within(before).findByText(NO_BASIS)).toBeTruthy();
+    expect(region()).toBe(before);
+    expect(before.isConnected).toBe(true);
+    expect(within(before).queryByText(m.loading)).toBeNull();
+  });
+
+  it("eligibilitySection_hiddenStates_noRegionAndNoE1: signed out, unavailable and an answer without basisState show no region and no E-1", async () => {
+    const answers: ApiResult<BrokerageEligibility>[] = [
+      { ok: false, kind: "signed-out" },
+      { ok: false, kind: "unavailable" },
+      answered({ viewerIsAssignedSale: true, units: [] }),
+    ];
+    for (const answer of answers) {
+      vi.mocked(getEligibility).mockResolvedValue(answer);
+      const { unmount } = render(view());
+
+      await waitFor(() => expect(getEligibility).toHaveBeenCalled());
+      await waitFor(() => expect(screen.queryByRole("region", { name: TITLE })).toBeNull());
+      expect(screen.queryByText(E1)).toBeNull();
+
+      unmount();
+      vi.mocked(getEligibility).mockReset();
+    }
   });
 });
