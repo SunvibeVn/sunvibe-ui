@@ -1,11 +1,20 @@
 import { useTranslations } from "next-intl";
+import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
 import type { VersionRow } from "../lib/agreement-model";
 
-/** The versions of an agreement, by number: each with its state and its period as calendar dates. */
-export function AgreementVersionList({ versions }: { versions: VersionRow[] }) {
+import { VersionTermsPanel } from "./version-terms-panel";
+
+type VersionListProps = {
+  versions: VersionRow[];
+  /** The edit form of the draft (brokerage-agreement E05-S3): shown for that version in place of its period and content. */
+  draftEditor?: { versionNo: number; node: ReactNode };
+};
+
+/** The versions of an agreement, by number: each with its state, its period as calendar dates, and its content. */
+export function AgreementVersionList({ versions, draftEditor }: VersionListProps) {
   const t = useTranslations("BrokerageAgreement");
 
   return (
@@ -16,16 +25,23 @@ export function AgreementVersionList({ versions }: { versions: VersionRow[] }) {
             <h3 className="text-sm font-semibold text-slate-900">{t("detail.version", { number: version.versionNo })}</h3>
             <Badge tone="neutral">{t(version.statusKey)}</Badge>
           </div>
-          <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
-            <div>
-              <dt className="text-slate-500">{t("detail.startDate")}</dt>
-              <dd className="text-slate-900">{version.startText}</dd>
-            </div>
-            <div>
-              <dt className="text-slate-500">{t("detail.endDate")}</dt>
-              <dd className="text-slate-900">{version.endText}</dd>
-            </div>
-          </dl>
+          {draftEditor !== undefined && draftEditor.versionNo === version.versionNo ? (
+            draftEditor.node
+          ) : (
+            <>
+              <dl className="grid grid-cols-1 gap-x-6 gap-y-1 text-sm sm:grid-cols-2">
+                <div>
+                  <dt className="text-slate-500">{t("detail.startDate")}</dt>
+                  <dd className="text-slate-900">{version.startText}</dd>
+                </div>
+                <div>
+                  <dt className="text-slate-500">{t("detail.endDate")}</dt>
+                  <dd className="text-slate-900">{version.endText}</dd>
+                </div>
+              </dl>
+              <VersionTermsPanel content={version.content} />
+            </>
+          )}
         </li>
       ))}
     </ul>

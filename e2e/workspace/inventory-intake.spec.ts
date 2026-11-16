@@ -65,6 +65,7 @@ const AVAILABILITY_SAVE = /\/inventory-intake\/availability$/;
 const PREVIEW_READ = /\/inventory-intake\/preview$/;
 const COMPLETION = /\/inventory-intake\/completion$/;
 const OWNER_CHECK_CONTEXT = /\/inventory-intake\/owner-check-context$/;
+const SURVEY_TERMS = /\/brokerage-agreements\/[0-9A-Z]{26}\/survey-terms$/;
 
 const step = (page: Page, name: string): Locator => mainArea(page).getByRole("region", { name, exact: true });
 const button = (scope: Page | Locator, name: string): Locator => scope.getByRole("button", { name, exact: true });
@@ -402,6 +403,90 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(admin).toHaveURL(new RegExp(`${agreementPath}$`), { timeout: 20_000 });
     await expect(mainArea(admin).getByText("Drafting", { exact: true })).toBeVisible({ timeout: 20_000 });
     await expect(mainArea(admin).getByText("Version 1", { exact: true })).toBeVisible();
+  });
+
+  // Brief E-1, stated in the eligibility region in every state it shows (brokerage-agreement S3-D19).
+  const E1 =
+    "Units created by the old direct property form, and survey parts left out of an intake, are not listed here. They need an intake or unit management first.";
+
+  test("agreementTerms_editWithSurveyValues_savedAndReadOnly (UD-8, brokerage-agreement US-1 AC-1, AC-3, AC-5, E-1)", async () => {
+    // On the lead page the previous test leaves open.
+    const eligibility = mainArea(sale).getByRole("region", { name: "Agreement eligibility", exact: true });
+    await expect(eligibility.getByText(E1, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await eligibility.getByRole("listitem").getByRole("link", { name: "Open the agreement", exact: true }).click();
+    await expect(sale).toHaveURL(/\/workspace\/brokerage-agreements\/[0-9A-Z]{26}$/, { timeout: 20_000 });
+    const agreementPath = new URL(sale.url()).pathname;
+    const agreement = mainArea(sale);
+
+    // L15's PASSED revision holds no G8 value at this point of the chain (spec A-2, E05S3-P8), so every answer of the
+    // survey reference is stubbed for this test: `next dev` mounts the panel twice (Strict Mode), and the first read is
+    // dropped. ED-9 holds the server mapping on PostgreSQL.
+    const proposal = {
+      terms: {
+        monthlyRent: { amount: 8000000, currency: "VND", unit: "MONTH" },
+        deposit: null,
+        minimumTermMonths: 12,
+        paymentPeriodMonths: 1,
+        mandatoryFees: [{ name: "Electricity", basis: "AMOUNT", amount: 3500, currency: "VND", chargeUnit: "PER_KWH" }],
+      },
+      sources: [
+        { field: "monthlyRent", source: "OWNER_STATED", date: "2026-11-10" },
+        { field: "minimumTermMonths", source: "OBSERVED_ON_SITE", date: "2026-11-09" },
+        { field: "paymentPeriodMonths", source: "OBSERVED_ON_SITE", date: "2026-11-09" },
+        { field: "mandatoryFees[0]", source: "OBSERVED_ON_SITE", date: "2026-11-09" },
+      ],
+    };
+    await sale.route(SURVEY_TERMS, (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(proposal) }),
+    );
+    await button(agreement, "Edit the draft").click({ timeout: 20_000 });
+
+    const survey = agreement.getByRole("region", { name: "Survey reference", exact: true });
+    await expect(survey.getByText("Said by the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(survey.getByText("10 Nov 2026", { exact: true })).toBeVisible();
+    await button(survey, "Use the survey values").click();
+    await expect(agreement.getByLabel("Monthly rent (VND)", { exact: true })).toHaveValue("8000000");
+    await expect(agreement.getByText("From the survey: Said by the owner, 10 Nov 2026", { exact: true })).toBeVisible();
+    await sale.unrouteAll({ behavior: "wait" });
+
+    await agreement.getByLabel("Interior and common areas", { exact: true }).selectOption({ label: "Yes" });
+    await expect(agreement.getByLabel("Exterior (front, entrance, street view)", { exact: true })).not.toBeChecked();
+    await agreement.getByLabel("Deposit", { exact: true }).selectOption({ label: "Months of rent" });
+    await agreement.getByLabel("Value", { exact: true }).fill("2");
+    await button(agreement, "Add a fee").click();
+    await agreement.getByLabel("Fee name", { exact: true }).nth(1).fill("Water");
+    await agreement.getByLabel("Basis", { exact: true }).nth(1).selectOption({ label: "Provider's rate" });
+
+    // A double click saves once, leaves edit mode and reads the agreement again.
+    const calls = recordApiCalls(sale);
+    await button(agreement, "Save the draft").dblclick();
+    await expect(agreement.getByRole("heading", { name: "Editing the draft", exact: true })).toHaveCount(0, { timeout: 20_000 });
+    const saved = [
+      "Proposed terms: not confirmed by the owner yet.",
+      "8,000,000 VND per month",
+      "2 months' rent",
+      "12 months",
+      "Electricity: 3,500 VND per kWh",
+      "Water: provider's rate",
+    ];
+    for (const text of saved) await expect(agreement.getByText(text, { exact: true })).toBeVisible({ timeout: 20_000 });
+    expect(calls.filter((call) => call.method === "PUT" && call.url.pathname.endsWith("/draft"))).toHaveLength(1);
+
+    // A manager reads the same content at the same address, and is offered no edit (brokerage-agreement BR-16).
+    await admin.goto(agreementPath);
+    for (const text of saved) await expect(mainArea(admin).getByText(text, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(button(mainArea(admin), "Edit the draft")).toHaveCount(0);
+  });
+
+  test("eligibility_leadWithoutIntake_noneAndE1Lines (UD-8, UD-1, brokerage-agreement US-1 AC-1, E-1)", async () => {
+    // L1: the seed completes no intake, and no spec of the chain completes one on it.
+    await admin.goto(fixture.lead(1).path);
+    const eligibility = mainArea(admin).getByRole("region", { name: "Agreement eligibility", exact: true });
+    await expect(eligibility.getByText("This lead has no completed intake yet.", { exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(eligibility.getByText(E1, { exact: true })).toBeVisible();
+    await expect(eligibility.getByRole("listitem")).toHaveCount(0);
   });
 });
 

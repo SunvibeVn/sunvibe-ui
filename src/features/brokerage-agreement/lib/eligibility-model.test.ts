@@ -23,11 +23,22 @@ const http = (status: number, code: string, correlationId?: string): ApiResult<B
 });
 
 describe("eligibilityAfter (brokerage-agreement E05-S1, spec section 6)", () => {
-  it("eligibilityModel_noBasis_hidden: a lead with no completed intake shows nothing", () => {
-    expect(eligibilityAfter(answered({ basisState: "NONE", viewerIsAssignedSale: true, units: [] }))).toEqual({
-      kind: "hidden",
-    });
+  it("eligibilityModel_noBasis_hidden: an answer without basisState shows nothing", () => {
     expect(eligibilityAfter(answered({ viewerIsAssignedSale: true, units: [] }))).toEqual({ kind: "hidden" });
+  });
+
+  it("eligibilityModel_noneBasis_noneState: a lead with no completed intake has its own state (brokerage-agreement E-1, S3-D19)", () => {
+    expect(eligibilityAfter(answered({ basisState: "NONE", viewerIsAssignedSale: true, units: [] }))).toEqual({
+      kind: "none",
+    });
+  });
+
+  it("eligibilityModel_readyWithoutUnits_emptyRows: a basis whose intake lists no unit is ready with no row", () => {
+    expect(eligibilityAfter(answered({ basisState: "USABLE", viewerIsAssignedSale: true, units: [] }))).toEqual({
+      kind: "ready",
+      rows: [],
+      assignedOnly: false,
+    });
   });
 
   it("eligibilityModel_notFoundForbiddenOrSession_hidden: a 404, a 403 and the session states hide the section", () => {

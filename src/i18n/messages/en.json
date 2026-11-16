@@ -2163,7 +2163,10 @@
       "draft": "Draft an agreement",
       "inProgress": "Agreement in progress",
       "inProgressNote": "This unit already has an agreement in progress.",
-      "openAgreement": "Open the agreement"
+      "openAgreement": "Open the agreement",
+      "notListed": "Units created by the old direct property form, and survey parts left out of an intake, are not listed here. They need an intake or unit management first.",
+      "noBasis": "This lead has no completed intake yet.",
+      "noUnits": "The intake result of this lead lists no unit."
     },
     "draft": {
       "title": "Draft an agreement",
@@ -2231,6 +2234,123 @@
       "ACTIVATION_REFUSED": "Activation refused",
       "CANCELLED": "Cancelled",
       "OTHER": "Another state"
+    },
+    "terms": {
+      "proposed": "Proposed terms: not confirmed by the owner yet.",
+      "advertising": "Advertising",
+      "advertisingScope": {
+        "SUNVIBE_CHANNELS": "Sunvibe may advertise this unit on sunvibe.vn and by staff sending the listing link to customers, from the start date to the end date. Outside channels such as social networks, classified sites or other platforms are not included.",
+        "OTHER": "Another advertising permission."
+      },
+      "photos": "Public photos",
+      "interior": "Interior and common areas",
+      "exterior": "Exterior (front, entrance, street view)",
+      "yes": "Yes",
+      "no": "No",
+      "notAnswered": "Not answered yet",
+      "rental": "Rental terms",
+      "monthlyRent": "Monthly rent",
+      "rentValue": "{amount} VND per month",
+      "deposit": "Deposit",
+      "depositMonths": "{count, plural, one {# month's rent} other {# months' rent}}",
+      "depositAmount": "{amount} VND",
+      "noDeposit": "No deposit",
+      "depositOther": "Another kind of deposit",
+      "minimumTerm": "Minimum term",
+      "paymentPeriod": "Pay every",
+      "months": "{count, plural, one {# month} other {# months}}",
+      "mandatoryFees": "Mandatory fees",
+      "fee": {
+        "AMOUNT": "{name}: {amount} VND {unit}",
+        "INCLUDED": "{name}: included in the rent",
+        "PROVIDER_TARIFF": "{name}: provider's rate",
+        "OTHER": "{name}: another kind of fee"
+      },
+      "noFees": "No mandatory fee besides the rent",
+      "feesNotStated": "Not stated yet",
+      "notEntered": "Not entered yet",
+      "chargeUnit": {
+        "PER_MONTH": "per month",
+        "PER_KWH": "per kWh",
+        "PER_M3": "per m³",
+        "PER_PERSON_PER_MONTH": "per person per month",
+        "PER_VEHICLE_PER_MONTH": "per vehicle per month",
+        "ONE_OFF": "one-off",
+        "OTHER": "per another unit"
+      }
+    },
+    "edit": {
+      "open": "Edit the draft",
+      "title": "Editing the draft",
+      "transactionType": "Transaction type",
+      "interior": "Interior and common areas",
+      "consent": {
+        "yes": "Yes",
+        "no": "No",
+        "unanswered": "Not answered yet"
+      },
+      "exterior": "Exterior (front, entrance, street view)",
+      "monthlyRent": "Monthly rent (VND)",
+      "deposit": "Deposit",
+      "depositNone": "Not entered",
+      "depositMonths": "Months of rent",
+      "depositAmount": "Amount (VND)",
+      "depositValue": "Value",
+      "minimumTerm": "Minimum term (months)",
+      "paymentPeriod": "Pay every (months)",
+      "fees": "Mandatory fees",
+      "feesNotStated": "Not stated yet",
+      "feesNone": "No mandatory fee besides the rent",
+      "feesList": "These fees",
+      "feeName": "Fee name",
+      "feeBasis": "Basis",
+      "feeBasisOption": {
+        "AMOUNT": "An amount",
+        "INCLUDED": "Included in the rent",
+        "PROVIDER_TARIFF": "Provider's rate"
+      },
+      "feeAmount": "Amount (VND)",
+      "feeUnit": "Unit",
+      "feeUnitNone": "Choose a unit",
+      "addFee": "Add a fee",
+      "removeFee": "Remove",
+      "save": "Save the draft",
+      "cancel": "Cancel",
+      "reload": "Reload",
+      "fromSurvey": "From the survey: {source}, {date}",
+      "supportCode": "Support code: {code}",
+      "errors": {
+        "amount": "Enter a whole number of VND from 1, without separators.",
+        "depositMonths": "Enter a number of months from 0 to 12.",
+        "depositAmount": "Enter a whole number of VND from 0, without separators.",
+        "minimumTerm": "Enter a number of months from 1 to 120.",
+        "paymentPeriod": "Enter a number of months from 1 to 12.",
+        "feeName": "Enter a name of 1 to 100 characters.",
+        "feeAmount": "Enter a whole number of VND from 1, without separators.",
+        "feeUnit": "Choose a unit.",
+        "tooManyFees": "A draft holds at most 20 fees.",
+        "notEligible": "This draft cannot be saved now:",
+        "notDraft": "This version is no longer a draft.",
+        "stale": "This draft changed since you opened it.",
+        "notAssignee": "Only the Sale assigned to this lead edits the draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The draft could not be saved."
+      }
+    },
+    "survey": {
+      "title": "Survey reference",
+      "loading": "Reading the survey values.",
+      "empty": "The survey holds no value for these terms.",
+      "loadFailed": "The survey values could not be read.",
+      "retry": "Try again",
+      "use": "Use the survey values",
+      "source": {
+        "OBSERVED_ON_SITE": "Seen on site",
+        "OWNER_STATED": "Said by the owner",
+        "OWNER_FORM": "Owner's web form",
+        "none": "Source not recorded",
+        "OTHER": "Another source"
+      }
     }
   },
   "TestEnvironment": {
