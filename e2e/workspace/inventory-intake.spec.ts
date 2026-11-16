@@ -353,6 +353,56 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(eligibility.getByRole("listitem")).toContainText("Can get an agreement");
     await expect(eligibility).not.toContainText("Only the Sale assigned to this lead drafts an agreement.");
   });
+
+  test("agreementDraft_fromTheLeadPage_opensItsPage (UI-7, brokerage-agreement US-1 AC-3, AC-4)", async () => {
+    // On the lead page the previous test leaves open. The lead seed deletes the agreements of its leads, so this runs again
+    // after a re-seed (brokerage-agreement S2-D16).
+    const eligibility = mainArea(sale).getByRole("region", { name: "Agreement eligibility", exact: true });
+    const unit = eligibility.getByRole("listitem");
+    await button(unit, "Draft an agreement").click();
+    const dialog = sale.getByRole("dialog", { name: "Draft an agreement", exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog).toContainText("Transaction type: Long-term rental");
+
+    // A 13-month period is refused in the browser: nothing is sent.
+    const calls = recordApiCalls(sale);
+    const drafts = () => calls.filter((call) => call.method === "POST" && call.url.pathname === "/api/v1/staff/brokerage-agreements");
+    await dialog.getByLabel("Start date", { exact: true }).fill("2027-01-01");
+    await dialog.getByLabel("End date", { exact: true }).fill("2028-02-01");
+    await button(dialog, "Create the draft").click();
+    await expect(dialog.getByText("The end date is more than 12 months after the start date.", { exact: true })).toBeVisible();
+    expect(drafts()).toHaveLength(0);
+
+    // A double click creates one draft and lands on its page.
+    await dialog.getByLabel("End date", { exact: true }).fill("2027-12-31");
+    await button(dialog, "Create the draft").dblclick();
+    await expect(sale).toHaveURL(/\/workspace\/brokerage-agreements\/[0-9A-Z]{26}$/, { timeout: 20_000 });
+    const agreementPath = new URL(sale.url()).pathname;
+
+    const agreement = mainArea(sale);
+    await expect(agreement.getByRole("heading", { level: 1, name: "Brokerage agreement", exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    for (const text of ["Drafting", "Long-term rental", "Version 1", "Draft", "1 Jan 2027", "31 Dec 2027"]) {
+      await expect(agreement.getByText(text, { exact: true })).toBeVisible();
+    }
+    expect(drafts()).toHaveLength(1);
+
+    // Back on the lead, the unit has its agreement in progress and offers no second draft.
+    await agreement.getByRole("link", { name: "Open the lead", exact: true }).click();
+    await expect(sale).toHaveURL(new RegExp(`/workspace/owner-leads/${L15.id}$`), { timeout: 20_000 });
+    await expect(unit).toContainText("Agreement in progress", { timeout: 20_000 });
+    await expect(unit.getByRole("link", { name: "Open the agreement", exact: true })).toBeVisible();
+    await expect(button(unit, "Draft an agreement")).toHaveCount(0);
+
+    // A manager who may see the lead opens the same agreement from it (no new sign-in: the admin context of this spec).
+    await admin.goto(`/workspace/owner-leads/${L15.id}`);
+    const adminUnit = mainArea(admin).getByRole("region", { name: "Agreement eligibility", exact: true }).getByRole("listitem");
+    await adminUnit.getByRole("link", { name: "Open the agreement", exact: true }).click({ timeout: 20_000 });
+    await expect(admin).toHaveURL(new RegExp(`${agreementPath}$`), { timeout: 20_000 });
+    await expect(mainArea(admin).getByText("Drafting", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(mainArea(admin).getByText("Version 1", { exact: true })).toBeVisible();
+  });
 });
 
 // No fixture reaches a case, so the answers are stubbed: this is about what the pages do with them. Budget: 1 login.
