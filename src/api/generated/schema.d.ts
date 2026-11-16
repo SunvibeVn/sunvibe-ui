@@ -557,6 +557,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/brokerage-agreements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Draft a brokerage agreement for a unit of the lead's intake basis */
+        post: operations["createBrokerageAgreement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The detail of a brokerage agreement; each read is logged */
+        get: operations["getBrokerageAgreement"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/inventory-cases": {
         parameters: {
             query?: never;
@@ -1863,6 +1897,64 @@ export interface components {
              */
             startAt: string;
         };
+        BrokerageAgreementCreateRequest: {
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time, not before the start date and at most 12 months after it
+             */
+            endDate: string;
+            /** @description The basis lead: the owner lead whose latest completed intake maps the unit */
+            leadId: string;
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time, 2000-01-01 to 2099-12-31
+             */
+            startDate: string;
+            /**
+             * @description Only long-term rental now
+             * @enum {string}
+             */
+            transactionType: "LONG_TERM_RENT";
+            /** @description A unit the lead's latest completed intake maps */
+            unitId: string;
+        };
+        BrokerageAgreementCreated: {
+            agreementId?: string;
+        };
+        BrokerageAgreementDetail: {
+            agreementId?: string;
+            /** @description The basis lead of the latest version */
+            basisLeadId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /** @enum {string} */
+            status?: "DRAFTING" | "AWAITING_CONFIRMATION" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "TERMINATED" | "CANCELLED";
+            /** @enum {string} */
+            transactionType?: "LONG_TERM_RENT";
+            /** @description The unit's code as read from the intake basis at creation; null when it had none */
+            unitCode?: string | null;
+            unitId?: string;
+            /** @description By version number, from 1 */
+            versions?: components["schemas"]["BrokerageAgreementVersion"][];
+        };
+        BrokerageAgreementVersion: {
+            /** Format: date-time */
+            createdAt?: string;
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time
+             */
+            endDate?: string;
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time
+             */
+            startDate?: string;
+            /** @enum {string} */
+            status?: "DRAFT" | "AWAITING_OWNER" | "OWNER_CONFIRMED" | "ACTIVATED" | "EFFECTIVE" | "SUPERSEDED" | "OWNER_REJECTED" | "LAPSED" | "ACTIVATION_REFUSED" | "CANCELLED";
+            /** Format: int32 */
+            versionNo?: number;
+        };
         BrokerageEligibility: {
             /**
              * @description The readiness state of the lead's latest completed intake; NONE without one
@@ -1875,9 +1967,13 @@ export interface components {
             viewerIsAssignedSale?: boolean;
         };
         BrokerageEligibilityUnit: {
+            /** @description Set only when the agreement rests on this lead */
+            agreementId?: string | null;
             eligible?: boolean;
             /** @description BASIS: the lead's intake result is not usable now; PROPERTY: a stop for the whole property; UNIT: a stop of this unit; OWNER: the owner on record does not meet brokerage-agreement BR-4. No group names a lead. */
             reasonGroups?: ("BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /** @description The unit already has a long-term rental agreement in progress (drafting, awaiting confirmation, active or suspended) */
+            unfinishedAgreement?: boolean;
             /** @description Null when the unit row is missing */
             unitCode?: string | null;
             unitId?: string;
@@ -7825,6 +7921,124 @@ export interface operations {
                 };
             };
             /** @description Unknown province code (code NOT_FOUND) */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createBrokerageAgreement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description The draft was created; only its id is answered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageAgreementCreated"];
+                };
+            };
+            /** @description VALIDATION_FAILED (field entries; transactionType with its allowedValues) or MALFORMED_REQUEST (the body or a date cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff; AGREEMENT_NOT_ASSIGNEE: the caller is not the lead's assigned Sale */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the lead does not exist or is not visible */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER), AGREEMENT_EXISTS (the unit already has an agreement in progress) or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getBrokerageAgreement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The agreement and its versions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageAgreementDetail"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Caller is not staff */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description The agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
             404: {
                 headers: {
                     [name: string]: unknown;

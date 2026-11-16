@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 import { englishSessionTexts, RequireSession } from "@/features/auth/client";
 import { WorkspaceDocument, WorkspaceShell } from "@/features/workspace";
 import en from "@/i18n/messages/en.json";
+import * as agreementPage from "./brokerage-agreements/[agreementId]/page";
 import * as casePage from "./inventory-cases/[caseId]/page";
 import * as casesPage from "./inventory-cases/page";
 import WorkspaceLayout, { metadata } from "./layout";
@@ -53,6 +54,7 @@ describe("workspace pages opt out of instant-navigation validation", () => {
   // every workspace page as a dropped segment unless it sets `instant = false`.
   const pages: Record<string, { instant?: unknown }> = {
     "page.tsx": workspacePage,
+    "brokerage-agreements/[agreementId]/page.tsx": agreementPage,
     "inventory-cases/page.tsx": casesPage,
     "inventory-cases/[caseId]/page.tsx": casePage,
     "owner-leads/page.tsx": leadListPage,
