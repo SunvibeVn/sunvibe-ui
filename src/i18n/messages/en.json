@@ -2234,6 +2234,59 @@
       "ACTIVATION_REFUSED": "Activation refused",
       "CANCELLED": "Cancelled",
       "OTHER": "Another state"
+    },
+    "terms": {
+      "proposed": "Proposed terms: not confirmed by the owner yet.",
+      "advertising": "Advertising",
+      "advertisingScope": {
+        "SUNVIBE_CHANNELS": "Sunvibe may advertise this unit on sunvibe.vn and by staff sending the listing link to customers, from the start date to the end date. Outside channels such as social networks, classified sites or other platforms are not included.",
+        "OTHER": "Another advertising permission."
+      },
+      "photos": "Public photos",
+      "interior": "Interior and common areas",
+      "exterior": "Exterior (front, entrance, street view)",
+      "yes": "Yes",
+      "no": "No",
+      "notAnswered": "Not answered yet",
+      "rental": "Rental terms",
+      "monthlyRent": "Monthly rent",
+      "rentValue": "{amount} VND per month",
+      "deposit": "Deposit",
+      "depositMonths": "{count, plural, one {# month's rent} other {# months' rent}}",
+      "depositAmount": "{amount} VND",
+      "noDeposit": "No deposit",
+      "depositOther": "Another kind of deposit",
+      "minimumTerm": "Minimum term",
+      "paymentPeriod": "Pay every",
+      "months": "{count, plural, one {# month} other {# months}}",
+      "mandatoryFees": "Mandatory fees",
+      "fee": {
+        "AMOUNT": "{name}: {amount} VND {unit}",
+        "INCLUDED": "{name}: included in the rent",
+        "PROVIDER_TARIFF": "{name}: provider's rate",
+        "OTHER": "{name}: another kind of fee"
+      },
+      "noFees": "No mandatory fee besides the rent",
+      "feesNotStated": "Not stated yet",
+      "notEntered": "Not entered yet",
+      "chargeUnit": {
+        "PER_MONTH": "per month",
+        "PER_KWH": "per kWh",
+        "PER_M3": "per m³",
+        "PER_PERSON_PER_MONTH": "per person per month",
+        "PER_VEHICLE_PER_MONTH": "per vehicle per month",
+        "ONE_OFF": "one-off",
+        "OTHER": "per another unit"
+      }
+    },
+    "survey": {
+      "source": {
+        "OBSERVED_ON_SITE": "Seen on site",
+        "OWNER_STATED": "Said by the owner",
+        "OWNER_FORM": "Owner's web form",
+        "none": "Source not recorded",
+        "OTHER": "Another source"
+      }
     }
   },
   "TestEnvironment": {
