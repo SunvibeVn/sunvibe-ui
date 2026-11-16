@@ -591,6 +591,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the whole content of the agreement's draft, against the data version read */
+        put: operations["updateBrokerageAgreementDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/survey-terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The survey's values for the draft's terms, with their sources and dates; a proposal, never stored */
+        get: operations["getBrokerageAgreementSurveyTerms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/inventory-cases": {
         parameters: {
             query?: never;
@@ -1921,12 +1955,46 @@ export interface components {
         BrokerageAgreementCreated: {
             agreementId?: string;
         };
+        BrokerageAgreementDeposit: {
+            /**
+             * Format: int64
+             * @description Set for AMOUNT
+             */
+            amount?: number | null;
+            /** @enum {string} */
+            basis?: "MONTHS" | "AMOUNT";
+            /**
+             * @description VND with an amount, else null
+             * @enum {string|null}
+             */
+            currency?: "VND" | null;
+            /**
+             * Format: int32
+             * @description Set for MONTHS
+             */
+            months?: number | null;
+        };
+        BrokerageAgreementDepositInput: {
+            /** Format: int64 */
+            amount?: number | null;
+            /** @enum {string} */
+            basis: "MONTHS" | "AMOUNT";
+            /** @enum {string|null} */
+            currency?: "VND" | null;
+            /** Format: int32 */
+            months?: number | null;
+        };
         BrokerageAgreementDetail: {
             agreementId?: string;
             /** @description The basis lead of the latest version */
             basisLeadId?: string;
             /** Format: date-time */
             createdAt?: string;
+            /**
+             * Format: int64
+             * @description The data version a change of the agreement sends back as expectedDataVersion
+             */
+            dataVersion?: number;
             /** @enum {string} */
             status?: "DRAFTING" | "AWAITING_CONFIRMATION" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "TERMINATED" | "CANCELLED";
             /** @enum {string} */
@@ -1936,8 +2004,128 @@ export interface components {
             unitId?: string;
             /** @description By version number, from 1 */
             versions?: components["schemas"]["BrokerageAgreementVersion"][];
+            /** @description Whether the caller is the basis lead's assigned Sale, who edits the draft; a hint, the server decides */
+            viewerIsAssignedSale?: boolean;
+        };
+        BrokerageAgreementDraftRequest: {
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time, not before the start date and at most 12 months after it
+             */
+            endDate: string;
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+            /** @description Public photos of the exterior (front, entrance, street view); true only with photoConsent true */
+            exteriorPhotoConsent: boolean;
+            /** @description Public photos of the interior and common areas; null = not answered yet */
+            photoConsent?: boolean | null;
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time, 2000-01-01 to 2099-12-31
+             */
+            startDate: string;
+            terms: components["schemas"]["BrokerageAgreementTermsInput"];
+            /**
+             * @description Only long-term rental now
+             * @enum {string}
+             */
+            transactionType: "LONG_TERM_RENT";
+        };
+        BrokerageAgreementFee: {
+            /**
+             * Format: int64
+             * @description Set for AMOUNT
+             */
+            amount?: number | null;
+            /** @enum {string} */
+            basis?: "AMOUNT" | "INCLUDED" | "PROVIDER_TARIFF";
+            /**
+             * @description Set for AMOUNT
+             * @enum {string|null}
+             */
+            chargeUnit?: "PER_MONTH" | "PER_KWH" | "PER_M3" | "PER_PERSON_PER_MONTH" | "PER_VEHICLE_PER_MONTH" | "ONE_OFF" | null;
+            /**
+             * @description VND with an amount, else null
+             * @enum {string|null}
+             */
+            currency?: "VND" | null;
+            name?: string;
+        };
+        BrokerageAgreementFeeInput: {
+            /** Format: int64 */
+            amount?: number | null;
+            /** @enum {string} */
+            basis: "AMOUNT" | "INCLUDED" | "PROVIDER_TARIFF";
+            /** @enum {string|null} */
+            chargeUnit?: "PER_MONTH" | "PER_KWH" | "PER_M3" | "PER_PERSON_PER_MONTH" | "PER_VEHICLE_PER_MONTH" | "ONE_OFF" | null;
+            /** @enum {string|null} */
+            currency?: "VND" | null;
+            name: string;
+        };
+        BrokerageAgreementRent: {
+            /** Format: int64 */
+            amount?: number;
+            /** @enum {string} */
+            currency?: "VND";
+            /** @enum {string} */
+            unit?: "MONTH";
+        };
+        BrokerageAgreementRentInput: {
+            /** Format: int64 */
+            amount: number;
+            /** @enum {string} */
+            currency: "VND";
+            /** @enum {string} */
+            unit: "MONTH";
+        };
+        BrokerageAgreementSurveyTerms: {
+            /** @description One per part held: monthlyRent, deposit, minimumTermMonths, paymentPeriodMonths, mandatoryFees[i] */
+            sources?: components["schemas"]["BrokerageAgreementTermSource"][];
+            terms?: components["schemas"]["BrokerageAgreementTerms"];
+        };
+        BrokerageAgreementTermSource: {
+            /**
+             * Format: date
+             * @description The date of the survey's statement, else the day of the visit, in Vietnam time
+             */
+            date?: string;
+            /** @description monthlyRent, deposit, minimumTermMonths, paymentPeriodMonths or mandatoryFees[i] */
+            field?: string;
+            /**
+             * @description null when the survey recorded none of these
+             * @enum {string|null}
+             */
+            source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+        };
+        BrokerageAgreementTerms: {
+            deposit?: components["schemas"]["BrokerageAgreementDeposit"] | null;
+            /** @description null = not stated yet; [] = no mandatory fee besides the rent */
+            mandatoryFees?: components["schemas"]["BrokerageAgreementFee"][] | null;
+            /** Format: int32 */
+            minimumTermMonths?: number | null;
+            monthlyRent?: components["schemas"]["BrokerageAgreementRent"] | null;
+            /** Format: int32 */
+            paymentPeriodMonths?: number | null;
+        };
+        BrokerageAgreementTermsInput: {
+            deposit?: components["schemas"]["BrokerageAgreementDepositInput"] | null;
+            /** @description null = not stated yet; [] = no mandatory fee besides the rent */
+            mandatoryFees?: components["schemas"]["BrokerageAgreementFeeInput"][] | null;
+            /** Format: int32 */
+            minimumTermMonths?: number | null;
+            monthlyRent?: components["schemas"]["BrokerageAgreementRentInput"] | null;
+            /** Format: int32 */
+            paymentPeriodMonths?: number | null;
         };
         BrokerageAgreementVersion: {
+            /**
+             * @description The advertising permission: sunvibe.vn and staff sending the listing link, for the version's period (brokerage-agreement BR-9)
+             * @enum {string}
+             */
+            advertisingScope?: "SUNVIBE_CHANNELS";
             /** Format: date-time */
             createdAt?: string;
             /**
@@ -1945,6 +2133,10 @@ export interface components {
              * @description A calendar date in Vietnam time
              */
             endDate?: string;
+            /** @description Public photos of the exterior; true only with photoConsent true */
+            exteriorPhotoConsent?: boolean;
+            /** @description Public photos of the interior and common areas; null = not answered yet */
+            photoConsent?: boolean | null;
             /**
              * Format: date
              * @description A calendar date in Vietnam time
@@ -1952,6 +2144,7 @@ export interface components {
             startDate?: string;
             /** @enum {string} */
             status?: "DRAFT" | "AWAITING_OWNER" | "OWNER_CONFIRMED" | "ACTIVATED" | "EFFECTIVE" | "SUPERSEDED" | "OWNER_REJECTED" | "LAPSED" | "ACTIVATION_REFUSED" | "CANCELLED";
+            terms?: components["schemas"]["BrokerageAgreementTerms"];
             /** Format: int32 */
             versionNo?: number;
         };
@@ -8040,6 +8233,151 @@ export interface operations {
             };
             /** @description The agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    updateBrokerageAgreementDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description The draft was saved; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (one entry per field: expectedDataVersion, transactionType with its allowedValues, startDate, endDate, exteriorPhotoConsent or a terms path such as terms.mandatoryFees[2].amount) or MALFORMED_REQUEST (the body, a date or a number cannot be read; a fraction is not a whole number) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff; AGREEMENT_NOT_ASSIGNEE: the caller is not the basis lead's assigned Sale */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_DRAFT (the agreement has no draft to edit), AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) or CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getBrokerageAgreementSurveyTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The proposal of the unit's surveyed space; every part null and no source when the survey holds none or no longer stands as the intake's source */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageAgreementSurveyTerms"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_DRAFT: the agreement has no draft */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
