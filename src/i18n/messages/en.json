@@ -2190,6 +2190,47 @@
     "transactionType": {
       "LONG_TERM_RENT": "Long-term rental",
       "OTHER": "Another transaction type"
+    },
+    "detail": {
+      "title": "Brokerage agreement",
+      "loading": "Loading the agreement…",
+      "loadFailed": "The agreement could not be read.",
+      "retry": "Try again",
+      "notFound": "This agreement is not available.",
+      "status": "Status",
+      "transactionType": "Transaction type",
+      "unit": "Unit",
+      "noCode": "A unit with no code",
+      "createdAt": "Created",
+      "openLead": "Open the lead",
+      "versions": "Versions",
+      "version": "Version {number}",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "supportCode": "Support code: {correlationId}"
+    },
+    "status": {
+      "DRAFTING": "Drafting",
+      "AWAITING_CONFIRMATION": "Awaiting confirmation",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "EXPIRED": "Expired",
+      "TERMINATED": "Terminated",
+      "CANCELLED": "Cancelled",
+      "OTHER": "Another state"
+    },
+    "versionStatus": {
+      "DRAFT": "Draft",
+      "AWAITING_OWNER": "Awaiting the owner",
+      "OWNER_CONFIRMED": "Confirmed by the owner",
+      "ACTIVATED": "Activated",
+      "EFFECTIVE": "In effect",
+      "SUPERSEDED": "Superseded",
+      "OWNER_REJECTED": "Rejected by the owner",
+      "LAPSED": "Lapsed",
+      "ACTIVATION_REFUSED": "Activation refused",
+      "CANCELLED": "Cancelled",
+      "OTHER": "Another state"
     }
   },
   "TestEnvironment": {
