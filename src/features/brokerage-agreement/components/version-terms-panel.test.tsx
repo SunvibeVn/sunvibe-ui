@@ -79,14 +79,20 @@ describe("VersionTermsPanel (brokerage-agreement E05-S3, spec section 6, UD-2)",
     ]);
   });
 
-  it("versionTermsPanel_notDraft_noProposedLineAndNotEntered: a version past its draft has no proposed line; a missing value reads not entered", () => {
-    renderPanel({ versionNo: 2, status: "AWAITING_OWNER", startDate: "2027-01-01", endDate: "2027-12-31" });
+  it("versionTermsPanel_ownerAnswered_noProposedLineAndNotEntered: a version the owner answered has no proposed line; a missing value reads not entered", () => {
+    renderPanel({ versionNo: 2, status: "OWNER_CONFIRMED", startDate: "2027-01-01", endDate: "2027-12-31" });
 
     expect(screen.queryByText("Proposed terms: not confirmed by the owner yet.")).toBeNull();
     expect(screen.queryByText("Advertising", { selector: "dt" })).toBeNull();
     expect(valueOf("Interior and common areas")).toBe("Not answered yet");
     expect(valueOf("Monthly rent")).toBe("Not entered yet");
     expect(valueOf("Mandatory fees")).toBe("Not stated yet");
+  });
+
+  it("versionTermsPanel_awaitingOwner_proposedLine: a version sent to the owner still reads as proposed terms, once (brokerage-agreement E05-S4, S4-D15)", () => {
+    renderPanel({ ...FULL, status: "AWAITING_OWNER" });
+
+    expect(screen.getAllByText("Proposed terms: not confirmed by the owner yet.")).toHaveLength(1);
   });
 
   it("versionTermsPanel_repeatsNoPageText: no element of the panel holds as its own text a text the page already shows", () => {

@@ -12,6 +12,7 @@ import { getAgreement } from "../services/agreement-api";
 
 import { AgreementVersionList } from "./agreement-version-list";
 import { DraftEditForm } from "./draft-edit-form";
+import { DraftSendDialog } from "./draft-send-dialog";
 
 const LOADING: AgreementModel = { kind: "loading" };
 
@@ -19,8 +20,9 @@ const LOADING: AgreementModel = { kind: "loading" };
  * The workspace page of one brokerage agreement (brokerage-agreement US-4 AC-3 part, S2-D14): its state, transaction
  * type, unit, creation time and versions with their content, and a way back to its basis lead. No owner, intake,
  * property or person (BR-17). The assigned Sale edits the draft in place (E05-S3, S3-D18): "Edit the draft" shows the
- * form and the survey reference instead of the draft's content. Every read is one opening that the server logs
- * (S2-D9): one on mount, one per "Try again", one after a save or a "Reload".
+ * form and the survey reference instead of the draft's content. Beside it, "Send to the owner" (E05-S4, S4-D14) asks
+ * for a confirmation and sends the draft with the data version the page read. Every read is one opening that the
+ * server logs (S2-D9): one on mount, one per "Try again", one after a save, a send or a "Reload".
  */
 export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const t = useTranslations("BrokerageAgreement");
@@ -28,6 +30,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const [model, setModel] = useState<AgreementModel>(LOADING);
   const [attempt, setAttempt] = useState(0);
   const [editing, setEditing] = useState(false);
+  const [confirmingSend, setConfirmingSend] = useState(false);
   const versionsId = useId();
 
   useEffect(() => {
@@ -46,6 +49,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     () => () => {
       setModel(LOADING);
       setEditing(false);
+      setConfirmingSend(false);
     },
     [],
   );
@@ -54,9 +58,10 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     setModel(LOADING);
     setAttempt((count) => count + 1);
   };
-  // A saved draft or a "Reload": leave edit mode and read the agreement again.
+  // A saved or sent draft, or a "Reload": leave edit mode, close the send dialog and read the agreement again.
   const reread = () => {
     setEditing(false);
+    setConfirmingSend(false);
     retry();
   };
 
@@ -152,13 +157,28 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
                 {t("detail.versions")}
               </h2>
               {canEditDraft && draftEditor === undefined && (
-                <Button variant="secondary" className="px-4 py-2" onClick={() => setEditing(true)}>
-                  {t("edit.open")}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button variant="secondary" className="px-4 py-2" onClick={() => setEditing(true)}>
+                    {t("edit.open")}
+                  </Button>
+                  <Button className="px-4 py-2" onClick={() => setConfirmingSend(true)}>
+                    {t("send.open")}
+                  </Button>
+                </div>
               )}
             </div>
             <AgreementVersionList versions={versions} draftEditor={draftEditor} />
           </section>
+          {confirmingSend && canEditDraft && draft !== null && dataVersion !== null && draftEditor === undefined && (
+            <DraftSendDialog
+              agreementId={agreementId}
+              versionNo={draft.versionNo ?? 0}
+              dataVersion={dataVersion}
+              onClose={() => setConfirmingSend(false)}
+              onSent={reread}
+              onReload={reread}
+            />
+          )}
         </div>
       );
     }

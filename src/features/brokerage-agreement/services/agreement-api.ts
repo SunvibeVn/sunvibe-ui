@@ -5,6 +5,7 @@ import type {
   BrokerageAgreementCreateRequest,
   BrokerageAgreementDetail,
   BrokerageAgreementDraftRequest,
+  BrokerageAgreementDraftSubmissionRequest,
   BrokerageAgreementSurveyTerms,
 } from "../types";
 
@@ -41,6 +42,23 @@ export function updateDraft(
 ): Promise<ApiResult<undefined>> {
   return deps.callApi((client) =>
     client.PUT("/api/v1/staff/brokerage-agreements/{agreementId}/draft", { params: { path: { agreementId } }, body }),
+  );
+}
+
+/**
+ * POST the sending of the draft to the owner against the data version the page read (brokerage-agreement US-1 AC-5,
+ * S4-D2); a 204 has no body, so the page reads the detail again.
+ */
+export function submitDraft(
+  agreementId: string,
+  body: BrokerageAgreementDraftSubmissionRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/draft/submission", {
+      params: { path: { agreementId } },
+      body,
+    }),
   );
 }
 

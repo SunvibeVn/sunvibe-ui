@@ -140,4 +140,37 @@ describe("AgreementDetailView (brokerage-agreement E05-S2, spec section 6)", () 
     await screen.findByRole("heading", { level: 1, name: m.title });
     expect(screen.getAllByText("Another state")).toHaveLength(2);
   });
+
+  it("agreementDetailView_sentVersion_sentLineAndBothProposedLines: a sent version shows its state, when it was sent and both proposed lines once, and no action (brokerage-agreement E05-S4, UF-3, S4-D15)", async () => {
+    vi.mocked(getAgreement).mockResolvedValue(
+      answered({
+        ...DETAIL,
+        status: "AWAITING_CONFIRMATION",
+        dataVersion: 2,
+        viewerIsAssignedSale: true,
+        versions: [
+          {
+            versionNo: 1,
+            status: "AWAITING_OWNER",
+            startDate: "2027-01-01",
+            endDate: "2027-12-31",
+            createdAt: "2026-11-20T03:15:00Z",
+            sentAt: "2026-11-21T03:15:00.123456Z",
+          },
+        ],
+      }),
+    );
+    renderView();
+
+    await screen.findByRole("heading", { level: 1, name: m.title });
+    expect(screen.getByText("Awaiting confirmation")).toBeTruthy();
+    const versions = screen.getByRole("region", { name: m.versions });
+    const [version] = within(versions).getAllByRole("listitem");
+    expect(within(version as HTMLElement).getByText("Awaiting the owner")).toBeTruthy();
+    expect(within(version as HTMLElement).getByText(/^Sent to the owner: /).textContent).toMatch(/Nov 21, 2026.*10:15/);
+    expect(screen.getAllByText("Proposed terms: not confirmed by the owner yet.")).toHaveLength(1);
+    expect(screen.getAllByText("Proposed fee policy: not confirmed by the owner yet.")).toHaveLength(1);
+    expect(screen.queryByRole("button", { name: "Edit the draft" })).toBeNull();
+    expect(screen.queryByRole("button", { name: "Send to the owner" })).toBeNull();
+  });
 });

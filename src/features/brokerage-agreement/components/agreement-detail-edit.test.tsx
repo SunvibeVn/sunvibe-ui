@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiResult } from "@/features/auth/client";
 import en from "@/i18n/messages/en.json";
 
@@ -12,9 +12,10 @@ vi.mock("../services/agreement-api", async (importOriginal) => ({
   getAgreement: vi.fn(),
   getSurveyTerms: vi.fn(),
   updateDraft: vi.fn(),
+  submitDraft: vi.fn(),
 }));
 
-import { getAgreement, getSurveyTerms, updateDraft } from "../services/agreement-api";
+import { getAgreement, getSurveyTerms, submitDraft, updateDraft } from "../services/agreement-api";
 
 import { AgreementDetailView } from "./agreement-detail-view";
 
@@ -181,5 +182,88 @@ describe("AgreementDetailView, editing the draft (brokerage-agreement E05-S3, S3
     expect(within(second as HTMLElement).getByText("Version 2")).toBeTruthy();
     expect(within(second as HTMLElement).getByRole("heading", { name: m.edit.title })).toBeTruthy();
     expect(within(second as HTMLElement).queryByText(m.terms.proposed)).toBeNull();
+  });
+});
+
+describe("AgreementDetailView, sending the draft to the owner (brokerage-agreement E05-S4, S4-D14, UF-3)", () => {
+  // jsdom has the dialog element but not its methods (see agreement-draft-dialog.test.tsx).
+  beforeAll(() => {
+    HTMLDialogElement.prototype.showModal = function showModal(this: HTMLDialogElement) {
+      this.open = true;
+    };
+    HTMLDialogElement.prototype.close = function close(this: HTMLDialogElement) {
+      if (!this.open) return;
+      this.open = false;
+      this.dispatchEvent(new Event("close"));
+    };
+  });
+
+  beforeEach(() => {
+    vi.mocked(getAgreement).mockReset();
+    vi.mocked(getSurveyTerms).mockReset();
+    vi.mocked(submitDraft).mockReset();
+    vi.mocked(getSurveyTerms).mockResolvedValue(EMPTY_PROPOSAL);
+  });
+
+  const sendButton = () => screen.queryByRole("button", { name: m.send.open });
+
+  it("agreementDetailEdit_canEditDraft_sendButtonOpensTheDialog: the assigned Sale opens the dialog beside Edit the draft; Send posts the page's data version, and a 204 closes it and reads the agreement again", async () => {
+    vi.mocked(getAgreement).mockResolvedValueOnce(answered({ ...DETAIL, dataVersion: 3 }));
+    vi.mocked(submitDraft).mockResolvedValue({ ok: true, status: 204, replayed: false, data: undefined });
+    renderView();
+
+    fireEvent.click(await screen.findByRole("button", { name: m.send.open }));
+    const dialog = screen.getByRole("dialog", { name: m.send.title });
+    expect(within(dialog).getByText(/^Version 1 goes to the owner of this unit\./)).toBeTruthy();
+    expect(editButton()).toBeTruthy();
+
+    vi.mocked(getAgreement).mockResolvedValueOnce(
+      answered({
+        ...DETAIL,
+        status: "AWAITING_CONFIRMATION",
+        dataVersion: 4,
+        versions: [{ ...DRAFT_VERSION, status: "AWAITING_OWNER", sentAt: "2026-11-21T03:15:00Z" }],
+      }),
+    );
+    fireEvent.click(within(dialog).getByRole("button", { name: m.send.submit }));
+
+    expect(await screen.findByText("Awaiting confirmation")).toBeTruthy();
+    expect(submitDraft).toHaveBeenCalledTimes(1);
+    expect(vi.mocked(submitDraft).mock.calls[0]?.slice(0, 2)).toEqual([AGREEMENT_ID, { expectedDataVersion: 3 }]);
+    expect(getAgreement).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.getByText(/^Sent to the owner: /)).toBeTruthy();
+    expect(sendButton()).toBeNull();
+    expect(editButton()).toBeNull();
+  });
+
+  it("agreementDetailEdit_formOpenOrCannotEdit_noSendButton: no Send to the owner while the form is open, nor for a manager, a version past its draft or a cancelled agreement", async () => {
+    vi.mocked(getAgreement).mockResolvedValue(answered(DETAIL));
+    const { unmount } = renderView();
+
+    expect(await screen.findByRole("button", { name: m.send.open })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: m.edit.open }));
+    expect(editForm()).toBeTruthy();
+    expect(sendButton()).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: m.edit.cancel }));
+    expect(sendButton()).toBeTruthy();
+    unmount();
+    vi.mocked(getAgreement).mockReset();
+
+    for (const answer of [
+      { ...DETAIL, viewerIsAssignedSale: false },
+      { ...DETAIL, versions: [{ ...DRAFT_VERSION, status: "AWAITING_OWNER" as const }] },
+      { ...DETAIL, status: "CANCELLED" as const, versions: [{ ...DRAFT_VERSION, status: "CANCELLED" as const }] },
+    ]) {
+      vi.mocked(getAgreement).mockResolvedValue(answered(answer));
+      const view = renderView();
+
+      await screen.findByRole("heading", { level: 1, name: m.detail.title });
+      expect(sendButton()).toBeNull();
+
+      view.unmount();
+      vi.mocked(getAgreement).mockReset();
+    }
+    expect(submitDraft).not.toHaveBeenCalled();
   });
 });

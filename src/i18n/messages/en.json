@@ -2210,7 +2210,8 @@
       "version": "Version {number}",
       "startDate": "Start date",
       "endDate": "End date",
-      "supportCode": "Support code: {correlationId}"
+      "supportCode": "Support code: {correlationId}",
+      "sentAt": "Sent to the owner: {time}"
     },
     "status": {
       "DRAFTING": "Drafting",
@@ -2279,6 +2280,49 @@
         "OTHER": "per another unit"
       }
     },
+    "fee": {
+      "title": "Brokerage fee",
+      "proposed": "Proposed fee policy: not confirmed by the owner yet.",
+      "label": {
+        "payer": "Who pays",
+        "chargedWhen": "When it is charged",
+        "formula": "Fee",
+        "dueDays": "Payment due",
+        "renewal": "Lease renewed with the same tenant",
+        "earlyLeaseEnd": "If the lease ends early",
+        "protectionDays": "Protection period"
+      },
+      "payer": {
+        "OWNER": "The owner",
+        "OTHER": "Another payer"
+      },
+      "chargedWhen": {
+        "LEASE_SIGNED": "When a lease is signed",
+        "OTHER": "At another moment"
+      },
+      "formula": {
+        "PERCENT_OF_RENT": "Percentage of one month's rent",
+        "FIXED_AMOUNT": "Fixed amount",
+        "FREE": "Free of charge",
+        "NOT_CHARGED": "No fee",
+        "OTHER": "Another way of setting the fee"
+      },
+      "earlyLeaseEnd": {
+        "NO_REFUND": "No refund",
+        "PARTIAL_REFUND": "Partial refund",
+        "OTHER": "Another refund rule"
+      },
+      "line": {
+        "tier": "From a lease term of {months, plural, one {# month} other {# months}}: {percent}% of one month's rent",
+        "fixedAmount": "{amount} VND per signed lease",
+        "freeReason": "Free of charge. Reason: {reason}",
+        "dueOnSigning": "On the day the lease is signed",
+        "dueDays": "{count, plural, one {# day} other {# days}} after the lease is signed",
+        "partialRefund": "{percent}% of the fee paid is refunded if the lease ends within {months, plural, one {# month} other {# months}} of its start",
+        "noProtection": "None",
+        "protectionDays": "{count, plural, one {# day} other {# days}} after this agreement ends"
+      }
+    },
     "edit": {
       "open": "Edit the draft",
       "title": "Editing the draft",
@@ -2319,6 +2363,54 @@
       "reload": "Reload",
       "fromSurvey": "From the survey: {source}, {date}",
       "supportCode": "Support code: {code}",
+      "feePolicy": {
+        "title": "Brokerage fee",
+        "payer": "Paid by the owner.",
+        "chargedWhen": "Charged when a lease is signed.",
+        "formula": "How the fee is set",
+        "notEntered": "Not entered",
+        "kind": {
+          "PERCENT_OF_RENT": "Percentage of one month's rent",
+          "FIXED_AMOUNT": "Fixed amount",
+          "FREE": "Free of charge",
+          "NOT_CHARGED": "No fee"
+        },
+        "tierFrom": "Lease term from (months)",
+        "tierPercent": "Percentage of one month's rent (%)",
+        "addTier": "Add a tier",
+        "removeTier": "Remove tier",
+        "fixedAmount": "Fixed fee (VND)",
+        "freeReason": "Reason it is free",
+        "dueDays": "Payment due (days after the lease is signed)",
+        "renewal": "Lease renewed with the same tenant",
+        "renewalTierFrom": "Renewal: lease term from (months)",
+        "renewalTierPercent": "Renewal: percentage of one month's rent (%)",
+        "addRenewalTier": "Add a renewal tier",
+        "removeRenewalTier": "Remove renewal tier",
+        "renewalAmount": "Renewal fee (VND)",
+        "earlyLeaseEnd": "If the lease ends early",
+        "refund": {
+          "NO_REFUND": "No refund",
+          "PARTIAL_REFUND": "Partial refund"
+        },
+        "refundPercent": "Refund of the fee paid (%)",
+        "withinMonths": "If the lease ends within (months)",
+        "protectionDays": "Protection period (days after this agreement ends)",
+        "errors": {
+          "server": "Check the brokerage fee.",
+          "percent": "Enter a percentage from 1 to 300, without decimals.",
+          "tierStart": "Enter a lease term of 1 to 120 months.",
+          "tierOrder": "Start this tier at a longer lease term than the tier before.",
+          "tooManyTiers": "A fee holds at most 5 tiers.",
+          "fixedAmount": "Enter a fee in whole VND from 1, without separators.",
+          "freeReason": "Enter a reason of 1 to 500 characters.",
+          "freeReasonCharacters": "Remove the tab, line break or text direction characters from the reason.",
+          "dueDays": "Enter a number of days from 0 to 30.",
+          "protectionDays": "Enter a number of days from 0 to 180.",
+          "refundPercent": "Enter a refund percentage from 1 to 100.",
+          "withinMonths": "Enter a period of 1 to 12 months from the lease start."
+        }
+      },
       "errors": {
         "amount": "Enter a whole number of VND from 1, without separators.",
         "depositMonths": "Enter a number of months from 0 to 12.",
@@ -2335,6 +2427,39 @@
         "notAssignee": "Only the Sale assigned to this lead edits the draft.",
         "notFound": "This agreement is not available.",
         "failed": "The draft could not be saved."
+      }
+    },
+    "send": {
+      "open": "Send to the owner",
+      "title": "Send this version to the owner",
+      "body": "Version {number} goes to the owner of this unit. After sending, it can no longer be edited. The owner gets an email that asks them to sign in and read it.",
+      "submit": "Send",
+      "keepEditing": "Keep editing",
+      "reload": "Reload",
+      "supportCode": "Support code: {code}",
+      "part": {
+        "photoConsent": "Public photos of the interior",
+        "monthlyRent": "Monthly rent",
+        "deposit": "Deposit",
+        "minimumTerm": "Minimum term",
+        "paymentPeriod": "Payment period",
+        "mandatoryFees": "Mandatory fees",
+        "formula": "How the fee is set",
+        "dueDays": "Payment due",
+        "renewal": "Lease renewed with the same tenant",
+        "earlyLeaseEnd": "If the lease ends early",
+        "protectionDays": "Protection period",
+        "OTHER": "Another part"
+      },
+      "errors": {
+        "incomplete": "This version cannot be sent yet. Missing:",
+        "notEligible": "This version cannot be sent now:",
+        "notDraft": "This version is no longer a draft.",
+        "stale": "This draft changed since you opened it.",
+        "sendingOff": "Sending to owners is switched off on this server.",
+        "notAssignee": "Only the Sale assigned to this lead sends the draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The version could not be sent."
       }
     },
     "survey": {

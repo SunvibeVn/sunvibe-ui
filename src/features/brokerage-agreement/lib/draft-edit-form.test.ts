@@ -414,3 +414,21 @@ describe("the draft request (brokerage-agreement E05-S3, spec section 4, S3-D5)"
     for (const [key, text] of refusals) expect(t(key)).toBe(text);
   });
 });
+
+describe("the fee policy's server paths (brokerage-agreement E05-S4, S4-D14, spec section 6)", () => {
+  it("draftEditForm_feePolicyServerPaths_markTheSection: every feePolicy path of a 400 marks the fee section, the E05-S3 paths as before", () => {
+    for (const path of [
+      "feePolicy",
+      "feePolicy.formula.tiers[0].fromMonths",
+      "feePolicy.renewal.tiers[2].percent",
+      "feePolicy.renewal.type",
+      "feePolicy.protectionDays",
+      "feePolicy.formula.currency",
+      "feePolicy.earlyLeaseEnd.withinMonths",
+    ]) {
+      expect(fieldOfServerPath(path)).toBe("feePolicy");
+    }
+    for (const path of ["feePolicyX", "feePolicies.dueDays", "terms.feePolicy"]) expect(fieldOfServerPath(path)).toBeNull();
+    expect(fieldOfServerPath("terms.mandatoryFees[2].amount")).toBe("fees.2.amount");
+  });
+});

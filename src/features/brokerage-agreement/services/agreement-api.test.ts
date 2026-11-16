@@ -7,10 +7,11 @@ import type {
   BrokerageAgreementCreateRequest,
   BrokerageAgreementDetail,
   BrokerageAgreementDraftRequest,
+  BrokerageAgreementDraftSubmissionRequest,
   BrokerageAgreementSurveyTerms,
 } from "../types";
 
-import { createAgreement, getAgreement, getSurveyTerms, updateDraft } from "./agreement-api";
+import { createAgreement, getAgreement, getSurveyTerms, submitDraft, updateDraft } from "./agreement-api";
 
 /** A fake `callApi` that runs the request against a client recording each call, and answers `answer` as it is. */
 function recording<T>(answer: ApiResult<T>) {
@@ -131,6 +132,26 @@ describe("draft calls (brokerage-agreement E05-S3)", () => {
         method: "GET",
         path: "/api/v1/staff/brokerage-agreements/{agreementId}/survey-terms",
         options: { params: { path: { agreementId: "A1" } } },
+      },
+    ]);
+  });
+});
+
+describe("sending the draft (brokerage-agreement E05-S4, S4-D2)", () => {
+  it("agreementApi_submitDraft_postsTheDataVersion: one POST of the data version to the submission path, through callApi, its answer returned as it is", async () => {
+    const body: BrokerageAgreementDraftSubmissionRequest = { expectedDataVersion: 3 };
+    const answer: ApiResult<undefined> = { ok: true, data: undefined, status: 204, replayed: false };
+    const { calls, callApi } = recording(answer);
+
+    const result = await submitDraft("A1", body, { callApi: callApi as never });
+
+    expect(result).toBe(answer);
+    expect(callApi).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual([
+      {
+        method: "POST",
+        path: "/api/v1/staff/brokerage-agreements/{agreementId}/draft/submission",
+        options: { params: { path: { agreementId: "A1" } }, body: { expectedDataVersion: 3 } },
       },
     ]);
   });

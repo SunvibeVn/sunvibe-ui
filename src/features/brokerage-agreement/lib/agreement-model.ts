@@ -3,6 +3,7 @@ import type { ApiResult } from "@/features/auth/client";
 import type { BrokerageAgreementDetail, BrokerageAgreementVersion } from "../types";
 
 import { calendarDateText } from "./date-text";
+import { type FeePolicyView, feePolicyModel } from "./fee-policy-model";
 import type { EligibilityKey } from "./reason-text";
 import { agreementStatusText, transactionTypeText, versionStatusText } from "./status-text";
 import { type VersionContent, versionContent } from "./version-terms-model";
@@ -19,13 +20,18 @@ export type AgreementHeader = {
   leadPath: string | null;
 };
 
-/** One version of the agreement, its dates as calendar dates, and its content (brokerage-agreement E05-S3). */
+/**
+ * One version of the agreement, its dates as calendar dates, its content (brokerage-agreement E05-S3), its fee policy
+ * and when it was sent to the owner (E05-S4: an instant in UTC, null for a version never sent).
+ */
 export type VersionRow = {
   versionNo: number;
   statusKey: EligibilityKey;
   startText: string;
   endText: string;
   content: VersionContent;
+  fee: FeePolicyView;
+  sentAt: string | null;
 };
 
 /** What a read of the agreement leaves on screen. */
@@ -85,15 +91,19 @@ export function agreementAfter(result: ApiResult<BrokerageAgreementDetail>): Agr
       leadPath: basisLeadId === undefined ? null : `/workspace/owner-leads/${basisLeadId}`,
     };
     const rows = (versions ?? [])
-      .map(
-        (version): VersionRow => ({
+      .map((version): VersionRow => {
+        const content = versionContent(version);
+        return {
           versionNo: version.versionNo ?? 0,
           statusKey: versionStatusText(version.status ?? ""),
           startText: calendarDateText(version.startDate ?? ""),
           endText: calendarDateText(version.endDate ?? ""),
-          content: versionContent(version),
-        }),
-      )
+          content,
+          // Both panels read one "proposed" flag (brokerage-agreement S4-D15, E05S4-P4).
+          fee: feePolicyModel(version.feePolicy, content.proposed),
+          sentAt: version.sentAt ?? null,
+        };
+      })
       .sort((a, b) => a.versionNo - b.versionNo);
     const knownVersion = dataVersion ?? null;
     const pending = draftOf(versions ?? []);
