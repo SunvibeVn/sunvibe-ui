@@ -478,6 +478,93 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(button(mainArea(admin), "Edit the draft")).toHaveCount(0);
   });
 
+  test("agreementSend_feePolicyThenSend_awaitingTheOwner (UF-6, brokerage-agreement US-1 AC-3, AC-5, BR-7, S4-D15)", async () => {
+    // On the agreement page the previous test leaves open: its terms and consent are complete, its fee policy is not.
+    // The dev profile has the BR-19 switch on (S4-D8); the owner's notice row is written, and no spec reads the mail.
+    const agreementPath = new URL(sale.url()).pathname;
+    const agreement = mainArea(sale);
+    const sendDialog = sale.getByRole("dialog", { name: "Send this version to the owner", exact: true });
+    const submissions = (calls: { method: string; url: URL }[]) =>
+      calls.filter((call) => call.method === "POST" && call.url.pathname.endsWith("/draft/submission"));
+
+    // Sending a version without its fee policy is refused with the five missing parts, in order; it stays a draft.
+    await button(agreement, "Send to the owner").click({ timeout: 20_000 });
+    await expect(sendDialog).toBeVisible();
+    await button(sendDialog, "Send").click();
+    await expect(sendDialog.getByText("This version cannot be sent yet. Missing:", { exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(sendDialog.getByRole("listitem")).toHaveText([
+      "How the fee is set",
+      "Payment due",
+      "Lease renewed with the same tenant",
+      "If the lease ends early",
+      "Protection period",
+    ]);
+    await button(sendDialog, "Keep editing").click();
+    await expect(sendDialog).toHaveCount(0);
+    await expect(agreement.getByText("Drafting", { exact: true })).toBeVisible();
+    await expect(agreement.getByText("Draft", { exact: true })).toBeVisible();
+
+    // The Sale enters the fee policy: 50% from 1 month, 100% from 12 months, due 7 days, no renewal fee, no refund,
+    // protection 90 days. One save.
+    await button(agreement, "Edit the draft").click();
+    await agreement.getByLabel("How the fee is set", { exact: true }).selectOption({ label: "Percentage of one month's rent" });
+    await expect(agreement.getByLabel("Lease term from (months)", { exact: true })).toHaveValue("1");
+    await agreement.getByLabel("Percentage of one month's rent (%)", { exact: true }).fill("50");
+    await button(agreement, "Add a tier").click();
+    await agreement.getByLabel("Lease term from (months)", { exact: true }).nth(1).fill("12");
+    await agreement.getByLabel("Percentage of one month's rent (%)", { exact: true }).nth(1).fill("100");
+    await agreement.getByLabel("Payment due (days after the lease is signed)", { exact: true }).fill("7");
+    await agreement.getByLabel("Lease renewed with the same tenant", { exact: true }).selectOption({ label: "No fee" });
+    await agreement.getByLabel("If the lease ends early", { exact: true }).selectOption({ label: "No refund" });
+    await agreement.getByLabel("Protection period (days after this agreement ends)", { exact: true }).fill("90");
+    const saves = recordApiCalls(sale);
+    await button(agreement, "Save the draft").click();
+    await expect(agreement.getByRole("heading", { name: "Editing the draft", exact: true })).toHaveCount(0, { timeout: 20_000 });
+    const feeLines = [
+      "Proposed fee policy: not confirmed by the owner yet.",
+      "The owner",
+      "When a lease is signed",
+      "From a lease term of 1 month: 50% of one month's rent",
+      "From a lease term of 12 months: 100% of one month's rent",
+      "7 days after the lease is signed",
+      "No fee",
+      "No refund",
+      "90 days after this agreement ends",
+    ];
+    for (const text of feeLines) await expect(agreement.getByText(text, { exact: true })).toBeVisible({ timeout: 20_000 });
+    expect(saves.filter((call) => call.method === "PUT" && call.url.pathname.endsWith("/draft"))).toHaveLength(1);
+
+    // A double click on Send sends one request, with the data version of the read after the save (Review Focus 4).
+    const sends = recordApiCalls(sale);
+    await button(agreement, "Send to the owner").click();
+    await expect(sendDialog).toContainText(
+      "Version 1 goes to the owner of this unit. After sending, it can no longer be edited. The owner gets an email that asks them to sign in and read it.",
+    );
+    await button(sendDialog, "Send").dblclick();
+    await expect(sendDialog).toHaveCount(0, { timeout: 20_000 });
+    const sentPage = [
+      "Awaiting confirmation",
+      "Awaiting the owner",
+      "Proposed terms: not confirmed by the owner yet.",
+      "Proposed fee policy: not confirmed by the owner yet.",
+      "From a lease term of 12 months: 100% of one month's rent",
+    ];
+    for (const text of sentPage) await expect(agreement.getByText(text, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(agreement.getByText(/^Sent to the owner: /)).toBeVisible();
+    await expect(button(agreement, "Edit the draft")).toHaveCount(0);
+    await expect(button(agreement, "Send to the owner")).toHaveCount(0);
+    expect(submissions(sends)).toHaveLength(1);
+
+    // A manager reads the same at the same address, with no action (brokerage-agreement BR-16).
+    await admin.goto(agreementPath);
+    for (const text of sentPage) await expect(mainArea(admin).getByText(text, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(mainArea(admin).getByText(/^Sent to the owner: /)).toBeVisible();
+    await expect(button(mainArea(admin), "Edit the draft")).toHaveCount(0);
+    await expect(button(mainArea(admin), "Send to the owner")).toHaveCount(0);
+  });
+
   test("eligibility_leadWithoutIntake_noneAndE1Lines (UD-8, UD-1, brokerage-agreement US-1 AC-1, E-1)", async () => {
     // L1: the seed completes no intake, and no spec of the chain completes one on it.
     await admin.goto(fixture.lead(1).path);
