@@ -4,8 +4,21 @@ import type { BrokerageEligibility } from "../types";
 
 import { type EligibilityKey, reasonText } from "./reason-text";
 
-/** One unit of the basis as the section lists it; `unitCode` is null when the unit row is missing. */
-export type EligibilityRow = { unitId: string; unitCode: string | null; eligible: boolean; reasonKeys: EligibilityKey[] };
+/**
+ * One unit of the basis as the section lists it; `unitCode` is null when the unit row is missing. `agreementInProgress`:
+ * the unit has an unfinished agreement, from any lead; `agreementId` is set only when that agreement rests on this lead
+ * (brokerage-agreement S2-D11). `canDraft`: the viewer is the assigned Sale and the unit is eligible and free
+ * (brokerage-agreement BR-16); a hint only, the server decides.
+ */
+export type EligibilityRow = {
+  unitId: string;
+  unitCode: string | null;
+  eligible: boolean;
+  reasonKeys: EligibilityKey[];
+  agreementInProgress: boolean;
+  agreementId: string | null;
+  canDraft: boolean;
+};
 
 /** What a read of the eligibility leaves on screen. */
 export type EligibilityModel =
@@ -28,14 +41,19 @@ export function eligibilityAfter(result: ApiResult<BrokerageEligibility>): Eligi
   if (result.ok) {
     const { basisState, viewerIsAssignedSale, units } = result.data;
     if (basisState === undefined || basisState === "NONE") return { kind: "hidden" };
-    const rows = (units ?? []).map(
-      (unit): EligibilityRow => ({
+    const rows = (units ?? []).map((unit): EligibilityRow => {
+      const eligible = unit.eligible === true;
+      const agreementInProgress = unit.unfinishedAgreement === true;
+      return {
         unitId: unit.unitId ?? "",
         unitCode: unit.unitCode ?? null,
-        eligible: unit.eligible === true,
+        eligible,
         reasonKeys: (unit.reasonGroups ?? []).map(reasonText),
-      }),
-    );
+        agreementInProgress,
+        agreementId: unit.agreementId ?? null,
+        canDraft: eligible && !agreementInProgress && viewerIsAssignedSale === true,
+      };
+    });
     return { kind: "ready", rows, assignedOnly: viewerIsAssignedSale !== true };
   }
   switch (result.kind) {

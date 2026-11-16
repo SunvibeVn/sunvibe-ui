@@ -62,12 +62,23 @@ describe("eligibilityAfter (brokerage-agreement E05-S1, spec section 6)", () => 
       kind: "ready",
       assignedOnly: false,
       rows: [
-        { unitId: "U1", unitCode: "P101", eligible: true, reasonKeys: [] },
+        {
+          unitId: "U1",
+          unitCode: "P101",
+          eligible: true,
+          reasonKeys: [],
+          agreementInProgress: false,
+          agreementId: null,
+          canDraft: true,
+        },
         {
           unitId: "U2",
           unitCode: "P102",
           eligible: false,
           reasonKeys: ["eligibility.reasons.PROPERTY", "eligibility.reasons.OWNER"],
+          agreementInProgress: false,
+          agreementId: null,
+          canDraft: false,
         },
       ],
     });
@@ -95,5 +106,32 @@ describe("eligibilityAfter (brokerage-agreement E05-S1, spec section 6)", () => 
 
     expect(notAssigned).toMatchObject({ kind: "ready", assignedOnly: true });
     expect(assigned).toMatchObject({ kind: "ready", assignedOnly: false });
+  });
+});
+
+/** The rows of a usable basis read by `viewerIsAssignedSale` with `units`. */
+function rowsOf(viewerIsAssignedSale: boolean, units: NonNullable<BrokerageEligibility["units"]>) {
+  const model = eligibilityAfter(answered({ basisState: "USABLE", viewerIsAssignedSale, units }));
+  return model.kind === "ready" ? model.rows : [];
+}
+
+describe("eligibilityAfter, the agreement of a unit (brokerage-agreement E05-S2, S2-D11)", () => {
+  it("eligibilityModel_unfinishedAgreement_inProgressWithId: a unit with an unfinished agreement is in progress, with its id when it has one", () => {
+    const rows = rowsOf(true, [
+      { unitId: "U1", unitCode: "P101", eligible: true, reasonGroups: [], unfinishedAgreement: true, agreementId: "A1" },
+      { unitId: "U2", unitCode: "P102", eligible: true, reasonGroups: [], unfinishedAgreement: true, agreementId: null },
+    ]);
+
+    expect(rows[0]).toMatchObject({ agreementInProgress: true, agreementId: "A1", canDraft: false });
+    expect(rows[1]).toMatchObject({ agreementInProgress: true, agreementId: null, canDraft: false });
+  });
+
+  it("eligibilityModel_canDraft_onlyEligibleFreeAndAssigned: only the assigned Sale drafts, on an eligible unit without an agreement", () => {
+    const free = { unitId: "U1", unitCode: "P101", eligible: true, reasonGroups: [], unfinishedAgreement: false };
+    const stopped = { unitId: "U2", unitCode: "P102", eligible: false, reasonGroups: ["UNIT" as const] };
+
+    expect(rowsOf(false, [free])[0]?.canDraft).toBe(false);
+    expect(rowsOf(true, [free])[0]?.canDraft).toBe(true);
+    expect(rowsOf(true, [stopped])[0]?.canDraft).toBe(false);
   });
 });
