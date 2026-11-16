@@ -79,6 +79,15 @@ const addFee = () => screen.getByRole("button", { name: e.addFee }) as HTMLButto
 /** The body of the n-th save. */
 const sent = (call = 0) => vi.mocked(updateDraft).mock.calls[call]?.[1] as BrokerageAgreementDraftRequest;
 
+/** Clicks "Save the draft" once the last save has ended, and waits until this one has sent and ended too. */
+async function saveOnce() {
+  const before = vi.mocked(updateDraft).mock.calls.length;
+  await waitFor(() => expect(saveButton().disabled).toBe(false));
+  fireEvent.click(saveButton());
+  await waitFor(() => expect(updateDraft).toHaveBeenCalledTimes(before + 1));
+  await waitFor(() => expect(saveButton().disabled).toBe(false));
+}
+
 describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-6)", () => {
   beforeEach(() => {
     vi.mocked(updateDraft).mockReset();
@@ -139,8 +148,9 @@ describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-
     type(field(e.fees), "none");
     type(field(m.draft.endDate), "2026-12-31");
     fireEvent.click(saveButton());
-    expect(await screen.findByText(e.errors.minimumTerm)).toBeTruthy();
-    expect(screen.getByText(m.draft.errors.endBeforeStart)).toBeTruthy();
+    // Wait for a text only this round shows: the minimum term's text is still on screen from the first round.
+    expect(await screen.findByText(m.draft.errors.endBeforeStart)).toBeTruthy();
+    expect(screen.getByText(e.errors.minimumTerm)).toBeTruthy();
     expect(screen.queryByText(e.errors.amount)).toBeNull();
     expect(screen.queryByText(e.errors.depositMonths)).toBeNull();
     await waitFor(() => expect(document.activeElement).toBe(field(m.draft.endDate)));
@@ -183,13 +193,11 @@ describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-
     vi.mocked(updateDraft).mockResolvedValue(http(409, "AGREEMENT_NOT_DRAFT"));
     renderForm();
 
-    fireEvent.click(saveButton());
-    await waitFor(() => expect(updateDraft).toHaveBeenCalledTimes(1));
+    await saveOnce();
     expect(sent(0).terms.mandatoryFees).toBeNull();
 
     type(field(e.fees), "none");
-    fireEvent.click(saveButton());
-    await waitFor(() => expect(updateDraft).toHaveBeenCalledTimes(2));
+    await saveOnce();
     expect(sent(1).terms.mandatoryFees).toEqual([]);
 
     type(field(e.fees), "list");
@@ -200,8 +208,7 @@ describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-
     type(fields(e.feeName)[1] as HTMLInputElement, "Electricity");
     type(fields(e.feeAmount)[0] as HTMLInputElement, "3500");
     type(fields(e.feeUnit)[0] as HTMLInputElement, "PER_KWH");
-    fireEvent.click(saveButton());
-    await waitFor(() => expect(updateDraft).toHaveBeenCalledTimes(3));
+    await saveOnce();
     expect(sent(2).terms.mandatoryFees).toEqual([
       { name: "Water", basis: "PROVIDER_TARIFF", amount: null, currency: null, chargeUnit: null },
       { name: "Electricity", basis: "AMOUNT", amount: 3500, currency: "VND", chargeUnit: "PER_KWH" },
@@ -275,8 +282,8 @@ describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-
     vi.mocked(updateDraft).mockResolvedValueOnce(
       http(409, "AGREEMENT_NOT_ELIGIBLE", { fields: ["reasonGroups.BASIS", "reasonGroups.NEW_GROUP"], correlationId: "c-1" }),
     );
-    fireEvent.click(saveButton());
-    expect(await screen.findByText(e.errors.notEligible)).toBeTruthy();
+    await saveOnce();
+    expect(screen.getByText(e.errors.notEligible)).toBeTruthy();
     expect(screen.getByText(m.eligibility.reasons.BASIS)).toBeTruthy();
     expect(screen.getByText(m.eligibility.reasons.OTHER)).toBeTruthy();
     await waitFor(() => expect(document.activeElement?.textContent).toContain(e.errors.notEligible));
@@ -288,22 +295,22 @@ describe("DraftEditForm (brokerage-agreement E05-S3, spec section 6, UD-4 to UD-
       [http(403, "FORBIDDEN"), e.errors.notFound],
     ] as const) {
       vi.mocked(updateDraft).mockResolvedValueOnce(answer);
-      fireEvent.click(saveButton());
-      expect(await screen.findByText(text)).toBeTruthy();
+      await saveOnce();
+      expect(screen.getByRole("alert").textContent).toBe(text);
       expect(field(e.monthlyRent).value).toBe("8000000");
       expect(field(e.minimumTerm).value).toBe("12");
     }
 
     vi.mocked(updateDraft).mockResolvedValueOnce(http(500, "INTERNAL_ERROR", { correlationId: "c-9" }));
-    fireEvent.click(saveButton());
-    expect(await screen.findByText(e.errors.failed)).toBeTruthy();
+    await saveOnce();
+    expect(screen.getByText(e.errors.failed)).toBeTruthy();
     expect(screen.getByText("Support code: c-9")).toBeTruthy();
 
     vi.mocked(updateDraft).mockResolvedValueOnce(
       http(400, "VALIDATION_FAILED", { fields: ["terms.minimumTermMonths"], correlationId: "c-3" }),
     );
-    fireEvent.click(saveButton());
-    expect(await screen.findByText("Support code: c-3")).toBeTruthy();
+    await saveOnce();
+    expect(screen.getByText("Support code: c-3")).toBeTruthy();
     expect(screen.getByText(e.errors.failed)).toBeTruthy();
     expect(field(e.minimumTerm).getAttribute("aria-invalid")).toBe("true");
     expect(field(e.monthlyRent).value).toBe("8000000");
