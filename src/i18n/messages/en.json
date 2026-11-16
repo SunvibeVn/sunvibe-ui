@@ -2279,6 +2279,25 @@
         "OTHER": "per another unit"
       }
     },
+    "edit": {
+      "errors": {
+        "amount": "Enter a whole number of VND from 1, without separators.",
+        "depositMonths": "Enter a number of months from 0 to 12.",
+        "depositAmount": "Enter a whole number of VND from 0, without separators.",
+        "minimumTerm": "Enter a number of months from 1 to 120.",
+        "paymentPeriod": "Enter a number of months from 1 to 12.",
+        "feeName": "Enter a name of 1 to 100 characters.",
+        "feeAmount": "Enter a whole number of VND from 1, without separators.",
+        "feeUnit": "Choose a unit.",
+        "tooManyFees": "A draft holds at most 20 fees.",
+        "notEligible": "This draft cannot be saved now:",
+        "notDraft": "This version is no longer a draft.",
+        "stale": "This draft changed since you opened it.",
+        "notAssignee": "Only the Sale assigned to this lead edits the draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The draft could not be saved."
+      }
+    },
     "survey": {
       "source": {
         "OBSERVED_ON_SITE": "Seen on site",
