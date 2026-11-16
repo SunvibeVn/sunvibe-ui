@@ -32,7 +32,19 @@ const NOTHING_ENTERED = {
   fees: { kind: "notStated" },
 };
 
-const http = (status: number, code: string, correlationId?: string): ApiResult<BrokerageAgreementDetail> => ({
+/** The fee policy of a version whose answer leaves it out: every part not entered (brokerage-agreement S4-D10). */
+const noFeeEntered = (proposed: boolean) => ({
+  proposed,
+  payer: { key: "fee.payer.OWNER" },
+  chargedWhen: { key: "fee.chargedWhen.LEASE_SIGNED" },
+  formula: [{ key: "terms.notEntered" }],
+  dueDays: { key: "terms.notEntered" },
+  renewal: [{ key: "terms.notEntered" }],
+  earlyLeaseEnd: { key: "terms.notEntered" },
+  protectionDays: { key: "terms.notEntered" },
+});
+
+const http =(status: number, code: string, correlationId?: string): ApiResult<BrokerageAgreementDetail> => ({
   ok: false,
   kind: "http",
   status,
@@ -59,6 +71,8 @@ describe("agreementAfter (brokerage-agreement E05-S2, spec section 6)", () => {
           startText: "1 Jan 2027",
           endText: "31 Dec 2027",
           content: { ...NOTHING_ENTERED, proposed: true },
+          fee: noFeeEntered(true),
+          sentAt: null,
         },
         {
           versionNo: 2,
@@ -66,6 +80,8 @@ describe("agreementAfter (brokerage-agreement E05-S2, spec section 6)", () => {
           startText: "1 Feb 2027",
           endText: "31 Jan 2028",
           content: { ...NOTHING_ENTERED, proposed: true },
+          fee: noFeeEntered(true),
+          sentAt: null,
         },
       ],
       dataVersion: null,
@@ -117,5 +133,67 @@ describe("agreementAfter, the draft the page may edit (brokerage-agreement E05-S
     for (const answer of answers) expect(ready(answer)).toMatchObject({ kind: "ready", canEditDraft: false, draft: null });
     expect(ready(answers[1] as BrokerageAgreementDetail)).toMatchObject({ dataVersion: 3 });
     expect(ready(answers[4] as BrokerageAgreementDetail)).toMatchObject({ dataVersion: null });
+  });
+});
+
+describe("agreementAfter, the fee policy and the sending of a version (brokerage-agreement E05-S4, S4-D10, S4-D15)", () => {
+  const VERSION = DETAIL.versions?.[1] as NonNullable<BrokerageAgreementDetail["versions"]>[number];
+  const rowOf = (version: NonNullable<BrokerageAgreementDetail["versions"]>[number]) => {
+    const model = agreementAfter({ ok: true, status: 200, replayed: false, data: { ...DETAIL, versions: [version] } });
+    if (model.kind !== "ready") throw new Error("expected a ready model");
+    return model.versions[0];
+  };
+
+  it("agreementModel_versionStates_proposedOnlyBeforeTheOwnerAnswers: the terms and the fee policy read as proposed for a DRAFT or AWAITING_OWNER version only, from one flag", () => {
+    for (const status of ["DRAFT", "AWAITING_OWNER"] as const) {
+      const row = rowOf({ ...VERSION, status });
+      expect(row?.content.proposed).toBe(true);
+      expect(row?.fee.proposed).toBe(true);
+    }
+    for (const status of [
+      "OWNER_CONFIRMED",
+      "ACTIVATED",
+      "EFFECTIVE",
+      "SUPERSEDED",
+      "OWNER_REJECTED",
+      "LAPSED",
+      "ACTIVATION_REFUSED",
+      "CANCELLED",
+      undefined,
+    ] as const) {
+      const row = rowOf({ ...VERSION, status });
+      expect(row?.content.proposed).toBe(false);
+      expect(row?.fee.proposed).toBe(false);
+    }
+  });
+
+  it("agreementModel_sentVersion_sentAtAndFee: a sent version's row holds its sending time and its fee policy's lines", () => {
+    const row = rowOf({
+      ...VERSION,
+      status: "AWAITING_OWNER",
+      sentAt: "2026-11-17T03:15:00.123456Z",
+      feePolicy: {
+        payer: "OWNER",
+        chargedWhen: "LEASE_SIGNED",
+        formula: { type: "FIXED_AMOUNT", tiers: [], amount: 2000000, currency: "VND", freeReason: null },
+        dueDays: 0,
+        renewal: { type: "NOT_CHARGED", tiers: [], amount: null, currency: null, freeReason: null },
+        earlyLeaseEnd: { type: "NO_REFUND", refundPercent: null, withinMonths: null },
+        protectionDays: 90,
+      },
+    });
+
+    expect(row?.sentAt).toBe("2026-11-17T03:15:00.123456Z");
+    expect(row?.fee).toEqual({
+      proposed: true,
+      payer: { key: "fee.payer.OWNER" },
+      chargedWhen: { key: "fee.chargedWhen.LEASE_SIGNED" },
+      formula: [{ key: "fee.line.fixedAmount", values: { amount: "2,000,000" } }],
+      dueDays: { key: "fee.line.dueOnSigning" },
+      renewal: [{ key: "fee.formula.NOT_CHARGED" }],
+      earlyLeaseEnd: { key: "fee.earlyLeaseEnd.NO_REFUND" },
+      protectionDays: { key: "fee.line.protectionDays", values: { count: 90 } },
+    });
+    expect(rowOf({ ...VERSION, sentAt: null })?.sentAt).toBeNull();
   });
 });

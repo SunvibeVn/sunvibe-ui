@@ -1,10 +1,11 @@
-import { useTranslations } from "next-intl";
+import { useFormatter, useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
 import { Badge } from "@/components/ui/badge";
 
 import type { VersionRow } from "../lib/agreement-model";
 
+import { FeePolicyPanel } from "./fee-policy-panel";
 import { VersionTermsPanel } from "./version-terms-panel";
 
 type VersionListProps = {
@@ -13,9 +14,13 @@ type VersionListProps = {
   draftEditor?: { versionNo: number; node: ReactNode };
 };
 
-/** The versions of an agreement, by number: each with its state, its period as calendar dates, and its content. */
+/**
+ * The versions of an agreement, by number: each with its state, its period as calendar dates, when it was sent to the
+ * owner (brokerage-agreement E05-S4), its content and its fee policy.
+ */
 export function AgreementVersionList({ versions, draftEditor }: VersionListProps) {
   const t = useTranslations("BrokerageAgreement");
+  const format = useFormatter();
 
   return (
     <ul className="divide-y divide-slate-100">
@@ -39,7 +44,15 @@ export function AgreementVersionList({ versions, draftEditor }: VersionListProps
                   <dd className="text-slate-900">{version.endText}</dd>
                 </div>
               </dl>
+              {version.sentAt !== null && (
+                <p className="text-sm text-slate-700">
+                  {t("detail.sentAt", {
+                    time: format.dateTime(new Date(version.sentAt), { dateStyle: "medium", timeStyle: "short" }),
+                  })}
+                </p>
+              )}
               <VersionTermsPanel content={version.content} />
+              <FeePolicyPanel view={version.fee} />
             </>
           )}
         </li>

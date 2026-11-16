@@ -2210,7 +2210,8 @@
       "version": "Version {number}",
       "startDate": "Start date",
       "endDate": "End date",
-      "supportCode": "Support code: {correlationId}"
+      "supportCode": "Support code: {correlationId}",
+      "sentAt": "Sent to the owner: {time}"
     },
     "status": {
       "DRAFTING": "Drafting",
@@ -2277,6 +2278,49 @@
         "PER_VEHICLE_PER_MONTH": "per vehicle per month",
         "ONE_OFF": "one-off",
         "OTHER": "per another unit"
+      }
+    },
+    "fee": {
+      "title": "Brokerage fee",
+      "proposed": "Proposed fee policy: not confirmed by the owner yet.",
+      "label": {
+        "payer": "Who pays",
+        "chargedWhen": "When it is charged",
+        "formula": "Fee",
+        "dueDays": "Payment due",
+        "renewal": "Lease renewed with the same tenant",
+        "earlyLeaseEnd": "If the lease ends early",
+        "protectionDays": "Protection period"
+      },
+      "payer": {
+        "OWNER": "The owner",
+        "OTHER": "Another payer"
+      },
+      "chargedWhen": {
+        "LEASE_SIGNED": "When a lease is signed",
+        "OTHER": "At another moment"
+      },
+      "formula": {
+        "PERCENT_OF_RENT": "Percentage of one month's rent",
+        "FIXED_AMOUNT": "Fixed amount",
+        "FREE": "Free of charge",
+        "NOT_CHARGED": "No fee",
+        "OTHER": "Another way of setting the fee"
+      },
+      "earlyLeaseEnd": {
+        "NO_REFUND": "No refund",
+        "PARTIAL_REFUND": "Partial refund",
+        "OTHER": "Another refund rule"
+      },
+      "line": {
+        "tier": "From a lease term of {months, plural, one {# month} other {# months}}: {percent}% of one month's rent",
+        "fixedAmount": "{amount} VND per signed lease",
+        "freeReason": "Free of charge. Reason: {reason}",
+        "dueOnSigning": "On the day the lease is signed",
+        "dueDays": "{count, plural, one {# day} other {# days}} after the lease is signed",
+        "partialRefund": "{percent}% of the fee paid is refunded if the lease ends within {months, plural, one {# month} other {# months}} of its start",
+        "noProtection": "None",
+        "protectionDays": "{count, plural, one {# day} other {# days}} after this agreement ends"
       }
     },
     "edit": {
