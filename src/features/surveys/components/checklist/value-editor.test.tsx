@@ -34,4 +34,14 @@ describe("ValueEditor numbers (survey-checklist SV-247)", () => {
   it("reports no value for text that is not a number", () => {
     expect(reported({ kind: "area" }, "abc")).toEqual([null]);
   });
+
+  it("reads 4.25 x 8.1 = 34.425 as 34.425 m2, never as 34425 (a dot or comma is a decimal point in an area)", () => {
+    expect(reported({ kind: "area" }, "34.425")).toEqual([34.425]);
+    expect(reported({ kind: "area" }, "34,425")).toEqual([34.425]);
+  });
+
+  it("does not group thousands in a whole-number cell: 1.000 is not a valid count", () => {
+    expect(reported({ kind: "integer", min: 0, max: 50 }, "1.000")).toEqual([null]);
+    expect(reported({ kind: "integer", min: 0, max: 50 }, "12")).toEqual([12]);
+  });
 });

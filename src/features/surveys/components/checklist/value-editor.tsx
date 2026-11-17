@@ -53,6 +53,7 @@ function NumberInput({
   value,
   onChange,
   decimals,
+  thousands = false,
   error,
   disabled,
 }: {
@@ -61,12 +62,15 @@ function NumberInput({
   value: number | null;
   onChange(value: number | null): void;
   decimals: boolean;
+  /** Only a money amount: a dot, comma or space before three digits groups thousands. Elsewhere it is a decimal point. */
+  thousands?: boolean;
   error?: string;
   disabled?: boolean;
 }) {
   const [raw, setRaw] = useState(value === null ? "" : String(value));
   const parse = (text: string): number | null => {
-    const clean = text.replace(/[\s.,](?=\d{3}(\D|$))/g, "").replace(",", ".").trim();
+    const grouped = thousands ? text.replace(/[\s.,](?=\d{3}(\D|$))/g, "") : text;
+    const clean = grouped.replace(",", ".").trim();
     if (clean === "") return null;
     if (!(decimals ? /^\d+(\.\d*)?$/ : /^\d+$/).test(clean)) return Number.NaN;
     return Number(clean);
@@ -94,7 +98,7 @@ function NumberInput({
 /** A whole VND amount, typed with or without thousands separators. */
 function MoneyInput(props: { id: string; label: string; value: unknown; onChange(amount: number | null): void; error?: string; disabled?: boolean }) {
   const amount = typeof props.value === "number" ? props.value : null;
-  return <NumberInput {...props} value={amount} decimals={false} />;
+  return <NumberInput {...props} value={amount} decimals={false} thousands />;
 }
 
 function Choice({
