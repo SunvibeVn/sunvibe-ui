@@ -79,16 +79,24 @@ function NumberInput({
     return Number(typed.replace(",", "."));
   };
   const shown = parse(raw) === value || (Number.isNaN(parse(raw)) && value === null) ? raw : value === null ? "" : String(value);
+  // survey-checklist SV-247: a number that did not read is refused and says so, after the user leaves the cell or when
+  // the save check holds a problem on it; the typed text stays.
+  const t = useTranslations("OwnerLeads");
+  const [left, setLeft] = useState(false);
+  const notRead = shown === raw && raw.trim() !== "" && Number.isNaN(parse(raw));
+  const message = notRead && (left || error !== undefined) ? checklistProblemText(t, "invalid") : error;
   return (
-    <FormField id={id} label={label} error={error}>
+    <FormField id={id} label={label} error={message}>
       <Input
         id={id}
         inputMode={decimals ? "decimal" : "numeric"}
         value={shown}
         disabled={disabled}
-        invalid={error !== undefined}
-        aria-describedby={describedBy(id, error)}
+        invalid={message !== undefined}
+        aria-describedby={describedBy(id, message)}
+        onBlur={() => setLeft(true)}
         onChange={(event) => {
+          setLeft(false);
           setRaw(event.target.value);
           const next = parse(event.target.value);
           onChange(next === null || Number.isNaN(next) ? null : next);

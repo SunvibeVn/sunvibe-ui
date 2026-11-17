@@ -188,3 +188,49 @@ describe("ValueEditor nested money cells (survey-checklist SV-247)", () => {
     expect(reportedAt({ kind: "fees" }, fees, "12.000,000")).toEqual([fees]);
   });
 });
+
+describe("ValueEditor text that did not read (survey-checklist SV-247)", () => {
+  const INVALID = "Enter a valid value.";
+  const REQUIRED = "Fill in this field.";
+
+  // survey-checklist SV-247: a number cell whose text did not read says so once the user leaves it.
+  it("numberCell_leftWithTextNotRead_saysInvalid", () => {
+    const area = render(<Held kind={{ kind: "area" }} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "34.425" } });
+    expect(screen.queryByText(INVALID)).toBeNull();
+    fireEvent.blur(screen.getByRole("textbox"));
+    expect(screen.getByText(INVALID)).toBeTruthy();
+    expect(screen.getByRole("textbox").getAttribute("aria-invalid")).toBe("true");
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "34.4" } });
+    expect(screen.queryByText(INVALID)).toBeNull();
+    area.unmount();
+
+    render(<Held kind={{ kind: "rent" }} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "0,500" } });
+    fireEvent.blur(screen.getByRole("textbox"));
+    expect(screen.getByText(INVALID)).toBeTruthy();
+  });
+
+  // survey-checklist SV-247: a save problem on a cell whose text did not read names the text, not a missing value.
+  it("numberCell_saveProblemOnTextNotRead_saysInvalid", () => {
+    const typed = render(<Held kind={{ kind: "area" }} problems={{ "": "required" }} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "34.425" } });
+    expect(screen.getByText(INVALID)).toBeTruthy();
+    expect(screen.queryByText(REQUIRED)).toBeNull();
+    typed.unmount();
+
+    render(<Held kind={{ kind: "area" }} problems={{ "": "required" }} />);
+    expect(screen.getByText(REQUIRED)).toBeTruthy();
+  });
+
+  // survey-checklist SV-247: a number set from outside the cell replaces the text and its message.
+  it("numberCell_outsideValue_removesMessage", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<Outside kind={{ kind: "area" }} value={null} onChange={onChange} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "34.425" } });
+    fireEvent.blur(screen.getByRole("textbox"));
+    expect(screen.getByText(INVALID)).toBeTruthy();
+    rerender(<Outside kind={{ kind: "area" }} value={50} onChange={onChange} />);
+    expect(screen.queryByText(INVALID)).toBeNull();
+  });
+});
