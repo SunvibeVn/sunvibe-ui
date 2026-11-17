@@ -2476,6 +2476,18 @@
         "none": "Source not recorded",
         "OTHER": "Another source"
       }
+    },
+    "owner": {
+      "unit": "Unit {code}",
+      "reason": "Your reason: {reason}",
+      "state": {
+        "awaiting": "Waiting for your answer until {time}",
+        "confirmed": "You confirmed it on {time}",
+        "rejected": "You declined it on {time}",
+        "lapsed": "No answer by {time}",
+        "cancelled": "Withdrawn by Sunvibe",
+        "handling": "Sunvibe is handling this version."
+      }
     }
   },
   "TestEnvironment": {
