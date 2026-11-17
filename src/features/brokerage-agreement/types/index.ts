@@ -63,3 +63,22 @@ export type BrokerageAgreementEarlyLeaseEndInput = Schemas["BrokerageAgreementEa
 export type BrokerageAgreementDraftSubmissionRequest = Schemas["BrokerageAgreementDraftSubmissionRequest"];
 export type FeeFormulaType = NonNullable<BrokerageAgreementFeeFormula["type"]>;
 export type EarlyLeaseEndType = NonNullable<BrokerageAgreementEarlyLeaseEnd["type"]>;
+
+// The owner's answer to a sent version, and a new draft after a rejection or a lapse (brokerage-agreement E05-S5).
+
+/**
+ * The account's agreements holding a sent version (S5-D1): at most 50, newest sending first; `more` when there are more.
+ * An account that is not an owner gets an empty list, the same as an owner with nothing (S5-D18).
+ */
+export type BrokerageAgreementOwnerList = Schemas["BrokerageAgreementOwnerList"];
+/** One agreement of the owner: its unit and location, its sent versions in their effective state, the statement. */
+export type BrokerageAgreementOwnerItem = Schemas["BrokerageAgreementOwnerItem"];
+/** The confirmation statement of the version the owner may answer now; its `version` goes back with a confirmation. */
+export type BrokerageAgreementStatement = Schemas["BrokerageAgreementStatement"];
+/** Confirming 1 to 20 sent versions with the current password and the statement version read (S5-D5). */
+export type BrokerageAgreementConfirmationRequest = Schemas["BrokerageAgreementConfirmationRequest"];
+export type BrokerageAgreementConfirmationItemInput = Schemas["BrokerageAgreementConfirmationItemInput"];
+/** Declining the version waiting for the owner, with an optional private reason (S5-D7). */
+export type BrokerageAgreementRejectionRequest = Schemas["BrokerageAgreementRejectionRequest"];
+/** Opening the next draft version: only the data version the page read (S5-D10). */
+export type BrokerageAgreementNewDraftRequest = Schemas["BrokerageAgreementNewDraftRequest"];

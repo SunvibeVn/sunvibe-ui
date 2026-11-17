@@ -6,6 +6,7 @@ import type {
   BrokerageAgreementDetail,
   BrokerageAgreementDraftRequest,
   BrokerageAgreementDraftSubmissionRequest,
+  BrokerageAgreementNewDraftRequest,
   BrokerageAgreementSurveyTerms,
 } from "../types";
 
@@ -59,6 +60,21 @@ export function submitDraft(
       params: { path: { agreementId } },
       body,
     }),
+  );
+}
+
+/**
+ * POST the opening of the next draft version against the data version the page read (brokerage-agreement BR-5,
+ * S5-D10): a copy of the latest version, after the owner declined it or did not answer in time; a 204 has no body, so
+ * the page reads the detail again.
+ */
+export function openDraft(
+  agreementId: string,
+  body: BrokerageAgreementNewDraftRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/draft", { params: { path: { agreementId } }, body }),
   );
 }
 

@@ -264,6 +264,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/brokerage-agreements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The signed-in account's brokerage agreements with every version sent to them; each read is logged */
+        get: operations["listMyBrokerageAgreements"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/brokerage-agreements/confirmations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm one or several versions sent to the account, with the current password and the statement read; all or none */
+        post: operations["confirmMyBrokerageAgreementVersions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/me/brokerage-agreements/{agreementId}/rejection": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decline the version waiting for the account's answer, with an optional private reason */
+        post: operations["rejectMyBrokerageAgreementVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/email/confirm-code": {
         parameters: {
             query?: never;
@@ -601,7 +652,8 @@ export interface paths {
         get?: never;
         /** Replace the whole content of the agreement's draft, against the data version read */
         put: operations["updateBrokerageAgreementDraft"];
-        post?: never;
+        /** Open the next draft version, a copy of the latest one, after the owner declined it or did not answer in time, against the data version read */
+        post: operations["openBrokerageAgreementDraft"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1948,6 +2000,29 @@ export interface components {
              */
             startAt: string;
         };
+        BrokerageAgreementConfirmationItemInput: {
+            /**
+             * @description The agreement's id
+             * @example 01JAGREEMENT00000000000000
+             */
+            agreementId: string;
+            /**
+             * Format: int32
+             * @description The version number the owner read
+             */
+            versionNo: number;
+        };
+        BrokerageAgreementConfirmationRequest: {
+            /** @description The account's current password */
+            currentPassword: string;
+            /**
+             * @description The statement version the owner read
+             * @example brokerage-agreement-2026-11
+             */
+            statementVersion: string;
+            /** @description 1 to 20 versions, no agreement twice; each recorded on its own, all or none */
+            versions: components["schemas"]["BrokerageAgreementConfirmationItemInput"][];
+        };
         BrokerageAgreementCreateRequest: {
             /**
              * Format: date
@@ -2223,6 +2298,53 @@ export interface components {
              */
             percent: number;
         };
+        BrokerageAgreementNewDraftRequest: {
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+        };
+        BrokerageAgreementOwnerItem: {
+            agreementId?: string;
+            /** @description The statement of the version the owner may answer now; null when none */
+            statement?: components["schemas"]["BrokerageAgreementStatement"] | null;
+            /**
+             * @description The effective state: past a version's deadline the agreement reads DRAFTING
+             * @enum {string}
+             */
+            status?: "DRAFTING" | "AWAITING_CONFIRMATION" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "TERMINATED" | "CANCELLED";
+            /** @description The property's street; null when the property no longer answers */
+            street?: string | null;
+            /** @enum {string} */
+            transactionType?: "LONG_TERM_RENT";
+            /** @description The unit's code; null when the unit has none */
+            unitCode?: string | null;
+            /** @description The unit's location in the property; null when none is known */
+            unitLocation?: string | null;
+            /** @description The versions sent to the owner, by version number, in their effective state */
+            versions?: components["schemas"]["BrokerageAgreementVersion"][];
+            /** @description The property's ward; null when the property no longer answers */
+            wardName?: string | null;
+        };
+        BrokerageAgreementOwnerList: {
+            /** @description At most 50, newest sending first; empty for an account that is not an owner */
+            items?: components["schemas"]["BrokerageAgreementOwnerItem"][];
+            /** @description Whether more agreements exist than the list shows */
+            more?: boolean;
+        };
+        BrokerageAgreementRejectionRequest: {
+            /**
+             * @description Optional and private; trimmed, and stored only when not blank; no control or bidirectional formatting character
+             * @example The rent is too low.
+             */
+            reason?: string | null;
+            /**
+             * Format: int32
+             * @description The version number the owner read
+             */
+            versionNo: number;
+        };
         BrokerageAgreementRent: {
             /** Format: int64 */
             amount?: number;
@@ -2238,6 +2360,12 @@ export interface components {
             currency: "VND";
             /** @enum {string} */
             unit: "MONTH";
+        };
+        BrokerageAgreementStatement: {
+            /** @description The text, naming the version number and the unit's code */
+            text?: string;
+            /** @description The statement version a confirmation sends back as statementVersion */
+            version?: string;
         };
         BrokerageAgreementSurveyTerms: {
             /** @description One per part held: monthlyRent, deposit, minimumTermMonths, paymentPeriodMonths, mandatoryFees[i] */
@@ -2284,6 +2412,11 @@ export interface components {
              * @enum {string}
              */
             advertisingScope?: "SUNVIBE_CHANNELS";
+            /**
+             * Format: date-time
+             * @description Until when the owner may answer: 7 days after the sending, exclusive; null for a version never sent
+             */
+            answerBy?: string | null;
             /** Format: date-time */
             createdAt?: string;
             /**
@@ -2294,6 +2427,13 @@ export interface components {
             /** @description Public photos of the exterior; true only with photoConsent true */
             exteriorPhotoConsent?: boolean;
             feePolicy?: components["schemas"]["BrokerageAgreementFeePolicy"];
+            /**
+             * Format: date-time
+             * @description When the owner confirmed or declined the version; null otherwise
+             */
+            ownerAnsweredAt?: string | null;
+            /** @description The owner's private reason for declining; null when none was given */
+            ownerRejectionReason?: string | null;
             /** @description Public photos of the interior and common areas; null = not answered yet */
             photoConsent?: boolean | null;
             /**
@@ -7150,6 +7290,234 @@ export interface operations {
             };
         };
     };
+    listMyBrokerageAgreements: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description At most 50 agreements, newest sending first; an account that is not an owner gets an empty list */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageAgreementOwnerList"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    confirmMyBrokerageAgreementVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementConfirmationRequest"];
+            };
+        };
+        responses: {
+            /** @description Every version was confirmed, each recorded on its own; no body (read the list again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (one entry per field: currentPassword, statementVersion, versions, versions[i].agreementId or versions[i].versionNo; the one entry currentPassword alone is a wrong password) or MALFORMED_REQUEST (the body cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: a version is not one sent to this account; one answer for every caller and id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_STATEMENT_OUTDATED (the statement changed; no entry), AGREEMENT_NOT_AWAITING_OWNER (one versions[i] entry per version no longer waiting or past its 7 days), AGREEMENT_NOT_ELIGIBLE (entries versions[i].reasonGroups.<GROUP>, in the order BASIS, PROPERTY, UNIT, OWNER) or CONCURRENT_MODIFICATION (no entry) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description ACCOUNT_LOCKED: too many wrong passwords; no entry */
+            423: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    rejectMyBrokerageAgreementVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementRejectionRequest"];
+            };
+        };
+        responses: {
+            /** @description The version was declined and the agreement is drafting again; no body (read the list again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry versionNo or reason) or MALFORMED_REQUEST (the body cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description No valid access token (security chain) */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Access denied (security chain) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: not a version sent to this account; one answer for every caller and id */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_AWAITING_OWNER (the version no longer waits or its 7 days passed; no entry) or CONCURRENT_MODIFICATION (no entry) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Too many requests */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     meConfirmEmailBindCode: {
         parameters: {
             query?: never;
@@ -8465,6 +8833,84 @@ export interface operations {
                 };
             };
             /** @description AGREEMENT_NOT_DRAFT (the agreement has no draft to edit), AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) or CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    openBrokerageAgreementDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementNewDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description The draft was opened; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry expectedDataVersion) or MALFORMED_REQUEST (the body or the number cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff; AGREEMENT_NOT_ASSIGNEE: the caller is not the basis lead's assigned Sale */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NEW_DRAFT_NOT_ALLOWED (a version still waits for the owner or for activation, or the agreement is not drafting; no entry), CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) or AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) */
             409: {
                 headers: {
                     [name: string]: unknown;
