@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { describedBy, FormField } from "@/components/ui/form-field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { WHOLE_AMOUNT } from "@/features/lead-shared";
 
 import type { ChecklistProblem } from "../../schemas/checklist";
 import { SurveyTextField } from "../survey/survey-text-field";
@@ -62,18 +63,20 @@ function NumberInput({
   value: number | null;
   onChange(value: number | null): void;
   decimals: boolean;
-  /** Only a money amount: a dot, comma or space before three digits groups thousands. Elsewhere it is a decimal point. */
+  /** Only a money amount: it reads by the whole-amount rule (groups of three). Elsewhere a dot or comma is a decimal point. */
   thousands?: boolean;
   error?: string;
   disabled?: boolean;
 }) {
   const [raw, setRaw] = useState(value === null ? "" : String(value));
   const parse = (text: string): number | null => {
-    const grouped = thousands ? text.replace(/[\s.,](?=\d{3}(\D|$))/g, "") : text;
-    const clean = grouped.replace(",", ".").trim();
-    if (clean === "") return null;
-    if (!(decimals ? /^\d+(\.\d*)?$/ : /^\d+$/).test(clean)) return Number.NaN;
-    return Number(clean);
+    const typed = text.trim();
+    if (typed === "") return null;
+    // Money: the SV-176 whole-amount rule. Elsewhere a dot or comma is a decimal point, and a decimal has one digit
+    // after it (the template's area has one decimal), so 34.425 and 1.200 are refused, never read as 34425 or 1.2.
+    if (thousands) return WHOLE_AMOUNT.test(typed) ? Number(typed.replace(/[\s.,]/g, "")) : Number.NaN;
+    if (!(decimals ? /^\d+([.,]\d?)?$/ : /^\d+$/).test(typed)) return Number.NaN;
+    return Number(typed.replace(",", "."));
   };
   const shown = parse(raw) === value || (Number.isNaN(parse(raw)) && value === null) ? raw : value === null ? "" : String(value);
   return (

@@ -35,9 +35,34 @@ describe("ValueEditor numbers (survey-checklist SV-247)", () => {
     expect(reported({ kind: "area" }, "abc")).toEqual([null]);
   });
 
-  it("reads 4.25 x 8.1 = 34.425 as 34.425 m2, never as 34425 (a dot or comma is a decimal point in an area)", () => {
-    expect(reported({ kind: "area" }, "34.425")).toEqual([34.425]);
-    expect(reported({ kind: "area" }, "34,425")).toEqual([34.425]);
+  it("reports no value for 4.25 x 8.1 = 34.425: a dot or comma is a decimal point in an area and it has one decimal", () => {
+    expect(reported({ kind: "area" }, "34.425")).toEqual([null]);
+    expect(reported({ kind: "area" }, "34,425")).toEqual([null]);
+  });
+
+  it("never reads a thousands-grouped area as 1000 times too small: 1.200, 1,200 and 34.400 report no value", () => {
+    expect(reported({ kind: "area" }, "1.200")).toEqual([null]);
+    expect(reported({ kind: "area" }, "1,200")).toEqual([null]);
+    expect(reported({ kind: "area" }, "34.400")).toEqual([null]);
+  });
+
+  it("still reads whole and one-decimal areas", () => {
+    expect(reported({ kind: "area" }, "1200")).toEqual([1200]);
+    expect(reported({ kind: "area" }, "1.2")).toEqual([1.2]);
+    expect(reported({ kind: "area" }, "34.4")).toEqual([34.4]);
+  });
+
+  it("reports no value for a money amount that is not whole digits or groups of three (SV-176 rule)", () => {
+    expect(reported({ kind: "rent" }, "0,500")).toEqual([{ amount: null, currency: "VND", unit: "MONTH" }]);
+    expect(reported({ kind: "rent" }, "12.000,000")).toEqual([{ amount: null, currency: "VND", unit: "MONTH" }]);
+    expect(reported({ kind: "rent" }, "12,5")).toEqual([{ amount: null, currency: "VND", unit: "MONTH" }]);
+    expect(reported({ kind: "rent" }, "012.000")).toEqual([{ amount: null, currency: "VND", unit: "MONTH" }]);
+  });
+
+  it("still reads well-formed money: 1.500, 12 000 000, 800000", () => {
+    expect(reported({ kind: "rent" }, "1.500")).toEqual([{ amount: 1500, currency: "VND", unit: "MONTH" }]);
+    expect(reported({ kind: "rent" }, "12 000 000")).toEqual([{ amount: 12000000, currency: "VND", unit: "MONTH" }]);
+    expect(reported({ kind: "rent" }, "800000")).toEqual([{ amount: 800000, currency: "VND", unit: "MONTH" }]);
   });
 
   it("does not group thousands in a whole-number cell: 1.000 is not a valid count", () => {
