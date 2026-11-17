@@ -63,8 +63,12 @@ function renderForm() {
 const passwordField = () => screen.getByLabelText(o.password) as HTMLInputElement;
 const confirmButton = (count = 2) => screen.getByRole("button", { name: `Confirm the selected versions (${count})` }) as HTMLButtonElement;
 
-/** Types the password and confirms once the last answer has ended, and waits until this one has ended too. */
-async function confirmOnce(answer: ApiResult<undefined>) {
+/**
+ * Types the password and confirms once the last answer has ended, and waits until this one has ended too and `shown`
+ * holds. The form clears the password in the action's `finally`, before React shows the answer the action returns, so an
+ * empty field alone does not mean the answer is on screen.
+ */
+async function confirmOnce(answer: ApiResult<undefined>, shown: () => void = () => undefined) {
   vi.mocked(confirmVersions).mockResolvedValueOnce(answer);
   const before = vi.mocked(confirmVersions).mock.calls.length;
   fireEvent.change(passwordField(), { target: { value: "secret-1" } });
@@ -72,6 +76,7 @@ async function confirmOnce(answer: ApiResult<undefined>) {
   fireEvent.click(confirmButton());
   await waitFor(() => expect(confirmVersions).toHaveBeenCalledTimes(before + 1));
   await waitFor(() => expect(passwordField().value).toBe(""));
+  await waitFor(shown);
 }
 
 describe("OwnerConfirmForm (brokerage-agreement E05-S5, S5-D4, S5-D5, UO-2)", () => {
@@ -119,15 +124,15 @@ describe("OwnerConfirmForm (brokerage-agreement E05-S5, S5-D4, S5-D5, UO-2)", ()
   it("ownerConfirmForm_afterAnswer_passwordCleared: the password field is empty after every answer, a wrong one marked on the field", async () => {
     renderForm();
 
-    await confirmOnce(http(400, "VALIDATION_FAILED", { fields: ["currentPassword"] }));
-    expect(passwordField().getAttribute("aria-invalid")).toBe("true");
+    await confirmOnce(http(400, "VALIDATION_FAILED", { fields: ["currentPassword"] }), () =>
+      expect(passwordField().getAttribute("aria-invalid")).toBe("true"),
+    );
     expect(screen.getByText(o.errors.wrongPassword)).toBeTruthy();
 
-    await confirmOnce(http(409, "CONCURRENT_MODIFICATION"));
-    expect(screen.getByText(o.errors.concurrent)).toBeTruthy();
+    await confirmOnce(http(409, "CONCURRENT_MODIFICATION"), () => expect(screen.getByText(o.errors.concurrent)).toBeTruthy());
     expect(screen.queryByText(o.errors.wrongPassword)).toBeNull();
 
-    await confirmOnce(http(500, "INTERNAL_ERROR"));
+    await confirmOnce(http(500, "INTERNAL_ERROR"), () => expect(screen.getByText(o.errors.failed)).toBeTruthy());
     expect(screen.queryByText("secret-1")).toBeNull();
   });
 
@@ -142,14 +147,14 @@ describe("OwnerConfirmForm (brokerage-agreement E05-S5, S5-D4, S5-D5, UO-2)", ()
       [http(500, "INTERNAL_ERROR", { correlationId: "c-9" }), `${o.errors.failed}Support code: c-9`],
       [http(400, "MALFORMED_REQUEST"), o.errors.failed],
     ] as const) {
-      await confirmOnce(answer);
-      expect(alertText()).toBe(text);
+      await confirmOnce(answer, () => expect(alertText()).toBe(text));
     }
 
     await confirmOnce(
       http(409, "AGREEMENT_NOT_ELIGIBLE", {
         fields: ["versions[0].reasonGroups.BASIS", "versions[0].reasonGroups.OWNER", "versions[1].reasonGroups.UNIT"],
       }),
+      () => expect(within(screen.getByRole("alert")).getByText("Version 1 of unit P101 cannot be confirmed now:")).toBeTruthy(),
     );
     const alert = screen.getByRole("alert");
     expect(within(alert).getByText("Version 1 of unit P101 cannot be confirmed now:")).toBeTruthy();
