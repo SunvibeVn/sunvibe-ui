@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { AccountOverview, NoscriptNotice } from "@/features/auth";
+import { AgreementsAccountCard } from "@/features/brokerage-agreement/client";
 import { ConfirmationsAccountCard } from "@/features/inventory-intake/client";
 import { WorkspaceAccountCard } from "@/features/workspace";
 
@@ -12,6 +13,7 @@ export default function AccountPage() {
       <NoscriptNotice />
       <AccountOverview>
         <ConfirmationsAccountCard />
+        <AgreementsAccountCard />
         <WorkspaceAccountCard />
       </AccountOverview>
     </div>
