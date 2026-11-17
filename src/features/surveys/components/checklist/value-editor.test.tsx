@@ -1,7 +1,10 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
+import { useState } from "react";
 import { describe, expect, it, vi } from "vitest";
 import en from "@/i18n/messages/en.json";
+
+import type { ChecklistProblem } from "../../schemas/checklist";
 
 import { type ValueKind, ValueEditor } from "./value-editor";
 
@@ -68,5 +71,93 @@ describe("ValueEditor numbers (survey-checklist SV-247)", () => {
   it("does not group thousands in a whole-number cell: 1.000 is not a valid count", () => {
     expect(reported({ kind: "integer", min: 0, max: 50 }, "1.000")).toEqual([null]);
     expect(reported({ kind: "integer", min: 0, max: 50 }, "12")).toEqual([12]);
+  });
+});
+
+/** The text a box shows. */
+const shownIn = (element: HTMLElement) => (element as HTMLInputElement).value;
+
+/** The editor with its value held and passed back, as the field control does. */
+function Held({ kind, problems = {} }: { kind: ValueKind; problems?: Readonly<Record<string, ChecklistProblem>> }) {
+  const [value, setValue] = useState<unknown>(null);
+  return (
+    <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
+      <ValueEditor id="f" label="Field" kind={kind} value={value} onChange={setValue} problems={problems} />
+    </NextIntlClientProvider>
+  );
+}
+
+/** The editor with a value set from outside and a mock onChange that never feeds it back. */
+function Outside({ kind, value, onChange }: { kind: ValueKind; value: unknown; onChange(value: unknown): void }) {
+  return (
+    <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
+      <ValueEditor id="f" label="Field" kind={kind} value={value} onChange={onChange} problems={{}} />
+    </NextIntlClientProvider>
+  );
+}
+
+describe("ValueEditor shown text (survey-checklist SV-247 pin)", () => {
+  it("numberCell_outsideValue_replacesTypedText", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<Outside kind={{ kind: "area" }} value={null} onChange={onChange} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "34.425" } });
+    expect(shownIn(screen.getByRole("textbox"))).toBe("34.425");
+    rerender(<Outside kind={{ kind: "area" }} value={50} onChange={onChange} />);
+    expect(shownIn(screen.getByRole("textbox"))).toBe("50");
+  });
+
+  it("rentCell_ownerFormValue_replacesTypedAmount", () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<Outside kind={{ kind: "rent" }} value={null} onChange={onChange} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "0,500" } });
+    expect(shownIn(screen.getByRole("textbox"))).toBe("0,500");
+    rerender(<Outside kind={{ kind: "rent" }} value={{ amount: 14000000, currency: "VND", unit: "MONTH" }} onChange={onChange} />);
+    expect(shownIn(screen.getByRole("textbox"))).toBe("14000000");
+  });
+
+  it("numberCell_typedText_keptWhileReadOrNotRead", () => {
+    const area = render(<Held kind={{ kind: "area" }} />);
+    for (const typed of ["36", "34,4", "34.425"]) {
+      fireEvent.change(screen.getByRole("textbox"), { target: { value: typed } });
+      expect(shownIn(screen.getByRole("textbox"))).toBe(typed);
+    }
+    area.unmount();
+    render(<Held kind={{ kind: "rent" }} />);
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "1.500.000" } });
+    expect(shownIn(screen.getByRole("textbox"))).toBe("1.500.000");
+  });
+
+  // survey-checklist SV-247 pin of today's behaviour: the fee rows are keyed by their index (spec risk R-4, kept by
+  // [DEL-8] SV247-D5), so a typed text that did not read stays on the mounted row after a fee above it is removed.
+  // A fix of the fee rows' identity changes this test on purpose.
+  it("feeRows_removedFee_mountedRowKeepsTextNotRead", () => {
+    const onChange = vi.fn();
+    const fees = { kind: "fees" } as const;
+    const first = render(
+      <Outside
+        kind={fees}
+        value={[
+          { name: "A", amount: null, chargeUnit: null },
+          { name: "B", amount: null, chargeUnit: null },
+        ]}
+        onChange={onChange}
+      />,
+    );
+    fireEvent.change(screen.getAllByLabelText("Amount (VND)")[0], { target: { value: "0,500" } });
+    expect(shownIn(screen.getAllByLabelText("Amount (VND)")[0])).toBe("0,500");
+    fireEvent.click(screen.getAllByRole("button", { name: "Remove" })[0]);
+    expect(onChange.mock.calls.at(-1)?.[0]).toEqual([{ name: "B", amount: null, chargeUnit: null }]);
+    first.rerender(<Outside kind={fees} value={[{ name: "B", amount: null, chargeUnit: null }]} onChange={onChange} />);
+    expect(screen.getAllByLabelText("Amount (VND)")).toHaveLength(1);
+    expect(shownIn(screen.getByRole("textbox", { name: "Fee" }))).toBe("B");
+    expect(shownIn(screen.getByLabelText("Amount (VND)"))).toBe("0,500");
+    first.unmount();
+
+    const priced = { name: "B", amount: { amount: 2000000, currency: "VND" }, chargeUnit: null };
+    const second = render(<Outside kind={fees} value={[{ name: "A", amount: null, chargeUnit: null }, priced]} onChange={onChange} />);
+    fireEvent.change(screen.getAllByLabelText("Amount (VND)")[0], { target: { value: "0,500" } });
+    fireEvent.click(screen.getAllByRole("button", { name: "Remove" })[0]);
+    second.rerender(<Outside kind={fees} value={[priced]} onChange={onChange} />);
+    expect(shownIn(screen.getByLabelText("Amount (VND)"))).toBe("2000000");
   });
 });
