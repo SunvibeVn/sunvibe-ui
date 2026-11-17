@@ -131,7 +131,7 @@ describe("OwnerConfirmForm (brokerage-agreement E05-S5, S5-D4, S5-D5, UO-2)", ()
     expect(screen.queryByText("secret-1")).toBeNull();
   });
 
-  it("ownerConfirmForm_refusals_texts: each refusal shows its text by code, the eligibility lines per item, and the reload codes hand back", async () => {
+  it("ownerConfirmForm_refusals_texts: each refusal shows its text by code, and the eligibility lines per item", async () => {
     const props = renderForm();
     const alertText = () => screen.getByRole("alert").textContent;
 
@@ -160,6 +160,11 @@ describe("OwnerConfirmForm (brokerage-agreement E05-S5, S5-D4, S5-D5, UO-2)", ()
     expect(within(alert).getByText(o.errors.contact)).toBeTruthy();
     expect(screen.queryByText("server text")).toBeNull();
     expect(props.onReload).not.toHaveBeenCalled();
+    expect(props.onConfirmed).not.toHaveBeenCalled();
+  });
+
+  it("ownerConfirmForm_outOfDate_handsBack: a version gone, no longer waiting, or a changed statement hands back so the page says it reloaded", async () => {
+    const props = renderForm();
 
     for (const answer of [
       http(404, "NOT_FOUND"),

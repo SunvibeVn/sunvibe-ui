@@ -2524,6 +2524,28 @@
         "badReason": "This reason cannot be saved. Remove special characters.",
         "failed": "Your answer could not be saved."
       }
+    },
+    "answer": {
+      "awaiting": "The owner may answer until {time}",
+      "confirmed": "Confirmed by the owner on {time}",
+      "rejected": "Rejected by the owner on {time}",
+      "reason": "Reason: {reason}",
+      "noReason": "No reason given.",
+      "lapsed": "No answer by {time}"
+    },
+    "newDraft": {
+      "notice": "The owner declined this version or did not answer in time. Open a new draft to send them a changed version.",
+      "open": "Open a new draft",
+      "reload": "Reload",
+      "pending": "A version is still pending. The page was reloaded.",
+      "supportCode": "Support code: {code}",
+      "errors": {
+        "notEligible": "A new draft cannot be opened now:",
+        "stale": "This agreement changed since you opened it.",
+        "notAssignee": "Only the Sale assigned to this lead opens a new draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The draft could not be opened."
+      }
     }
   },
   "TestEnvironment": {

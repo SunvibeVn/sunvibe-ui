@@ -6,13 +6,14 @@ import en from "@/i18n/messages/en.json";
 
 import type { BrokerageAgreementDetail } from "../types";
 
-// The edge only: the detail call, so no request leaves the test.
+// The edge only: the detail call and the new-draft call, so no request leaves the test.
 vi.mock("../services/agreement-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/agreement-api")>()),
   getAgreement: vi.fn(),
+  openDraft: vi.fn(),
 }));
 
-import { getAgreement } from "../services/agreement-api";
+import { getAgreement, openDraft } from "../services/agreement-api";
 
 import { AgreementDetailView } from "./agreement-detail-view";
 
@@ -172,5 +173,123 @@ describe("AgreementDetailView (brokerage-agreement E05-S2, spec section 6)", () 
     expect(screen.getAllByText("Proposed fee policy: not confirmed by the owner yet.")).toHaveLength(1);
     expect(screen.queryByRole("button", { name: "Edit the draft" })).toBeNull();
     expect(screen.queryByRole("button", { name: "Send to the owner" })).toBeNull();
+  });
+});
+
+describe("AgreementDetailView, the owner's answer and a new draft (brokerage-agreement E05-S5, S5-D10, S5-D13, UF-1)", () => {
+  beforeEach(() => {
+    vi.mocked(getAgreement).mockReset();
+    vi.mocked(openDraft).mockReset();
+  });
+
+  const REJECTED = {
+    versionNo: 1,
+    status: "OWNER_REJECTED",
+    startDate: "2027-01-01",
+    endDate: "2027-12-31",
+    createdAt: "2026-11-20T03:15:00Z",
+    sentAt: "2026-11-21T03:15:00Z",
+    answerBy: "2026-11-28T03:15:00Z",
+    ownerAnsweredAt: "2026-11-22T03:15:00Z",
+    ownerRejectionReason: "The rent is too low.",
+  } as const satisfies NonNullable<BrokerageAgreementDetail["versions"]>[number];
+
+  it("agreementDetailView_rejectedVersion_answerLinesAndOpenDraft: a declined version shows when and why; the assigned Sale opens a new draft once, and the page then shows version 2 as a draft to edit and send", async () => {
+    vi.mocked(getAgreement)
+      .mockResolvedValueOnce(answered({ ...DETAIL, status: "DRAFTING", dataVersion: 3, viewerIsAssignedSale: true, versions: [REJECTED] }))
+      .mockResolvedValueOnce(
+        answered({
+          ...DETAIL,
+          status: "DRAFTING",
+          dataVersion: 4,
+          viewerIsAssignedSale: true,
+          versions: [
+            REJECTED,
+            { versionNo: 2, status: "DRAFT", startDate: "2027-01-01", endDate: "2027-12-31", createdAt: "2026-11-23T03:15:00Z" },
+          ],
+        }),
+      );
+    vi.mocked(openDraft).mockResolvedValueOnce({ ok: true, status: 204, replayed: false, data: undefined });
+    renderView();
+
+    await screen.findByRole("heading", { level: 1, name: m.title });
+    const versions = screen.getByRole("region", { name: m.versions });
+    expect(within(versions).getByText("Rejected by the owner")).toBeTruthy();
+    expect(within(versions).getByText(/^Rejected by the owner on /).textContent).toMatch(/Nov 22, 2026.*10:15/);
+    expect(within(versions).getByText("Reason: The rent is too low.")).toBeTruthy();
+    expect(screen.getByText(en.BrokerageAgreement.newDraft.notice)).toBeTruthy();
+    expect(screen.queryByRole("button", { name: "Edit the draft" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: en.BrokerageAgreement.newDraft.open }));
+
+    expect(await screen.findByText("Version 2")).toBeTruthy();
+    expect(vi.mocked(openDraft).mock.calls.map((call) => call.slice(0, 2))).toEqual([[AGREEMENT_ID, { expectedDataVersion: 3 }]]);
+    expect(getAgreement).toHaveBeenCalledTimes(2);
+    const [, second] = within(screen.getByRole("region", { name: m.versions })).getAllByRole("listitem");
+    expect(within(second as HTMLElement).getByText("Draft")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Edit the draft" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Send to the owner" })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: en.BrokerageAgreement.newDraft.open })).toBeNull();
+  });
+
+  it("agreementDetailView_newDraftNotAllowed_reloadsWithItsText: a new draft refused for a pending version says so and the page reads the agreement again", async () => {
+    vi.mocked(getAgreement)
+      .mockResolvedValueOnce(answered({ ...DETAIL, status: "DRAFTING", dataVersion: 3, viewerIsAssignedSale: true, versions: [REJECTED] }))
+      .mockResolvedValueOnce(
+        answered({
+          ...DETAIL,
+          status: "AWAITING_CONFIRMATION",
+          dataVersion: 5,
+          viewerIsAssignedSale: true,
+          versions: [REJECTED, { ...REJECTED, versionNo: 2, status: "AWAITING_OWNER", ownerAnsweredAt: null, ownerRejectionReason: null }],
+        }),
+      );
+    vi.mocked(openDraft).mockResolvedValueOnce({
+      ok: false,
+      kind: "http",
+      status: 409,
+      code: "AGREEMENT_NEW_DRAFT_NOT_ALLOWED",
+      fieldErrors: [],
+    });
+    renderView();
+
+    fireEvent.click(await screen.findByRole("button", { name: en.BrokerageAgreement.newDraft.open }));
+
+    expect(await screen.findByText(en.BrokerageAgreement.newDraft.pending)).toBeTruthy();
+    expect(await screen.findByText("Version 2")).toBeTruthy();
+    expect(getAgreement).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: en.BrokerageAgreement.newDraft.open })).toBeNull();
+  });
+
+  it("agreementDetailView_answerLines_eachState: the deadline, a confirmation, a declined version without a reason and a lapse each read their line", async () => {
+    const at = (versionNo: number, version: Partial<NonNullable<BrokerageAgreementDetail["versions"]>[number]>) => ({
+      ...REJECTED,
+      ownerRejectionReason: null,
+      ...version,
+      versionNo,
+    });
+    vi.mocked(getAgreement).mockResolvedValue(
+      answered({
+        ...DETAIL,
+        status: "AWAITING_CONFIRMATION",
+        dataVersion: 5,
+        viewerIsAssignedSale: true,
+        versions: [
+          at(1, { status: "OWNER_REJECTED" }),
+          at(2, { status: "LAPSED" }),
+          at(3, { status: "OWNER_CONFIRMED" }),
+          at(4, { status: "AWAITING_OWNER", ownerAnsweredAt: null }),
+        ],
+      }),
+    );
+    renderView();
+
+    await screen.findByRole("heading", { level: 1, name: m.title });
+    const rows = within(screen.getByRole("region", { name: m.versions })).getAllByRole("listitem") as HTMLElement[];
+    expect(within(rows[0] as HTMLElement).getByText("No reason given.")).toBeTruthy();
+    expect(within(rows[1] as HTMLElement).getByText(/^No answer by /).textContent).toMatch(/Nov 28, 2026.*10:15/);
+    expect(within(rows[2] as HTMLElement).getByText(/^Confirmed by the owner on /).textContent).toMatch(/Nov 22, 2026.*10:15/);
+    expect(within(rows[3] as HTMLElement).getByText(/^The owner may answer until /).textContent).toMatch(/Nov 28, 2026.*10:15/);
+    expect(screen.queryByRole("button", { name: en.BrokerageAgreement.newDraft.open })).toBeNull();
   });
 });

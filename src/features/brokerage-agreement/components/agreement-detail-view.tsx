@@ -12,6 +12,7 @@ import { getAgreement } from "../services/agreement-api";
 
 import { AgreementVersionList } from "./agreement-version-list";
 import { DraftEditForm } from "./draft-edit-form";
+import { DraftOpenNotice } from "./draft-open-notice";
 import { DraftSendDialog } from "./draft-send-dialog";
 
 const LOADING: AgreementModel = { kind: "loading" };
@@ -21,8 +22,9 @@ const LOADING: AgreementModel = { kind: "loading" };
  * type, unit, creation time and versions with their content, and a way back to its basis lead. No owner, intake,
  * property or person (BR-17). The assigned Sale edits the draft in place (E05-S3, S3-D18): "Edit the draft" shows the
  * form and the survey reference instead of the draft's content. Beside it, "Send to the owner" (E05-S4, S4-D14) asks
- * for a confirmation and sends the draft with the data version the page read. Every read is one opening that the
- * server logs (S2-D9): one on mount, one per "Try again", one after a save, a send or a "Reload".
+ * for a confirmation and sends the draft with the data version the page read. After the owner declined the last version
+ * or did not answer in time, "Open a new draft" (E05-S5, S5-D10) opens the next one. Every read is one opening that the
+ * server logs (S2-D9): one on mount, one per "Try again", one after a save, a send, a new draft or a "Reload".
  */
 export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const t = useTranslations("BrokerageAgreement");
@@ -31,6 +33,8 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const [attempt, setAttempt] = useState(0);
   const [editing, setEditing] = useState(false);
   const [confirmingSend, setConfirmingSend] = useState(false);
+  /** "A version is still pending. The page was reloaded.": kept across the read it causes. */
+  const [stillPending, setStillPending] = useState(false);
   const versionsId = useId();
 
   useEffect(() => {
@@ -50,6 +54,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
       setModel(LOADING);
       setEditing(false);
       setConfirmingSend(false);
+      setStillPending(false);
     },
     [],
   );
@@ -58,11 +63,17 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     setModel(LOADING);
     setAttempt((count) => count + 1);
   };
-  // A saved or sent draft, or a "Reload": leave edit mode, close the send dialog and read the agreement again.
+  // A saved or sent draft, a new draft, or a "Reload": leave edit mode, close the send dialog and read the agreement again.
   const reread = () => {
     setEditing(false);
     setConfirmingSend(false);
+    setStillPending(false);
     retry();
+  };
+  // The new draft was refused because a version is still pending: say so and read the agreement again.
+  const rereadStillPending = () => {
+    reread();
+    setStillPending(true);
   };
 
   switch (model.kind) {
@@ -95,7 +106,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
         </div>
       );
     case "ready": {
-      const { agreement, versions, canEditDraft, draft, dataVersion } = model;
+      const { agreement, versions, canEditDraft, canOpenDraft, draft, dataVersion } = model;
       const draftEditor =
         editing && canEditDraft && draft !== null && dataVersion !== null
           ? {
@@ -167,6 +178,16 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
                 </div>
               )}
             </div>
+            {stillPending && <Alert tone="info">{t("newDraft.pending")}</Alert>}
+            {canOpenDraft && dataVersion !== null && (
+              <DraftOpenNotice
+                agreementId={agreementId}
+                dataVersion={dataVersion}
+                onOpened={reread}
+                onNotAllowed={rereadStillPending}
+                onReload={reread}
+              />
+            )}
             <AgreementVersionList versions={versions} draftEditor={draftEditor} />
           </section>
           {confirmingSend && canEditDraft && draft !== null && dataVersion !== null && draftEditor === undefined && (
