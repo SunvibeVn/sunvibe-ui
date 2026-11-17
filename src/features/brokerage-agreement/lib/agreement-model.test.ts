@@ -73,6 +73,7 @@ describe("agreementAfter (brokerage-agreement E05-S2, spec section 6)", () => {
           content: { ...NOTHING_ENTERED, proposed: true },
           fee: noFeeEntered(true),
           sentAt: null,
+          answer: null,
         },
         {
           versionNo: 2,
@@ -82,10 +83,12 @@ describe("agreementAfter (brokerage-agreement E05-S2, spec section 6)", () => {
           content: { ...NOTHING_ENTERED, proposed: true },
           fee: noFeeEntered(true),
           sentAt: null,
+          answer: null,
         },
       ],
       dataVersion: null,
       canEditDraft: false,
+      canOpenDraft: false,
       draft: null,
     });
   });
@@ -195,5 +198,69 @@ describe("agreementAfter, the fee policy and the sending of a version (brokerage
       protectionDays: { key: "fee.line.protectionDays", values: { count: 90 } },
     });
     expect(rowOf({ ...VERSION, sentAt: null })?.sentAt).toBeNull();
+  });
+});
+
+describe("agreementAfter, the owner's answer and a new draft (brokerage-agreement E05-S5, S5-D10, S5-D13, UF-1)", () => {
+  const VERSION = DETAIL.versions?.[1] as NonNullable<BrokerageAgreementDetail["versions"]>[number];
+  const SENT = { ...VERSION, sentAt: "2026-11-17T03:15:00Z", answerBy: "2026-11-24T03:15:00Z" };
+  const rowOf = (version: NonNullable<BrokerageAgreementDetail["versions"]>[number]) => {
+    const model = agreementAfter({ ok: true, status: 200, replayed: false, data: { ...DETAIL, versions: [version] } });
+    if (model.kind !== "ready") throw new Error("expected a ready model");
+    return model.versions[0];
+  };
+  const ready = (data: BrokerageAgreementDetail) => agreementAfter({ ok: true, status: 200, replayed: false, data });
+
+  it("agreementModel_answerLines_perVersionState: each sent version's answer line follows its effective state and its time, none without that time", () => {
+    expect(rowOf({ ...SENT, status: "AWAITING_OWNER" })?.answer).toEqual({
+      kind: "awaiting",
+      time: "2026-11-24T03:15:00Z",
+      reasonOrNull: null,
+    });
+    expect(rowOf({ ...SENT, status: "OWNER_CONFIRMED", ownerAnsweredAt: "2026-11-18T01:00:00Z" })?.answer).toEqual({
+      kind: "confirmed",
+      time: "2026-11-18T01:00:00Z",
+      reasonOrNull: null,
+    });
+    expect(
+      rowOf({ ...SENT, status: "OWNER_REJECTED", ownerAnsweredAt: "2026-11-18T01:00:00Z", ownerRejectionReason: "The rent is too low." })
+        ?.answer,
+    ).toEqual({ kind: "rejected", time: "2026-11-18T01:00:00Z", reasonOrNull: "The rent is too low." });
+    expect(
+      rowOf({ ...SENT, status: "OWNER_REJECTED", ownerAnsweredAt: "2026-11-18T01:00:00Z", ownerRejectionReason: null })?.answer,
+    ).toEqual({ kind: "rejected", time: "2026-11-18T01:00:00Z", reasonOrNull: null });
+    expect(rowOf({ ...SENT, status: "LAPSED" })?.answer).toEqual({ kind: "lapsed", time: "2026-11-24T03:15:00Z", reasonOrNull: null });
+
+    // No line for a draft, a version without the time its line names, or any other state.
+    expect(rowOf({ ...VERSION, status: "DRAFT" })?.answer).toBeNull();
+    expect(rowOf({ ...VERSION, status: "AWAITING_OWNER" })?.answer).toBeNull();
+    expect(rowOf({ ...SENT, status: "OWNER_CONFIRMED", ownerAnsweredAt: null })?.answer).toBeNull();
+    expect(rowOf({ ...SENT, status: "LAPSED", answerBy: null })?.answer).toBeNull();
+    for (const status of ["ACTIVATED", "EFFECTIVE", "SUPERSEDED", "ACTIVATION_REFUSED", "CANCELLED"] as const) {
+      expect(rowOf({ ...SENT, status, ownerAnsweredAt: "2026-11-18T01:00:00Z" })?.answer).toBeNull();
+    }
+  });
+
+  it("agreementModel_canOpenDraft_onlyAssignedSaleWithoutPending: the assigned Sale opens a new draft of a drafting agreement with no pending version, and nobody else", () => {
+    const rejected = { ...SENT, versionNo: 1, status: "OWNER_REJECTED" as const, ownerAnsweredAt: "2026-11-18T01:00:00Z" };
+    const lapsed = { ...SENT, versionNo: 1, status: "LAPSED" as const };
+    const base: BrokerageAgreementDetail = { ...DETAIL, status: "DRAFTING", dataVersion: 3, viewerIsAssignedSale: true };
+
+    expect(ready({ ...base, versions: [rejected] })).toMatchObject({ kind: "ready", canOpenDraft: true, canEditDraft: false });
+    expect(ready({ ...base, versions: [lapsed] })).toMatchObject({ canOpenDraft: true });
+    expect(ready({ ...base, versions: [rejected, { ...lapsed, versionNo: 2 }] })).toMatchObject({ canOpenDraft: true });
+
+    const refused: BrokerageAgreementDetail[] = [
+      { ...base, versions: [rejected], viewerIsAssignedSale: false },
+      { ...base, versions: [rejected], viewerIsAssignedSale: undefined },
+      { ...base, versions: [rejected], status: "AWAITING_CONFIRMATION" },
+      { ...base, versions: [rejected], status: "CANCELLED" },
+      { ...base, versions: [rejected], dataVersion: undefined },
+      ...(["DRAFT", "AWAITING_OWNER", "OWNER_CONFIRMED", "ACTIVATED"] as const).map((status) => ({
+        ...base,
+        versions: [rejected, { ...SENT, versionNo: 2, status }],
+      })),
+    ];
+    for (const answer of refused) expect(ready(answer)).toMatchObject({ kind: "ready", canOpenDraft: false });
   });
 });

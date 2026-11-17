@@ -565,6 +565,94 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(button(mainArea(admin), "Send to the owner")).toHaveCount(0);
   });
 
+  test("agreementOwner_declineNewDraftConfirm_answeredVersions (E2E-1, brokerage-agreement US-2 AC-1 to AC-3, BR-5, BR-17)", async () => {
+    // The agreement page the previous test leaves open on the Sale's side; the owner is CUSTOMER, signed in at U-8 and the
+    // declared owner of L15's intake (spec A-2: the owner step above asks CUSTOMER's email, and CUSTOMER confirms it).
+    // Owner POSTs: one rejection and two confirmations, of the 10 per 15 minutes of the agreements' own bucket. One wrong
+    // password only: the account's re-authentication counter is the one U-8 used.
+    const agreementPath = new URL(sale.url()).pathname;
+    const agreement = mainArea(sale);
+    const ownerCard = owner.getByRole("listitem").filter({ has: owner.getByRole("heading", { level: 2 }) });
+    const declineDialog = owner.getByRole("dialog", { name: "Decline version 1", exact: true });
+    const password = CUSTOMER.password ?? "";
+    expect(password).not.toBe("");
+
+    // The owner opens the agreements from the account overview and reads version 1, its unit and its terms.
+    await owner.goto("/account");
+    await owner.getByRole("link", { name: "Open your agreements", exact: true }).click({ timeout: 20_000 });
+    await expect(owner).toHaveURL(/\/account\/brokerage-agreements$/);
+    await expect(owner.getByRole("heading", { level: 1, name: "Brokerage agreements", exact: true })).toBeVisible();
+    await expect(ownerCard).toHaveCount(1, { timeout: 20_000 });
+    await expect(ownerCard.getByRole("heading", { level: 2 })).toHaveText(/^(Unit .+|A unit with no code)$/);
+    await expect(ownerCard.getByText("Long-term rental", { exact: true })).toBeVisible();
+    await expect(ownerCard.getByRole("heading", { name: "Version 1", exact: true })).toBeVisible();
+    await expect(ownerCard.getByText(/^Waiting for your answer until \d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)).toBeVisible();
+    await expect(ownerCard.getByText(/^Version 1 of the brokerage agreement for unit /)).toBeVisible();
+    for (const text of ["8,000,000 VND per month", "From a lease term of 12 months: 100% of one month's rent"]) {
+      await expect(ownerCard.getByText(text, { exact: true })).toBeVisible();
+    }
+    await expect(owner.getByText("Proposed terms: not confirmed by the owner yet.", { exact: true })).toHaveCount(0);
+    await expect(owner.getByText("Proposed fee policy: not confirmed by the owner yet.", { exact: true })).toHaveCount(0);
+    await expectNoSidewaysScroll(owner);
+
+    // The owner declines version 1 with a reason; no password is asked.
+    await button(ownerCard, "Decline").click();
+    await declineDialog.getByLabel(/^Reason/).fill("The rent is too low.");
+    await button(declineDialog, "Decline").click();
+    await expect(declineDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(ownerCard.getByText(/^You declined it on /)).toBeVisible({ timeout: 20_000 });
+    await expect(ownerCard.getByText("Your reason: The rent is too low.", { exact: true })).toBeVisible();
+    await expect(ownerCard.getByRole("checkbox")).toHaveCount(0);
+
+    // The Sale reads the rejection, opens a new draft, a copy of version 1, and sends it.
+    await sale.goto(agreementPath);
+    await expect(agreement.getByText("Rejected by the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(agreement.getByText(/^Rejected by the owner on /)).toBeVisible();
+    await expect(agreement.getByText("Reason: The rent is too low.", { exact: true })).toBeVisible();
+    await expect(agreement.getByText("Drafting", { exact: true })).toBeVisible();
+    const newDrafts = recordApiCalls(sale);
+    await button(agreement, "Open a new draft").dblclick();
+    await expect(agreement.getByText("Version 2", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(agreement.getByText("Draft", { exact: true })).toBeVisible();
+    await expect(button(agreement, "Edit the draft")).toBeVisible();
+    expect(newDrafts.filter((call) => call.method === "POST" && call.url.pathname.endsWith("/draft"))).toHaveLength(1);
+
+    const sendDialog = sale.getByRole("dialog", { name: "Send this version to the owner", exact: true });
+    await button(agreement, "Send to the owner").click();
+    await expect(sendDialog).toContainText("Version 2 goes to the owner of this unit.");
+    await button(sendDialog, "Send").click();
+    await expect(sendDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(agreement.getByText("Awaiting the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(agreement.getByText(/^The owner may answer until /)).toBeVisible();
+
+    // The owner reads again: only version 2 has a box; a wrong password says so, the right one confirms it.
+    await owner.reload();
+    const box = ownerCard.getByRole("checkbox", { name: "I have read version 2 and confirm it", exact: true });
+    await expect(box).toBeVisible({ timeout: 20_000 });
+    await expect(ownerCard.getByRole("checkbox")).toHaveCount(1);
+    await expect(ownerCard.getByText(/^Version 2 of the brokerage agreement for unit /)).toBeVisible();
+    await box.check();
+    await owner.getByLabel("Current password", { exact: true }).fill("not-the-password");
+    await button(owner, "Confirm the selected versions (1)").click();
+    await expect(owner.getByText("That password isn't right.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(owner.getByLabel("Current password", { exact: true })).toHaveValue("");
+
+    await owner.getByLabel("Current password", { exact: true }).fill(password);
+    await button(owner, "Confirm the selected versions (1)").click();
+    await expect(ownerCard.getByText(/^You confirmed it on /)).toBeVisible({ timeout: 20_000 });
+    await expect(ownerCard.getByText(/^You declined it on /)).toBeVisible();
+    await expect(owner.getByLabel("Current password", { exact: true })).toHaveCount(0);
+    expect(await storedText(owner)).not.toContain(password);
+    expect(owner.url()).not.toContain(password);
+
+    // The Sale reads the confirmation; the agreement still awaits its activation (E05-S6).
+    await sale.reload();
+    await expect(agreement.getByText("Confirmed by the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(agreement.getByText(/^Confirmed by the owner on /)).toBeVisible();
+    await expect(agreement.getByText("Awaiting confirmation", { exact: true })).toBeVisible();
+    await expect(button(agreement, "Open a new draft")).toHaveCount(0);
+  });
+
   test("eligibility_leadWithoutIntake_noneAndE1Lines (UD-8, UD-1, brokerage-agreement US-1 AC-1, E-1)", async () => {
     // L1: the seed completes no intake, and no spec of the chain completes one on it.
     await admin.goto(fixture.lead(1).path);
