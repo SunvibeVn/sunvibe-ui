@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
-import type { ReactNode } from "react";
+import { Activity, type ReactNode } from "react";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResult, SessionSnapshot } from "@/features/auth/client";
@@ -147,5 +147,48 @@ describe("OwnerAgreementsView (brokerage-agreement E05-S5, S5-D17, UO-1, UO-3)",
     expect(await screen.findByText(o.errors.reload)).toBeTruthy();
     await waitFor(() => expect(listMine).toHaveBeenCalledTimes(4));
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("ownerAgreementsView_shownAgain_readsAgainAndForgets: a route shown again after Back reads the list again, with no notice, tick or decline dialog left from before", async () => {
+    vi.mocked(listMine)
+      .mockResolvedValueOnce(ok({ items: [ITEM], more: false }))
+      .mockResolvedValueOnce(ok({ items: [ITEM], more: false }))
+      .mockResolvedValueOnce(ok({ items: [ITEM], more: false }));
+    vi.mocked(rejectVersion).mockResolvedValueOnce({
+      ok: false,
+      kind: "http",
+      status: 409,
+      code: "AGREEMENT_NOT_AWAITING_OWNER",
+      fieldErrors: [],
+    });
+    const view = (mode: "visible" | "hidden") => (
+      <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
+        <Activity mode={mode}>
+          <OwnerAgreementsView />
+        </Activity>
+      </NextIntlClientProvider>
+    );
+    const { rerender } = render(view("visible"));
+
+    // The reload notice, a ticked version and an open decline dialog: all on screen before the route is left.
+    fireEvent.click(await screen.findByRole("button", { name: o.decline }));
+    fireEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: o.declineDialog.submit }));
+    expect(await screen.findByText(o.errors.reload)).toBeTruthy();
+    await waitFor(() => expect(listMine).toHaveBeenCalledTimes(2));
+    fireEvent.click(await screen.findByRole("checkbox", { name: "I have read version 1 and confirm it" }));
+    fireEvent.click(screen.getByRole("button", { name: o.decline }));
+    expect(screen.getByRole("dialog", { name: "Decline version 1" })).toBeTruthy();
+
+    // Next keeps a route left by a client-side navigation mounted but hidden, and runs its effects again when shown.
+    rerender(view("hidden"));
+    rerender(view("visible"));
+
+    expect(await screen.findByRole("heading", { name: "Unit P101" })).toBeTruthy();
+    expect(listMine).toHaveBeenCalledTimes(3);
+    expect(screen.queryByRole("status")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(screen.queryByText(o.errors.reload)).toBeNull();
+    expect((screen.getByRole("checkbox", { name: "I have read version 1 and confirm it" }) as HTMLInputElement).checked).toBe(false);
+    expect(screen.queryByLabelText(o.password)).toBeNull();
   });
 });

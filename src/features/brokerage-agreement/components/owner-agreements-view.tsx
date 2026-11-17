@@ -46,8 +46,8 @@ function OwnerAgreementList() {
   /** Number of the newest read; an older answer is dropped. */
   const newest = useRef(0);
 
-  // Each read writes one access-log row per agreement (brokerage-agreement BR-17), so the page reads only on opening,
-  // on "Try again" and after an answer.
+  // Each read writes one access-log row per agreement (brokerage-agreement BR-17), so the page reads only on opening
+  // (also when shown again), on "Try again" and after an answer.
   const load = useCallback(() => {
     const mine = ++newest.current;
     void listMine().then((answer) => {
@@ -59,16 +59,17 @@ function OwnerAgreementList() {
     live.current = true;
     return () => {
       live.current = false;
-      // Next keeps this route hidden (Activity): nothing of the agreements stays in it.
+      // Next keeps this route hidden (Activity): nothing of the agreements, the ticks or the dialog stays in it.
       setResult(null);
+      setTicked([]);
+      setDeclining(null);
+      setReloaded(false);
     };
   }, []);
 
-  // One read on opening, also when a development double effect runs it twice.
-  const started = useRef(false);
+  // A read on every mount: Next shows a route left by Back again with its effects run again. The newest number drops the
+  // answer of a read overtaken, so a development double effect only costs one extra read.
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
     load();
   }, [load]);
 
