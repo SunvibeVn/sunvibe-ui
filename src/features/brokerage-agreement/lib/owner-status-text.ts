@@ -1,4 +1,22 @@
+import type { ReasonGroup } from "../types";
+
 import type { EligibilityKey } from "./reason-text";
+
+/** `Record` over the enum: a group without the owner's text fails `npm run typecheck`. */
+const OWNER_REASON_TEXT: Record<ReasonGroup, EligibilityKey> = {
+  BASIS: "owner.reasons.BASIS",
+  PROPERTY: "owner.reasons.PROPERTY",
+  UNIT: "owner.reasons.UNIT",
+  OWNER: "owner.reasons.OWNER",
+};
+
+/**
+ * The owner's text of a reason group that stops a confirmation (brokerage-agreement BR-3, E-2, E-5, E-11, spec section
+ * 6), in the owner's words rather than the staff's; a group this UI does not know reads the `OTHER` text, never dropped.
+ */
+export function ownerReasonText(group: string): EligibilityKey {
+  return Object.hasOwn(OWNER_REASON_TEXT, group) ? OWNER_REASON_TEXT[group as ReasonGroup] : "owner.reasons.OTHER";
+}
 
 /**
  * The owner's text of a version's effective state (brokerage-agreement E05-S5, spec section 6): waiting for their answer

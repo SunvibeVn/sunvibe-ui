@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { ownerStatusText } from "./owner-status-text";
+import { ownerReasonText, ownerStatusText } from "./owner-status-text";
 
 describe("ownerStatusText (brokerage-agreement E05-S5, spec section 6)", () => {
   it("ownerStatusText_eachState_itsKey: each effective version state reads the owner's text, an AWAITING_OWNER version only while it can be answered", () => {
@@ -14,5 +14,16 @@ describe("ownerStatusText (brokerage-agreement E05-S5, spec section 6)", () => {
     for (const status of ["DRAFT", "ACTIVATED", "EFFECTIVE", "SUPERSEDED", "ACTIVATION_REFUSED", "SOMETHING_NEW", ""]) {
       expect(ownerStatusText(status, false)).toBe("owner.state.handling");
     }
+  });
+
+  it("ownerStatusText_reasonGroups_ownersText: each reason group that stops a confirmation reads the owner's text, an unknown one its OTHER text", () => {
+    expect(["BASIS", "PROPERTY", "UNIT", "OWNER", "NEW_GROUP", ""].map(ownerReasonText)).toEqual([
+      "owner.reasons.BASIS",
+      "owner.reasons.PROPERTY",
+      "owner.reasons.UNIT",
+      "owner.reasons.OWNER",
+      "owner.reasons.OTHER",
+      "owner.reasons.OTHER",
+    ]);
   });
 });

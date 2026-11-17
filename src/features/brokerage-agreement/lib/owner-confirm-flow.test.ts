@@ -59,7 +59,7 @@ describe("confirmVersions (brokerage-agreement E05-S5, S5-D4 to S5-D6, spec sect
     expect(await confirm(http(409, "CONCURRENT_MODIFICATION"))).toEqual({ kind: "refused", reason: "concurrent" });
   });
 
-  it("ownerConfirmFlow_notEligible_perItemGroups: each failing item, by its index, names its version and its group texts in the answer's order", async () => {
+  it("ownerConfirmFlow_notEligible_perItemGroups: each failing item, by its index, names its version and the owner's group texts in the answer's order", async () => {
     expect(
       await confirm(
         http(409, "AGREEMENT_NOT_ELIGIBLE", {
@@ -77,8 +77,8 @@ describe("confirmVersions (brokerage-agreement E05-S5, S5-D4 to S5-D6, spec sect
       kind: "refused",
       reason: "notEligible",
       items: [
-        { agreementId: "A1", versionNo: 1, groupKeys: ["eligibility.reasons.BASIS", "eligibility.reasons.OTHER"] },
-        { agreementId: "A2", versionNo: 2, groupKeys: ["eligibility.reasons.PROPERTY", "eligibility.reasons.OWNER"] },
+        { agreementId: "A1", versionNo: 1, groupKeys: ["owner.reasons.BASIS", "owner.reasons.OTHER"] },
+        { agreementId: "A2", versionNo: 2, groupKeys: ["owner.reasons.PROPERTY", "owner.reasons.OWNER"] },
       ],
     });
   });

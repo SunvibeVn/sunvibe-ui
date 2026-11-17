@@ -3,7 +3,8 @@ import type { ApiResult } from "@/features/auth/client";
 import { confirmVersions as postConfirmations } from "../services/owner-agreement-api";
 import type { BrokerageAgreementConfirmationRequest } from "../types";
 
-import { type EligibilityKey, reasonText } from "./reason-text";
+import { ownerReasonText } from "./owner-status-text";
+import type { EligibilityKey } from "./reason-text";
 
 /** A version of the request that cannot be confirmed now, with one text per reason group (BR-3, E-2, E-5, E-11). */
 export type NotEligibleItem = { agreementId: string; versionNo: number; groupKeys: EligibilityKey[] };
@@ -40,7 +41,7 @@ function notEligibleItems(body: BrokerageAgreementConfirmationRequest, fields: s
     if (match === null) continue;
     const index = Number(match[1]);
     if (body.versions[index] === undefined) continue;
-    groups.set(index, [...(groups.get(index) ?? []), reasonText(match[2] ?? "")]);
+    groups.set(index, [...(groups.get(index) ?? []), ownerReasonText(match[2] ?? "")]);
   }
   return [...groups.entries()]
     .sort(([a], [b]) => a - b)

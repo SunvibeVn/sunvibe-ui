@@ -2478,6 +2478,13 @@
       }
     },
     "owner": {
+      "title": "Brokerage agreements",
+      "loading": "Loading your agreements…",
+      "loadFailed": "Your agreements could not be read.",
+      "retry": "Try again",
+      "supportCode": "Support code: {correlationId}",
+      "empty": "Sunvibe has not sent you an agreement yet.",
+      "more": "More than 50 agreements: only the 50 most recent are shown.",
       "unit": "Unit {code}",
       "reason": "Your reason: {reason}",
       "state": {
@@ -2487,6 +2494,35 @@
         "lapsed": "No answer by {time}",
         "cancelled": "Withdrawn by Sunvibe",
         "handling": "Sunvibe is handling this version."
+      },
+      "tick": "I have read version {number} and confirm it",
+      "decline": "Decline",
+      "password": "Current password",
+      "confirm": "Confirm the selected versions ({count})",
+      "reasons": {
+        "BASIS": "Sunvibe's intake record of this unit is not usable now.",
+        "PROPERTY": "Something about the whole property must be settled first.",
+        "UNIT": "Something about this unit must be settled first.",
+        "OWNER": "Your account cannot confirm for this property now.",
+        "OTHER": "Something else must be settled first."
+      },
+      "declineDialog": {
+        "title": "Decline version {number}",
+        "reason": "Reason",
+        "submit": "Decline",
+        "keep": "Keep it"
+      },
+      "errors": {
+        "wrongPassword": "That password isn't right.",
+        "locked": "Too many wrong passwords. Try again later.",
+        "tooMany": "Too many tries. Wait a few minutes.",
+        "reload": "Something changed. The page was reloaded.",
+        "notEligible": "Version {number} of unit {code} cannot be confirmed now:",
+        "notEligibleNoCode": "Version {number} of a unit with no code cannot be confirmed now:",
+        "contact": "Contact Sunvibe.",
+        "concurrent": "Something changed at the same time. Try again.",
+        "badReason": "This reason cannot be saved. Remove special characters.",
+        "failed": "Your answer could not be saved."
       }
     }
   },
