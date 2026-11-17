@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WHOLE_AMOUNT } from "@/features/lead-shared";
 import {
   addProblem,
   basisDateProblem,
@@ -45,12 +46,6 @@ const FROM_STATUSES: readonly string[] = ["ASSIGNED", "CONTACTED", "ON_HOLD", "S
 
 /** Most digits of an amount (the intake rule: 1..15 digits, whole VND). */
 const AMOUNT_DIGITS = 15;
-
-/**
- * Plain digits, or groups of three with one separator throughout and a first group that does not start with 0, so
- * `12,5` and `0,500` are refused (`012.000` with them); `1,500` reads as 1500 (SV-176, owner 2026-11-07).
- */
-const WHOLE_AMOUNT = /^\d+$|^[1-9]\d{0,2}([\s.,])\d{3}(?:\1\d{3})*$/;
 
 /** A PASSED of the cycle refuses the change in any status; a SUBMITTED revision does not (survey-checklist D3-7, D3-13). */
 export function canChangeRequirement(status: string | undefined, survey?: SurveyRecordFacts | null): boolean {

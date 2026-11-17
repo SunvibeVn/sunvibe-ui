@@ -14,5 +14,5 @@ export {
   statusLabelKey,
   wardTypeLabelKey,
 } from "./lib/labels";
-export { formatDate, formatDateTime, formatPrice, localInputToInstant } from "./lib/format";
+export { formatDate, formatDateTime, formatPrice, localInputToInstant, WHOLE_AMOUNT } from "./lib/format";
 export { mapDirectionsUrl } from "./lib/map-link";

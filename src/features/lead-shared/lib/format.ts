@@ -5,6 +5,13 @@ import { type OwnerLeadsKey, priceUnitLabelKey } from "./labels";
 // The Vietnam time helpers live in `@/lib/format/vietnam-time`; re-exported for the lead features.
 export { formatDate, formatDateTime, instantToLocalInput, localInputToInstant } from "@/lib/format/vietnam-time";
 
+/**
+ * A typed whole VND amount: plain digits, or groups of three with one separator throughout and a first group that
+ * does not start with 0, so `12,5` and `0,500` are refused (`012.000` with them); `1,500` reads as 1500 (SV-176,
+ * owner 2026-11-07). Shared by the requirement dialog (owner-leads) and the checklist money cells (surveys).
+ */
+export const WHOLE_AMOUNT = /^\d+$|^[1-9]\d{0,2}([\s.,])\d{3}(?:\1\d{3})*$/;
+
 const VND = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
 
 /**

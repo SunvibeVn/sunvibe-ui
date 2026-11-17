@@ -110,6 +110,23 @@ describe("checkGroupInput (spec 4.6 limits, A-11 phone rule; paths as the server
     expect(problems("parts", { "parts/totalFloors": sourced("VALUE", 0, "OBSERVED_ON_SITE") })).toEqual({ "content.totalFloors.value": "invalid" });
   });
 
+  // survey-checklist SV-247 pin: a number cell whose text did not read holds no value, and the save is refused.
+  it("numberCell_textNotRead_saveRefused", () => {
+    expect(problems("dimensions", { [unitKey.spaceField("dimensions", P1, "area")]: sourced("VALUE", null, "MEASURED") })).toEqual({
+      "content.spaces.0.area.value": "required",
+    });
+    expect(
+      problems("terms", {
+        [unitKey.spaceField("terms", P1, "monthlyRent")]: sourced("VALUE", { amount: null, currency: "VND", unit: "MONTH" }, "OBSERVED_ON_SITE"),
+      }),
+    ).toEqual({ "content.spaces.0.monthlyRent.value.amount": "invalid" });
+    expect(
+      problems("terms", {
+        [unitKey.spaceField("terms", P1, "deposit")]: sourced("VALUE", { basis: "AMOUNT", months: null, amount: null }, "OBSERVED_ON_SITE"),
+      }),
+    ).toEqual({ "content.spaces.0.deposit.value.amount": "required" });
+  });
+
   it("checks the area checks of G4 (BR-17)", () => {
     const key = unitKey.spaceField("condition", P1, "kitchen");
     expect(
