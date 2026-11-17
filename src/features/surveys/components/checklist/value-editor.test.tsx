@@ -161,3 +161,30 @@ describe("ValueEditor shown text (survey-checklist SV-247 pin)", () => {
     expect(shownIn(screen.getByLabelText("Amount (VND)"))).toBe("2000000");
   });
 });
+
+/** What the editor reports after `typed` is entered in the "Amount (VND)" box of an editor holding `value`. */
+function reportedAt(kind: ValueKind, value: unknown, typed: string): unknown[] {
+  const onChange = vi.fn();
+  const { unmount } = render(<Outside kind={kind} value={value} onChange={onChange} />);
+  fireEvent.change(screen.getByLabelText("Amount (VND)"), { target: { value: typed } });
+  unmount();
+  return onChange.mock.calls.map((call) => call[0]);
+}
+
+describe("ValueEditor nested money cells (survey-checklist SV-247)", () => {
+  // survey-checklist SV-247: the deposit, charge and fee amounts read by the owner-leads SV-176 whole-amount rule.
+  it("nestedMoney_sv176Rule_readOrRefused", () => {
+    const deposit = { basis: "AMOUNT", months: null, amount: null };
+    expect(reportedAt({ kind: "deposit" }, deposit, "1.500.000")).toEqual([{ ...deposit, amount: { amount: 1500000, currency: "VND" } }]);
+    expect(reportedAt({ kind: "deposit" }, deposit, "0,500")).toEqual([deposit]);
+    expect(reportedAt({ kind: "deposit" }, deposit, "12.000,000")).toEqual([deposit]);
+
+    const charge = { basis: "AMOUNT", amount: null, chargeUnit: null, note: null };
+    expect(reportedAt({ kind: "charge" }, charge, "3.500")).toEqual([{ ...charge, amount: { amount: 3500, currency: "VND" } }]);
+    expect(reportedAt({ kind: "charge" }, charge, "0,500")).toEqual([charge]);
+
+    const fees = [{ name: "", amount: null, chargeUnit: null }];
+    expect(reportedAt({ kind: "fees" }, fees, "12 000")).toEqual([[{ name: "", amount: { amount: 12000, currency: "VND" }, chargeUnit: null }]]);
+    expect(reportedAt({ kind: "fees" }, fees, "12.000,000")).toEqual([fees]);
+  });
+});
