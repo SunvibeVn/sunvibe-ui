@@ -31,6 +31,7 @@
       "close": "Close menu",
       "ownerLeads": "SUPPLY LEADS",
       "surveys": "SURVEYS",
+      "brokerageAgreements": "AGREEMENTS",
       "territories": "TERRITORIES",
       "inventoryCases": "INVENTORY CASES"
     },
@@ -2622,6 +2623,27 @@
       "refused": "Activation refused on {time}: {reason}.",
       "note": "Note: {note}",
       "reasonOther": "Another reason"
+    },
+    "list": {
+      "title": "Brokerage agreements",
+      "state": "State",
+      "allStates": "All states",
+      "endingSoon": "Ends within the next 30 days",
+      "noCode": "A unit with no code",
+      "version": "Version {number}: {status}",
+      "created": "Created {date}",
+      "loading": "Loading agreements…",
+      "empty": "No agreements yet.",
+      "emptyFiltered": "No agreements match these filters.",
+      "loadFailed": "The agreements could not be loaded.",
+      "supportCode": "Support code: {correlationId}",
+      "retry": "Try again",
+      "pagination": {
+        "label": "Agreement pages",
+        "pageOf": "Page {page} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
     },
     "history": {
       "title": "History",
