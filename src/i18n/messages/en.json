@@ -2622,6 +2622,35 @@
       "refused": "Activation refused on {time}: {reason}.",
       "note": "Note: {note}",
       "reasonOther": "Another reason"
+    },
+    "history": {
+      "title": "History",
+      "show": "Show history",
+      "hide": "Hide history",
+      "loading": "Loading history…",
+      "empty": "No events yet.",
+      "older": "Show older entries",
+      "loadFailed": "The history could not be loaded.",
+      "retry": "Try again",
+      "version": "Version {number}",
+      "events": {
+        "CREATED": "Agreement drafted",
+        "DRAFT_EDITED": "Draft edited",
+        "VERSION_SENT": "Sent to the owner",
+        "OWNER_CONFIRMED": "Confirmed by the owner",
+        "OWNER_REJECTED": "Declined by the owner",
+        "VERSION_LAPSED": "Lapsed",
+        "DRAFT_OPENED": "New draft opened",
+        "ACTIVATED": "Activated",
+        "ACTIVATION_REFUSED": "Activation refused",
+        "VERSION_STARTED": "Took effect",
+        "OTHER": "Another event"
+      },
+      "actors": {
+        "staffUnknown": "A staff member",
+        "owner": "The owner",
+        "system": "Sunvibe (automatic)"
+      }
     }
   },
   "TestEnvironment": {
