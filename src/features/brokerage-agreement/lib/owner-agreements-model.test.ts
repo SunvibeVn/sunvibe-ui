@@ -175,3 +175,13 @@ describe("ownerAgreementsModel (brokerage-agreement E05-S5, S5-D17, spec section
     expect(listOf([ITEM], true)).toMatchObject({ kind: "list", more: true });
   });
 });
+
+describe("ownerAgreementsModel, the owner's 7-day lapse (brokerage-agreement E05-S6 pin, U-24)", () => {
+  it("ownerAgreementsModel_lapsedVersion_lapsedAtAnswerByEvenWithOwnerAnsweredAt: a lapsed version reads no answer by its answerBy in Vietnam time, also when the answer carries an ownerAnsweredAt", () => {
+    const lapsed: BrokerageAgreementVersion = { ...SENT_V1, status: "LAPSED", ownerAnsweredAt: "2026-11-18T01:00:00Z" };
+    const version = listOf([{ ...ITEM, versions: [lapsed], statement: null }]).items[0]?.versions[0];
+
+    expect(version?.state).toEqual({ key: "owner.state.lapsed", values: { time: "2026-11-24 10:15" } });
+    expect(version?.answerable).toBe(false);
+  });
+});
