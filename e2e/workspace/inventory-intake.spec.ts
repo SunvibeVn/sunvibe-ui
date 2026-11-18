@@ -781,19 +781,24 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
       await expect(row.getByText("Sunvibe may advertise this unit until the end of 31 Dec 2027.", { exact: true })).toBeVisible();
     }
 
-    // "Ends within the next 30 days" keeps the row only in the last 30 days of its period.
+    // "Ends within the next 30 days" keeps the row only in the last 30 days of its period. The box mirrors the address, so
+    // it changes only once the new address is in place: it is clicked and the address awaited, as clickStatusBox does for
+    // the lead list; check() and uncheck() read it right after the click and fail.
     const ending = mainArea(sale).getByRole("checkbox", { name: "Ends within the next 30 days", exact: true });
     const endingRead = listRead(sale, true);
-    await ending.check();
+    await ending.click();
     await endingRead;
     await expect(sale).toHaveURL(/\?status=ACTIVE&ending=1$/);
+    await expect(ending).toBeChecked();
     await expect(mainArea(sale).getByText("Loading agreements…", { exact: true })).toHaveCount(0, { timeout: 20_000 });
     await expect(rowOf(sale)).toHaveCount(endsSoon ? 1 : 0);
 
     // Unticked again, the row opens the agreement page; its history names who acted, the owner never by name.
     const allRead = listRead(sale, false);
-    await ending.uncheck();
+    await ending.click();
     await allRead;
+    await expect(sale).toHaveURL(/\/workspace\/brokerage-agreements\?status=ACTIVE$/);
+    await expect(ending).not.toBeChecked();
     await expect(rowOf(sale)).toHaveCount(1, { timeout: 20_000 });
     await rowOf(sale).getByRole("link").click();
     await expect(sale).toHaveURL(new RegExp(`${agreementPath}$`), { timeout: 20_000 });
