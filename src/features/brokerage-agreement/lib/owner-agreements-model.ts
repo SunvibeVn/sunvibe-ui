@@ -79,14 +79,27 @@ function stateTime(version: BrokerageAgreementVersion): string | null | undefine
   }
 }
 
+/** A calendar date phrase of the owner's activation texts, or Sunvibe handling the version when the date is absent. */
+function datedPhrase(key: EligibilityKey, date: string | null | undefined): Phrase {
+  return present(date) ? { key, values: { date: calendarDateText(date) } } : { key: "owner.state.handling" };
+}
+
 /**
- * The state phrase of a version. A state whose time the answer leaves out reads that Sunvibe is handling the version,
- * never a text with an empty time.
+ * The state phrase of a version. A lapsed version with `activateBy` is one the owner confirmed and Sunvibe did not
+ * activate in 14 days (brokerage-agreement S6-D5, S6-D19, S6-D21: the owner page reads `activateBy`, never the
+ * activation record); one without it keeps the owner's own "No answer by" text. An activated version names its start
+ * date, an effective one its end date. A state whose time or date the answer leaves out reads that Sunvibe is handling
+ * the version, never a text with an empty value.
  */
 function statePhrase(version: BrokerageAgreementVersion, answerable: boolean): Phrase {
+  if (version.status === "LAPSED" && present(version.activateBy)) return { key: "owner.state.notActivated" };
   const key = ownerStatusText(version.status ?? "", answerable);
+  if (key === "owner.state.activated") return datedPhrase(key, version.startDate);
+  if (key === "owner.state.effective") return datedPhrase(key, version.endDate);
   const time = stateTime(version);
-  if (key === "owner.state.cancelled" || key === "owner.state.handling") return { key };
+  if (key === "owner.state.cancelled" || key === "owner.state.handling" || key === "owner.state.activationRefused") {
+    return { key };
+  }
   return present(time) ? { key, values: { time: vietnamTimeText(time) } } : { key: "owner.state.handling" };
 }
 

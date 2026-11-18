@@ -185,3 +185,31 @@ describe("ownerAgreementsModel, the owner's 7-day lapse (brokerage-agreement E05
     expect(version?.answerable).toBe(false);
   });
 });
+
+describe("ownerAgreementsModel, activation (brokerage-agreement E05-S6, S6-D19, S6-D21, UF-4)", () => {
+  const stateOf = (version: BrokerageAgreementVersion) =>
+    listOf([{ ...ITEM, status: "ACTIVE", versions: [version], statement: null }]).items[0]?.versions[0]?.state;
+
+  it("ownerAgreementsModel_activationStates_textsWithDates: an activated version names its start date, an effective one its end date, a refused one no value", () => {
+    const answered = { ...SENT_V1, ownerAnsweredAt: "2026-11-18T01:00:00Z", activateBy: "2026-12-02T01:00:00Z" };
+
+    expect(stateOf({ ...answered, status: "ACTIVATED" })).toEqual({ key: "owner.state.activated", values: { date: "1 Jan 2027" } });
+    expect(stateOf({ ...answered, status: "EFFECTIVE" })).toEqual({ key: "owner.state.effective", values: { date: "31 Dec 2027" } });
+    expect(stateOf({ ...answered, status: "ACTIVATION_REFUSED" })).toEqual({ key: "owner.state.activationRefused" });
+    // A date the answer leaves out: Sunvibe is handling the version, never a text with an empty date.
+    expect(stateOf({ ...answered, status: "ACTIVATED", startDate: "" })).toEqual({ key: "owner.state.handling" });
+    expect(stateOf({ ...answered, status: "EFFECTIVE", endDate: "" })).toEqual({ key: "owner.state.handling" });
+  });
+
+  it("ownerAgreementsModel_fourteenDayLapse_notActivatedInTime: a lapsed version with activateBy was not activated in time; without it the owner's own 7-day lapse", () => {
+    expect(stateOf({ ...SENT_V1, status: "LAPSED", ownerAnsweredAt: "2026-11-18T01:00:00Z", activateBy: "2026-12-02T01:00:00Z" })).toEqual({
+      key: "owner.state.notActivated",
+    });
+    for (const activateBy of [null, undefined]) {
+      expect(stateOf({ ...SENT_V1, status: "LAPSED", activateBy })).toEqual({
+        key: "owner.state.lapsed",
+        values: { time: "2026-11-24 10:15" },
+      });
+    }
+  });
+});

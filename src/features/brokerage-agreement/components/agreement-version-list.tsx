@@ -17,6 +17,7 @@ const ANSWER_TEXT = {
   confirmed: "answer.confirmed",
   rejected: "answer.rejected",
   lapsed: "answer.lapsed",
+  notActivated: "answer.notActivated",
 } as const satisfies Record<VersionAnswer["kind"], EligibilityKey>;
 
 /**
