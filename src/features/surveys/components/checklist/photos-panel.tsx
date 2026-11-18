@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 
 import { type CoverageRow, isEditingHolder, type MediaPanelModel } from "../../lib/checklist/media-panel-model";
 import { coverageStateText, mediaErrorText } from "../../lib/checklist/media-messages";
+import { notCarriedLines } from "../../lib/checklist/refused-photo-model";
 
 import { useChecklistPage } from "./checklist-context";
 import { type MediaController, useChecklistMedia } from "./media-context";
+import { NotCarriedNotice } from "./not-carried-notice";
 import { PhotoGrid, type PhotoGridMode } from "./photo-grid";
 import { PhotoRemovedList } from "./photo-removed-list";
 import { PhotoUploadForm } from "./photo-upload-form";
@@ -96,10 +98,13 @@ function UploadArea({ media, model }: { media: MediaController; model: MediaPane
  * The photos of the checklist (survey-media spec 6.2): the internal-only text and the guidance always; required pairs
  * with their state, optional ones apart; the uploader for the holder of an editable checklist; the grid by placement
  * and category; the photos not accepted and the removed ones. `mode`: the Edit panel, the read-only Edit (grid and
- * viewer, Hold for ADMIN) or the Preview section (grid and viewer only).
+ * viewer, Hold for ADMIN) or the Preview section (grid and viewer only). In every mode, the refused photos of the
+ * previous revision this revision does not hold (survey-checklist SV-310 RU-2).
  */
 export function PhotosBody({ mode }: { mode: PhotoGridMode }) {
   const t = useTranslations("OwnerLeads");
+  // Rendered only inside ChecklistPage (Edit, read-only Edit, Preview); called before the early return below.
+  const { view } = useChecklistPage();
   const media = useChecklistMedia();
   if (media === null) return <p className="text-sm text-slate-600">{t("checklist.evidence.text")}</p>;
   const { model, loadError } = media;
@@ -110,6 +115,7 @@ export function PhotosBody({ mode }: { mode: PhotoGridMode }) {
         <p className="text-sm text-slate-600">{t("checklist.media.notices.noPeople")}</p>
         <p className="text-sm text-slate-600">{t("checklist.media.notices.thisVisitOnly")}</p>
       </div>
+      <NotCarriedNotice lines={notCarriedLines(view, t)} />
       {model === null ? (
         loadError !== null ? (
           <div className="space-y-2">

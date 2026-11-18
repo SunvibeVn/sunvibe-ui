@@ -9,6 +9,7 @@ import { Dialog } from "@/components/ui/dialog";
 import type { OwnerLeadsKey } from "@/features/lead-shared";
 
 import { previewModel } from "../../lib/checklist/preview-model";
+import { sameContentLines } from "../../lib/checklist/refused-photo-model";
 import {
   afterDecision,
   decisionConsequenceKey,
@@ -83,6 +84,7 @@ export function ReviewTab({ form, onChange, chain, onRetryChain }: ReviewTabProp
   const model = useMemo(() => previewModel(view, t), [view, t]);
   const sections = useMemo(() => model.sections.filter((section) => section.group !== "evidence"), [model]);
   const rows = evidenceRows(view, media?.model ?? null);
+  const refused = useMemo(() => sameContentLines(view, t), [view, t]);
   const blockers = passedBlockers(view, form);
   const problems = reviewProblems(form, view);
   // The review ended while the viewer worked: what they typed stays readable, nothing can be sent (I-1).
@@ -131,6 +133,7 @@ export function ReviewTab({ form, onChange, chain, onRetryChain }: ReviewTabProp
       <EvidenceReviewList
         rows={rows}
         marks={form.marks}
+        refused={refused}
         problems={tried ? problems.marks : {}}
         disabled={locked}
         onMark={(mediaId, mark) => onChange((current) => withMark(current, mediaId, mark))}

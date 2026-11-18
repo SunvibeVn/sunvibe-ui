@@ -31,6 +31,7 @@
       "close": "Close menu",
       "ownerLeads": "SUPPLY LEADS",
       "surveys": "SURVEYS",
+      "brokerageAgreements": "AGREEMENTS",
       "territories": "TERRITORIES",
       "inventoryCases": "INVENTORY CASES"
     },
@@ -732,7 +733,8 @@
           "loadFailed": "The photos could not be loaded.",
           "held": "On hold: no image for now.",
           "notAccepted": "Not accepted",
-          "reason": "Why it is not accepted"
+          "reason": "Why it is not accepted",
+          "sameContent": "Same image as a photo not accepted in revision #{no} ({pair}): {reason}"
         },
         "form": {
           "title": "Decision",
@@ -1456,6 +1458,11 @@
           "correction": "Someone else uploaded this photo. Removing it from this revision needs a correction.",
           "rateLimited": "Too many tries on this photo. Try again in {minutes, plural, one {# minute} other {# minutes}}."
         },
+        "notCarried": {
+          "title": "Not carried into this revision",
+          "text": "A reviewer did not accept these photos, so this revision does not hold them. They stay in their earlier revision.",
+          "line": "{pair}: {reason} (revision #{no})"
+        },
         "remove": {
           "title": "Remove photo #{no}?",
           "text": "The photo leaves this checklist and its file is deleted. A replacement is a new photo.",
@@ -2153,10 +2160,533 @@
         "UNIT": "Stopped for this unit.",
         "OWNER": "The owner on record does not meet the conditions: one current owner, the declared owner, an individual whose account can sign in and holds no staff role.",
         "OTHER": "Another reason stops it."
+      },
+      "draft": "Draft an agreement",
+      "inProgress": "Agreement in progress",
+      "inProgressNote": "This unit already has an agreement in progress.",
+      "openAgreement": "Open the agreement",
+      "notListed": "Units created by the old direct property form, and survey parts left out of an intake, are not listed here. They need an intake or unit management first.",
+      "noBasis": "This lead has no completed intake yet.",
+      "noUnits": "The intake result of this lead lists no unit."
+    },
+    "draft": {
+      "title": "Draft an agreement",
+      "unit": "Unit: {code}",
+      "transactionType": "Transaction type: {type}",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "periodHint": "The end date is at most 12 months after the start date.",
+      "submit": "Create the draft",
+      "cancel": "Cancel",
+      "errors": {
+        "required": "Enter a date.",
+        "endBeforeStart": "The end date cannot be before the start date.",
+        "tooLong": "The end date is more than 12 months after the start date.",
+        "outOfRange": "Use a date from 2000 to 2099.",
+        "notEligible": "This unit cannot get an agreement now:",
+        "exists": "This unit already has an agreement in progress.",
+        "notAssignee": "Only the Sale assigned to this lead drafts an agreement.",
+        "notFound": "This lead is no longer available to you.",
+        "conflict": "Something changed at the same time. Try again.",
+        "failed": "The draft could not be created."
+      }
+    },
+    "transactionType": {
+      "LONG_TERM_RENT": "Long-term rental",
+      "OTHER": "Another transaction type"
+    },
+    "detail": {
+      "title": "Brokerage agreement",
+      "loading": "Loading the agreement…",
+      "loadFailed": "The agreement could not be read.",
+      "retry": "Try again",
+      "notFound": "This agreement is not available.",
+      "status": "Status",
+      "transactionType": "Transaction type",
+      "unit": "Unit",
+      "noCode": "A unit with no code",
+      "createdAt": "Created",
+      "openLead": "Open the lead",
+      "versions": "Versions",
+      "version": "Version {number}",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "supportCode": "Support code: {correlationId}",
+      "sentAt": "Sent to the owner: {time}"
+    },
+    "status": {
+      "DRAFTING": "Drafting",
+      "AWAITING_CONFIRMATION": "Awaiting confirmation",
+      "ACTIVE": "Active",
+      "SUSPENDED": "Suspended",
+      "EXPIRED": "Expired",
+      "TERMINATED": "Terminated",
+      "CANCELLED": "Cancelled",
+      "OTHER": "Another state"
+    },
+    "versionStatus": {
+      "DRAFT": "Draft",
+      "AWAITING_OWNER": "Awaiting the owner",
+      "OWNER_CONFIRMED": "Confirmed by the owner",
+      "ACTIVATED": "Activated",
+      "EFFECTIVE": "In effect",
+      "SUPERSEDED": "Superseded",
+      "OWNER_REJECTED": "Rejected by the owner",
+      "LAPSED": "Lapsed",
+      "ACTIVATION_REFUSED": "Activation refused",
+      "CANCELLED": "Cancelled",
+      "OTHER": "Another state"
+    },
+    "terms": {
+      "proposed": "Proposed terms: not confirmed by the owner yet.",
+      "advertising": "Advertising",
+      "advertisingScope": {
+        "SUNVIBE_CHANNELS": "Sunvibe may advertise this unit on sunvibe.vn and by staff sending the listing link to customers, from the start date to the end date. Outside channels such as social networks, classified sites or other platforms are not included.",
+        "OTHER": "Another advertising permission."
+      },
+      "photos": "Public photos",
+      "interior": "Interior and common areas",
+      "exterior": "Exterior (front, entrance, street view)",
+      "yes": "Yes",
+      "no": "No",
+      "notAnswered": "Not answered yet",
+      "rental": "Rental terms",
+      "monthlyRent": "Monthly rent",
+      "rentValue": "{amount} VND per month",
+      "deposit": "Deposit",
+      "depositMonths": "{count, plural, one {# month's rent} other {# months' rent}}",
+      "depositAmount": "{amount} VND",
+      "noDeposit": "No deposit",
+      "depositOther": "Another kind of deposit",
+      "minimumTerm": "Minimum term",
+      "paymentPeriod": "Pay every",
+      "months": "{count, plural, one {# month} other {# months}}",
+      "mandatoryFees": "Mandatory fees",
+      "fee": {
+        "AMOUNT": "{name}: {amount} VND {unit}",
+        "INCLUDED": "{name}: included in the rent",
+        "PROVIDER_TARIFF": "{name}: provider's rate",
+        "OTHER": "{name}: another kind of fee"
+      },
+      "noFees": "No mandatory fee besides the rent",
+      "feesNotStated": "Not stated yet",
+      "notEntered": "Not entered yet",
+      "chargeUnit": {
+        "PER_MONTH": "per month",
+        "PER_KWH": "per kWh",
+        "PER_M3": "per m³",
+        "PER_PERSON_PER_MONTH": "per person per month",
+        "PER_VEHICLE_PER_MONTH": "per vehicle per month",
+        "ONE_OFF": "one-off",
+        "OTHER": "per another unit"
+      }
+    },
+    "fee": {
+      "title": "Brokerage fee",
+      "proposed": "Proposed fee policy: not confirmed by the owner yet.",
+      "label": {
+        "payer": "Who pays",
+        "chargedWhen": "When it is charged",
+        "formula": "Fee",
+        "dueDays": "Payment due",
+        "renewal": "Lease renewed with the same tenant",
+        "earlyLeaseEnd": "If the lease ends early",
+        "protectionDays": "Protection period"
+      },
+      "payer": {
+        "OWNER": "The owner",
+        "OTHER": "Another payer"
+      },
+      "chargedWhen": {
+        "LEASE_SIGNED": "When a lease is signed",
+        "OTHER": "At another moment"
+      },
+      "formula": {
+        "PERCENT_OF_RENT": "Percentage of one month's rent",
+        "FIXED_AMOUNT": "Fixed amount",
+        "FREE": "Free of charge",
+        "NOT_CHARGED": "No fee",
+        "OTHER": "Another way of setting the fee"
+      },
+      "earlyLeaseEnd": {
+        "NO_REFUND": "No refund",
+        "PARTIAL_REFUND": "Partial refund",
+        "OTHER": "Another refund rule"
+      },
+      "line": {
+        "tier": "From a lease term of {months, plural, one {# month} other {# months}}: {percent}% of one month's rent",
+        "fixedAmount": "{amount} VND per signed lease",
+        "freeReason": "Free of charge. Reason: {reason}",
+        "dueOnSigning": "On the day the lease is signed",
+        "dueDays": "{count, plural, one {# day} other {# days}} after the lease is signed",
+        "partialRefund": "{percent}% of the fee paid is refunded if the lease ends within {months, plural, one {# month} other {# months}} of its start",
+        "noProtection": "None",
+        "protectionDays": "{count, plural, one {# day} other {# days}} after this agreement ends"
+      }
+    },
+    "edit": {
+      "open": "Edit the draft",
+      "title": "Editing the draft",
+      "transactionType": "Transaction type",
+      "interior": "Interior and common areas",
+      "consent": {
+        "yes": "Yes",
+        "no": "No",
+        "unanswered": "Not answered yet"
+      },
+      "exterior": "Exterior (front, entrance, street view)",
+      "monthlyRent": "Monthly rent (VND)",
+      "deposit": "Deposit",
+      "depositNone": "Not entered",
+      "depositMonths": "Months of rent",
+      "depositAmount": "Amount (VND)",
+      "depositValue": "Value",
+      "minimumTerm": "Minimum term (months)",
+      "paymentPeriod": "Pay every (months)",
+      "fees": "Mandatory fees",
+      "feesNotStated": "Not stated yet",
+      "feesNone": "No mandatory fee besides the rent",
+      "feesList": "These fees",
+      "feeName": "Fee name",
+      "feeBasis": "Basis",
+      "feeBasisOption": {
+        "AMOUNT": "An amount",
+        "INCLUDED": "Included in the rent",
+        "PROVIDER_TARIFF": "Provider's rate"
+      },
+      "feeAmount": "Amount (VND)",
+      "feeUnit": "Unit",
+      "feeUnitNone": "Choose a unit",
+      "addFee": "Add a fee",
+      "removeFee": "Remove",
+      "save": "Save the draft",
+      "cancel": "Cancel",
+      "reload": "Reload",
+      "fromSurvey": "From the survey: {source}, {date}",
+      "supportCode": "Support code: {code}",
+      "feePolicy": {
+        "title": "Brokerage fee",
+        "payer": "Paid by the owner.",
+        "chargedWhen": "Charged when a lease is signed.",
+        "formula": "How the fee is set",
+        "notEntered": "Not entered",
+        "kind": {
+          "PERCENT_OF_RENT": "Percentage of one month's rent",
+          "FIXED_AMOUNT": "Fixed amount",
+          "FREE": "Free of charge",
+          "NOT_CHARGED": "No fee"
+        },
+        "tierFrom": "Lease term from (months)",
+        "tierPercent": "Percentage of one month's rent (%)",
+        "addTier": "Add a tier",
+        "removeTier": "Remove tier",
+        "fixedAmount": "Fixed fee (VND)",
+        "freeReason": "Reason it is free",
+        "dueDays": "Payment due (days after the lease is signed)",
+        "renewal": "Lease renewed with the same tenant",
+        "renewalTierFrom": "Renewal: lease term from (months)",
+        "renewalTierPercent": "Renewal: percentage of one month's rent (%)",
+        "addRenewalTier": "Add a renewal tier",
+        "removeRenewalTier": "Remove renewal tier",
+        "renewalAmount": "Renewal fee (VND)",
+        "earlyLeaseEnd": "If the lease ends early",
+        "refund": {
+          "NO_REFUND": "No refund",
+          "PARTIAL_REFUND": "Partial refund"
+        },
+        "refundPercent": "Refund of the fee paid (%)",
+        "withinMonths": "If the lease ends within (months)",
+        "protectionDays": "Protection period (days after this agreement ends)",
+        "errors": {
+          "server": "Check the brokerage fee.",
+          "percent": "Enter a percentage from 1 to 300, without decimals.",
+          "tierStart": "Enter a lease term of 1 to 120 months.",
+          "tierOrder": "Start this tier at a longer lease term than the tier before.",
+          "tooManyTiers": "A fee holds at most 5 tiers.",
+          "fixedAmount": "Enter a fee in whole VND from 1, without separators.",
+          "freeReason": "Enter a reason of 1 to 500 characters.",
+          "freeReasonCharacters": "Remove the tab, line break or text direction characters from the reason.",
+          "dueDays": "Enter a number of days from 0 to 30.",
+          "protectionDays": "Enter a number of days from 0 to 180.",
+          "refundPercent": "Enter a refund percentage from 1 to 100.",
+          "withinMonths": "Enter a period of 1 to 12 months from the lease start."
+        }
+      },
+      "errors": {
+        "amount": "Enter a whole number of VND from 1, without separators.",
+        "depositMonths": "Enter a number of months from 0 to 12.",
+        "depositAmount": "Enter a whole number of VND from 0, without separators.",
+        "minimumTerm": "Enter a number of months from 1 to 120.",
+        "paymentPeriod": "Enter a number of months from 1 to 12.",
+        "feeName": "Enter a name of 1 to 100 characters.",
+        "feeAmount": "Enter a whole number of VND from 1, without separators.",
+        "feeUnit": "Choose a unit.",
+        "tooManyFees": "A draft holds at most 20 fees.",
+        "notEligible": "This draft cannot be saved now:",
+        "notDraft": "This version is no longer a draft.",
+        "stale": "This draft changed since you opened it.",
+        "notAssignee": "Only the Sale assigned to this lead edits the draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The draft could not be saved."
+      }
+    },
+    "send": {
+      "open": "Send to the owner",
+      "title": "Send this version to the owner",
+      "body": "Version {number} goes to the owner of this unit. After sending, it can no longer be edited. The owner gets an email that asks them to sign in and read it.",
+      "submit": "Send",
+      "keepEditing": "Keep editing",
+      "reload": "Reload",
+      "supportCode": "Support code: {code}",
+      "part": {
+        "photoConsent": "Public photos of the interior",
+        "monthlyRent": "Monthly rent",
+        "deposit": "Deposit",
+        "minimumTerm": "Minimum term",
+        "paymentPeriod": "Payment period",
+        "mandatoryFees": "Mandatory fees",
+        "formula": "How the fee is set",
+        "dueDays": "Payment due",
+        "renewal": "Lease renewed with the same tenant",
+        "earlyLeaseEnd": "If the lease ends early",
+        "protectionDays": "Protection period",
+        "OTHER": "Another part"
+      },
+      "errors": {
+        "incomplete": "This version cannot be sent yet. Missing:",
+        "notEligible": "This version cannot be sent now:",
+        "notDraft": "This version is no longer a draft.",
+        "stale": "This draft changed since you opened it.",
+        "sendingOff": "Sending to owners is switched off on this server.",
+        "notAssignee": "Only the Sale assigned to this lead sends the draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The version could not be sent."
+      }
+    },
+    "survey": {
+      "title": "Survey reference",
+      "loading": "Reading the survey values.",
+      "empty": "The survey holds no value for these terms.",
+      "loadFailed": "The survey values could not be read.",
+      "retry": "Try again",
+      "use": "Use the survey values",
+      "source": {
+        "OBSERVED_ON_SITE": "Seen on site",
+        "OWNER_STATED": "Said by the owner",
+        "OWNER_FORM": "Owner's web form",
+        "none": "Source not recorded",
+        "OTHER": "Another source"
+      }
+    },
+    "owner": {
+      "title": "Brokerage agreements",
+      "loading": "Loading your agreements…",
+      "loadFailed": "Your agreements could not be read.",
+      "retry": "Try again",
+      "supportCode": "Support code: {correlationId}",
+      "empty": "Sunvibe has not sent you an agreement yet.",
+      "more": "More than 50 agreements: only the 50 most recent are shown.",
+      "unit": "Unit {code}",
+      "reason": "Your reason: {reason}",
+      "state": {
+        "awaiting": "Waiting for your answer until {time}",
+        "confirmed": "You confirmed it on {time}",
+        "rejected": "You declined it on {time}",
+        "lapsed": "No answer by {time}",
+        "cancelled": "Withdrawn by Sunvibe",
+        "handling": "Sunvibe is handling this version.",
+        "activated": "Signed and activated. It takes effect on {date}.",
+        "effective": "In effect until {date}.",
+        "activationRefused": "Sunvibe did not activate this version.",
+        "notActivated": "Sunvibe did not activate it in time."
+      },
+      "tick": "I have read version {number} and confirm it",
+      "decline": "Decline",
+      "password": "Current password",
+      "confirm": "Confirm the selected versions ({count})",
+      "reasons": {
+        "BASIS": "Sunvibe's intake record of this unit is not usable now.",
+        "PROPERTY": "Something about the whole property must be settled first.",
+        "UNIT": "Something about this unit must be settled first.",
+        "OWNER": "Your account cannot confirm for this property now.",
+        "OTHER": "Something else must be settled first."
+      },
+      "declineDialog": {
+        "title": "Decline version {number}",
+        "reason": "Reason",
+        "submit": "Decline",
+        "keep": "Keep it"
+      },
+      "errors": {
+        "wrongPassword": "That password isn't right.",
+        "locked": "Too many wrong passwords. Try again later.",
+        "tooMany": "Too many tries. Wait a few minutes.",
+        "reload": "Something changed. The page was reloaded.",
+        "notEligible": "Version {number} of unit {code} cannot be confirmed now:",
+        "notEligibleNoCode": "Version {number} of a unit with no code cannot be confirmed now:",
+        "contact": "Contact Sunvibe.",
+        "concurrent": "Something changed at the same time. Try again.",
+        "badReason": "This reason cannot be saved. Remove special characters.",
+        "failed": "Your answer could not be saved."
+      }
+    },
+    "answer": {
+      "awaiting": "The owner may answer until {time}",
+      "confirmed": "Confirmed by the owner on {time}",
+      "rejected": "Rejected by the owner on {time}",
+      "reason": "Reason: {reason}",
+      "noReason": "No reason given.",
+      "lapsed": "No answer by {time}",
+      "notActivated": "Not activated by {time}"
+    },
+    "newDraft": {
+      "notice": "The latest version did not take effect. Its line in the list of versions says why. Open a new draft to send the owner a changed version.",
+      "open": "Open a new draft",
+      "reload": "Reload",
+      "pending": "A version is still pending. The page was reloaded.",
+      "supportCode": "Support code: {code}",
+      "errors": {
+        "notEligible": "A new draft cannot be opened now:",
+        "stale": "This agreement changed since you opened it.",
+        "notAssignee": "Only the Sale assigned to this lead opens a new draft.",
+        "notFound": "This agreement is not available.",
+        "failed": "The draft could not be opened."
+      }
+    },
+    "advertising": {
+      "title": "Advertising",
+      "allowed": "Sunvibe may advertise this unit until the end of {date}.",
+      "allowedNoEnd": "Sunvibe may advertise this unit now.",
+      "photos": {
+        "interior": "Public photos: interior and common areas",
+        "interiorAndExterior": "Public photos: interior and common areas and exterior",
+        "none": "No public photos"
+      },
+      "notAllowed": "Sunvibe may not advertise this unit now:",
+      "reasons": {
+        "NO_AGREEMENT": "There is no agreement in effect.",
+        "NOT_IN_EFFECT": "The agreement is not in effect yet.",
+        "NOT_STARTED": "Advertising starts on {date}.",
+        "SUSPENDED": "The agreement is suspended.",
+        "ENDED": "The agreement has ended."
+      },
+      "notStartedUndated": "Advertising has not started yet.",
+      "endedOn": "The agreement's period ended on {date}."
+    },
+    "activation": {
+      "title": "Activation",
+      "confirmed": "The owner confirmed version {number} on {time}. Activate it by {deadline}.",
+      "freeFee": "Check against the signed document: the brokerage fee of version {number} is free of charge. Reason: {reason}.",
+      "freeFeeNoReason": "Check against the signed document: the brokerage fee of version {number} is free of charge. Reason: not given.",
+      "documentNumber": "Document number",
+      "signedOn": "Signed on",
+      "signatoryName": "Sunvibe's signatory: name",
+      "signatoryTitle": "Sunvibe's signatory: title",
+      "statementBox": "I make the statement above.",
+      "activate": "Activate",
+      "refuse": "Refuse activation",
+      "waiting": "Waiting for a manager's activation until {time}.",
+      "changed": "Something changed. The page was reloaded.",
+      "reload": "Reload",
+      "supportCode": "Support code: {code}",
+      "errors": {
+        "documentNumber": "Enter the document number (at most 50 characters).",
+        "signedOn": "Enter a date from 1 Jan 2000 to today.",
+        "signatoryName": "Enter the name (at most 100 characters).",
+        "signatoryTitle": "Enter the title (at most 100 characters).",
+        "characters": "Remove special characters.",
+        "notIndependent": "You drafted this version or are the lead's assigned Sale: another manager must decide.",
+        "periodEnded": "This version's period has ended. The Sale must draft a new one.",
+        "notEligible": "This unit cannot be activated now:",
+        "concurrent": "Something changed at the same time. Reload and try again.",
+        "notFound": "This agreement is not available.",
+        "failed": "The activation could not be saved."
+      },
+      "refusal": {
+        "title": "Refuse activation of version {number}",
+        "reason": "Reason",
+        "DOCUMENT_DIFFERS": "The signed document differs from this version",
+        "SIGNER_NOT_OWNER": "The owner did not sign it",
+        "note": "Note",
+        "submit": "Refuse",
+        "keep": "Keep it",
+        "errors": {
+          "badNote": "This note cannot be saved. Remove special characters.",
+          "failed": "The refusal could not be saved."
+        }
+      }
+    },
+    "versionActivation": {
+      "activated": "Activated on {time}; takes effect on {date}.",
+      "effective": "In effect.",
+      "document": "Document {number}, signed on {date}; signed for Sunvibe by {name}, {title}.",
+      "refused": "Activation refused on {time}: {reason}.",
+      "note": "Note: {note}",
+      "reasonOther": "Another reason"
+    },
+    "list": {
+      "title": "Brokerage agreements",
+      "state": "State",
+      "allStates": "All states",
+      "endingSoon": "Ends within the next 30 days",
+      "noCode": "A unit with no code",
+      "version": "Version {number}: {status}",
+      "created": "Created {date}",
+      "loading": "Loading agreements…",
+      "empty": "No agreements yet.",
+      "emptyFiltered": "No agreements match these filters.",
+      "loadFailed": "The agreements could not be loaded.",
+      "supportCode": "Support code: {correlationId}",
+      "retry": "Try again",
+      "pagination": {
+        "label": "Agreement pages",
+        "pageOf": "Page {page} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "history": {
+      "title": "History",
+      "show": "Show history",
+      "hide": "Hide history",
+      "loading": "Loading history…",
+      "empty": "No events yet.",
+      "older": "Show older entries",
+      "loadFailed": "The history could not be loaded.",
+      "retry": "Try again",
+      "version": "Version {number}",
+      "events": {
+        "CREATED": "Agreement drafted",
+        "DRAFT_EDITED": "Draft edited",
+        "VERSION_SENT": "Sent to the owner",
+        "OWNER_CONFIRMED": "Confirmed by the owner",
+        "OWNER_REJECTED": "Declined by the owner",
+        "VERSION_LAPSED": "Lapsed",
+        "DRAFT_OPENED": "New draft opened",
+        "ACTIVATED": "Activated",
+        "ACTIVATION_REFUSED": "Activation refused",
+        "VERSION_STARTED": "Took effect",
+        "OTHER": "Another event"
+      },
+      "actors": {
+        "staffUnknown": "A staff member",
+        "owner": "The owner",
+        "system": "Sunvibe (automatic)"
       }
     }
   },
   "TestEnvironment": {
     "notice": "Sunvibe test environment. Use fake data only; data may be deleted at any time."
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "message": "The link may be wrong, or the page is no longer on Sunvibe.",
+    "home": "Back to home"
+  },
+  "SiteError": {
+    "title": "Something went wrong",
+    "message": "The page could not be loaded. Please try again in a few minutes.",
+    "retry": "Try again",
+    "home": "Back to home"
   }
 }

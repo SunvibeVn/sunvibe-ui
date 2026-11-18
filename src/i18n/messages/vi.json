@@ -210,5 +210,16 @@
   },
   "TestEnvironment": {
     "notice": "Môi trường thử nghiệm của Sunvibe. Chỉ dùng dữ liệu giả; dữ liệu có thể bị xóa bất cứ lúc nào."
+  },
+  "NotFound": {
+    "title": "Không tìm thấy trang",
+    "message": "Đường dẫn có thể không đúng, hoặc trang không còn trên Sunvibe.",
+    "home": "Về trang chủ"
+  },
+  "SiteError": {
+    "title": "Đã có lỗi xảy ra",
+    "message": "Trang chưa tải được. Vui lòng thử lại sau ít phút.",
+    "retry": "Thử lại",
+    "home": "Về trang chủ"
   }
 }
