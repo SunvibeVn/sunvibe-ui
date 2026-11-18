@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
-/** Error boundary of /list-with-us only; the marketing home page keeps its own behavior. */
+/** The nearer boundary of /list-with-us; the rest of the marketing group uses (marketing)/error.tsx. */
 export default function Error({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   const t = useTranslations("OwnerIntake.page.error");
   return (
