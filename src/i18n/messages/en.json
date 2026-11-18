@@ -2550,5 +2550,16 @@
   },
   "TestEnvironment": {
     "notice": "Sunvibe test environment. Use fake data only; data may be deleted at any time."
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "message": "The link may be wrong, or the page is no longer on Sunvibe.",
+    "home": "Back to home"
+  },
+  "SiteError": {
+    "title": "Something went wrong",
+    "message": "The page could not be loaded. Please try again in a few minutes.",
+    "retry": "Try again",
+    "home": "Back to home"
   }
 }
