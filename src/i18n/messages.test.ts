@@ -191,7 +191,7 @@ describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
   });
 
   it("workspace namespaces only in en", () => {
-    expect(Object.keys(en).sort()).toEqual([...WORKSPACE_NAMESPACES, "Session", "TestEnvironment"].sort());
+    expect(Object.keys(en).sort()).toEqual([...WORKSPACE_NAMESPACES, "Session", "TestEnvironment", "NotFound", "SiteError"].sort());
     for (const namespace of WORKSPACE_NAMESPACES) expect(vi).not.toHaveProperty(namespace);
   });
 
@@ -221,6 +221,41 @@ describe("en.json, the staff workspace messages (W14-20, W14-21)", () => {
     expect(en.Session.forbidden.title).toBe("You don't have access to this page");
     expect(en.Session.forbidden.link).toBe("Back to home");
     expect(en.Session.forbiddenNotice).toBe("You don't have permission to do this.");
+  });
+});
+
+describe("NotFound and SiteError, the error pages (marketing-landing SV-250)", () => {
+  it("notFoundTexts_viAndEn_verbatim", () => {
+    expect(vi.NotFound).toEqual({
+      title: "Không tìm thấy trang",
+      message: "Đường dẫn có thể không đúng, hoặc trang không còn trên Sunvibe.",
+      home: "Về trang chủ",
+    });
+    expect(en.NotFound).toEqual({
+      title: "Page not found",
+      message: "The link may be wrong, or the page is no longer on Sunvibe.",
+      home: "Back to home",
+    });
+  });
+
+  it("siteErrorMessages_viAndEn_verbatim", () => {
+    expect(vi.SiteError).toEqual({
+      title: "Đã có lỗi xảy ra",
+      message: "Trang chưa tải được. Vui lòng thử lại sau ít phút.",
+      retry: "Thử lại",
+      home: "Về trang chủ",
+    });
+    expect(en.SiteError).toEqual({
+      title: "Something went wrong",
+      message: "The page could not be loaded. Please try again in a few minutes.",
+      retry: "Try again",
+      home: "Back to home",
+    });
+  });
+
+  it("errorPageTexts_viAndEn_sameKeys", () => {
+    expect(keyPaths(en.NotFound)).toEqual(keyPaths(vi.NotFound));
+    expect(keyPaths(en.SiteError)).toEqual(keyPaths(vi.SiteError));
   });
 });
 
