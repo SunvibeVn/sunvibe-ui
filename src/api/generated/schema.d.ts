@@ -615,7 +615,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** The brokerage agreements in the caller's scope, each with its state and its advertising answer at the read; the read is not logged */
+        get: operations["listBrokerageAgreements"];
         put?: never;
         /** Draft a brokerage agreement for a unit of the lead's intake basis */
         post: operations["createBrokerageAgreement"];
@@ -705,6 +706,23 @@ export interface paths {
         put?: never;
         /** Send the agreement's complete draft to the owner, against the data version read */
         post: operations["submitBrokerageAgreementDraft"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The events of a brokerage agreement, newest first: what happened, the version, who acted and when; no reason; the read is not logged */
+        get: operations["getBrokerageAgreementHistory"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2438,6 +2456,91 @@ export interface components {
              */
             percent: number;
         };
+        BrokerageAgreementHistory: {
+            entries?: components["schemas"]["BrokerageAgreementHistoryEntry"][];
+            /**
+             * Format: int32
+             * @description The zero-based page answered
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description The size asked for
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Every stored event of the agreement
+             */
+            totalElements?: number;
+        };
+        BrokerageAgreementHistoryEntry: {
+            /** @description The staff member's full name; null for the owner, for Sunvibe's job and for an account the server does not know */
+            actorName?: string | null;
+            /**
+             * @description Who acted: a staff member, the owner, or Sunvibe's own job
+             * @enum {string}
+             */
+            actorType?: "STAFF" | "OWNER" | "SYSTEM";
+            /** Format: date-time */
+            occurredAt?: string;
+            /**
+             * @description The event; OTHER for one this version of the server does not know
+             * @enum {string}
+             */
+            type?: "CREATED" | "DRAFT_EDITED" | "VERSION_SENT" | "OWNER_CONFIRMED" | "OWNER_REJECTED" | "VERSION_LAPSED" | "DRAFT_OPENED" | "ACTIVATED" | "ACTIVATION_REFUSED" | "VERSION_STARTED" | "OTHER";
+            /**
+             * Format: int32
+             * @description The version the event is about; null for none
+             */
+            versionNo?: number | null;
+        };
+        BrokerageAgreementListAdvertising: {
+            /** @description True exactly when reasonGroups is empty */
+            allowed?: boolean;
+            /**
+             * Format: date
+             * @description The end date of the version that counts, a calendar date in Vietnam time; null without one
+             */
+            endDate?: string | null;
+            /**
+             * Format: date-time
+             * @description The start of the day after that end date in Vietnam; null without one
+             */
+            endsAt?: string | null;
+            /** @description The groups of reasons that stop the advertising, in this order; empty when allowed */
+            reasonGroups?: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /**
+             * Format: date
+             * @description The start date of the activated version that has not started yet, a calendar date in Vietnam time; null without one
+             */
+            startDate?: string | null;
+        };
+        BrokerageAgreementListItem: {
+            advertising?: components["schemas"]["BrokerageAgreementListAdvertising"];
+            agreementId?: string;
+            /** Format: date-time */
+            createdAt?: string;
+            /**
+             * Format: int32
+             * @description The highest version number
+             */
+            latestVersionNo?: number;
+            /**
+             * @description That version's state at the read
+             * @enum {string}
+             */
+            latestVersionStatus?: "DRAFT" | "AWAITING_OWNER" | "OWNER_CONFIRMED" | "ACTIVATED" | "EFFECTIVE" | "SUPERSEDED" | "OWNER_REJECTED" | "LAPSED" | "ACTIVATION_REFUSED" | "CANCELLED";
+            /**
+             * @description The agreement's state at the read
+             * @enum {string}
+             */
+            status?: "DRAFTING" | "AWAITING_CONFIRMATION" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "TERMINATED" | "CANCELLED";
+            /** @enum {string} */
+            transactionType?: "LONG_TERM_RENT";
+            /** @description The unit's code, kept on the agreement since its creation; null without one */
+            unitCode?: string | null;
+        };
         BrokerageAgreementNewDraftRequest: {
             /**
              * Format: int64
@@ -2472,6 +2575,24 @@ export interface components {
             items?: components["schemas"]["BrokerageAgreementOwnerItem"][];
             /** @description Whether more agreements exist than the list shows */
             more?: boolean;
+        };
+        BrokerageAgreementPage: {
+            items?: components["schemas"]["BrokerageAgreementListItem"][];
+            /**
+             * Format: int32
+             * @description The zero-based page answered
+             */
+            page?: number;
+            /**
+             * Format: int32
+             * @description The size asked for
+             */
+            size?: number;
+            /**
+             * Format: int64
+             * @description Every agreement in the caller's scope that matches
+             */
+            totalElements?: number;
         };
         BrokerageAgreementRejectionRequest: {
             /**
@@ -8827,6 +8948,71 @@ export interface operations {
             };
         };
     };
+    listBrokerageAgreements: {
+        parameters: {
+            query?: {
+                /** @description Keep only the agreements in these stored states (repeat the parameter); every state when left out */
+                status?: ("DRAFTING" | "AWAITING_CONFIRMATION" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "TERMINATED" | "CANCELLED")[];
+                /** @description Keep only the agreements in effect whose right ends within the next 30 days (Vietnam time) */
+                endsWithin30Days?: boolean;
+                /** @description Zero-based page number, 0 to 9999 */
+                page?: number;
+                /** @description Agreements per page, 1 to 50 */
+                size?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page: newest first, then by id; with endsWithin30Days, soonest end date first, then by id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageAgreementPage"];
+                };
+            };
+            /** @description VALIDATION_FAILED: one entry naming the parameter, never its value: status (with its allowedValues), page, size or endsWithin30Days */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     createBrokerageAgreement: {
         parameters: {
             query?: never;
@@ -9317,6 +9503,78 @@ export interface operations {
             };
             /** @description AGREEMENT_NOT_DRAFT (the agreement has no draft), CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between), AGREEMENT_VERSION_INCOMPLETE (one entry per missing part, in the order photoConsent, terms.monthlyRent, terms.deposit, terms.minimumTermMonths, terms.paymentPeriodMonths, terms.mandatoryFees, feePolicy.formula, feePolicy.dueDays, feePolicy.renewal, feePolicy.earlyLeaseEnd, feePolicy.protectionDays), AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) or AGREEMENT_SENDING_NOT_AVAILABLE (sending to owners is not open on this server; no entry) */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getBrokerageAgreementHistory: {
+        parameters: {
+            query?: {
+                /** @description Zero-based page number, 0 to 9999 */
+                page?: number;
+                /** @description Events per page, 1 to 100 */
+                size?: number;
+            };
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description One page of the agreement's events, newest first */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["BrokerageAgreementHistory"];
+                };
+            };
+            /** @description VALIDATION_FAILED: one entry naming the parameter, never its value: page or size */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };
