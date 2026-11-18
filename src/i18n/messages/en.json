@@ -31,6 +31,7 @@
       "close": "Close menu",
       "ownerLeads": "SUPPLY LEADS",
       "surveys": "SURVEYS",
+      "brokerageAgreements": "AGREEMENTS",
       "territories": "TERRITORIES",
       "inventoryCases": "INVENTORY CASES"
     },
@@ -2622,6 +2623,56 @@
       "refused": "Activation refused on {time}: {reason}.",
       "note": "Note: {note}",
       "reasonOther": "Another reason"
+    },
+    "list": {
+      "title": "Brokerage agreements",
+      "state": "State",
+      "allStates": "All states",
+      "endingSoon": "Ends within the next 30 days",
+      "noCode": "A unit with no code",
+      "version": "Version {number}: {status}",
+      "created": "Created {date}",
+      "loading": "Loading agreements…",
+      "empty": "No agreements yet.",
+      "emptyFiltered": "No agreements match these filters.",
+      "loadFailed": "The agreements could not be loaded.",
+      "supportCode": "Support code: {correlationId}",
+      "retry": "Try again",
+      "pagination": {
+        "label": "Agreement pages",
+        "pageOf": "Page {page} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      }
+    },
+    "history": {
+      "title": "History",
+      "show": "Show history",
+      "hide": "Hide history",
+      "loading": "Loading history…",
+      "empty": "No events yet.",
+      "older": "Show older entries",
+      "loadFailed": "The history could not be loaded.",
+      "retry": "Try again",
+      "version": "Version {number}",
+      "events": {
+        "CREATED": "Agreement drafted",
+        "DRAFT_EDITED": "Draft edited",
+        "VERSION_SENT": "Sent to the owner",
+        "OWNER_CONFIRMED": "Confirmed by the owner",
+        "OWNER_REJECTED": "Declined by the owner",
+        "VERSION_LAPSED": "Lapsed",
+        "DRAFT_OPENED": "New draft opened",
+        "ACTIVATED": "Activated",
+        "ACTIVATION_REFUSED": "Activation refused",
+        "VERSION_STARTED": "Took effect",
+        "OTHER": "Another event"
+      },
+      "actors": {
+        "staffUnknown": "A staff member",
+        "owner": "The owner",
+        "system": "Sunvibe (automatic)"
+      }
     }
   },
   "TestEnvironment": {

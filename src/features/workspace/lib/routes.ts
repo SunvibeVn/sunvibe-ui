@@ -10,6 +10,9 @@ export const WORKSPACE_HOME = "/workspace/owner-leads";
 /** The survey list (survey-schedule spec 6.5). */
 export const SURVEYS_PATH = "/workspace/surveys";
 
+/** The brokerage agreement list; each agreement's page is below it (brokerage-agreement E05-S7, S7-D12). */
+export const BROKERAGE_AGREEMENTS_PATH = "/workspace/brokerage-agreements";
+
 /** The duplicate cases of the inventory intake (property-create intake 7.2). */
 export const INVENTORY_CASES_PATH = "/workspace/inventory-cases";
 

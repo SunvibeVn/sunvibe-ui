@@ -12,6 +12,7 @@ import { getAgreement } from "../services/agreement-api";
 
 import { ActivationForm } from "./activation-form";
 import { AdvertisingPanel } from "./advertising-panel";
+import { AgreementHistorySection } from "./agreement-history-section";
 import { AgreementVersionList } from "./agreement-version-list";
 import { DraftEditForm } from "./draft-edit-form";
 import { DraftOpenNotice } from "./draft-open-notice";
@@ -41,6 +42,8 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const [model, setModel] = useState<AgreementModel>(LOADING);
   const [attempt, setAttempt] = useState(0);
   const [editing, setEditing] = useState(false);
+  /** "Show history" (E05-S7, E05S7-P10): kept across the reread that follows a command, so the section stays open. */
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [confirmingSend, setConfirmingSend] = useState(false);
   /** "A version is still pending. The page was reloaded.": kept across the read it causes. */
   const [stillPending, setStillPending] = useState(false);
@@ -64,6 +67,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     () => () => {
       setModel(LOADING);
       setEditing(false);
+      setHistoryOpen(false);
       setConfirmingSend(false);
       setStillPending(false);
       setActivationChanged(false);
@@ -226,6 +230,12 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
             )}
             <AgreementVersionList versions={versions} draftEditor={draftEditor} />
           </section>
+          <AgreementHistorySection
+            agreementId={agreementId}
+            dataVersion={dataVersion}
+            open={historyOpen}
+            onToggle={() => setHistoryOpen((value) => !value)}
+          />
           {confirmingSend && canEditDraft && draft !== null && dataVersion !== null && draftEditor === undefined && (
             <DraftSendDialog
               agreementId={agreementId}

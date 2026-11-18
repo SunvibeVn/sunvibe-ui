@@ -1,4 +1,4 @@
-import type { components } from "@/api/generated/schema";
+import type { components, operations } from "@/api/generated/schema";
 
 type Schemas = components["schemas"];
 
@@ -100,3 +100,18 @@ export type BrokerageAgreementActivationRequest = Schemas["BrokerageAgreementAct
 /** Refusing the activation: one of two reasons, an optional note and the data version (S6-D4). */
 export type BrokerageAgreementActivationRefusalRequest = Schemas["BrokerageAgreementActivationRefusalRequest"];
 export type ActivationRefusalType = NonNullable<BrokerageAgreementActivationRefusalRequest["reasonType"]>;
+
+// Agreement list and history (brokerage-agreement E05-S7).
+
+/** One page of the agreements in the caller's scope; `totalElements` counts every match (S7-D1, S7-D2). */
+export type BrokerageAgreementPage = Schemas["BrokerageAgreementPage"];
+/** One agreement of the list: its unit code, its state and latest version at the read, and its advertising answer. */
+export type BrokerageAgreementListItem = Schemas["BrokerageAgreementListItem"];
+/** A row's advertising answer at the read (S7-D5): no terms, no photo consent; `startDate` of the version not started. */
+export type BrokerageAgreementListAdvertising = Schemas["BrokerageAgreementListAdvertising"];
+/** One page of an agreement's events, newest first (S7-D7). */
+export type BrokerageAgreementHistory = Schemas["BrokerageAgreementHistory"];
+/** One event: its type, version, who acted (a staff name only) and when; never a reason or a user id (BR-17). */
+export type BrokerageAgreementHistoryEntry = Schemas["BrokerageAgreementHistoryEntry"];
+/** The list's query: the states, the ending filter, the zero-based page and the size. */
+export type AgreementListQuery = NonNullable<operations["listBrokerageAgreements"]["parameters"]["query"]>;

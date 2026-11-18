@@ -1,6 +1,7 @@
 import { callApi, type ApiResult, type CallApi } from "@/features/auth/client";
 
 import type {
+  AgreementListQuery,
   BrokerageAgreementActivationRefusalRequest,
   BrokerageAgreementActivationRequest,
   BrokerageAgreementCreated,
@@ -8,7 +9,9 @@ import type {
   BrokerageAgreementDetail,
   BrokerageAgreementDraftRequest,
   BrokerageAgreementDraftSubmissionRequest,
+  BrokerageAgreementHistory,
   BrokerageAgreementNewDraftRequest,
+  BrokerageAgreementPage,
   BrokerageAgreementSurveyTerms,
 } from "../types";
 
@@ -110,6 +113,33 @@ export function refuseActivation(
     client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/activation-refusal", {
       params: { path: { agreementId } },
       body,
+    }),
+  );
+}
+
+/**
+ * GET one page of the agreements in the caller's scope, each with its state and advertising answer at the read
+ * (brokerage-agreement US-4 AC-3, S7-D1 to S7-D5); the server decides the scope and logs nothing for it (S7-D6).
+ */
+export function listAgreements(
+  query: AgreementListQuery,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<BrokerageAgreementPage>> {
+  return deps.callApi((client) => client.GET("/api/v1/staff/brokerage-agreements", { params: { query } }));
+}
+
+/**
+ * GET one page of the agreement's events, newest first, with who acted and when, never a reason (brokerage-agreement
+ * US-4 AC-4, S7-D7); the read is not logged (S7-D6).
+ */
+export function getAgreementHistory(
+  agreementId: string,
+  query: { page: number; size: number },
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<BrokerageAgreementHistory>> {
+  return deps.callApi((client) =>
+    client.GET("/api/v1/staff/brokerage-agreements/{agreementId}/history", {
+      params: { path: { agreementId }, query },
     }),
   );
 }
