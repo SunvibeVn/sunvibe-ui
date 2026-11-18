@@ -642,6 +642,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/activation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate the version the owner confirmed, against the signed document, the activation statement and the data version read */
+        post: operations["activateBrokerageAgreementVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/activation-refusal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Refuse to activate the version the owner confirmed, with a reason type and an optional note, against the data version read */
+        post: operations["refuseBrokerageAgreementActivation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/brokerage-agreements/{agreementId}/draft": {
         parameters: {
             query?: never;
@@ -652,7 +686,7 @@ export interface paths {
         get?: never;
         /** Replace the whole content of the agreement's draft, against the data version read */
         put: operations["updateBrokerageAgreementDraft"];
-        /** Open the next draft version, a copy of the latest one, after the owner declined it or did not answer in time, against the data version read */
+        /** Open the next draft version, a copy of the latest one, once the latest version did not take effect (the owner declined it or did not answer in time, or a manager refused its activation or did not activate it in time), against the data version read */
         post: operations["openBrokerageAgreementDraft"];
         delete?: never;
         options?: never;
@@ -2000,6 +2034,106 @@ export interface components {
              */
             startAt: string;
         };
+        BrokerageAgreementActivationRefusalRequest: {
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+            /**
+             * @description Optional and private; trimmed, and stored only when not blank; no control or bidirectional formatting character
+             * @example The rent differs.
+             */
+            note?: string | null;
+            /**
+             * @description DOCUMENT_DIFFERS: the signed document differs from the version; SIGNER_NOT_OWNER: the owner's side was not signed by the owner who confirmed it
+             * @enum {string}
+             */
+            reasonType: "DOCUMENT_DIFFERS" | "SIGNER_NOT_OWNER";
+            /**
+             * Format: int32
+             * @description The number of the version awaiting activation
+             */
+            versionNo: number;
+        };
+        BrokerageAgreementActivationRequest: {
+            /**
+             * @description The signed document's number as written on it; private; 1 to 50 characters after trimming, no control or bidirectional formatting character
+             * @example HDMG-2026/014
+             */
+            documentNumber: string;
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+            /**
+             * Format: date
+             * @description The date the document was signed, a calendar date in Vietnam from 2000-01-01 to today
+             * @example 2026-11-16
+             */
+            signedOn: string;
+            /**
+             * @description The activation statement version the manager made
+             * @example brokerage-activation-2026-11
+             */
+            statementVersion: string;
+            /**
+             * @description Sunvibe's signatory's name as written on the document; private; 1 to 100 characters after trimming, no control or bidirectional formatting character
+             * @example Nguyen Van A
+             */
+            sunvibeSignatoryName: string;
+            /**
+             * @description Sunvibe's signatory's title as written on the document; private; 1 to 100 characters after trimming, no control or bidirectional formatting character
+             * @example Director
+             */
+            sunvibeSignatoryTitle: string;
+            /**
+             * Format: int32
+             * @description The number of the version awaiting activation the manager compared
+             */
+            versionNo: number;
+        };
+        BrokerageAgreementAdvertising: {
+            /** @description True exactly when reasonGroups is empty */
+            allowed?: boolean;
+            /**
+             * Format: date
+             * @description The end date of the version that counts, a calendar date in Vietnam time; null without one
+             */
+            endDate?: string | null;
+            /**
+             * Format: date-time
+             * @description The start of the day after that end date in Vietnam; null without one
+             */
+            endsAt?: string | null;
+            /** @description The activated version that has not started yet; null without one */
+            pendingVersion?: components["schemas"]["BrokerageAgreementAdvertisingPendingVersion"] | null;
+            photoConsent?: components["schemas"]["BrokerageAgreementAdvertisingPhotoConsent"];
+            /** @description The groups of reasons that stop the advertising, in this order; empty when allowed; NOT_STARTED alone means the activated version has not started yet */
+            reasonGroups?: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /** @description The rental terms of the version in effect; null without one or once ended */
+            termsInEffect?: components["schemas"]["BrokerageAgreementTerms"] | null;
+        };
+        BrokerageAgreementAdvertisingPendingVersion: {
+            /**
+             * Format: date
+             * @description A calendar date in Vietnam time
+             */
+            startDate?: string;
+            /**
+             * Format: date-time
+             * @description The start of that date in Vietnam
+             */
+            startsAt?: string;
+            terms?: components["schemas"]["BrokerageAgreementTerms"];
+        };
+        BrokerageAgreementAdvertisingPhotoConsent: {
+            /** @description Photos of the exterior may be public now */
+            exterior?: boolean;
+            /** @description Photos of the interior and common areas may be public now */
+            interior?: boolean;
+        };
         BrokerageAgreementConfirmationItemInput: {
             /**
              * @description The agreement's id
@@ -2077,6 +2211,10 @@ export interface components {
             months?: number | null;
         };
         BrokerageAgreementDetail: {
+            /** @description The activation statement of the version awaiting activation now; null when none awaits activation */
+            activationStatement?: components["schemas"]["BrokerageAgreementStatement"] | null;
+            /** @description Whether Sunvibe may advertise the unit now under this agreement, computed at this read; always sent */
+            advertising?: components["schemas"]["BrokerageAgreementAdvertising"];
             agreementId?: string;
             /** @description The basis lead of the latest version */
             basisLeadId?: string;
@@ -2098,6 +2236,8 @@ export interface components {
             versions?: components["schemas"]["BrokerageAgreementVersion"][];
             /** @description Whether the caller is the basis lead's assigned Sale, who edits the draft; a hint, the server decides */
             viewerIsAssignedSale?: boolean;
+            /** @description Whether the caller holds SALE_LEADER, SALES_MANAGER or ADMIN and is neither the basis lead's assignee nor an author of the version awaiting activation; a hint, the server decides; always sent */
+            viewerMayDecideActivation?: boolean;
         };
         BrokerageAgreementDraftRequest: {
             /**
@@ -2408,6 +2548,13 @@ export interface components {
         };
         BrokerageAgreementVersion: {
             /**
+             * Format: date-time
+             * @description Until when a manager may activate the version: 14 days after the owner's confirmation, exclusive, whatever its status now; null when the owner did not confirm it
+             */
+            activateBy?: string | null;
+            /** @description A manager's activation decision; staff only, always null in the owner's read */
+            activation?: components["schemas"]["BrokerageAgreementVersionActivation"] | null;
+            /**
              * @description The advertising permission: sunvibe.vn and staff sending the listing link, for the version's period (brokerage-agreement BR-9)
              * @enum {string}
              */
@@ -2451,6 +2598,30 @@ export interface components {
             terms?: components["schemas"]["BrokerageAgreementTerms"];
             /** Format: int32 */
             versionNo?: number;
+        };
+        BrokerageAgreementVersionActivation: {
+            /** Format: date-time */
+            decidedAt?: string;
+            /** @enum {string} */
+            decision?: "ACTIVATED" | "REFUSED";
+            /** @description The signed document's number; set for ACTIVATED */
+            documentNumber?: string | null;
+            /** @description The manager's note; set for REFUSED when one was given */
+            refusalNote?: string | null;
+            /**
+             * @description Why the activation was refused; set for REFUSED
+             * @enum {string|null}
+             */
+            refusalType?: "DOCUMENT_DIFFERS" | "SIGNER_NOT_OWNER" | null;
+            /**
+             * Format: date
+             * @description The signing date, a calendar date in Vietnam time; set for ACTIVATED
+             */
+            signedOn?: string | null;
+            /** @description Sunvibe's signatory's name as written; set for ACTIVATED */
+            sunvibeSignatoryName?: string | null;
+            /** @description Sunvibe's signatory's title as written; set for ACTIVATED */
+            sunvibeSignatoryTitle?: string | null;
         };
         BrokerageEligibility: {
             /**
@@ -8765,6 +8936,162 @@ export interface operations {
             };
             /** @description The agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    activateBrokerageAgreementVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementActivationRequest"];
+            };
+        };
+        responses: {
+            /** @description The version was activated: ACTIVATED until its start, else EFFECTIVE, and the agreement ACTIVE; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (one entry per field: expectedDataVersion, versionNo, statementVersion, documentNumber, signedOn (2000-01-01 to today in Vietnam), sunvibeSignatoryName, sunvibeSignatoryTitle) or MALFORMED_REQUEST (the body, the date or a number cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not a SALE_LEADER, SALES_MANAGER or ADMIN; AGREEMENT_ACTIVATOR_NOT_INDEPENDENT: the caller is the basis lead's assignee or an author of the version */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_AWAITING_ACTIVATION (the version is not the confirmed one awaiting activation, or its 14 days have passed; no entry), CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between), AGREEMENT_STATEMENT_OUTDATED (the activation statement changed; no entry), AGREEMENT_VERSION_PERIOD_ENDED (the end date has passed; no entry) or AGREEMENT_NOT_ELIGIBLE (one reasonGroups.<GROUP> entry per group, in the order BASIS, PROPERTY, UNIT, OWNER) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    refuseBrokerageAgreementActivation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementActivationRefusalRequest"];
+            };
+        };
+        responses: {
+            /** @description The activation was refused and the agreement is drafting again; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (one entry per field: expectedDataVersion, versionNo, reasonType with its allowedValues, note) or MALFORMED_REQUEST (the body or a number cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not a SALE_LEADER, SALES_MANAGER or ADMIN; AGREEMENT_ACTIVATOR_NOT_INDEPENDENT: the caller is the basis lead's assignee or an author of the version */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_NOT_AWAITING_ACTIVATION (the version is not the confirmed one awaiting activation, or its 14 days have passed; no entry) or CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
