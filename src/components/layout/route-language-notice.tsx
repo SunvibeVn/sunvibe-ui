@@ -2,26 +2,7 @@
 
 import { usePathname } from "next/navigation";
 
-/**
- * The screens that are English today; every other route is a public page, which is Vietnamese. No screen mixes
- * languages (G2 D-48), so the notice takes the language of the screen:
- * - the staff workspace (C-41, D-48);
- * - the auth and onboarding screens and the account pages, English until the translation wave (D-48: "/login and
- *   /account stay English as today").
- * A screen that changes language changes here too.
- */
-const ENGLISH_SECTIONS = [
-  "/workspace",
-  "/login",
-  "/sign-up",
-  "/forgot-password",
-  "/reset-password",
-  "/verify-phone",
-  "/account",
-];
-
-const isEnglishScreen = (pathname: string): boolean =>
-  ENGLISH_SECTIONS.some((section) => pathname === section || pathname.startsWith(`${section}/`));
+import { isEnglishScreen } from "@/i18n/screen-language";
 
 /**
  * A one-line notice in the language of the screen. The texts come in as props, because the root layout that renders it
