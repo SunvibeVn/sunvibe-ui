@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { agreementAfter, type AgreementModel } from "../lib/agreement-model";
 import { getAgreement } from "../services/agreement-api";
 
+import { ActivationForm } from "./activation-form";
+import { AdvertisingPanel } from "./advertising-panel";
 import { AgreementVersionList } from "./agreement-version-list";
 import { DraftEditForm } from "./draft-edit-form";
 import { DraftOpenNotice } from "./draft-open-notice";
@@ -17,14 +19,21 @@ import { DraftSendDialog } from "./draft-send-dialog";
 
 const LOADING: AgreementModel = { kind: "loading" };
 
+/** An instant on the staff page, as the version list formats its times (the page's provider sets the zone). */
+const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
+
 /**
  * The workspace page of one brokerage agreement (brokerage-agreement US-4 AC-3 part, S2-D14): its state, transaction
  * type, unit, creation time and versions with their content, and a way back to its basis lead. No owner, intake,
- * property or person (BR-17). The assigned Sale edits the draft in place (E05-S3, S3-D18): "Edit the draft" shows the
- * form and the survey reference instead of the draft's content. Beside it, "Send to the owner" (E05-S4, S4-D14) asks
- * for a confirmation and sends the draft with the data version the page read. After the owner declined the last version
- * or did not answer in time, "Open a new draft" (E05-S5, S5-D10) opens the next one. Every read is one opening that the
- * server logs (S2-D9): one on mount, one per "Try again", one after a save, a send, a new draft or a "Reload".
+ * property or person (BR-17). Below the header, "Advertising" (E05-S6, US-4 AC-1, S6-D7) says whether Sunvibe may
+ * advertise the unit now, when the answer holds it; then, for a manager who may decide (a hint, the server decides),
+ * "Activation" (US-3 AC-1 to AC-3, S6-D1, S6-D4) activates the version the owner confirmed or refuses it, while any
+ * other reader sees until when it waits. The assigned Sale edits the draft in place (E05-S3, S3-D18): "Edit the draft"
+ * shows the form and the survey reference instead of the draft's content. Beside it, "Send to the owner" (E05-S4,
+ * S4-D14) asks for a confirmation and sends the draft with the data version the page read. Once the latest version did
+ * not take effect, its line in the list saying why, "Open a new draft" (E05-S5, S5-D10, S6-D24) opens the next one.
+ * Every read is one opening that the server logs (S2-D9): one on mount, one per "Try again", one after a save, a send, a
+ * new draft, an activation, a refusal or a "Reload".
  */
 export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const t = useTranslations("BrokerageAgreement");
@@ -35,6 +44,8 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const [confirmingSend, setConfirmingSend] = useState(false);
   /** "A version is still pending. The page was reloaded.": kept across the read it causes. */
   const [stillPending, setStillPending] = useState(false);
+  /** "Something changed. The page was reloaded.", after an activation or a refusal met a changed state (E05S6-P14). */
+  const [activationChanged, setActivationChanged] = useState(false);
   const versionsId = useId();
 
   useEffect(() => {
@@ -55,6 +66,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
       setEditing(false);
       setConfirmingSend(false);
       setStillPending(false);
+      setActivationChanged(false);
     },
     [],
   );
@@ -63,17 +75,24 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     setModel(LOADING);
     setAttempt((count) => count + 1);
   };
-  // A saved or sent draft, a new draft, or a "Reload": leave edit mode, close the send dialog and read the agreement again.
+  // A saved or sent draft, a new draft, an activation or a refusal, or a "Reload": leave edit mode, close the send
+  // dialog and read the agreement again.
   const reread = () => {
     setEditing(false);
     setConfirmingSend(false);
     setStillPending(false);
+    setActivationChanged(false);
     retry();
   };
   // The new draft was refused because a version is still pending: say so and read the agreement again.
   const rereadStillPending = () => {
     reread();
     setStillPending(true);
+  };
+  // The activation or its refusal met a version no longer awaiting it, or a changed statement: say so and read again.
+  const rereadChanged = () => {
+    reread();
+    setActivationChanged(true);
   };
 
   switch (model.kind) {
@@ -106,7 +125,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
         </div>
       );
     case "ready": {
-      const { agreement, versions, canEditDraft, canOpenDraft, draft, dataVersion } = model;
+      const { agreement, versions, canEditDraft, canOpenDraft, draft, dataVersion, advertising, activation } = model;
       const draftEditor =
         editing && canEditDraft && draft !== null && dataVersion !== null
           ? {
@@ -159,6 +178,17 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
               </Link>
             )}
           </div>
+          {advertising !== undefined && <AdvertisingPanel model={advertising} />}
+          {activation?.kind === "decide" && dataVersion !== null && (
+            <ActivationForm
+              agreementId={agreementId}
+              dataVersion={dataVersion}
+              model={activation}
+              onDecided={reread}
+              onChanged={rereadChanged}
+              onReload={reread}
+            />
+          )}
           <section
             aria-labelledby={versionsId}
             className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
@@ -179,6 +209,12 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
               )}
             </div>
             {stillPending && <Alert tone="info">{t("newDraft.pending")}</Alert>}
+            {activationChanged && <Alert tone="info">{t("activation.changed")}</Alert>}
+            {activation?.kind === "waiting" && (
+              <p className="text-sm text-slate-700">
+                {t("activation.waiting", { time: format.dateTime(new Date(activation.activateBy), TIME_FORMAT) })}
+              </p>
+            )}
             {canOpenDraft && dataVersion !== null && (
               <DraftOpenNotice
                 agreementId={agreementId}

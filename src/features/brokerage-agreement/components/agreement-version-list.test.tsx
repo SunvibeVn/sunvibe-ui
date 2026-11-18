@@ -69,6 +69,7 @@ function renderList(versions: VersionRow[]): HTMLElement[] {
 }
 
 const ANSWER_LINE = /^(The owner may answer until|Confirmed by the owner on|Rejected by the owner on|No answer by) /;
+const ANSWER_LINE_WITH_LAPSES = /^(No answer by|Not activated by) /;
 
 describe("AgreementVersionList, the lines of today (brokerage-agreement E05-S6 pin, U-23)", () => {
   it("agreementVersionList_todayLines_statusSentAndAnswer: each version shows its heading, its state, when it was sent and the owner's answer line as today", () => {
@@ -97,5 +98,74 @@ describe("AgreementVersionList, the lines of today (brokerage-agreement E05-S6 p
     expect(within(lapsed).getByText(/^Sent to the owner: /).textContent).toMatch(/^Sent to the owner: Nov 21, 2026.*10:15/);
     expect(within(lapsed).getByText(ANSWER_LINE).textContent).toMatch(/^No answer by Nov 28, 2026.*10:15/);
     expect(within(lapsed).queryByText(/^Reason: /)).toBeNull();
+  });
+});
+
+describe("AgreementVersionList, activation lines (brokerage-agreement E05-S6, S6-D22, UF-5)", () => {
+  const ACTIVATED_RECORD = {
+    decision: "ACTIVATED",
+    decidedAt: "2026-11-18T03:00:00Z",
+    documentNumber: "HDMG-2026/014",
+    signedOn: "2026-11-16",
+    sunvibeSignatoryName: "Nguyen Van A",
+    sunvibeSignatoryTitle: "Director",
+    refusalType: null,
+    refusalNote: null,
+  } as const satisfies NonNullable<Version["activation"]>;
+  const SENT = {
+    ...PERIOD,
+    sentAt: "2026-11-16T03:15:00Z",
+    answerBy: "2026-11-23T03:15:00Z",
+    ownerAnsweredAt: "2026-11-17T03:15:00Z",
+  } as const;
+
+  it("agreementVersionList_activationLines_documentRefusalAndNotActivated: activated and in-effect versions show their document line, a refused one its reason and note, a 14-day lapse Not activated by, a 7-day lapse still No answer by", () => {
+    const rows = renderList(
+      rowsOf({
+        ...DETAIL,
+        status: "ACTIVE",
+        versions: [
+          {
+            versionNo: 1,
+            status: "ACTIVATION_REFUSED",
+            ...SENT,
+            activateBy: "2026-12-01T03:15:00Z",
+            activation: {
+              decision: "REFUSED",
+              decidedAt: "2026-11-18T03:00:00Z",
+              refusalType: "SIGNER_NOT_OWNER",
+              refusalNote: "The signature is not the owner's.",
+            },
+          },
+          { versionNo: 2, status: "LAPSED", ...SENT, activateBy: "2026-12-01T03:15:00Z", activation: null },
+          { versionNo: 3, status: "LAPSED", ...SENT, activateBy: null },
+          { versionNo: 4, status: "ACTIVATED", ...SENT, activateBy: "2026-12-01T03:15:00Z", activation: ACTIVATED_RECORD },
+          { versionNo: 5, status: "EFFECTIVE", ...SENT, activateBy: "2026-12-01T03:15:00Z", activation: ACTIVATED_RECORD },
+        ],
+      }),
+    );
+    const [refused, notActivated, lapsed, activated, effective] = rows as [HTMLElement, HTMLElement, HTMLElement, HTMLElement, HTMLElement];
+    const DOCUMENT = "Document HDMG-2026/014, signed on 16 Nov 2026; signed for Sunvibe by Nguyen Van A, Director.";
+
+    expect(within(refused).getByText(/^Activation refused on /).textContent).toMatch(
+      /^Activation refused on Nov 18, 2026.*10:00.*: The owner did not sign it\.$/,
+    );
+    expect(within(refused).getByText("Note: The signature is not the owner's.")).toBeTruthy();
+    expect(within(refused).queryByText(/^Document /)).toBeNull();
+
+    expect(within(notActivated).getByText(ANSWER_LINE_WITH_LAPSES).textContent).toMatch(/^Not activated by Dec 1, 2026.*10:15/);
+    expect(within(notActivated).queryByText(/^No answer by /)).toBeNull();
+
+    expect(within(lapsed).getByText(ANSWER_LINE_WITH_LAPSES).textContent).toMatch(/^No answer by Nov 23, 2026.*10:15/);
+    expect(within(lapsed).queryByText(/^Not activated by /)).toBeNull();
+
+    expect(within(activated).getByText(/^Activated on /).textContent).toMatch(
+      /^Activated on Nov 18, 2026.*10:00.*; takes effect on 1 Jan 2027\.$/,
+    );
+    expect(within(activated).getByText(DOCUMENT)).toBeTruthy();
+    expect(within(activated).queryByText(/^Activation refused/)).toBeNull();
+
+    expect(within(effective).getByText("In effect.")).toBeTruthy();
+    expect(within(effective).getByText(DOCUMENT)).toBeTruthy();
   });
 });
