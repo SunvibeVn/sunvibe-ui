@@ -68,12 +68,16 @@ const pageOf = (items: BrokerageAgreementListItem[], totalElements = items.lengt
 const EMPTY = pageOf([]);
 
 /** The workspace layout's provider: English messages in Vietnam time (C-41). */
-function renderView() {
-  return render(
+function viewTree() {
+  return (
     <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
       <AgreementListView />
-    </NextIntlClientProvider>,
+    </NextIntlClientProvider>
   );
+}
+
+function renderView() {
+  return render(viewTree());
 }
 
 describe("AgreementListView (brokerage-agreement E05-S7, spec section 6, UL-1, UL-3, UL-4)", () => {
@@ -204,7 +208,31 @@ describe("AgreementListView (brokerage-agreement E05-S7, spec section 6, UL-1, U
     expect(router.replace).toHaveBeenLastCalledWith("/workspace/brokerage-agreements?", { scroll: false });
   });
 
-  it("agreementListView_addressNotNormalized_replacedBeforeAnyCall: an address the list does not accept is replaced first and nothing is asked for it", async () => {
+  it("agreementListView_endingBox_mirrorsTheAddress: a click asks for the new address and ticks nothing; the box shows what the address says", async () => {
+    address.query = "status=ACTIVE";
+    vi.mocked(listAgreements).mockResolvedValue(pageOf([ITEM]));
+
+    const view = renderView();
+    await screen.findByRole("link", { name: "P101" });
+    const box = () => screen.getByRole("checkbox", { name: m.endingSoon }) as HTMLInputElement;
+    expect(box().checked).toBe(false);
+
+    // Until the navigation ends the address is unchanged, so the box is too (spec section 6). A browser test therefore
+    // clicks it and waits for the new address; Playwright's `check()` fails on it (E2E-1, round 1).
+    fireEvent.click(box());
+    expect(router.replace).toHaveBeenLastCalledWith("/workspace/brokerage-agreements?status=ACTIVE&ending=1", { scroll: false });
+    expect(box().checked).toBe(false);
+
+    address.query = "status=ACTIVE&ending=1";
+    view.rerender(viewTree());
+    expect(box().checked).toBe(true);
+
+    fireEvent.click(box());
+    expect(router.replace).toHaveBeenLastCalledWith("/workspace/brokerage-agreements?status=ACTIVE", { scroll: false });
+    expect(box().checked).toBe(true);
+  });
+
+  it("agreementListView_addressNotNormalized_replacedBeforeAnyCall:an address the list does not accept is replaced first and nothing is asked for it", async () => {
     address.query = "status=active&page=0";
     vi.mocked(listAgreements).mockResolvedValue(EMPTY);
 
