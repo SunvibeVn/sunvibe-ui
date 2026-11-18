@@ -21,7 +21,8 @@ import {
 // Inventory intake from a surveyed lead (property-create intake spec 6; U-1..U-10). The flow in one line: the SALE selects
 // the parts and asks for the owner, the owner confirms on their own account page, E2E Admin starts the check and the owner
 // enters the phrase, then the SALE creates the property, records availability, reads the preview and completes. Answers
-// changed in the browser: a stale previewHash. Budget: 3 logins (SALE, CUSTOMER, ADMIN), and 5 of the 10 owner POSTs an IP may
+// changed in the browser: a stale previewHash. Budget: 4 logins (SALE, CUSTOMER, ADMIN, and SALE_LEADER in the agreement list
+// test), and 5 of the 10 owner POSTs an IP may
 // send in 15 minutes, which only a restart of the API resets: a second run in a row can meet the limit. No trace, video or screenshot in
 // this project (playwright.workspace.config.ts): the code, the phrase and the password must not land in a file.
 //
@@ -718,6 +719,109 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     }
     // The owner page shows no activation record (brokerage-agreement S6-D21, BR-17).
     await expect(owner.getByText(/HDMG-E2E\/001|E2E Signatory/)).toHaveCount(0);
+  });
+
+  test("agreementList_activeRowAndHistory_saleAndLeader (E2E-1, brokerage-agreement US-4 AC-3, AC-4)", async ({ browser }) => {
+    // The agreement the chain activated above (version 2, 1 Jan 2027 to 31 Dec 2027, set in
+    // agreementDraft_fromTheLeadPage_opensItsPage), still open on the Sale's side. Its unit code comes from the chain's
+    // intake, so its row is found by the link to its page. The lines follow today's date in Vietnam, as the activation
+    // test reads it; once that period has passed the test fails with the same message, never skips. One login: the
+    // leader, in a context of this test (E05S7-P9).
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+    if (today > "2027-12-31") {
+      throw new Error(
+        "The chain's fixed agreement period (1 Jan 2027 to 31 Dec 2027, set in agreementDraft_fromTheLeadPage_opensItsPage) has passed: move those dates forward before this test can activate the agreement.",
+      );
+    }
+    const beforeStart = today < "2027-01-01";
+    // "Ends within the next 30 days": an end date from today to today + 29 days, Vietnam calendar (S7-D4).
+    const endsSoon = today >= "2027-12-02";
+    const agreementPath = new URL(sale.url()).pathname;
+    const LIST = /\/workspace\/brokerage-agreements(\?.*)?$/;
+    /** The answer of the list read of "Active", with or without the ending filter. */
+    const listRead = (page: Page, endingFilter: boolean) =>
+      page.waitForResponse((response) => {
+        const url = new URL(response.url());
+        return (
+          response.request().method() === "GET" &&
+          url.pathname.endsWith("/api/v1/staff/brokerage-agreements") &&
+          url.searchParams.getAll("status").join() === "ACTIVE" &&
+          url.searchParams.has("endsWithin30Days") === endingFilter
+        );
+      });
+    const rowOf = (page: Page): Locator =>
+      mainArea(page).getByRole("listitem").filter({ has: page.locator(`a[href="${agreementPath}"]`) });
+
+    /** Opens AGREEMENTS from the menu, chooses "Active" and waits for that list. */
+    async function activeAgreements(page: Page): Promise<Locator> {
+      await page.getByRole("navigation", { name: T.menuLabel }).getByRole("link", { name: T.menuAgreements, exact: true }).click();
+      await expect(page).toHaveURL(LIST);
+      await expect(mainArea(page).getByRole("heading", { level: 1, name: "Brokerage agreements", exact: true })).toBeVisible({
+        timeout: 20_000,
+      });
+      const read = listRead(page, false);
+      await mainArea(page).getByLabel("State", { exact: true }).selectOption({ label: "Active" });
+      await read;
+      await expect(page).toHaveURL(/\/workspace\/brokerage-agreements\?status=ACTIVE$/);
+      const row = rowOf(page);
+      await expect(row).toHaveCount(1, { timeout: 20_000 });
+      return row;
+    }
+
+    // The assigned Sale lists the active agreements and reads the chain's row with its answer at the read.
+    const row = await activeAgreements(sale);
+    await expect(row.getByRole("link")).toHaveText(/^.+$/);
+    await expect(row.getByText("Active", { exact: true })).toBeVisible();
+    if (beforeStart) {
+      await expect(row.getByText("Version 2: Activated", { exact: true })).toBeVisible();
+      await expect(row.getByText("Sunvibe may not advertise this unit now:", { exact: true })).toBeVisible();
+      await expect(row.getByText("Advertising starts on 1 Jan 2027.", { exact: true })).toBeVisible();
+    } else {
+      await expect(row.getByText("Version 2: In effect", { exact: true })).toBeVisible();
+      await expect(row.getByText("Sunvibe may advertise this unit until the end of 31 Dec 2027.", { exact: true })).toBeVisible();
+    }
+
+    // "Ends within the next 30 days" keeps the row only in the last 30 days of its period.
+    const ending = mainArea(sale).getByRole("checkbox", { name: "Ends within the next 30 days", exact: true });
+    const endingRead = listRead(sale, true);
+    await ending.check();
+    await endingRead;
+    await expect(sale).toHaveURL(/\?status=ACTIVE&ending=1$/);
+    await expect(mainArea(sale).getByText("Loading agreements…", { exact: true })).toHaveCount(0, { timeout: 20_000 });
+    await expect(rowOf(sale)).toHaveCount(endsSoon ? 1 : 0);
+
+    // Unticked again, the row opens the agreement page; its history names who acted, the owner never by name.
+    const allRead = listRead(sale, false);
+    await ending.uncheck();
+    await allRead;
+    await expect(rowOf(sale)).toHaveCount(1, { timeout: 20_000 });
+    await rowOf(sale).getByRole("link").click();
+    await expect(sale).toHaveURL(new RegExp(`${agreementPath}$`), { timeout: 20_000 });
+    const history = mainArea(sale).getByRole("region", { name: "History", exact: true });
+    await button(history, "Show history").click({ timeout: 20_000 });
+    const event = (text: string): Locator => history.getByRole("listitem").filter({ has: sale.getByText(text, { exact: true }) });
+    await expect(event("Activated")).toHaveCount(1, { timeout: 20_000 });
+    await expect(event("Activated").getByText(fixture.admin.name, { exact: true })).toBeVisible();
+    await expect(event("Confirmed by the owner")).toHaveCount(1);
+    await expect(event("Confirmed by the owner").getByText("The owner", { exact: true })).toBeVisible();
+    await expect(event("Agreement drafted")).toHaveCount(1);
+    await expect(history.getByText("The rent is too low.")).toHaveCount(0);
+    await expect(button(history, "Hide history")).toBeVisible();
+
+    // A manager (the leader account) sees the same row.
+    const leaderContext = await newStaffContext(browser);
+    try {
+      const leader = await leaderContext.newPage();
+      await signInAs(leader, "SALE_LEADER");
+      await expectSignedInAccount(leader);
+      await leader.getByRole("link", { name: T.openWorkspace }).click();
+      await expectListPage(leader);
+      const leaderRow = await activeAgreements(leader);
+      await expect(leaderRow.getByText("Active", { exact: true })).toBeVisible();
+      await expect(leaderRow.getByText(beforeStart ? "Version 2: Activated" : "Version 2: In effect", { exact: true })).toBeVisible();
+    } finally {
+      await leaderContext.close();
+    }
   });
 
   test("eligibility_leadWithoutIntake_noneAndE1Lines (UD-8, UD-1, brokerage-agreement US-1 AC-1, E-1)", async () => {
