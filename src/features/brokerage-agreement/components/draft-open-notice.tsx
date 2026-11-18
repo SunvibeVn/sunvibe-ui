@@ -34,10 +34,11 @@ const REFUSAL_TEXT = {
 } as const satisfies Record<string, EligibilityKey>;
 
 /**
- * "Open a new draft" on the staff page (brokerage-agreement US-2 AC-3, BR-5, S5-D10): why it is offered, then the button
- * that opens version n+1, a copy of the latest version, with the data version the page read. One request per click. A
- * refusal stays here, read by its code as the send dialog reads its own (S4-D11); a pending version hands back so the
- * page reloads.
+ * "Open a new draft" on the staff page (brokerage-agreement US-2 AC-3, US-3 AC-3, AC-4, BR-5, S5-D10, S6-D24): why it is
+ * offered, in words true after each cause (the latest version did not take effect; its line in the list says why), then
+ * the button that opens version n+1, a copy of the latest version, with the data version the page read. One request per
+ * click. A refusal stays here, read by its code as the send dialog reads its own (S4-D11); a pending version hands back
+ * so the page reloads.
  */
 export function DraftOpenNotice({ agreementId, dataVersion, onOpened, onNotAllowed, onReload }: DraftOpenNoticeProps) {
   const t = useTranslations("BrokerageAgreement");

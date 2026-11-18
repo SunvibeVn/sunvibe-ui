@@ -2493,7 +2493,11 @@
         "rejected": "You declined it on {time}",
         "lapsed": "No answer by {time}",
         "cancelled": "Withdrawn by Sunvibe",
-        "handling": "Sunvibe is handling this version."
+        "handling": "Sunvibe is handling this version.",
+        "activated": "Signed and activated. It takes effect on {date}.",
+        "effective": "In effect until {date}.",
+        "activationRefused": "Sunvibe did not activate this version.",
+        "notActivated": "Sunvibe did not activate it in time."
       },
       "tick": "I have read version {number} and confirm it",
       "decline": "Decline",
@@ -2531,10 +2535,11 @@
       "rejected": "Rejected by the owner on {time}",
       "reason": "Reason: {reason}",
       "noReason": "No reason given.",
-      "lapsed": "No answer by {time}"
+      "lapsed": "No answer by {time}",
+      "notActivated": "Not activated by {time}"
     },
     "newDraft": {
-      "notice": "The owner declined this version or did not answer in time. Open a new draft to send them a changed version.",
+      "notice": "The latest version did not take effect. Its line in the list of versions says why. Open a new draft to send the owner a changed version.",
       "open": "Open a new draft",
       "reload": "Reload",
       "pending": "A version is still pending. The page was reloaded.",
@@ -2546,6 +2551,77 @@
         "notFound": "This agreement is not available.",
         "failed": "The draft could not be opened."
       }
+    },
+    "advertising": {
+      "title": "Advertising",
+      "allowed": "Sunvibe may advertise this unit until the end of {date}.",
+      "allowedNoEnd": "Sunvibe may advertise this unit now.",
+      "photos": {
+        "interior": "Public photos: interior and common areas",
+        "interiorAndExterior": "Public photos: interior and common areas and exterior",
+        "none": "No public photos"
+      },
+      "notAllowed": "Sunvibe may not advertise this unit now:",
+      "reasons": {
+        "NO_AGREEMENT": "There is no agreement in effect.",
+        "NOT_IN_EFFECT": "The agreement is not in effect yet.",
+        "NOT_STARTED": "Advertising starts on {date}.",
+        "SUSPENDED": "The agreement is suspended.",
+        "ENDED": "The agreement has ended."
+      },
+      "notStartedUndated": "Advertising has not started yet.",
+      "endedOn": "The agreement's period ended on {date}."
+    },
+    "activation": {
+      "title": "Activation",
+      "confirmed": "The owner confirmed version {number} on {time}. Activate it by {deadline}.",
+      "freeFee": "Check against the signed document: the brokerage fee of version {number} is free of charge. Reason: {reason}.",
+      "freeFeeNoReason": "Check against the signed document: the brokerage fee of version {number} is free of charge. Reason: not given.",
+      "documentNumber": "Document number",
+      "signedOn": "Signed on",
+      "signatoryName": "Sunvibe's signatory: name",
+      "signatoryTitle": "Sunvibe's signatory: title",
+      "statementBox": "I make the statement above.",
+      "activate": "Activate",
+      "refuse": "Refuse activation",
+      "waiting": "Waiting for a manager's activation until {time}.",
+      "changed": "Something changed. The page was reloaded.",
+      "reload": "Reload",
+      "supportCode": "Support code: {code}",
+      "errors": {
+        "documentNumber": "Enter the document number (at most 50 characters).",
+        "signedOn": "Enter a date from 1 Jan 2000 to today.",
+        "signatoryName": "Enter the name (at most 100 characters).",
+        "signatoryTitle": "Enter the title (at most 100 characters).",
+        "characters": "Remove special characters.",
+        "notIndependent": "You drafted this version or are the lead's assigned Sale: another manager must decide.",
+        "periodEnded": "This version's period has ended. The Sale must draft a new one.",
+        "notEligible": "This unit cannot be activated now:",
+        "concurrent": "Something changed at the same time. Reload and try again.",
+        "notFound": "This agreement is not available.",
+        "failed": "The activation could not be saved."
+      },
+      "refusal": {
+        "title": "Refuse activation of version {number}",
+        "reason": "Reason",
+        "DOCUMENT_DIFFERS": "The signed document differs from this version",
+        "SIGNER_NOT_OWNER": "The owner did not sign it",
+        "note": "Note",
+        "submit": "Refuse",
+        "keep": "Keep it",
+        "errors": {
+          "badNote": "This note cannot be saved. Remove special characters.",
+          "failed": "The refusal could not be saved."
+        }
+      }
+    },
+    "versionActivation": {
+      "activated": "Activated on {time}; takes effect on {date}.",
+      "effective": "In effect.",
+      "document": "Document {number}, signed on {date}; signed for Sunvibe by {name}, {title}.",
+      "refused": "Activation refused on {time}: {reason}.",
+      "note": "Note: {note}",
+      "reasonOther": "Another reason"
     }
   },
   "TestEnvironment": {

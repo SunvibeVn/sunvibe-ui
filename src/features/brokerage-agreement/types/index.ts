@@ -82,3 +82,21 @@ export type BrokerageAgreementConfirmationItemInput = Schemas["BrokerageAgreemen
 export type BrokerageAgreementRejectionRequest = Schemas["BrokerageAgreementRejectionRequest"];
 /** Opening the next draft version: only the data version the page read (S5-D10). */
 export type BrokerageAgreementNewDraftRequest = Schemas["BrokerageAgreementNewDraftRequest"];
+
+// Activation and the advertising answer (brokerage-agreement E05-S6).
+
+/**
+ * Whether Sunvibe may advertise the unit now, computed at each read of the detail (S6-D7, S6-D8): the reason groups when
+ * not, the end date, the photo consent in force and the version that starts later. Every part may be absent.
+ */
+export type BrokerageAgreementAdvertising = Schemas["BrokerageAgreementAdvertising"];
+/**
+ * A manager's activation decision on a version (S6-D3, S6-D4, S6-D21): staff-only private values (BR-17), always null in
+ * the owner's read.
+ */
+export type BrokerageAgreementVersionActivation = Schemas["BrokerageAgreementVersionActivation"];
+/** Activating the confirmed version: the signed document's four values, the statement version and the data version. */
+export type BrokerageAgreementActivationRequest = Schemas["BrokerageAgreementActivationRequest"];
+/** Refusing the activation: one of two reasons, an optional note and the data version (S6-D4). */
+export type BrokerageAgreementActivationRefusalRequest = Schemas["BrokerageAgreementActivationRefusalRequest"];
+export type ActivationRefusalType = NonNullable<BrokerageAgreementActivationRefusalRequest["reasonType"]>;

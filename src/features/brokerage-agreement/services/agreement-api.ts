@@ -1,6 +1,8 @@
 import { callApi, type ApiResult, type CallApi } from "@/features/auth/client";
 
 import type {
+  BrokerageAgreementActivationRefusalRequest,
+  BrokerageAgreementActivationRequest,
   BrokerageAgreementCreated,
   BrokerageAgreementCreateRequest,
   BrokerageAgreementDetail,
@@ -65,7 +67,8 @@ export function submitDraft(
 
 /**
  * POST the opening of the next draft version against the data version the page read (brokerage-agreement BR-5,
- * S5-D10): a copy of the latest version, after the owner declined it or did not answer in time; a 204 has no body, so
+ * S5-D10): a copy of the latest version, once the latest version did not take effect (the owner declined it or did not
+ * answer in time, or a manager refused its activation or did not activate it in time, S6-D24); a 204 has no body, so
  * the page reads the detail again.
  */
 export function openDraft(
@@ -75,6 +78,39 @@ export function openDraft(
 ): Promise<ApiResult<undefined>> {
   return deps.callApi((client) =>
     client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/draft", { params: { path: { agreementId } }, body }),
+  );
+}
+
+/**
+ * POST the activation of the version the owner confirmed, with the signed document's four values, the statement version
+ * the page read and its data version (brokerage-agreement US-3 AC-1, AC-2, S6-D1, S6-D3); a 204 has no body, so the
+ * page reads the detail again. The server decides who may activate (S6-D2).
+ */
+export function activate(
+  agreementId: string,
+  body: BrokerageAgreementActivationRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/activation", { params: { path: { agreementId } }, body }),
+  );
+}
+
+/**
+ * POST the refusal to activate the version the owner confirmed, with one of two reasons and an optional note, against
+ * the data version the page read (brokerage-agreement US-3 AC-3, S6-D4); a 204 has no body, so the page reads the
+ * detail again.
+ */
+export function refuseActivation(
+  agreementId: string,
+  body: BrokerageAgreementActivationRefusalRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/activation-refusal", {
+      params: { path: { agreementId } },
+      body,
+    }),
   );
 }
 

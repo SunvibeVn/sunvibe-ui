@@ -645,12 +645,79 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     expect(await storedText(owner)).not.toContain(password);
     expect(owner.url()).not.toContain(password);
 
-    // The Sale reads the confirmation; the agreement still awaits its activation (E05-S6).
+    // The Sale reads the confirmation; the agreement still awaits a manager's activation (the next test, E05-S6).
     await sale.reload();
     await expect(agreement.getByText("Confirmed by the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
     await expect(agreement.getByText(/^Confirmed by the owner on /)).toBeVisible();
     await expect(agreement.getByText("Awaiting confirmation", { exact: true })).toBeVisible();
     await expect(button(agreement, "Open a new draft")).toHaveCount(0);
+  });
+
+  test("agreementActivation_managerActivates_advertisingAnswer (E2E-1, brokerage-agreement US-3 AC-1, AC-2, AC-5, US-4 AC-1)", async () => {
+    // The agreement page the previous test leaves open on the Sale's side, version 2 confirmed by the owner. The manager is
+    // the chain's admin page (E2E Admin, seed ADMIN): it may see L15 and is neither its assignee (E2E Sale, never
+    // reassigned in the chain) nor an author of a version (every draft, edit, new draft and sending above is the Sale's),
+    // so it may decide (brokerage-agreement S6-D2, A-4, E05S6-P10). Version 2 is a copy of version 1, whose period is fixed
+    // in agreementDraft_fromTheLeadPage_opensItsPage (1 Jan 2027 to 31 Dec 2027): the outcome follows today's date in
+    // Vietnam, and once that period has passed the test fails before it activates, never skips. No login, no owner POST.
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+    if (today > "2027-12-31") {
+      throw new Error(
+        "The chain's fixed agreement period (1 Jan 2027 to 31 Dec 2027, set in agreementDraft_fromTheLeadPage_opensItsPage) has passed: move those dates forward before this test can activate the agreement.",
+      );
+    }
+    const beforeStart = today < "2027-01-01";
+    const agreementPath = new URL(sale.url()).pathname;
+    const agreement = mainArea(sale);
+    const DOCUMENT = /^Document HDMG-E2E\/001, signed on .+; signed for Sunvibe by E2E Signatory, Director\.$/;
+
+    // The Sale, the lead's assignee, sees until when the version waits and no activation section.
+    await expect(agreement.getByText(/^Waiting for a manager's activation until /)).toBeVisible({ timeout: 20_000 });
+    await expect(agreement.getByRole("region", { name: "Activation", exact: true })).toHaveCount(0);
+    await expect(
+      agreement.getByRole("region", { name: "Advertising", exact: true }).getByText("The agreement is not in effect yet.", { exact: true }),
+    ).toBeVisible();
+
+    // The manager opens the agreement, enters the signed document, makes the statement and activates once.
+    await admin.goto(agreementPath);
+    const page = mainArea(admin);
+    const section = page.getByRole("region", { name: "Activation", exact: true });
+    await expect(section).toBeVisible({ timeout: 20_000 });
+    await expect(section.getByText(/^The owner confirmed version 2 on .+\. Activate it by .+\.$/)).toBeVisible();
+    await section.getByLabel("Document number", { exact: true }).fill("HDMG-E2E/001");
+    await section.getByLabel("Signed on", { exact: true }).fill(today);
+    await section.getByLabel("Sunvibe's signatory: name", { exact: true }).fill("E2E Signatory");
+    await section.getByLabel("Sunvibe's signatory: title", { exact: true }).fill("Director");
+    await expect(button(section, "Activate")).toBeDisabled();
+    await section.getByRole("checkbox", { name: "I make the statement above.", exact: true }).check();
+    const activations = recordApiCalls(admin);
+    await button(section, "Activate").dblclick();
+    await expect(section).toHaveCount(0, { timeout: 20_000 });
+    expect(activations.filter((call) => call.method === "POST" && call.url.pathname.endsWith("/activation"))).toHaveLength(1);
+
+    await expect(page.getByText("Active", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText(DOCUMENT)).toBeVisible();
+    const panel = page.getByRole("region", { name: "Advertising", exact: true });
+    const ownerCard = owner.getByRole("listitem").filter({ has: owner.getByRole("heading", { level: 2 }) });
+    await owner.reload();
+    if (beforeStart) {
+      await expect(page.getByText("Activated", { exact: true })).toBeVisible();
+      await expect(page.getByText(/^Activated on .+; takes effect on 1 Jan 2027\.$/)).toBeVisible();
+      // Not started yet is the only group: the panel holds its heading, the refusal line and that one line.
+      await expect(panel).toHaveText(
+        ["Advertising", "Sunvibe may not advertise this unit now:", "Advertising starts on 1 Jan 2027."].join(""),
+      );
+      await expect(ownerCard.getByText("Signed and activated. It takes effect on 1 Jan 2027.", { exact: true })).toBeVisible({
+        timeout: 20_000,
+      });
+    } else {
+      await expect(page.getByText("In effect", { exact: true })).toBeVisible();
+      await expect(page.getByText("In effect.", { exact: true })).toBeVisible();
+      await expect(panel.getByText("Sunvibe may advertise this unit until the end of 31 Dec 2027.", { exact: true })).toBeVisible();
+      await expect(ownerCard.getByText("In effect until 31 Dec 2027.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    }
+    // The owner page shows no activation record (brokerage-agreement S6-D21, BR-17).
+    await expect(owner.getByText(/HDMG-E2E\/001|E2E Signatory/)).toHaveCount(0);
   });
 
   test("eligibility_leadWithoutIntake_noneAndE1Lines (UD-8, UD-1, brokerage-agreement US-1 AC-1, E-1)", async () => {

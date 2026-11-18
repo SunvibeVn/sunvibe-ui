@@ -139,7 +139,7 @@ describe("OwnerAgreementCard (brokerage-agreement E05-S5, S5-D17, UO-1)", () => 
       ],
       [{ ...SENT_V1, status: "LAPSED" }, ["No answer by 2026-11-24 10:15"]],
       [{ ...SENT_V1, status: "CANCELLED" }, ["Withdrawn by Sunvibe"]],
-      [{ ...SENT_V1, status: "ACTIVATED" }, ["Sunvibe is handling this version."]],
+      [{ ...SENT_V1, status: "ACTIVATED" }, ["Signed and activated. It takes effect on 1 Jan 2027."]],
     ];
     for (const [version, texts] of cases) {
       const { unmount } = render(
