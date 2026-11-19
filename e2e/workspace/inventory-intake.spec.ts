@@ -1069,7 +1069,7 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(agreement.getByText("Awaiting the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
 
     // The owner confirms version 1 with the current password (the steps of agreementOwner_declineNewDraftConfirm_answeredVersions).
-    // The chain's own agreement is answered, so this version holds the only box; the list is newest sending first.
+    // The chain's own agreement is answered, so this version holds the only box.
     await owner.goto("/account/brokerage-agreements");
     const box = owner.getByRole("checkbox", { name: "I have read version 1 and confirm it", exact: true });
     await expect(box).toBeVisible({ timeout: 20_000 });
@@ -1077,10 +1077,11 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await box.check();
     await owner.getByLabel("Current password", { exact: true }).fill(password);
     await button(owner, "Confirm the selected versions (1)").click();
-    const ownerCard = owner.getByRole("listitem").filter({ has: owner.getByRole("heading", { level: 2 }) }).first();
-    await expect(ownerCard.getByText(/^You confirmed it on /)).toBeVisible({ timeout: 20_000 });
+    await expect(owner.getByRole("checkbox")).toHaveCount(0, { timeout: 20_000 });
     await expect(owner.getByLabel("Current password", { exact: true })).toHaveCount(0);
     expect(await storedText(owner)).not.toContain(password);
+    await sale.reload();
+    await expect(agreement.getByText("Confirmed by the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
 
     // The admin activates it, signed today, as agreementActivation_managerActivates_advertisingAnswer does.
     await admin.goto(listingAgreementPath);
