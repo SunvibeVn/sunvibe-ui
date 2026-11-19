@@ -24,7 +24,7 @@ Next.js 16.4 (App Router, React 19.3) web app for sunvibe.vn. Package manager: n
   contract; CI checks out sunvibe-server at the recorded commit).
 - E2E: npm run e2e (main suite), npm run e2e:workspace (staff workspace), npm run e2e:phone and npm run e2e:legacy
   (phone channel on and legacy-login); prerequisites in .cursor/rules/e2e.mdc.
-- Tooling tests (gen:api, check:api-client): npm run test:tooling
+- Tooling tests (gen:api, check:api-client, the pinned Next.js version): npm run test:tooling
 - Git hooks (husky): pre-commit runs eslint --fix on staged files; pre-push blocks pushes to main
 
 ## Architecture
