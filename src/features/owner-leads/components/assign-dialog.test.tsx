@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ApiResult, SessionSnapshot } from "@/features/auth/client";
@@ -86,6 +86,13 @@ function renderDialog(lead: LeadDetail) {
   return props;
 }
 
+/** The footer of the dialog: the row that holds its submit button. */
+function footer(): HTMLElement {
+  const row = screen.getByRole("button", { name: "Assign" }).parentElement;
+  if (row === null) throw new Error("the Assign button has no parent");
+  return row;
+}
+
 const assigneeSelect = (): HTMLSelectElement => screen.getByRole("combobox", { name: /Assign to/ }) as HTMLSelectElement;
 
 describe("AssignDialog", () => {
@@ -157,9 +164,9 @@ describe("AssignDialog", () => {
     const props = renderDialog({ id: "L-1", assignedUserId: undefined });
     await screen.findByRole("option", { name: "Lan Nguyen · Sale" });
 
-    // The footer button; the close button in the corner carries the same name.
-    const [, footerCancel] = screen.getAllByRole("button", { name: "Cancel" });
-    fireEvent.click(footerCancel);
+    // The footer button, found by where it is; the close button in the corner carries the same name and effect.
+    expect(screen.getAllByRole("button", { name: "Cancel" })).toHaveLength(2);
+    fireEvent.click(within(footer()).getByRole("button", { name: "Cancel" }));
 
     expect(props.onClose).toHaveBeenCalledTimes(1);
   });
