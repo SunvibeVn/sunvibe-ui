@@ -677,6 +677,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/cancellation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cancel an agreement that never took effect, against the data version read */
+        post: operations["cancelBrokerageAgreement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/brokerage-agreements/{agreementId}/draft": {
         parameters: {
             query?: never;
@@ -740,6 +757,57 @@ export interface paths {
         get: operations["getBrokerageAgreementSurveyTerms"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/suspension": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Suspend an agreement in effect, with a reason type and an optional private note */
+        post: operations["suspendBrokerageAgreement"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/suspension-release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lift the suspension, with a private reason, against the data version read */
+        post: operations["releaseBrokerageAgreementSuspension"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/brokerage-agreements/{agreementId}/termination": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Terminate an agreement that has not ended, for one of its three reasons with that reason's fields */
+        post: operations["terminateBrokerageAgreement"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2152,6 +2220,13 @@ export interface components {
             /** @description Photos of the interior and common areas may be public now */
             interior?: boolean;
         };
+        BrokerageAgreementCancellationRequest: {
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+        };
         BrokerageAgreementConfirmationItemInput: {
             /**
              * @description The agreement's id
@@ -2243,8 +2318,19 @@ export interface components {
              * @description The data version a change of the agreement sends back as expectedDataVersion
              */
             dataVersion?: number;
+            /**
+             * Format: date-time
+             * @description When the agreement ended: the end of its version for an expiry, the moment of a termination or a cancellation; null while it has not ended
+             */
+            endedAt?: string | null;
+            /** @description Whether older suspension records exist; their events stay in the paged history */
+            moreSuspensions?: boolean;
             /** @enum {string} */
             status?: "DRAFTING" | "AWAITING_CONFIRMATION" | "ACTIVE" | "SUSPENDED" | "EXPIRED" | "TERMINATED" | "CANCELLED";
+            /** @description The suspension records, newest first, at most 20; an absent list reads as none */
+            suspensions?: components["schemas"]["BrokerageAgreementSuspension"][];
+            /** @description What staff recorded when they terminated the agreement; null unless TERMINATED; private */
+            termination?: components["schemas"]["BrokerageAgreementTermination"] | null;
             /** @enum {string} */
             transactionType?: "LONG_TERM_RENT";
             /** @description The unit's code as read from the intake basis at creation; null when it had none */
@@ -2256,6 +2342,8 @@ export interface components {
             viewerIsAssignedSale?: boolean;
             /** @description Whether the caller holds SALE_LEADER, SALES_MANAGER or ADMIN and is neither the basis lead's assignee nor an author of the version awaiting activation; a hint, the server decides; always sent */
             viewerMayDecideActivation?: boolean;
+            /** @description The stops the caller may take now, in this order; a hint, the server decides; empty on an agreement that ended */
+            viewerStopActions?: ("CANCEL" | "SUSPEND" | "RELEASE_SUSPENSION" | "TERMINATE_OWNER_WITHDREW" | "TERMINATE_UNIT_LET" | "TERMINATE_SUNVIBE")[];
         };
         BrokerageAgreementDraftRequest: {
             /**
@@ -2488,7 +2576,7 @@ export interface components {
              * @description The event; OTHER for one this version of the server does not know
              * @enum {string}
              */
-            type?: "CREATED" | "DRAFT_EDITED" | "VERSION_SENT" | "OWNER_CONFIRMED" | "OWNER_REJECTED" | "VERSION_LAPSED" | "DRAFT_OPENED" | "ACTIVATED" | "ACTIVATION_REFUSED" | "VERSION_STARTED" | "OTHER";
+            type?: "CREATED" | "DRAFT_EDITED" | "VERSION_SENT" | "OWNER_CONFIRMED" | "OWNER_REJECTED" | "VERSION_LAPSED" | "DRAFT_OPENED" | "ACTIVATED" | "ACTIVATION_REFUSED" | "VERSION_STARTED" | "SUSPENDED" | "SUSPENSION_RELEASED" | "TERMINATED" | "EXPIRED" | "CANCELLED" | "OTHER";
             /**
              * Format: int32
              * @description The version the event is about; null for none
@@ -2633,6 +2721,46 @@ export interface components {
             sources?: components["schemas"]["BrokerageAgreementTermSource"][];
             terms?: components["schemas"]["BrokerageAgreementTerms"];
         };
+        BrokerageAgreementSuspension: {
+            /** @description The manager's note; private */
+            note?: string | null;
+            /** @enum {string} */
+            reasonType?: "COMPLAINT" | "SUSPECTED_FRAUD" | "DISPUTE" | "NEEDS_CHECK";
+            /** @description Why it was lifted; private; null while it is open */
+            releaseReason?: string | null;
+            /**
+             * Format: date-time
+             * @description When it was lifted; null while it is open
+             */
+            releasedAt?: string | null;
+            /** Format: date-time */
+            suspendedAt?: string;
+        };
+        BrokerageAgreementSuspensionReleaseRequest: {
+            /**
+             * Format: int64
+             * @description The dataVersion of the detail the caller read
+             */
+            expectedDataVersion: number;
+            /**
+             * @description Private; 1 to 500 characters after trimming, at most 500 as sent; no control or bidirectional formatting character
+             * @example The price was checked with the owner.
+             */
+            reason: string;
+        };
+        BrokerageAgreementSuspensionRequest: {
+            /**
+             * @description Optional and private; at most 500 characters as sent, trimmed, and stored only when not blank; no control or bidirectional formatting character
+             * @example Tenant reported a different price.
+             */
+            note?: string | null;
+            /**
+             * @description Why: a complaint, suspected fraud, a dispute or a check that is needed
+             * @example COMPLAINT
+             * @enum {string}
+             */
+            reasonType: "COMPLAINT" | "SUSPECTED_FRAUD" | "DISPUTE" | "NEEDS_CHECK";
+        };
         BrokerageAgreementTermSource: {
             /**
              * Format: date
@@ -2646,6 +2774,64 @@ export interface components {
              * @enum {string|null}
              */
             source?: "OBSERVED_ON_SITE" | "OWNER_STATED" | "OWNER_FORM" | null;
+        };
+        BrokerageAgreementTermination: {
+            /**
+             * @description How the owner said it; OWNER_WITHDREW only
+             * @enum {string|null}
+             */
+            channel?: "PHONE_CALL" | "IN_PERSON" | "MESSAGE" | "EMAIL" | "OTHER" | null;
+            /**
+             * @description Whether Sunvibe introduced the tenant; UNIT_LET only
+             * @enum {string|null}
+             */
+            introducedBySunvibe?: "YES" | "NO" | "UNKNOWN" | null;
+            /** @description The note; private */
+            note?: string | null;
+            /**
+             * Format: date
+             * @description The date the owner said it or reported it; null for SUNVIBE_TERMINATED
+             */
+            reportedOn?: string | null;
+            /**
+             * Format: date-time
+             * @description When the agreement was terminated
+             */
+            terminatedAt?: string;
+            /** @enum {string} */
+            type?: "OWNER_WITHDREW" | "UNIT_LET" | "SUNVIBE_TERMINATED";
+        };
+        /**
+         * @example {
+         *       "type": "UNIT_LET",
+         *       "reportedOn": "2026-12-02",
+         *       "introducedBySunvibe": "UNKNOWN",
+         *       "note": null
+         *     }
+         */
+        BrokerageAgreementTerminationRequest: {
+            /**
+             * @description OWNER_WITHDREW only, required for it: how the owner said it
+             * @enum {string|null}
+             */
+            channel?: "PHONE_CALL" | "IN_PERSON" | "MESSAGE" | "EMAIL" | "OTHER" | null;
+            /**
+             * @description UNIT_LET only, required for it: whether Sunvibe introduced the tenant
+             * @enum {string|null}
+             */
+            introducedBySunvibe?: "YES" | "NO" | "UNKNOWN" | null;
+            /** @description Private; at most 500 characters as sent, trimmed; required (1 to 500) for SUNVIBE_TERMINATED, optional and stored only when not blank otherwise; no control or bidirectional formatting character */
+            note?: string | null;
+            /**
+             * Format: date
+             * @description OWNER_WITHDREW and UNIT_LET only, required for them: the date the owner said it or reported it, a calendar date in Vietnam from 2000-01-01 to today
+             */
+            reportedOn?: string | null;
+            /**
+             * @description OWNER_WITHDREW: the owner withdrew; UNIT_LET: the unit is let; SUNVIBE_TERMINATED: Sunvibe's decision (a manager only)
+             * @enum {string}
+             */
+            type: "OWNER_WITHDREW" | "UNIT_LET" | "SUNVIBE_TERMINATED";
         };
         BrokerageAgreementTerms: {
             deposit?: components["schemas"]["BrokerageAgreementDeposit"] | null;
@@ -9287,6 +9473,84 @@ export interface operations {
             };
         };
     };
+    cancelBrokerageAgreement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementCancellationRequest"];
+            };
+        };
+        responses: {
+            /** @description The agreement is CANCELLED and its pending version cancelled; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry expectedDataVersion) or MALFORMED_REQUEST (the body or a number cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff; AGREEMENT_ASSIGNEE_ONLY: the caller is not the lead's assigned Sale */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_ENDED (it has ended), AGREEMENT_TOOK_EFFECT (it took effect: terminate it instead) or CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     updateBrokerageAgreementDraft: {
         parameters: {
             query?: never;
@@ -9641,6 +9905,240 @@ export interface operations {
                 };
             };
             /** @description AGREEMENT_NOT_DRAFT: the agreement has no draft */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    suspendBrokerageAgreement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementSuspensionRequest"];
+            };
+        };
+        responses: {
+            /** @description The agreement is SUSPENDED and the unit's advertising is off from now; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry reasonType with its allowedValues, or note) or MALFORMED_REQUEST (the body cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not a SALE_LEADER, SALES_MANAGER or ADMIN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_ENDED (it has ended), AGREEMENT_NOT_IN_EFFECT (it never took effect), AGREEMENT_ALREADY_SUSPENDED or CONCURRENT_MODIFICATION (no entry: the agreement's basis lead changed, or a change committed at the same time); no entry for any */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    releaseBrokerageAgreementSuspension: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementSuspensionReleaseRequest"];
+            };
+        };
+        responses: {
+            /** @description The agreement is ACTIVE again; the advertising returns by itself when every other condition holds; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry expectedDataVersion or reason) or MALFORMED_REQUEST (the body or a number cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not a SALE_LEADER, SALES_MANAGER or ADMIN; AGREEMENT_RELEASER_NOT_INDEPENDENT: the caller is the basis lead's assignee */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_ENDED (it has ended, its end passed while suspended included), AGREEMENT_NOT_SUSPENDED or CONCURRENT_MODIFICATION (entry expectedDataVersion for a stale value, none for a change committed in between) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    terminateBrokerageAgreement: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BrokerageAgreementTerminationRequest"];
+            };
+        };
+        responses: {
+            /** @description The agreement is TERMINATED, its pending version cancelled, and the unit's advertising is off from now; no body (read the detail again) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_FAILED (entry type with its allowedValues, a field of another type or a missing one, channel or introducedBySunvibe with its allowedValues, reportedOn (2000-01-01 to today in Vietnam) or note) or MALFORMED_REQUEST (the body or the date cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller is not staff; AGREEMENT_ASSIGNEE_ONLY: UNIT_LET by a caller who is not the lead's assigned Sale; AGREEMENT_TERMINATION_NOT_ALLOWED: SUNVIBE_TERMINATED by a caller who is not a manager */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed or its basis lead is not visible: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description AGREEMENT_ENDED (it has ended) or CONCURRENT_MODIFICATION (no entry: the agreement's basis lead changed, or a change committed at the same time) */
             409: {
                 headers: {
                     [name: string]: unknown;

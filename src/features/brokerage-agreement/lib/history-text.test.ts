@@ -8,7 +8,7 @@ import { historyActorText, historyEventText } from "./history-text";
 const t = createTranslator({ locale: "en", messages: en, namespace: "BrokerageAgreement" });
 
 describe("history texts (brokerage-agreement E05-S7, S7-D7, S7-D8, spec section 6)", () => {
-  it("historyText_everyEvent_hasEnglishText: each of the ten event codes and OTHER reads its text", () => {
+  it("historyText_everyEvent_hasEnglishText: each of the fifteen event codes and OTHER reads its text", () => {
     const table: [string, string][] = [
       ["CREATED", "Agreement drafted"],
       ["DRAFT_EDITED", "Draft edited"],
@@ -20,6 +20,11 @@ describe("history texts (brokerage-agreement E05-S7, S7-D7, S7-D8, spec section 
       ["ACTIVATED", "Activated"],
       ["ACTIVATION_REFUSED", "Activation refused"],
       ["VERSION_STARTED", "Took effect"],
+      ["SUSPENDED", "Suspended"],
+      ["SUSPENSION_RELEASED", "Suspension lifted"],
+      ["TERMINATED", "Terminated"],
+      ["EXPIRED", "Expired"],
+      ["CANCELLED", "Cancelled"],
       ["OTHER", "Another event"],
     ];
     for (const [code, text] of table) {

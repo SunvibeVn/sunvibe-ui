@@ -2666,6 +2666,11 @@
         "ACTIVATED": "Activated",
         "ACTIVATION_REFUSED": "Activation refused",
         "VERSION_STARTED": "Took effect",
+        "SUSPENDED": "Suspended",
+        "SUSPENSION_RELEASED": "Suspension lifted",
+        "TERMINATED": "Terminated",
+        "EXPIRED": "Expired",
+        "CANCELLED": "Cancelled",
         "OTHER": "Another event"
       },
       "actors": {
