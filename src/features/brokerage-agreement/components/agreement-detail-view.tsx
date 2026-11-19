@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useLayoutEffect, useState } from "react";
+import { type ReactNode, useEffect, useId, useLayoutEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -39,7 +39,14 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
  * new draft, an activation, a refusal, a stop of "Agreement state" (a suspension, its release, a termination or a
  * cancellation, E05-S8) or a "Reload".
  */
-export function AgreementDetailView({ agreementId }: { agreementId: string }) {
+export function AgreementDetailView({
+  agreementId,
+  belowAdvertising,
+}: {
+  agreementId: string;
+  /** Placed by the page below "Advertising" once the agreement is read; every reread unmounts it (E06S1-D12). */
+  belowAdvertising?: ReactNode;
+}) {
   const t = useTranslations("BrokerageAgreement");
   const format = useFormatter();
   const [model, setModel] = useState<AgreementModel>(LOADING);
@@ -195,6 +202,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
             )}
           </div>
           {advertising !== undefined && <AdvertisingPanel model={advertising} />}
+          {belowAdvertising}
           {stopChanged !== null && <Alert tone="info">{t(stopErrorKey(stopChanged))}</Alert>}
           {stop !== undefined && (
             <AgreementStopSection
