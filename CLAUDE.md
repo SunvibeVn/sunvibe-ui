@@ -15,7 +15,9 @@ Hub workflow and cross-repo rules below; their paths (docs/...) are relative to 
   client. Use superpowers:executing-plans ("Native") with
   superpowers:test-driven-development, on the run's branch, without a worktree unless the owner asks.
   feature-implementer is optional (legacy): only for one self-contained task the owner asks to delegate.
-- Read the brief, never edit it; a missing or unclear one goes to the owner.
+- Read the brief, never edit it; a missing or unclear one goes back through a hub session to whoever decides it:
+  the delegated brief author where an active row of ../docs/setup/decision-delegation.md covers the point (DEL-1:
+  the owner is not asked those questions), else the owner.
 - Stop and report the exact conflict when handoff, spec, contract, plan, ADR or code disagree in a way that changes
   behavior, when a plan breaks a rule file, an ADR or the naming standard (even with no behavior change), or when a
   task needs a business decision. After two evidence-backed failed attempts on one task, raise the effort once
