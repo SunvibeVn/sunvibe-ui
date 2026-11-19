@@ -22,9 +22,11 @@ import {
 // the parts and asks for the owner, the owner confirms on their own account page, E2E Admin starts the check and the owner
 // enters the phrase, then the SALE creates the property, records availability, reads the preview and completes. Answers
 // changed in the browser: a stale previewHash. Budget: 4 logins (SALE, CUSTOMER, ADMIN, and SALE_LEADER in the agreement list
-// test), and 5 of the 10 owner POSTs an IP may
+// test), and 5 of the 10 owner POSTs to the property confirmations (/api/v1/me/property-confirmations/**) an IP may
 // send in 15 minutes, which only a restart of the API resets: a second run in a row can meet the limit. No trace, video or screenshot in
 // this project (playwright.workspace.config.ts): the code, the phrase and the password must not land in a file.
+// The owner POSTs to the agreements (/api/v1/me/brokerage-agreements/**) count in their own bucket, 10 per 15 minutes:
+// 4 of them per run (a rejection and two confirmations in the chain, one confirmation in E2E-1 of the listing tests).
 //
 // Runs after survey-checklist-review, from L15's end state: QUALIFIED with a real PASSED. `requalification` runs after it,
 // on the same lead. A re-run of the lead seed clears what an intake left, the property included.
@@ -960,6 +962,193 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     });
     await expect(eligibility.getByText(E1, { exact: true })).toBeVisible();
     await expect(eligibility.getByRole("listitem")).toHaveCount(0);
+  });
+
+  // Listing publication (listing-publish E06-S1, E2E-1 and E2E-2): an agreement in effect on the run date, then its listing.
+  // Its dates follow the run date in Vietnam (E06S1-D13, SV-326 (2)), so these tests never meet a passed period. No login:
+  // the chain's three pages. One owner POST: the confirmation of E2E-1 (the header's agreements bucket).
+
+  /** `date` (yyyy-mm-dd) plus `months` calendar months, the day clamped to the last day of the month it lands in. */
+  function plusMonths(date: string, months: number): string {
+    const [year = 0, month = 1, day = 1] = date.split("-").map(Number);
+    const first = new Date(Date.UTC(year, month - 1 + months, 1));
+    const lastDay = new Date(Date.UTC(first.getUTCFullYear(), first.getUTCMonth() + 1, 0)).getUTCDate();
+    first.setUTCDate(Math.min(day, lastDay));
+    return first.toISOString().slice(0, 10);
+  }
+
+  /** The page of the agreement E2E-1 activates; E2E-2 creates its listing. */
+  let listingAgreementPath = "";
+
+  test("listingAgreement_inEffectFromToday_activated (E2E-1, PLAN8-D3 (2), SV-326 (2))", async () => {
+    // L15's unit is free again: the chain's agreement ended and its next draft was cancelled (the stop test above). The Sale
+    // drafts from today to today + 6 months, completes the terms and the fee policy and sends version 1 with the chain's
+    // inputs; the owner (CUSTOMER, signed in at U-8) confirms it; the chain's admin (not the assignee, author of no
+    // version) activates it, signed today, so it is in effect at once.
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+    const start = today;
+    const end = plusMonths(today, 6);
+    const password = CUSTOMER.password ?? "";
+    expect(password).not.toBe("");
+
+    // The draft, from the lead page.
+    await sale.goto(`/workspace/owner-leads/${L15.id}`);
+    const unit = mainArea(sale).getByRole("region", { name: "Agreement eligibility", exact: true }).getByRole("listitem");
+    await expect(button(unit, "Draft an agreement")).toBeVisible({ timeout: 20_000 });
+    await button(unit, "Draft an agreement").click();
+    const draftDialog = sale.getByRole("dialog", { name: "Draft an agreement", exact: true });
+    await expect(draftDialog).toBeVisible();
+    await draftDialog.getByLabel("Start date", { exact: true }).fill(start);
+    await draftDialog.getByLabel("End date", { exact: true }).fill(end);
+    await expect(button(draftDialog, "Create the draft")).toBeVisible();
+    await button(draftDialog, "Create the draft").click();
+    await expect(sale).toHaveURL(/\/workspace\/brokerage-agreements\/[0-9A-Z]{26}$/, { timeout: 20_000 });
+    listingAgreementPath = new URL(sale.url()).pathname;
+    const agreement = mainArea(sale);
+    await expect(agreement.getByText("Drafting", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // The terms and the consent, from the survey values as agreementTerms_editWithSurveyValues_savedAndReadOnly enters them.
+    const proposal = {
+      terms: {
+        monthlyRent: { amount: 8000000, currency: "VND", unit: "MONTH" },
+        deposit: null,
+        minimumTermMonths: 12,
+        paymentPeriodMonths: 1,
+        mandatoryFees: [{ name: "Electricity", basis: "AMOUNT", amount: 3500, currency: "VND", chargeUnit: "PER_KWH" }],
+      },
+      sources: [
+        { field: "monthlyRent", source: "OWNER_STATED", date: "2026-11-10" },
+        { field: "minimumTermMonths", source: "OBSERVED_ON_SITE", date: "2026-11-09" },
+        { field: "paymentPeriodMonths", source: "OBSERVED_ON_SITE", date: "2026-11-09" },
+        { field: "mandatoryFees[0]", source: "OBSERVED_ON_SITE", date: "2026-11-09" },
+      ],
+    };
+    await sale.route(SURVEY_TERMS, (route) =>
+      route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(proposal) }),
+    );
+    await button(agreement, "Edit the draft").click({ timeout: 20_000 });
+    const survey = agreement.getByRole("region", { name: "Survey reference", exact: true });
+    await expect(survey.getByText("Said by the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await button(survey, "Use the survey values").click();
+    await expect(agreement.getByLabel("Monthly rent (VND)", { exact: true })).toHaveValue("8000000");
+    await sale.unrouteAll({ behavior: "wait" });
+    await agreement.getByLabel("Interior and common areas", { exact: true }).selectOption({ label: "Yes" });
+    await agreement.getByLabel("Deposit", { exact: true }).selectOption({ label: "Months of rent" });
+    await agreement.getByLabel("Value", { exact: true }).fill("2");
+    await button(agreement, "Add a fee").click();
+    await agreement.getByLabel("Fee name", { exact: true }).nth(1).fill("Water");
+    await agreement.getByLabel("Basis", { exact: true }).nth(1).selectOption({ label: "Provider's rate" });
+    await button(agreement, "Save the draft").click();
+    await expect(agreement.getByRole("heading", { name: "Editing the draft", exact: true })).toHaveCount(0, { timeout: 20_000 });
+    await expect(agreement.getByText("8,000,000 VND per month", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // The fee policy, as agreementSend_feePolicyThenSend_awaitingTheOwner enters it.
+    await button(agreement, "Edit the draft").click();
+    await agreement.getByLabel("How the fee is set", { exact: true }).selectOption({ label: "Percentage of one month's rent" });
+    await expect(agreement.getByLabel("Lease term from (months)", { exact: true })).toHaveValue("1");
+    await agreement.getByLabel("Percentage of one month's rent (%)", { exact: true }).fill("50");
+    await button(agreement, "Add a tier").click();
+    await agreement.getByLabel("Lease term from (months)", { exact: true }).nth(1).fill("12");
+    await agreement.getByLabel("Percentage of one month's rent (%)", { exact: true }).nth(1).fill("100");
+    await agreement.getByLabel("Payment due (days after the lease is signed)", { exact: true }).fill("7");
+    await agreement.getByLabel("Lease renewed with the same tenant", { exact: true }).selectOption({ label: "No fee" });
+    await agreement.getByLabel("If the lease ends early", { exact: true }).selectOption({ label: "No refund" });
+    await agreement.getByLabel("Protection period (days after this agreement ends)", { exact: true }).fill("90");
+    await button(agreement, "Save the draft").click();
+    await expect(agreement.getByRole("heading", { name: "Editing the draft", exact: true })).toHaveCount(0, { timeout: 20_000 });
+    await expect(
+      agreement.getByText("From a lease term of 12 months: 100% of one month's rent", { exact: true }),
+    ).toBeVisible({ timeout: 20_000 });
+
+    // Sent to the owner.
+    const sendDialog = sale.getByRole("dialog", { name: "Send this version to the owner", exact: true });
+    await button(agreement, "Send to the owner").click();
+    await expect(sendDialog).toContainText("Version 1 goes to the owner of this unit.");
+    await button(sendDialog, "Send").click();
+    await expect(sendDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(agreement.getByText("Awaiting the owner", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // The owner confirms version 1 with the current password (the steps of agreementOwner_declineNewDraftConfirm_answeredVersions).
+    // The chain's own agreement is answered, so this version holds the only box; the list is newest sending first.
+    await owner.goto("/account/brokerage-agreements");
+    const box = owner.getByRole("checkbox", { name: "I have read version 1 and confirm it", exact: true });
+    await expect(box).toBeVisible({ timeout: 20_000 });
+    await expect(owner.getByRole("checkbox")).toHaveCount(1);
+    await box.check();
+    await owner.getByLabel("Current password", { exact: true }).fill(password);
+    await button(owner, "Confirm the selected versions (1)").click();
+    const ownerCard = owner.getByRole("listitem").filter({ has: owner.getByRole("heading", { level: 2 }) }).first();
+    await expect(ownerCard.getByText(/^You confirmed it on /)).toBeVisible({ timeout: 20_000 });
+    await expect(owner.getByLabel("Current password", { exact: true })).toHaveCount(0);
+    expect(await storedText(owner)).not.toContain(password);
+
+    // The admin activates it, signed today, as agreementActivation_managerActivates_advertisingAnswer does.
+    await admin.goto(listingAgreementPath);
+    const page = mainArea(admin);
+    const section = page.getByRole("region", { name: "Activation", exact: true });
+    await expect(section).toBeVisible({ timeout: 20_000 });
+    await section.getByLabel("Document number", { exact: true }).fill("HDMG-E2E/002");
+    await section.getByLabel("Signed on", { exact: true }).fill(today);
+    await section.getByLabel("Sunvibe's signatory: name", { exact: true }).fill("E2E Signatory");
+    await section.getByLabel("Sunvibe's signatory: title", { exact: true }).fill("Director");
+    await section.getByRole("checkbox", { name: "I make the statement above.", exact: true }).check();
+    await expect(button(section, "Activate")).toBeEnabled();
+    await button(section, "Activate").click();
+    await expect(section).toHaveCount(0, { timeout: 20_000 });
+
+    // Active and in effect from today: Sunvibe may advertise the unit until the end date.
+    await expect(page.getByText("Active", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(page.getByText("In effect", { exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Advertising", exact: true }).getByText(/^Sunvibe may advertise this unit until the end of .+\.$/),
+    ).toBeVisible();
+  });
+
+  test("listingCreate_fromTheAgreementPage_unpublishedWithDraft (E2E-2, listing-publish US-1 AC-1 to AC-4, E-2)", async () => {
+    // The agreement E2E-1 activated: the Sale, the lead's assignee, creates its listing from the agreement page.
+    expect(listingAgreementPath).toMatch(/^\/workspace\/brokerage-agreements\/[0-9A-Z]{26}$/);
+    const LISTING_PAGE = /\/workspace\/listings\/[0-9A-Z]{26}$/;
+    const CODE_HEADING = /^Listing TD-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/;
+    const listingSection = (page: Page): Locator => mainArea(page).getByRole("region", { name: "Listing", exact: true });
+
+    await sale.goto(listingAgreementPath);
+    const section = listingSection(sale);
+    await expect(section.getByText("No listing for this agreement yet.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(button(section, "Create a listing")).toBeVisible();
+
+    // A double click sends one create and lands on the listing's page.
+    const calls = recordApiCalls(sale);
+    await button(section, "Create a listing").dblclick();
+    await expect(sale).toHaveURL(LISTING_PAGE, { timeout: 20_000 });
+    const listingUrl = new URL(sale.url()).pathname;
+    expect(calls.filter((call) => call.method === "POST" && call.url.pathname === "/api/v1/staff/listings")).toHaveLength(1);
+
+    const listing = mainArea(sale);
+    const heading = listing.getByRole("heading", { level: 1 });
+    await expect(heading).toHaveText(CODE_HEADING, { timeout: 20_000 });
+    const title = (await heading.textContent()) ?? "";
+    await expect(listing.getByText("Unpublished", { exact: true })).toBeVisible();
+    const revisions = listing.getByRole("region", { name: "Revisions", exact: true });
+    await expect(revisions.getByText("Revision 1", { exact: true })).toBeVisible();
+    await expect(revisions.getByText("Draft", { exact: true })).toBeVisible();
+    await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
+
+    // Back on the agreement, the section lists the listing and offers no create.
+    await listing.getByRole("link", { name: "Open the agreement", exact: true }).click();
+    await expect(sale).toHaveURL(new RegExp(`${listingAgreementPath}$`), { timeout: 20_000 });
+    const row = listingSection(sale).getByRole("listitem").filter({ has: sale.getByText(title, { exact: true }) });
+    await expect(row).toHaveCount(1, { timeout: 20_000 });
+    await expect(row.getByRole("link", { name: "Open", exact: true })).toBeVisible();
+    await expect(button(listingSection(sale), "Create a listing")).toHaveCount(0);
+
+    // The admin's page of the agreement lists the same listing with no create, and opens the same page.
+    await admin.goto(listingAgreementPath);
+    const adminRow = listingSection(admin).getByRole("listitem").filter({ has: admin.getByText(title, { exact: true }) });
+    await expect(adminRow).toHaveCount(1, { timeout: 20_000 });
+    await expect(button(listingSection(admin), "Create a listing")).toHaveCount(0);
+    await adminRow.getByRole("link", { name: "Open", exact: true }).click();
+    await expect(admin).toHaveURL(new RegExp(`${listingUrl}$`), { timeout: 20_000 });
+    await expect(mainArea(admin).getByRole("heading", { level: 1, name: title, exact: true })).toBeVisible({ timeout: 20_000 });
   });
 });
 
