@@ -2683,6 +2683,79 @@
         "owner": "The owner",
         "system": "Sunvibe (automatic)"
       }
+    },
+    "stop": {
+      "title": "Agreement state",
+      "suspendedSince": "Suspended since {time}: {reason}.",
+      "suspendedUntilEnd": "Suspended {time} until the agreement ended: {reason}.",
+      "suspendedFromTo": "Suspended {from} to {to}: {reason}. Lifted: {releaseReason}.",
+      "suspendedFromToNoReason": "Suspended {from} to {to}: {reason}.",
+      "note": "Note: {note}",
+      "earlier": "Earlier suspensions are in the history.",
+      "ownerWithdrew": "Ended on {time}: the owner withdrew (told by {channel} on {date}).",
+      "unitLet": "Ended on {time}: the unit is let (reported on {date}; tenant introduced by Sunvibe: {introduced}).",
+      "sunvibe": "Ended on {time} by Sunvibe: {note}.",
+      "endedOn": "Ended on {time}.",
+      "expired": "Expired at the end of {date}.",
+      "cancelled": "Cancelled on {time}.",
+      "reasons": {
+        "COMPLAINT": "a complaint",
+        "SUSPECTED_FRAUD": "suspected fraud",
+        "DISPUTE": "a dispute",
+        "NEEDS_CHECK": "a check is needed",
+        "OTHER": "another reason"
+      },
+      "channels": {
+        "PHONE_CALL": "a phone call",
+        "IN_PERSON": "a meeting in person",
+        "MESSAGE": "a message",
+        "EMAIL": "email",
+        "OTHER": "another channel"
+      },
+      "introduced": {
+        "YES": "yes",
+        "NO": "no",
+        "UNKNOWN": "not known"
+      },
+      "types": {
+        "OWNER_WITHDREW": "The owner withdrew",
+        "UNIT_LET": "The unit is let",
+        "SUNVIBE_TERMINATED": "Sunvibe's decision",
+        "OTHER": "Another reason"
+      },
+      "suspendDialog": {
+        "reasons": {
+          "COMPLAINT": "A complaint",
+          "SUSPECTED_FRAUD": "Suspected fraud",
+          "DISPUTE": "A dispute",
+          "NEEDS_CHECK": "A check is needed"
+        }
+      },
+      "terminateDialog": {
+        "channels": {
+          "PHONE_CALL": "Phone call",
+          "IN_PERSON": "In person",
+          "MESSAGE": "Message",
+          "EMAIL": "Email",
+          "OTHER": "Other"
+        },
+        "introduced": {
+          "YES": "Yes",
+          "NO": "No",
+          "UNKNOWN": "Not known"
+        }
+      },
+      "errors": {
+        "AGREEMENT_ASSIGNEE_ONLY": "Only the lead's assigned Sale may do this.",
+        "AGREEMENT_RELEASER_NOT_INDEPENDENT": "Only a manager who is not the lead's assigned Sale may lift the suspension.",
+        "AGREEMENT_TERMINATION_NOT_ALLOWED": "Only a manager may end an agreement as Sunvibe's decision.",
+        "AGREEMENT_NOT_IN_EFFECT": "This agreement is not in effect.",
+        "AGREEMENT_ENDED": "This agreement has ended.",
+        "AGREEMENT_ALREADY_SUSPENDED": "This agreement is already suspended.",
+        "AGREEMENT_NOT_SUSPENDED": "This agreement is not suspended.",
+        "AGREEMENT_TOOK_EFFECT": "This agreement has taken effect: end it instead.",
+        "changed": "This agreement changed. Read it again."
+      }
     }
   },
   "TestEnvironment": {

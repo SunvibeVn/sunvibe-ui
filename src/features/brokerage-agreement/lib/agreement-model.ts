@@ -8,6 +8,7 @@ import { calendarDateText } from "./date-text";
 import { type FeePolicyView, feePolicyModel } from "./fee-policy-model";
 import type { EligibilityKey } from "./reason-text";
 import { agreementStatusText, endedWithAgreement, transactionTypeText, versionBadgeText } from "./status-text";
+import { type StopModel, stopModel } from "./stop-model";
 import { type Phrase, type VersionContent, versionContent } from "./version-terms-model";
 
 /**
@@ -99,6 +100,11 @@ export type AgreementModel =
       advertising?: AdvertisingModel;
       /** The activation section or the waiting line (E05-S6, S6-D8, S6-D22); set only when there is one to show. */
       activation?: ActivationModel;
+      /**
+       * The stop section (E05-S8, spec section 6, S8-D11): set only when the answer holds an action for the viewer, an
+       * end or a suspension record.
+       */
+      stop?: StopModel;
     };
 
 /** The workspace page of one agreement. */
@@ -264,6 +270,9 @@ export function agreementAfter(result: ApiResult<BrokerageAgreementDetail>): Agr
     }
     const activation = activationModel(result.data);
     if (activation !== null) ready.activation = activation;
+    // An answer without the E05-S8 properties, or with none set, gives exactly today's model (S8-D11, S6-D8).
+    const stop = stopModel(result.data);
+    if (stop !== null) ready.stop = stop;
     return ready;
   }
   switch (result.kind) {
