@@ -2755,7 +2755,23 @@
         "AGREEMENT_NOT_SUSPENDED": "This agreement is not suspended.",
         "AGREEMENT_TOOK_EFFECT": "This agreement has taken effect: end it instead.",
         "changed": "This agreement changed. Read it again."
-      }
+      },
+      "fieldErrors": {
+        "reasonType": "Choose a reason.",
+        "note": "Enter at most 500 characters.",
+        "releaseReason": "Enter a reason (at most 500 characters).",
+        "type": "Choose how the agreement ended.",
+        "reportedOn": "Enter a date from 1 Jan 2000 to today.",
+        "channel": "Choose how the owner said it.",
+        "introducedBySunvibe": "Choose whether Sunvibe introduced the tenant.",
+        "sunvibeNote": "Enter the reason for Sunvibe's decision (at most 500 characters).",
+        "badText": "This text cannot be saved. Remove special characters."
+      },
+      "concurrent": "Something changed at the same time.",
+      "reload": "Reload",
+      "notFound": "This agreement is not available.",
+      "failed": "The change could not be saved.",
+      "supportCode": "Support code: {code}"
     }
   },
   "TestEnvironment": {
