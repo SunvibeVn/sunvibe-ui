@@ -2723,15 +2723,50 @@
         "SUNVIBE_TERMINATED": "Sunvibe's decision",
         "OTHER": "Another reason"
       },
+      "actions": {
+        "suspend": "Suspend",
+        "release": "Lift the suspension",
+        "terminate": "End the agreement",
+        "cancel": "Cancel the agreement"
+      },
       "suspendDialog": {
+        "title": "Suspend the agreement",
+        "reason": "Reason",
+        "chooseReason": "Choose a reason",
         "reasons": {
           "COMPLAINT": "A complaint",
           "SUSPECTED_FRAUD": "Suspected fraud",
           "DISPUTE": "A dispute",
           "NEEDS_CHECK": "A check is needed"
-        }
+        },
+        "note": "Note",
+        "submit": "Suspend",
+        "keep": "Keep it"
+      },
+      "releaseDialog": {
+        "title": "Lift the suspension",
+        "reason": "Reason for lifting it",
+        "submit": "Lift",
+        "keep": "Keep it"
+      },
+      "cancelDialog": {
+        "title": "Cancel the agreement",
+        "body": "Cancel this agreement? It never took effect; this cannot be undone.",
+        "submit": "Cancel the agreement",
+        "keep": "Keep it"
       },
       "terminateDialog": {
+        "title": "End the agreement",
+        "type": "How did it end?",
+        "reportedOn": "Reported on",
+        "channel": "How the owner said it",
+        "chooseChannel": "Choose how",
+        "introducedLabel": "Tenant introduced by Sunvibe",
+        "chooseIntroduced": "Choose an answer",
+        "note": "Note",
+        "sunvibeNote": "Reason for Sunvibe's decision",
+        "submit": "End the agreement",
+        "keep": "Keep it",
         "channels": {
           "PHONE_CALL": "Phone call",
           "IN_PERSON": "In person",
