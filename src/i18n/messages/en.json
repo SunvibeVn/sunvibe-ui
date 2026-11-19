@@ -2235,6 +2235,7 @@
       "LAPSED": "Lapsed",
       "ACTIVATION_REFUSED": "Activation refused",
       "CANCELLED": "Cancelled",
+      "ENDED": "Ended with the agreement",
       "OTHER": "Another state"
     },
     "terms": {
@@ -2498,7 +2499,10 @@
         "activated": "Signed and activated. It takes effect on {date}.",
         "effective": "In effect until {date}.",
         "activationRefused": "Sunvibe did not activate this version.",
-        "notActivated": "Sunvibe did not activate it in time."
+        "notActivated": "Sunvibe did not activate it in time.",
+        "suspended": "Sunvibe has paused advertising of this unit.",
+        "expired": "Ended on {date}.",
+        "ended": "Ended."
       },
       "tick": "I have read version {number} and confirm it",
       "decline": "Decline",
@@ -2619,6 +2623,7 @@
     "versionActivation": {
       "activated": "Activated on {time}; takes effect on {date}.",
       "effective": "In effect.",
+      "ended": "In effect until the agreement ended.",
       "document": "Document {number}, signed on {date}; signed for Sunvibe by {name}, {title}.",
       "refused": "Activation refused on {time}: {reason}.",
       "note": "Note: {note}",

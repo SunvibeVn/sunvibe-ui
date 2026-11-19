@@ -7,7 +7,7 @@ import { type AdvertisingModel, advertisingModel } from "./advertising-model";
 import { calendarDateText } from "./date-text";
 import { type FeePolicyView, feePolicyModel } from "./fee-policy-model";
 import type { EligibilityKey } from "./reason-text";
-import { agreementStatusText, transactionTypeText, versionStatusText } from "./status-text";
+import { agreementStatusText, endedWithAgreement, transactionTypeText, versionBadgeText } from "./status-text";
 import { type Phrase, type VersionContent, versionContent } from "./version-terms-model";
 
 /**
@@ -152,17 +152,24 @@ function refusalReason(type: string | null | undefined): Phrase {
 
 /**
  * The activation lines of a version (brokerage-agreement E05-S6, S6-D3, S6-D4, S6-D22): activated with its start date,
- * or in effect, from its state; the signed document's number, date and Sunvibe's signatory for an activation; the
- * reason and the note for a refusal. A line whose time or value the answer leaves out is not shown.
+ * or in effect, from its state; an EFFECTIVE version of an EXPIRED or TERMINATED agreement was in effect until the
+ * agreement ended (E05-S8, S8-D16, E05S8-P11); the signed document's number, date and Sunvibe's signatory for an
+ * activation; the reason and the note for a refusal. A line whose time or value the answer leaves out is not shown.
  */
-function activationLines(version: BrokerageAgreementVersion, activation: BrokerageAgreementVersionActivation): VersionActivationLines {
+function activationLines(
+  version: BrokerageAgreementVersion,
+  activation: BrokerageAgreementVersionActivation,
+  agreementStatus: string | undefined,
+): VersionActivationLines {
   const decidedAt = present(activation.decidedAt) ? activation.decidedAt : null;
   const { documentNumber, signedOn, sunvibeSignatoryName, sunvibeSignatoryTitle, refusalNote } = activation;
   let first: Phrase | null = null;
   if (decidedAt !== null && version.status === "ACTIVATED") {
     first = { key: "versionActivation.activated", values: { date: calendarDateText(version.startDate ?? "") } };
   } else if (decidedAt !== null && version.status === "EFFECTIVE") {
-    first = { key: "versionActivation.effective" };
+    first = endedWithAgreement(version.status, agreementStatus)
+      ? { key: "versionActivation.ended" }
+      : { key: "versionActivation.effective" };
   }
   const document: Phrase | null =
     activation.decision === "ACTIVATED" &&
@@ -215,7 +222,7 @@ export function agreementAfter(result: ApiResult<BrokerageAgreementDetail>): Agr
         const content = versionContent(version);
         const row: VersionRow = {
           versionNo: version.versionNo ?? 0,
-          statusKey: versionStatusText(version.status ?? ""),
+          statusKey: versionBadgeText(version.status ?? "", status),
           startText: calendarDateText(version.startDate ?? ""),
           endText: calendarDateText(version.endDate ?? ""),
           content,
@@ -226,7 +233,7 @@ export function agreementAfter(result: ApiResult<BrokerageAgreementDetail>): Agr
         };
         // The key only when the answer holds the decision, so an answer of today gives today's row (S6-D8).
         if (version.activation !== null && version.activation !== undefined) {
-          row.activation = activationLines(version, version.activation);
+          row.activation = activationLines(version, version.activation, status);
         }
         return row;
       })
@@ -252,7 +259,8 @@ export function agreementAfter(result: ApiResult<BrokerageAgreementDetail>): Agr
     // Each new key only when its source is in the answer, never null or undefined, so an answer without the E05-S6
     // properties gives exactly today's model (S6-D8, S6-D22).
     if (result.data.advertising !== null && result.data.advertising !== undefined) {
-      ready.advertising = advertisingModel(result.data.advertising);
+      // The ENDED line by the agreement's state (S8-D16); an answer without one reads as an unknown state.
+      ready.advertising = advertisingModel(result.data.advertising, status ?? null);
     }
     const activation = activationModel(result.data);
     if (activation !== null) ready.activation = activation;

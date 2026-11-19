@@ -11,7 +11,7 @@ import type {
 
 import { advertisingReasonText } from "./advertising-text";
 import type { EligibilityKey } from "./reason-text";
-import { agreementStatusText, versionStatusText } from "./status-text";
+import { agreementStatusText, versionBadgeText } from "./status-text";
 import type { Phrase } from "./version-terms-model";
 
 /**
@@ -54,12 +54,16 @@ export function listAdvertisingAnswer(advertising: BrokerageAgreementListAdverti
 /**
  * The advertising lines of a row (brokerage-agreement US-4 AC-1, S6-D8, S7-D5): only `allowed` true reads as allowed,
  * with its end date; anything else is not allowed, one line per group in the answer's order, and an answer naming no
- * group reads the one fallback line, so nothing absent ever reads as allowed.
+ * group reads the one fallback line, so nothing absent ever reads as allowed. The ENDED line reads the row's state, null
+ * when the row has none (E05-S8, S8-D16).
  */
-function advertisingOf(advertising: BrokerageAgreementListAdvertising | undefined): AgreementListRow["advertising"] {
+function advertisingOf(
+  advertising: BrokerageAgreementListAdvertising | undefined,
+  status: string | null,
+): AgreementListRow["advertising"] {
   const answer = listAdvertisingAnswer(advertising);
   if (answer.allowed === true) return { allowed: true, endDate: present(answer.endDate) ? answer.endDate : null };
-  const reasons = (answer.reasonGroups ?? []).map((group) => advertisingReasonText(group, answer));
+  const reasons = (answer.reasonGroups ?? []).map((group) => advertisingReasonText(group, answer, status));
   return { allowed: false, reasons: reasons.length === 0 ? [{ key: "eligibility.reasons.OTHER" }] : reasons };
 }
 
@@ -70,9 +74,12 @@ function rowOf(item: BrokerageAgreementListItem & { agreementId: string }): Agre
     href: `${BROKERAGE_AGREEMENTS_PATH}/${encodeURIComponent(agreementId)}`,
     unitCode: unitCode ?? null,
     statusKey: agreementStatusText(status ?? ""),
+    // "Version <n>: <state>", an EFFECTIVE version of an ended agreement read with it (S8-D16, E05S8-P11).
     version:
-      latestVersionNo === undefined ? null : { number: latestVersionNo, statusKey: versionStatusText(latestVersionStatus ?? "") },
-    advertising: advertisingOf(advertising),
+      latestVersionNo === undefined
+        ? null
+        : { number: latestVersionNo, statusKey: versionBadgeText(latestVersionStatus ?? "", status) },
+    advertising: advertisingOf(advertising, status ?? null),
     createdAt: present(createdAt) ? createdAt : null,
   };
 }
