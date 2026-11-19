@@ -16,6 +16,11 @@ const EVENT_TEXT: Record<EventType, EligibilityKey> = {
   ACTIVATED: "history.events.ACTIVATED",
   ACTIVATION_REFUSED: "history.events.ACTIVATION_REFUSED",
   VERSION_STARTED: "history.events.VERSION_STARTED",
+  SUSPENDED: "history.events.SUSPENDED",
+  SUSPENSION_RELEASED: "history.events.SUSPENSION_RELEASED",
+  TERMINATED: "history.events.TERMINATED",
+  EXPIRED: "history.events.EXPIRED",
+  CANCELLED: "history.events.CANCELLED",
   OTHER: "history.events.OTHER",
 };
 

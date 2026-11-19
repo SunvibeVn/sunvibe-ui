@@ -46,6 +46,26 @@ export function versionStatusText(code: string): EligibilityKey {
   return textOf(VERSION_STATUS_TEXT, code, "versionStatus.OTHER");
 }
 
+/** The agreement states that end an EFFECTIVE version with them (brokerage-agreement S8-D3, S8-D16). */
+const ENDS_EFFECTIVE_VERSION: ReadonlySet<string> = new Set(["EXPIRED", "TERMINATED"]);
+
+/**
+ * Whether a version ended with its agreement (brokerage-agreement S8-D3, S8-D16): an EFFECTIVE version stays EFFECTIVE
+ * in the data once its agreement expired or was terminated, so the staff pages read the pair, not the version alone.
+ */
+export function endedWithAgreement(versionStatus: string | undefined, agreementStatus: string | null | undefined): boolean {
+  return versionStatus === "EFFECTIVE" && typeof agreementStatus === "string" && ENDS_EFFECTIVE_VERSION.has(agreementStatus);
+}
+
+/**
+ * The badge of a version on the staff pages (brokerage-agreement E05-S8, S8-D16, E05S8-P11): an EFFECTIVE version of an
+ * EXPIRED or TERMINATED agreement reads "Ended with the agreement"; every other pair, and a version read without its
+ * agreement's state, reads the version's own text.
+ */
+export function versionBadgeText(versionStatus: string, agreementStatus: string | null | undefined): EligibilityKey {
+  return endedWithAgreement(versionStatus, agreementStatus) ? "versionStatus.ENDED" : versionStatusText(versionStatus);
+}
+
 export function transactionTypeText(code: string): EligibilityKey {
   return textOf(TRANSACTION_TYPE_TEXT, code, "transactionType.OTHER");
 }

@@ -2235,6 +2235,7 @@
       "LAPSED": "Lapsed",
       "ACTIVATION_REFUSED": "Activation refused",
       "CANCELLED": "Cancelled",
+      "ENDED": "Ended with the agreement",
       "OTHER": "Another state"
     },
     "terms": {
@@ -2498,7 +2499,10 @@
         "activated": "Signed and activated. It takes effect on {date}.",
         "effective": "In effect until {date}.",
         "activationRefused": "Sunvibe did not activate this version.",
-        "notActivated": "Sunvibe did not activate it in time."
+        "notActivated": "Sunvibe did not activate it in time.",
+        "suspended": "Sunvibe has paused advertising of this unit.",
+        "expired": "Ended on {date}.",
+        "ended": "Ended."
       },
       "tick": "I have read version {number} and confirm it",
       "decline": "Decline",
@@ -2619,6 +2623,7 @@
     "versionActivation": {
       "activated": "Activated on {time}; takes effect on {date}.",
       "effective": "In effect.",
+      "ended": "In effect until the agreement ended.",
       "document": "Document {number}, signed on {date}; signed for Sunvibe by {name}, {title}.",
       "refused": "Activation refused on {time}: {reason}.",
       "note": "Note: {note}",
@@ -2666,6 +2671,11 @@
         "ACTIVATED": "Activated",
         "ACTIVATION_REFUSED": "Activation refused",
         "VERSION_STARTED": "Took effect",
+        "SUSPENDED": "Suspended",
+        "SUSPENSION_RELEASED": "Suspension lifted",
+        "TERMINATED": "Terminated",
+        "EXPIRED": "Expired",
+        "CANCELLED": "Cancelled",
         "OTHER": "Another event"
       },
       "actors": {
@@ -2673,6 +2683,130 @@
         "owner": "The owner",
         "system": "Sunvibe (automatic)"
       }
+    },
+    "stop": {
+      "title": "Agreement state",
+      "suspendedSince": "Suspended since {time}: {reason}.",
+      "suspendedUntilEnd": "Suspended {time} until the agreement ended: {reason}.",
+      "suspendedFromTo": "Suspended {from} to {to}: {reason}. Lifted: {releaseReason}.",
+      "suspendedFromToNoReason": "Suspended {from} to {to}: {reason}.",
+      "note": "Note: {note}",
+      "earlier": "Earlier suspensions are in the history.",
+      "ownerWithdrew": "Ended on {time}: the owner withdrew (told by {channel} on {date}).",
+      "unitLet": "Ended on {time}: the unit is let (reported on {date}; tenant introduced by Sunvibe: {introduced}).",
+      "sunvibe": "Ended on {time} by Sunvibe: {note}.",
+      "endedOn": "Ended on {time}.",
+      "expired": "Expired at the end of {date}.",
+      "cancelled": "Cancelled on {time}.",
+      "reasons": {
+        "COMPLAINT": "a complaint",
+        "SUSPECTED_FRAUD": "suspected fraud",
+        "DISPUTE": "a dispute",
+        "NEEDS_CHECK": "a check is needed",
+        "OTHER": "another reason"
+      },
+      "channels": {
+        "PHONE_CALL": "a phone call",
+        "IN_PERSON": "a meeting in person",
+        "MESSAGE": "a message",
+        "EMAIL": "email",
+        "OTHER": "another channel"
+      },
+      "introduced": {
+        "YES": "yes",
+        "NO": "no",
+        "UNKNOWN": "not known"
+      },
+      "types": {
+        "OWNER_WITHDREW": "The owner withdrew",
+        "UNIT_LET": "The unit is let",
+        "SUNVIBE_TERMINATED": "Sunvibe's decision",
+        "OTHER": "Another reason"
+      },
+      "actions": {
+        "suspend": "Suspend",
+        "release": "Lift the suspension",
+        "terminate": "End the agreement",
+        "cancel": "Cancel the agreement"
+      },
+      "suspendDialog": {
+        "title": "Suspend the agreement",
+        "reason": "Reason",
+        "chooseReason": "Choose a reason",
+        "reasons": {
+          "COMPLAINT": "A complaint",
+          "SUSPECTED_FRAUD": "Suspected fraud",
+          "DISPUTE": "A dispute",
+          "NEEDS_CHECK": "A check is needed"
+        },
+        "note": "Note",
+        "submit": "Suspend",
+        "keep": "Keep it"
+      },
+      "releaseDialog": {
+        "title": "Lift the suspension",
+        "reason": "Reason for lifting it",
+        "submit": "Lift",
+        "keep": "Keep it"
+      },
+      "cancelDialog": {
+        "title": "Cancel the agreement",
+        "body": "Cancel this agreement? It never took effect; this cannot be undone.",
+        "submit": "Cancel the agreement",
+        "keep": "Keep it"
+      },
+      "terminateDialog": {
+        "title": "End the agreement",
+        "type": "How did it end?",
+        "reportedOn": "Reported on",
+        "channel": "How the owner said it",
+        "chooseChannel": "Choose how",
+        "introducedLabel": "Tenant introduced by Sunvibe",
+        "chooseIntroduced": "Choose an answer",
+        "note": "Note",
+        "sunvibeNote": "Reason for Sunvibe's decision",
+        "submit": "End the agreement",
+        "keep": "Keep it",
+        "channels": {
+          "PHONE_CALL": "Phone call",
+          "IN_PERSON": "In person",
+          "MESSAGE": "Message",
+          "EMAIL": "Email",
+          "OTHER": "Other"
+        },
+        "introduced": {
+          "YES": "Yes",
+          "NO": "No",
+          "UNKNOWN": "Not known"
+        }
+      },
+      "errors": {
+        "AGREEMENT_ASSIGNEE_ONLY": "Only the lead's assigned Sale may do this.",
+        "AGREEMENT_RELEASER_NOT_INDEPENDENT": "Only a manager who is not the lead's assigned Sale may lift the suspension.",
+        "AGREEMENT_TERMINATION_NOT_ALLOWED": "Only a manager may end an agreement as Sunvibe's decision.",
+        "AGREEMENT_NOT_IN_EFFECT": "This agreement is not in effect.",
+        "AGREEMENT_ENDED": "This agreement has ended.",
+        "AGREEMENT_ALREADY_SUSPENDED": "This agreement is already suspended.",
+        "AGREEMENT_NOT_SUSPENDED": "This agreement is not suspended.",
+        "AGREEMENT_TOOK_EFFECT": "This agreement has taken effect: end it instead.",
+        "changed": "This agreement changed. Read it again."
+      },
+      "fieldErrors": {
+        "reasonType": "Choose a reason.",
+        "note": "Enter at most 500 characters.",
+        "releaseReason": "Enter a reason (at most 500 characters).",
+        "type": "Choose how the agreement ended.",
+        "reportedOn": "Enter a date from 1 Jan 2000 to today.",
+        "channel": "Choose how the owner said it.",
+        "introducedBySunvibe": "Choose whether Sunvibe introduced the tenant.",
+        "sunvibeNote": "Enter the reason for Sunvibe's decision (at most 500 characters).",
+        "badText": "This text cannot be saved. Remove special characters."
+      },
+      "concurrent": "Something changed at the same time.",
+      "reload": "Reload",
+      "notFound": "This agreement is not available.",
+      "failed": "The change could not be saved.",
+      "supportCode": "Support code: {code}"
     }
   },
   "TestEnvironment": {

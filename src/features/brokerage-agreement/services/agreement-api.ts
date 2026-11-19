@@ -4,6 +4,7 @@ import type {
   AgreementListQuery,
   BrokerageAgreementActivationRefusalRequest,
   BrokerageAgreementActivationRequest,
+  BrokerageAgreementCancellationRequest,
   BrokerageAgreementCreated,
   BrokerageAgreementCreateRequest,
   BrokerageAgreementDetail,
@@ -13,6 +14,9 @@ import type {
   BrokerageAgreementNewDraftRequest,
   BrokerageAgreementPage,
   BrokerageAgreementSurveyTerms,
+  BrokerageAgreementSuspensionReleaseRequest,
+  BrokerageAgreementSuspensionRequest,
+  BrokerageAgreementTerminationRequest,
 } from "../types";
 
 export type AgreementDeps = { callApi: CallApi };
@@ -114,6 +118,69 @@ export function refuseActivation(
       params: { path: { agreementId } },
       body,
     }),
+  );
+}
+
+/**
+ * POST the suspension of an agreement in effect, with one of four reasons and an optional note (brokerage-agreement
+ * US-5 AC-2, BR-15, S8-D6). No data version: a stop is refused only by its state (S8-D8). A 204 has no body, so the
+ * page reads the detail again. The server decides who may suspend (a manager).
+ */
+export function suspendAgreement(
+  agreementId: string,
+  body: BrokerageAgreementSuspensionRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/suspension", { params: { path: { agreementId } }, body }),
+  );
+}
+
+/**
+ * POST the release of a suspension, with a required reason against the data version the page read (brokerage-agreement
+ * US-5 AC-5, BR-5, BR-15, S8-D6); a 204 has no body, so the page reads the detail again. The server decides who may
+ * lift it (a manager who is not the lead's assigned Sale).
+ */
+export function releaseAgreementSuspension(
+  agreementId: string,
+  body: BrokerageAgreementSuspensionReleaseRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/suspension-release", {
+      params: { path: { agreementId } },
+      body,
+    }),
+  );
+}
+
+/**
+ * POST the termination of an agreement that has not ended, with its type and that type's fields (brokerage-agreement
+ * US-5 AC-2, BR-14, S8-D5). No data version: a stop is refused only by its state (S8-D8). A 204 has no body, so the
+ * page reads the detail again. The server decides who may record each type.
+ */
+export function terminateAgreement(
+  agreementId: string,
+  body: BrokerageAgreementTerminationRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/termination", { params: { path: { agreementId } }, body }),
+  );
+}
+
+/**
+ * POST the cancellation of an agreement that never took effect, against the data version the page read
+ * (brokerage-agreement US-1 AC-5, BR-5, S8-D7); a 204 has no body, so the page reads the detail again. The server
+ * decides who may cancel (the lead's assigned Sale).
+ */
+export function cancelAgreement(
+  agreementId: string,
+  body: BrokerageAgreementCancellationRequest,
+  deps: AgreementDeps = DEFAULT_DEPS,
+): Promise<ApiResult<undefined>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/brokerage-agreements/{agreementId}/cancellation", { params: { path: { agreementId } }, body }),
   );
 }
 
