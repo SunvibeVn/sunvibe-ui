@@ -829,6 +829,128 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     }
   });
 
+  test("agreementStop_suspendLiftTerminateCancel_staffAndOwner (E2E-1, brokerage-agreement US-5 AC-2, AC-4, AC-5, US-1 AC-5)", async () => {
+    // The agreement the chain activated above (version 2, 1 Jan 2027 to 31 Dec 2027, set in
+    // agreementDraft_fromTheLeadPage_opensItsPage), open on the Sale's side. The manager is the chain's admin page (E2E
+    // Admin: a manager who is not the lead's assignee, so it may suspend and lift, brokerage-agreement S8-D6); the Sale
+    // (the assignee) ends it as a let unit and cancels a new draft (S8-D5, S8-D7); the owner page reads the end. The lines
+    // follow today's date in Vietnam as the tests above read it; once that period has passed the test fails with the same
+    // message, never skips. No login, no owner POST (E05S8-P14): the header's budget is unchanged.
+    const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+    if (today > "2027-12-31") {
+      throw new Error(
+        "The chain's fixed agreement period (1 Jan 2027 to 31 Dec 2027, set in agreementDraft_fromTheLeadPage_opensItsPage) has passed: move those dates forward before this test can activate the agreement.",
+      );
+    }
+    const beforeStart = today < "2027-01-01";
+    const agreementPath = new URL(sale.url()).pathname;
+    /** The agreement's state: the first value of the page's header. */
+    const status = (page: Page): Locator => mainArea(page).locator("dl").first().getByRole("definition").first();
+    const panel = (page: Page): Locator => mainArea(page).getByRole("region", { name: "Advertising", exact: true });
+    const stopSection = (page: Page): Locator => mainArea(page).getByRole("region", { name: "Agreement state", exact: true });
+    const versionItem = (page: Page, number: number): Locator =>
+      mainArea(page)
+        .getByRole("region", { name: "Versions", exact: true })
+        .getByRole("listitem")
+        .filter({ has: page.getByRole("heading", { level: 3, name: `Version ${number}`, exact: true }) });
+
+    // 1. The manager suspends it for a complaint: the header, the advertising answer and the stop line say so.
+    await admin.goto(agreementPath);
+    await expect(status(admin)).toHaveText("Active", { timeout: 20_000 });
+    await expect(button(stopSection(admin), "Suspend")).toBeVisible();
+    await button(stopSection(admin), "Suspend").click();
+    const suspendDialog = admin.getByRole("dialog", { name: "Suspend the agreement", exact: true });
+    await expect(suspendDialog).toBeVisible();
+    await suspendDialog.getByLabel("Reason", { exact: true }).selectOption({ label: "A complaint" });
+    await expect(button(suspendDialog, "Suspend")).toBeVisible();
+    await button(suspendDialog, "Suspend").click();
+    await expect(suspendDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(status(admin)).toHaveText("Suspended", { timeout: 20_000 });
+    await expect(panel(admin).getByText("Sunvibe may not advertise this unit now:", { exact: true })).toBeVisible();
+    await expect(panel(admin).getByText("The agreement is suspended.", { exact: true })).toBeVisible();
+    await expect(stopSection(admin).getByText(/^Suspended since .+: a complaint\.$/)).toBeVisible();
+
+    // 2. The same manager, still not the assignee, lifts it with a reason: active again, with the answer of its period.
+    await expect(button(stopSection(admin), "Lift the suspension")).toBeVisible();
+    await button(stopSection(admin), "Lift the suspension").click();
+    const releaseDialog = admin.getByRole("dialog", { name: "Lift the suspension", exact: true });
+    await expect(releaseDialog).toBeVisible();
+    await releaseDialog.getByLabel("Reason for lifting it", { exact: true }).fill("The complaint was checked with the owner.");
+    await expect(button(releaseDialog, "Lift")).toBeVisible();
+    await button(releaseDialog, "Lift").click();
+    await expect(releaseDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(status(admin)).toHaveText("Active", { timeout: 20_000 });
+    await expect(
+      panel(admin).getByText(
+        beforeStart ? "Advertising starts on 1 Jan 2027." : "Sunvibe may advertise this unit until the end of 31 Dec 2027.",
+        { exact: true },
+      ),
+    ).toBeVisible();
+    await expect(stopSection(admin).getByText(/^Suspended .+ to .+: a complaint\. Lifted: The complaint was checked with the owner\.$/)).toBeVisible();
+
+    // 3. The Sale ends it: the unit is let, reported today, the tenant's introducer not known.
+    await sale.goto(agreementPath);
+    await expect(status(sale)).toHaveText("Active", { timeout: 20_000 });
+    await expect(button(stopSection(sale), "End the agreement")).toBeVisible();
+    await button(stopSection(sale), "End the agreement").click();
+    const endDialog = sale.getByRole("dialog", { name: "End the agreement", exact: true });
+    await expect(endDialog).toBeVisible();
+    await endDialog.getByRole("radio", { name: "The unit is let", exact: true }).check();
+    await expect(endDialog.getByLabel("Reported on", { exact: true })).toHaveValue(today);
+    await endDialog.getByLabel("Tenant introduced by Sunvibe", { exact: true }).selectOption({ label: "Not known" });
+    await expect(button(endDialog, "End the agreement")).toBeVisible();
+    await button(endDialog, "End the agreement").click();
+    await expect(endDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(status(sale)).toHaveText("Terminated", { timeout: 20_000 });
+    await expect(panel(sale).getByText("The agreement has ended.", { exact: true })).toBeVisible();
+    // Before its start the activated version is cancelled with the agreement; once in effect it ended with it (S8-D3).
+    await expect(versionItem(sale, 2).getByText(beforeStart ? "Cancelled" : "Ended with the agreement", { exact: true })).toBeVisible();
+    await expect(
+      stopSection(sale).getByText(/^Ended on .+: the unit is let \(reported on .+; tenant introduced by Sunvibe: not known\)\.$/),
+    ).toBeVisible();
+    await expect(stopSection(sale).getByRole("button")).toHaveCount(0);
+
+    const history = mainArea(sale).getByRole("region", { name: "History", exact: true });
+    await button(history, "Show history").click({ timeout: 20_000 });
+    const event = (text: string): Locator => history.getByRole("listitem").filter({ has: sale.getByText(text, { exact: true }) });
+    for (const text of ["Suspended", "Suspension lifted", "Terminated"]) await expect(event(text)).toHaveCount(1, { timeout: 20_000 });
+    // A history row holds no reason (brokerage-agreement BR-17, S8-D10).
+    await expect(history.getByText(/complaint|not known/i)).toHaveCount(0);
+
+    // 4. The owner page, read again, says version 2 ended, with no staff reason (S8-D16, BR-17).
+    const ownerCard = owner.getByRole("listitem").filter({ has: owner.getByRole("heading", { level: 2 }) });
+    await owner.reload();
+    const ownerVersion2 = ownerCard
+      .getByRole("listitem")
+      .filter({ has: owner.getByRole("heading", { level: 3, name: "Version 2", exact: true }) });
+    await expect(ownerVersion2.getByText("Ended.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(owner.getByText(/complaint|not known|checked with the owner/i)).toHaveCount(0);
+
+    // 5. The unit's slot is free (BR-1): the Sale drafts a new agreement from the lead page and cancels it.
+    await sale.goto(`/workspace/owner-leads/${L15.id}`);
+    const unit = mainArea(sale).getByRole("region", { name: "Agreement eligibility", exact: true }).getByRole("listitem");
+    await expect(button(unit, "Draft an agreement")).toBeVisible({ timeout: 20_000 });
+    await button(unit, "Draft an agreement").click();
+    const draftDialog = sale.getByRole("dialog", { name: "Draft an agreement", exact: true });
+    await expect(draftDialog).toBeVisible();
+    await draftDialog.getByLabel("Start date", { exact: true }).fill("2027-01-01");
+    await draftDialog.getByLabel("End date", { exact: true }).fill("2027-12-31");
+    await expect(button(draftDialog, "Create the draft")).toBeVisible();
+    await button(draftDialog, "Create the draft").click();
+    await expect(sale).toHaveURL(/\/workspace\/brokerage-agreements\/[0-9A-Z]{26}$/, { timeout: 20_000 });
+    expect(new URL(sale.url()).pathname).not.toBe(agreementPath);
+    await expect(status(sale)).toHaveText("Drafting", { timeout: 20_000 });
+    await expect(button(stopSection(sale), "Cancel the agreement")).toBeVisible();
+    await button(stopSection(sale), "Cancel the agreement").click();
+    const cancelDialog = sale.getByRole("dialog", { name: "Cancel the agreement", exact: true });
+    await expect(cancelDialog.getByText("Cancel this agreement? It never took effect; this cannot be undone.", { exact: true })).toBeVisible();
+    await expect(button(cancelDialog, "Cancel the agreement")).toBeVisible();
+    await button(cancelDialog, "Cancel the agreement").click();
+    await expect(cancelDialog).toHaveCount(0, { timeout: 20_000 });
+    await expect(status(sale)).toHaveText("Cancelled", { timeout: 20_000 });
+    await expect(stopSection(sale).getByText(/^Cancelled on .+\.$/)).toBeVisible();
+  });
+
   test("eligibility_leadWithoutIntake_noneAndE1Lines (UD-8, UD-1, brokerage-agreement US-1 AC-1, E-1)", async () => {
     // L1: the seed completes no intake, and no spec of the chain completes one on it.
     await admin.goto(fixture.lead(1).path);
