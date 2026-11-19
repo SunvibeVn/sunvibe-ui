@@ -27,6 +27,9 @@ function filesUnder(dir: string): string[] {
 
 const relative = (file: string): string => path.relative(SRC, file).replaceAll("\\", "/");
 
+/** A `use-<thing>` file that must hold a hook: its tests, `.test.ts` and `.test.tsx`, hold none. */
+const isHookFile = (name: string): boolean => /^use-.*\.tsx?$/.test(name) && !/\.test\.tsx?$/.test(name);
+
 describe("the UI naming standard (naming-layout.mdc, SV-178)", () => {
   it("fileNames_areKebabCase: only the listed dotted kinds, and a schema is <thing>.schema.ts", () => {
     const name = /^[a-z0-9]+(?:-[a-z0-9]+)*(?:\.(?:d|test|test-support|server|schema|schema\.test))?$/;
@@ -63,9 +66,14 @@ describe("the UI naming standard (naming-layout.mdc, SV-178)", () => {
 
   it("useFiles_exportAHook: a use-<thing> file holds a hook", () => {
     const offenders = filesUnder(SRC)
-      .filter((file) => /^use-.*\.tsx?$/.test(path.basename(file)) && !file.endsWith(".test.ts"))
+      .filter((file) => isHookFile(path.basename(file)))
       .filter((file) => !/export\s+(?:function|const)\s+use[A-Z]/.test(readFileSync(file, "utf8")))
       .map(relative);
     expect(offenders).toEqual([]);
+  });
+
+  it("useFiles_exportAHook_leavesOutTheTestsOfAHook: .test.ts and .test.tsx alike (SV-281)", () => {
+    const names = ["use-draft.ts", "use-draft.tsx", "use-draft.test.ts", "use-draft.test.tsx", "user-menu.tsx"];
+    expect(names.filter(isHookFile)).toEqual(["use-draft.ts", "use-draft.tsx"]);
   });
 });
