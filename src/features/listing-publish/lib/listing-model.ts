@@ -11,6 +11,7 @@ import {
   type RevisionStatusKey,
   type TransactionTypeKey,
 } from "./listing-text";
+import { type RevisionPanelInput, revisionPanelOf } from "./revision-model";
 
 /** One revision as the page lists it (listing-publish US-1 AC-4): its number, its status and when it was created. */
 export type ListingRevisionLine = { revisionNo: number; statusKey: RevisionStatusKey; createdAt: string };
@@ -34,6 +35,8 @@ export type ListingPageModel =
       /** At most the 20 newest, newest first, as the server answers them (E06S1-D17). */
       revisions: ListingRevisionLine[];
       olderRevisions: boolean;
+      /** What the "Current revision" panel reads from the listing (listing-publish E06-S2, E06S2-D20). */
+      revisionPanel: RevisionPanelInput;
     };
 
 /** The page of one listing in the workspace. */
@@ -61,6 +64,7 @@ export function listingModel(result: ApiResult<ListingDetail>): ListingPageModel
         createdAt: revision.createdAt,
       })),
       olderRevisions: listing.hasOlderRevisions,
+      revisionPanel: revisionPanelOf(listing),
     };
   }
   switch (result.kind) {

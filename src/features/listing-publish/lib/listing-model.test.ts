@@ -51,6 +51,7 @@ describe("listingModel (listing-publish E06-S1, spec section 6, UL-3)", () => {
         { revisionNo: 1, statusKey: "revisionStatuses.DRAFT", createdAt: "2026-11-20T03:15:00Z" },
       ],
       olderRevisions: false,
+      revisionPanel: { openRevisionNo: 2, dataVersion: 0, viewerMayDraft: true },
     });
     expect(listingPath(LISTING_ID)).toBe(`/workspace/listings/${LISTING_ID}`);
 
