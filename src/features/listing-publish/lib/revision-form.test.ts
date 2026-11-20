@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { ListingFeatures, ListingRevisionDetail } from "../types";
 
-import { codePointCount, contentBody, formValues, type RevisionFormValues } from "./revision-form";
+import { codePointCount, contentBody, formValues, type RevisionFormValues, sameValues } from "./revision-form";
 
 const NOTHING_CHOSEN: ListingFeatures = {
   furnishing: null,
@@ -89,6 +89,15 @@ describe("revision form (listing-publish E06-S2, spec section 6, E06S2-P11 (1))"
     // Only the thirteen features of the contract go into the values, whatever else an answer carries.
     const extra = formValues({ ...DRAFT, features: { ...EVERY_FEATURE, sauna: true } as ListingFeatures });
     expect(Object.keys(extra.features).sort()).toEqual(Object.keys(EVERY_FEATURE).sort());
+  });
+
+  it("sameValues_textsAndFeatures_equalOnlyWhenAllEqual: the form has unsaved changes when a text or one feature differs from the read", () => {
+    const read = formValues(DRAFT);
+    expect(sameValues(read, formValues(DRAFT))).toBe(true);
+    expect(sameValues(read, { ...read, title: `${read.title} ` })).toBe(false);
+    expect(sameValues(read, { ...read, description: "" })).toBe(false);
+    expect(sameValues(read, { ...read, features: { ...read.features, pets: null } })).toBe(false);
+    expect(sameValues(read, { ...read, features: { ...read.features, balcony: false } })).toBe(false);
   });
 
   it("codePointCount_emojiAndNfd_oneEach: the counters count code points of the NFC text", () => {

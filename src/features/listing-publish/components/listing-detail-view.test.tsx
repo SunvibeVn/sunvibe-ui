@@ -135,4 +135,14 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
     await waitFor(() => expect(getListing).toHaveBeenCalledTimes(4));
     await waitFor(() => expect(container.textContent).toBe(""));
   });
+
+  it("listingDetailView_ready_currentRevisionAboveRevisions: the 'Current revision' region precedes the 'Revisions' region", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered(DETAIL));
+    renderView();
+
+    const current = await screen.findByRole("region", { name: en.ListingPublish.revision.heading });
+    const revisions = screen.getByRole("region", { name: p.revisions });
+    expect(current.compareDocumentPosition(revisions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(current).getByText(en.ListingPublish.revision.loading)).toBeTruthy();
+  });
 });

@@ -2896,7 +2896,7 @@
       "title": "Title",
       "titleCounter": "{count} / 90",
       "description": "Description",
-      "descriptionCounter": "{count} / 3,000",
+      "descriptionCounter": "{count, number} / 3,000",
       "notWritten": "Not written yet.",
       "features": {
         "heading": "Features",
@@ -2989,6 +2989,7 @@
         "FORBIDDEN_WORD": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a claim a listing may not make.",
         "unknown": "This revision breaks a rule this page does not know yet."
       },
+      "unsaved": "Save the draft before you submit it.",
       "submit": "Submit for review",
       "submitting": "Submitting…",
       "submitted": "Submitted {time}; the content is locked.",

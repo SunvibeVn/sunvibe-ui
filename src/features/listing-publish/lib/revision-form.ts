@@ -31,6 +31,17 @@ export function formValues(detail: ListingRevisionDetail): RevisionFormValues {
   return { title: detail.title ?? "", description: detail.description ?? "", features: featuresOf(detail.features) };
 }
 
+/**
+ * Whether two form values hold the same texts and features: the form has unsaved changes while what is typed differs
+ * from the last read, and a submission sends the stored revision, never the screen.
+ */
+export function sameValues(a: RevisionFormValues, b: RevisionFormValues): boolean {
+  if (a.title !== b.title || a.description !== b.description) return false;
+  const first = featuresOf(a.features);
+  const second = featuresOf(b.features);
+  return (Object.keys(first) as (keyof ListingFeatures)[]).every((name) => first[name] === second[name]);
+}
+
 /** Null for an empty or blank text, which the server stores as empty; any other text as typed. */
 function textOrNull(text: string): string | null {
   return text.trim() === "" ? null : text;
