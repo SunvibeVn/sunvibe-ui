@@ -24,7 +24,8 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
  * it is public yet, and the page says so. No unit address, owner or person. It reads on mount and on "Try again".
  * The "Current revision" panel (E06-S2) sits above the revisions; after each of its commands the page reads the listing
  * again in place, keeping what it shows until the answer, so the panel and its alert stay (E06S2-P11 (2)): a 404 shows
- * the not-found state, and a failed re-read keeps the page as it is.
+ * the not-found state, and a failed re-read keeps the page as it is. Until that answer the panel's commands wait, since
+ * the page still holds the old data version.
  */
 export function ListingDetailView({ listingId }: { listingId: string }) {
   const t = useTranslations("ListingPublish");
@@ -32,6 +33,8 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   const [model, setModel] = useState<ListingPageModel>(LOADING);
   const [attempt, setAttempt] = useState(0);
   const [refresh, setRefresh] = useState(0);
+  /** The `refresh` of the last read that answered: behind `refresh` while the panel's re-read runs. */
+  const [answered, setAnswered] = useState(0);
   const revisionsId = useId();
 
   useEffect(() => {
@@ -40,6 +43,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
       if (dropped) return;
       const next = listingModel(result);
       setModel((current) => (current.kind === "ready" && next.kind === "error" ? current : next));
+      setAnswered(refresh);
     });
     return () => {
       dropped = true;
@@ -114,7 +118,12 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
               {t("page.openAgreement")}
             </Link>
           </div>
-          <RevisionPanel listingId={listingId} panel={model.revisionPanel} onListingChanged={reread} />
+          <RevisionPanel
+            listingId={listingId}
+            panel={model.revisionPanel}
+            listingRereading={answered !== refresh}
+            onListingChanged={reread}
+          />
           <section
             aria-labelledby={revisionsId}
             className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"

@@ -19,8 +19,8 @@ import { RevisionDraftForm } from "./revision-draft-form";
 import { RevisionProblemsNotice } from "./revision-problems-notice";
 import { type RevisionRefusal, useRevisionCommand } from "./use-revision-command";
 
-/** The answer of the revision read, with the number it was read for. */
-type RevisionRead = { revisionNo: number; result: ApiResult<ListingRevisionDetail> };
+/** The answer of the revision read, with the number and the attempt it was read for. */
+type RevisionRead = { revisionNo: number; attempt: number; result: ApiResult<ListingRevisionDetail> };
 
 /** The last command's refusal: its sentence, or for the 422 its sentence over the entries' list, which takes the focus. */
 function RefusalAlert({ refusal }: { refusal: RevisionRefusal }) {
@@ -42,16 +42,19 @@ function RefusalAlert({ refusal }: { refusal: RevisionRefusal }) {
  * open revision (Draft or Pending review). For the assigned Sale a Draft is the form and a Pending review revision
  * offers "Withdraw", asked first; anyone else reads the content. With no open revision the assigned Sale may start a
  * new empty Draft. One command runs at a time; after each the listing and the revision read again without returning to
- * "loading", and the answer's sentence shows in one alert. The commands are a hint: the server decides each. The panel
- * repeats none of the page's texts.
+ * "loading", every command waiting until both answered (the new data version), and the answer's sentence shows in one
+ * alert. The commands are a hint: the server decides each. The panel repeats none of the page's texts.
  */
 export function RevisionPanel({
   listingId,
   panel,
+  listingRereading,
   onListingChanged,
 }: {
   listingId: string;
   panel: RevisionPanelInput;
+  /** The page's read of the listing asked for by `onListingChanged` has not answered yet. */
+  listingRereading: boolean;
   onListingChanged: () => void;
 }) {
   const t = useTranslations("ListingPublish");
@@ -63,15 +66,20 @@ export function RevisionPanel({
   const [valuesToken, setValuesToken] = useState(0);
   const adoptNextRead = useRef(false);
   const keepId = useId();
-  const { busy, refusal, run } = useRevisionCommand((command, outcome) => {
-    if ((command === "save" && outcome.kind === "done") || (outcome.kind === "refused" && outcome.answer === "concurrent")) {
-      adoptNextRead.current = true;
-    }
-    if (command === "withdraw") setConfirming(false);
+  const revisionNo = panel.openRevisionNo;
+  // A read that `reread` asked for has not answered: the listing's, or the shown revision's (read for an older attempt).
+  const rereading = listingRereading || (read !== null && read.revisionNo === revisionNo && read.attempt !== attempt);
+  const { busy, refusal, run } = useRevisionCommand({
+    rereading,
+    onOutcome: (command, outcome) => {
+      if ((command === "save" && outcome.kind === "done") || (outcome.kind === "refused" && outcome.answer === "concurrent")) {
+        adoptNextRead.current = true;
+      }
+      if (command === "withdraw") setConfirming(false);
+    },
   });
 
   const listingGone = useEffectEvent(() => onListingChanged());
-  const revisionNo = panel.openRevisionNo;
 
   useEffect(() => {
     if (revisionNo === null) return;
@@ -82,7 +90,7 @@ export function RevisionPanel({
         adoptNextRead.current = false;
         setValuesToken((token) => token + 1);
       }
-      setRead({ revisionNo, result });
+      setRead({ revisionNo, attempt, result });
       // The one 404 of an unknown or out-of-scope revision: the page reads the listing again (spec section 6).
       if (!result.ok && result.kind === "http" && result.status === 404) listingGone();
     });

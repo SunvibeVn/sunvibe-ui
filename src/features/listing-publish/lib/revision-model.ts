@@ -36,9 +36,9 @@ export type RevisionCommandOutcome =
 export type RevisionCommand = "start" | "save" | "capture" | "submit" | "withdraw";
 
 /**
- * Runs one command of the panel: nothing when another is running, so one click sends one request; the panel shows the
- * outcome's answer. Every command carries the data version the page read, and the server refuses a second one that
- * lands with `CONCURRENT_MODIFICATION`.
+ * Runs one command of the panel: nothing when another is running or while the reads after the last one have not
+ * answered, so one click sends one request and every command carries the data version the page read last; the panel
+ * shows the outcome's answer. The server refuses a command that lands after another with `CONCURRENT_MODIFICATION`.
  */
 export type RevisionRun = (command: RevisionCommand, send: () => Promise<RevisionCommandOutcome>) => Promise<void>;
 

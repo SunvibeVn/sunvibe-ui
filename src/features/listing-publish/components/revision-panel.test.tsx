@@ -6,7 +6,7 @@ import type { ApiResult } from "@/features/auth/client";
 import en from "@/i18n/messages/en.json";
 
 import type { RevisionPanelInput } from "../lib/revision-model";
-import type { ListingRevisionChange, ListingRevisionDetail } from "../types";
+import type { ListingRevisionChange, ListingRevisionDetail, ListingTerms } from "../types";
 
 // The edge only: the seven revision calls, so no request leaves the test.
 vi.mock("../services/revision-api", async (importOriginal) => ({
@@ -21,6 +21,7 @@ vi.mock("../services/revision-api", async (importOriginal) => ({
 }));
 
 import {
+  captureListingRevisionTerms,
   getListingRevision,
   getListingTermsSources,
   saveListingRevisionContent,
@@ -81,6 +82,15 @@ const PENDING: ListingRevisionDetail = {
   problems: [],
 };
 
+/** E05's terms in effect, the one source the Draft's terms can be taken from. */
+const TERMS: ListingTerms = {
+  monthlyRent: { amount: 4500000, currency: "VND", unit: "MONTH" },
+  deposit: { basis: "MONTHS", months: 2, amount: null, currency: null },
+  minimumTermMonths: 6,
+  paymentPeriodMonths: 1,
+  mandatoryFees: [],
+};
+
 const DRAFTER: RevisionPanelInput = { openRevisionNo: 1, dataVersion: 4, viewerMayDraft: true };
 const MANAGER: RevisionPanelInput = { openRevisionNo: 1, dataVersion: 4, viewerMayDraft: false };
 
@@ -109,7 +119,7 @@ function deferred<T>() {
 function renderPanel(panel: RevisionPanelInput, onListingChanged = vi.fn<() => void>()) {
   const view = render(
     <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
-      <RevisionPanel listingId={LISTING_ID} panel={panel} onListingChanged={onListingChanged} />
+      <RevisionPanel listingId={LISTING_ID} panel={panel} listingRereading={false} onListingChanged={onListingChanged} />
     </NextIntlClientProvider>,
   );
   return { ...view, onListingChanged };
@@ -342,6 +352,48 @@ describe("RevisionPanel (listing-publish US-2 AC-1 to AC-6, spec section 6, RD-1
     vi.mocked(submitListingRevision).mockResolvedValueOnce(change("PENDING_REVIEW", 6));
     fireEvent.click(within(region()).getByRole("button", { name: r.submit }));
     await waitFor(() => expect(submitListingRevision).toHaveBeenCalledWith(LISTING_ID, 1, 5));
+  });
+
+  it("revisionPanel_afterCapture_commandsWaitForReread: after a command no command is sent until the revision's re-read answers, so none carries the old data version", async () => {
+    const reread = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevision)
+      .mockReturnValue(new Promise(() => undefined))
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockReturnValueOnce(reread.promise);
+    vi.mocked(getListingTermsSources).mockResolvedValue({ ok: true, status: 200, replayed: false, data: { ended: false, inEffect: TERMS, pending: null } });
+    vi.mocked(captureListingRevisionTerms).mockReset();
+    vi.mocked(captureListingRevisionTerms).mockResolvedValueOnce(change("DRAFT", 5));
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(change("DRAFT", 6));
+    const { onListingChanged } = renderPanel(DRAFTER);
+
+    fireEvent.click(await within(region()).findByRole("button", { name: r.terms.take }));
+    await waitFor(() => expect(getListingRevision).toHaveBeenCalledTimes(2));
+    expect(captureListingRevisionTerms).toHaveBeenCalledWith(LISTING_ID, 1, 4, "IN_EFFECT");
+    expect(onListingChanged).toHaveBeenCalledTimes(1);
+
+    // The capture answered, its re-read has not: the screen still holds data version 4, so every command waits.
+    const save = within(region()).getByRole("button", { name: r.saveDraft }) as HTMLButtonElement;
+    expect(save.disabled).toBe(true);
+    expect((within(region()).getByRole("button", { name: r.submit }) as HTMLButtonElement).disabled).toBe(true);
+    expect((within(region()).getByRole("button", { name: r.terms.taking }) as HTMLButtonElement).disabled).toBe(true);
+    fireEvent.click(save);
+    fireEvent.submit(save.form as HTMLFormElement);
+    expect(saveListingRevisionContent).not.toHaveBeenCalled();
+
+    // The re-read answers the snapshot and data version 5, which the next command sends.
+    reread.resolve(
+      answered({
+        ...DRAFT,
+        termsSnapshot: { source: "IN_EFFECT", pendingStartDate: null, capturedAt: "2026-11-21T04:00:00Z", terms: TERMS },
+        dataVersion: 5,
+        problems: DRAFT.problems.filter((problem) => problem.part !== "TERMS"),
+      }),
+    );
+    await waitFor(() => expect((within(region()).getByRole("button", { name: r.saveDraft }) as HTMLButtonElement).disabled).toBe(false));
+    expect((within(region()).getByRole("button", { name: r.terms.take }) as HTMLButtonElement).disabled).toBe(false);
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(saveListingRevisionContent).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(saveListingRevisionContent).mock.calls[0]?.[2]).toMatchObject({ dataVersion: 5 });
   });
 
   it("revisionPanel_texts_noOuterPageTexts: the panel repeats none of the page's texts and has no level-1 heading", async () => {
