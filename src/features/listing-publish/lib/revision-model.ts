@@ -32,6 +32,16 @@ export type RevisionCommandOutcome =
   | { kind: "refused"; answer: RevisionAnswer; problems: RevisionProblem[] }
   | { kind: "silent" };
 
+/** The five commands of the panel (E06S2-D1). */
+export type RevisionCommand = "start" | "save" | "capture" | "submit" | "withdraw";
+
+/**
+ * Runs one command of the panel: nothing when another is running, so one click sends one request; the panel shows the
+ * outcome's answer. Every command carries the data version the page read, and the server refuses a second one that
+ * lands with `CONCURRENT_MODIFICATION`.
+ */
+export type RevisionRun = (command: RevisionCommand, send: () => Promise<RevisionCommandOutcome>) => Promise<void>;
+
 /** The outcome of a command's result; `command` says whether the title and description entries are a save's. */
 export function commandOutcome(result: ApiResult<unknown>, command: "save" | "other"): RevisionCommandOutcome {
   if (result.ok) return { kind: "done" };
