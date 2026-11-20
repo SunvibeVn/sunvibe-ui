@@ -1151,6 +1151,116 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(admin).toHaveURL(new RegExp(`${listingUrl}$`), { timeout: 20_000 });
     await expect(mainArea(admin).getByRole("heading", { level: 1, name: title, exact: true })).toBeVisible({ timeout: 20_000 });
   });
+
+  // Drafting a listing revision (listing-publish E06-S2, RD-14), on the listing E2E-2 created: its Draft 1 is filled, refused
+  // for a phone number, submitted, withdrawn, and a new Draft 2 is started. The Sale is already signed in; no owner POST and
+  // no rate-limited path (E06S2-P13), so the header's counts are unchanged. The texts hold no digits but the refused phone
+  // number, and none of listing BR-11's words.
+  const REVISION_TITLE = "Phòng trọ gần trường";
+  const REVISION_DESCRIPTION =
+    "Phòng rộng rãi, thoáng mát, có cửa sổ lớn nhìn ra vườn cây. Gần chợ, trường học và bến xe buýt. Khu phố yên tĩnh, sạch sẽ.";
+  const PROBLEMS = "What still stops a submission:";
+
+  /** The "Current revision" region of the listing E2E-2 created, reached from its agreement's page (E06S2-P13). */
+  async function openRevisionPanel(page: Page): Promise<Locator> {
+    expect(listingAgreementPath).toMatch(/^\/workspace\/brokerage-agreements\/[0-9A-Z]{26}$/);
+    await page.goto(listingAgreementPath);
+    const row = mainArea(page).getByRole("region", { name: "Listing", exact: true }).getByRole("listitem");
+    await expect(row).toHaveCount(1, { timeout: 20_000 });
+    await row.getByRole("link", { name: "Open", exact: true }).click();
+    await expect(page).toHaveURL(/\/workspace\/listings\/[0-9A-Z]{26}$/, { timeout: 20_000 });
+    return mainArea(page).getByRole("region", { name: "Current revision", exact: true });
+  }
+
+  test("revisionDraft_partialSaveAndTerms_keptOnReload (RD-14, RD-1, RD-3, listing-publish US-2 AC-1 to AC-3)", async () => {
+    expect(REVISION_TITLE).toHaveLength(20);
+    const panel = await openRevisionPanel(sale);
+    const titleField = panel.getByLabel("Title", { exact: true });
+    await expect(titleField).toHaveValue("", { timeout: 20_000 });
+    const problems = panel.getByRole("list", { name: PROBLEMS, exact: true });
+    await expect(problems.getByText("Add a title.", { exact: true })).toBeVisible();
+
+    // A partial save: the title only.
+    await titleField.fill(REVISION_TITLE);
+    await button(panel, "Save draft").click();
+    await expect(problems.getByText("Add a title.", { exact: true })).toHaveCount(0, { timeout: 20_000 });
+
+    // Kept on reload, with what still stops a submission.
+    await sale.reload();
+    await expect(panel.getByLabel("Title", { exact: true })).toHaveValue(REVISION_TITLE, { timeout: 20_000 });
+    await expect(problems.getByRole("listitem")).toHaveCount(2);
+    await expect(problems.getByText("Add a description.", { exact: true })).toBeVisible();
+    await expect(problems.getByText("Take a terms snapshot.", { exact: true })).toBeVisible();
+
+    // The terms snapshot of the version in effect, shown read-only.
+    const terms = panel.getByRole("region", { name: "Terms", exact: true });
+    await expect(terms.getByText("No terms snapshot yet.", { exact: true })).toBeVisible();
+    const inEffect = terms.getByRole("radio", { name: "Terms in effect", exact: true });
+    await expect(inEffect).toBeVisible({ timeout: 20_000 });
+    await inEffect.check();
+    await button(terms, "Take this snapshot").click();
+    const snapshot = terms.getByRole("list", { name: "Terms in effect", exact: true });
+    await expect(snapshot).toBeVisible({ timeout: 20_000 });
+    await expect(snapshot.getByText(/^Rent: /)).toBeVisible();
+    await expect(terms.getByText("No terms snapshot yet.", { exact: true })).toHaveCount(0);
+    await expect(problems.getByRole("listitem")).toHaveCount(1);
+  });
+
+  test("revisionSubmit_phoneInDescription_refusedWithItsRule (RD-14, RD-4, RD-5, listing-publish US-2 AC-4, E-4)", async () => {
+    const panel = await openRevisionPanel(sale);
+    const descriptionField = panel.getByLabel("Description", { exact: true });
+    await expect(panel.getByLabel("Title", { exact: true })).toHaveValue(REVISION_TITLE, { timeout: 20_000 });
+
+    // A description of more than 100 characters holding a dotted phone number, saved: a save checks no machine rule.
+    await descriptionField.fill(`${REVISION_DESCRIPTION} Liên hệ 0905.123.456 để xem phòng.`);
+    await button(panel, "Save draft").click();
+    const problems = panel.getByRole("list", { name: PROBLEMS, exact: true });
+    await expect(problems.getByText("The description holds what reads as a phone number.", { exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // The submission is refused with its rule, never quoting the number, and the revision stays a Draft.
+    await button(panel, "Submit for review").click();
+    const alert = panel.getByRole("alert");
+    await expect(alert.getByText("This revision cannot be submitted yet:", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(alert.getByText("The description holds what reads as a phone number.", { exact: true })).toBeVisible();
+    await expect(alert).not.toContainText("0905");
+    const revisions = mainArea(sale).getByRole("region", { name: "Revisions", exact: true });
+    await expect(revisions.getByText("Draft", { exact: true })).toBeVisible();
+    await expect(button(panel, "Save draft")).toBeVisible();
+  });
+
+  test("revisionSubmit_complete_pendingLockedThenWithdrawn (RD-14, RD-6 to RD-8, listing-publish US-2 AC-4 to AC-6)", async () => {
+    const panel = await openRevisionPanel(sale);
+    const descriptionField = panel.getByLabel("Description", { exact: true });
+    await expect(descriptionField).toHaveValue(/0905\.123\.456/, { timeout: 20_000 });
+
+    // The description without the number, saved: nothing stops the submission.
+    await descriptionField.fill(REVISION_DESCRIPTION);
+    await button(panel, "Save draft").click();
+    await expect(panel.getByRole("list", { name: PROBLEMS, exact: true })).toHaveCount(0, { timeout: 20_000 });
+
+    // Submitted: locked, with no form, and the assigned Sale may withdraw it.
+    await button(panel, "Submit for review").click();
+    await expect(panel.getByText(/^Submitted .+; the content is locked\.$/)).toBeVisible({ timeout: 20_000 });
+    await expect(button(panel, "Save draft")).toHaveCount(0);
+    await expect(panel.getByText(REVISION_DESCRIPTION, { exact: true })).toBeVisible();
+    const revisions = mainArea(sale).getByRole("region", { name: "Revisions", exact: true });
+    await expect(revisions.getByText("Pending review", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // Withdrawn after the question: no draft is open.
+    await button(panel, "Withdraw").click();
+    await expect(panel.getByText("Withdraw this revision? It will be cancelled.", { exact: true })).toBeVisible();
+    await button(panel, "Withdraw revision").click();
+    await expect(panel.getByText("No draft is open.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(revisions.getByText("Cancelled", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // A new empty Draft 2.
+    await button(panel, "Start a new draft").click();
+    await expect(revisions.getByText("Revision 2", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(panel.getByLabel("Title", { exact: true })).toHaveValue("", { timeout: 20_000 });
+    await expect(panel.getByText("Revision 2: Draft", { exact: true })).toBeVisible();
+  });
 });
 
 // No fixture reaches a case, so the answers are stubbed: this is about what the pages do with them. Budget: 1 login.

@@ -7,13 +7,19 @@ import en from "@/i18n/messages/en.json";
 
 import type { ListingDetail } from "../types";
 
-// The edge only: the listing read, so no request leaves the test.
+// The edge only: the listing read, the revision read and the start, so no request leaves the test.
 vi.mock("../services/listing-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/listing-api")>()),
   getListing: vi.fn(),
 }));
+vi.mock("../services/revision-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../services/revision-api")>()),
+  getListingRevision: vi.fn(() => new Promise<never>(() => undefined)),
+  startListingRevision: vi.fn(),
+}));
 
 import { getListing } from "../services/listing-api";
+import { getListingRevision, startListingRevision } from "../services/revision-api";
 
 import { ListingDetailView } from "./listing-detail-view";
 
@@ -32,6 +38,7 @@ const DETAIL: ListingDetail = {
   createdAt: "2026-11-20T03:15:00Z",
   dataVersion: 0,
   viewerIsAssignedSale: true,
+  openRevisionNo: 1,
   revisions: [{ revisionNo: 1, status: "DRAFT", createdAt: "2026-11-20T03:15:00Z" }],
   hasOlderRevisions: false,
 };
@@ -129,5 +136,58 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
     const { container } = renderView();
     await waitFor(() => expect(getListing).toHaveBeenCalledTimes(4));
     await waitFor(() => expect(container.textContent).toBe(""));
+  });
+
+  it("listingDetailView_ready_currentRevisionAboveRevisions: the 'Current revision' region precedes the 'Revisions' region", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered(DETAIL));
+    renderView();
+
+    const current = await screen.findByRole("region", { name: en.ListingPublish.revision.heading });
+    const revisions = screen.getByRole("region", { name: p.revisions });
+    expect(current.compareDocumentPosition(revisions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(within(current).getByText(en.ListingPublish.revision.loading)).toBeTruthy();
+  });
+
+  it("listingDetailView_afterStart_startWaitsForListingReread: after a command the panel's commands wait for the listing's re-read, which brings the new open revision", async () => {
+    const r = en.ListingPublish.revision;
+    const reread = deferred<ApiResult<ListingDetail>>();
+    vi.mocked(getListing)
+      .mockResolvedValueOnce(answered({ ...DETAIL, openRevisionNo: null, revisions: [{ revisionNo: 1, status: "CANCELLED", createdAt: "2026-11-20T03:15:00Z" }] }))
+      .mockReturnValueOnce(reread.promise);
+    vi.mocked(startListingRevision).mockResolvedValueOnce({
+      ok: true,
+      status: 201,
+      replayed: false,
+      data: { listingId: LISTING_ID, revisionNo: 2, status: "DRAFT", dataVersion: 1 },
+    });
+    renderView();
+
+    const current = await screen.findByRole("region", { name: r.heading });
+    fireEvent.click(within(current).getByRole("button", { name: r.start }));
+    await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+    expect(startListingRevision).toHaveBeenCalledWith(LISTING_ID, 0);
+
+    // The start answered, the listing's re-read has not: "No draft is open." still shows, and the start waits.
+    expect(within(current).getByText(r.none)).toBeTruthy();
+    const starting = within(current).getByRole("button", { name: r.starting }) as HTMLButtonElement;
+    expect(starting.disabled).toBe(true);
+    fireEvent.click(starting);
+    expect(startListingRevision).toHaveBeenCalledTimes(1);
+
+    reread.resolve(
+      answered({
+        ...DETAIL,
+        dataVersion: 1,
+        openRevisionNo: 2,
+        revisions: [
+          { revisionNo: 2, status: "DRAFT", createdAt: "2026-11-21T03:15:00Z" },
+          { revisionNo: 1, status: "CANCELLED", createdAt: "2026-11-20T03:15:00Z" },
+        ],
+      }),
+    );
+    expect(await within(current).findByText(r.loading)).toBeTruthy();
+    expect(getListingRevision).toHaveBeenCalledWith(LISTING_ID, 2);
+    expect(within(current).queryByRole("button")).toBeNull();
+    expect(startListingRevision).toHaveBeenCalledTimes(1);
   });
 });

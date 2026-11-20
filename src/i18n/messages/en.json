@@ -2883,6 +2883,151 @@
       "UNIT": "Something about this unit stops it.",
       "OWNER": "The owner can no longer hold the agreement.",
       "OTHER": "Another reason stops it."
+    },
+    "revision": {
+      "heading": "Current revision",
+      "statusLine": "Revision {revisionNo}: {status}",
+      "loading": "Loading the revision…",
+      "loadFailed": "The revision could not be loaded.",
+      "retry": "Try again",
+      "none": "No draft is open.",
+      "start": "Start a new draft",
+      "starting": "Starting…",
+      "title": "Title",
+      "titleCounter": "{count} / 90",
+      "description": "Description",
+      "descriptionCounter": "{count, number} / 3,000",
+      "notWritten": "Not written yet.",
+      "features": {
+        "heading": "Features",
+        "none": "No feature chosen.",
+        "chosen": "{feature}: {option}",
+        "labels": {
+          "furnishing": "Furniture",
+          "airConditioner": "Air conditioner",
+          "waterHeater": "Water heater",
+          "fridge": "Fridge",
+          "washingMachine": "Washing machine",
+          "kitchen": "Kitchen",
+          "balcony": "Balcony",
+          "elevator": "Elevator",
+          "motorbikeParking": "Motorbike parking",
+          "carParking": "Car parking",
+          "internet": "Internet",
+          "pets": "Pets",
+          "noSharedLandlord": "Landlord does not live here"
+        },
+        "options": {
+          "FULL": "Fully furnished",
+          "BASIC": "Basic furniture",
+          "NONE": "No furniture",
+          "PRIVATE": "Private",
+          "SHARED": "Shared",
+          "ALLOWED": "Allowed",
+          "NOT_ALLOWED": "Not allowed",
+          "notStated": "Not stated",
+          "OTHER": "Another choice"
+        }
+      },
+      "saveDraft": "Save draft",
+      "saving": "Saving…",
+      "terms": {
+        "heading": "Terms",
+        "rent": "Rent: {amount} VND / month",
+        "depositMonths": "Deposit: {months, plural, one {# month's rent} other {# months' rent}}",
+        "depositAmount": "Deposit: {amount} VND",
+        "noDeposit": "No deposit",
+        "depositOther": "Deposit: in another form",
+        "minimumTerm": "Minimum term: {months, plural, one {# month} other {# months}}",
+        "paymentPeriod": "{months, plural, one {Pay every month} other {Pay every # months}}",
+        "feeAmount": "{name}: {amount} VND {unit}",
+        "feeIncluded": "{name}: included in the rent",
+        "feeProviderTariff": "{name}: at the provider's rate",
+        "feeOther": "{name}: another kind of fee",
+        "units": {
+          "PER_MONTH": "per month",
+          "PER_KWH": "per kWh",
+          "PER_M3": "per m³",
+          "PER_PERSON_PER_MONTH": "per person per month",
+          "PER_VEHICLE_PER_MONTH": "per vehicle per month",
+          "ONE_OFF": "one-off",
+          "OTHER": "per another unit"
+        },
+        "sources": {
+          "IN_EFFECT": "Terms in effect",
+          "PENDING_START": "Terms of the version starting {date}",
+          "OTHER": "Other terms"
+        },
+        "taken": "taken {time}",
+        "none": "No terms snapshot yet.",
+        "choose": "Terms you can take now",
+        "take": "Take this snapshot",
+        "taking": "Taking…",
+        "sourcesLoading": "Loading the terms you can take…",
+        "sourcesFailed": "The terms you can take could not be loaded.",
+        "noSource": "No terms can be taken now."
+      },
+      "problems": {
+        "heading": "What still stops a submission:",
+        "TITLE": {
+          "REQUIRED": "Add a title.",
+          "TOO_SHORT": "The title needs at least 15 characters.",
+          "TOO_LONG": "The title can have at most 90 characters."
+        },
+        "DESCRIPTION": {
+          "REQUIRED": "Add a description.",
+          "TOO_SHORT": "The description needs at least 100 characters.",
+          "TOO_LONG": "The description can have at most 3,000 characters."
+        },
+        "TERMS": {
+          "REQUIRED": "Take a terms snapshot."
+        },
+        "PHONE_NUMBER": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds what reads as a phone number.",
+        "EMAIL": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds an e-mail address.",
+        "LINK": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a link or a web address.",
+        "SOCIAL_HANDLE": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a social network or chat account.",
+        "FORBIDDEN_WORD": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a claim a listing may not make.",
+        "unknown": "This revision breaks a rule this page does not know yet."
+      },
+      "unsaved": "Save the draft before you submit it.",
+      "submit": "Submit for review",
+      "submitting": "Submitting…",
+      "submitted": "Submitted {time}; the content is locked.",
+      "withdraw": "Withdraw",
+      "withdrawConfirm": "Withdraw this revision? It will be cancelled.",
+      "withdrawYes": "Withdraw revision",
+      "withdrawNo": "Keep it",
+      "withdrawing": "Withdrawing…",
+      "unit": {
+        "heading": "Unit at submission",
+        "place": "{ward}, {province}",
+        "rooms": "{bedrooms, plural, one {# bedroom} other {# bedrooms}}, {bathrooms, plural, one {# bathroom} other {# bathrooms}}",
+        "area": "{area, number} m²",
+        "assetTypes": {
+          "HOUSE": "House",
+          "WHOLE_BUILDING": "Whole building",
+          "VILLA": "Villa",
+          "HOMESTAY": "Homestay",
+          "CONDOTEL": "Condotel",
+          "APARTMENT": "Apartment",
+          "OTHER": "Another type"
+        }
+      },
+      "answers": {
+        "validationTitle": "The title is too long, holds a line break or holds a character that cannot be saved.",
+        "validationDescription": "The description is too long or holds a character that cannot be saved.",
+        "validationOther": "This could not be saved. Reload the page and try again.",
+        "forbidden": "Only the Sale in charge of this listing can change it.",
+        "notFound": "This listing or revision is no longer available to you.",
+        "archived": "This listing is archived.",
+        "concurrent": "Someone changed this listing. It has been reloaded.",
+        "notDraft": "This revision is no longer a draft.",
+        "notPending": "This revision is no longer waiting for review.",
+        "openExists": "A draft or a submitted revision is already open.",
+        "termsAbsent": "These terms are no longer available. Choose again.",
+        "notSubmittable": "This revision cannot be submitted yet:",
+        "failed": "Something went wrong. Try again."
+      }
     }
   },
   "TestEnvironment": {

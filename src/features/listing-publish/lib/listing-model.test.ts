@@ -20,6 +20,7 @@ const DETAIL: ListingDetail = {
   createdAt: "2026-11-20T03:15:00Z",
   dataVersion: 0,
   viewerIsAssignedSale: true,
+  openRevisionNo: 2,
   revisions: [
     { revisionNo: 2, status: "PENDING_REVIEW", createdAt: "2026-11-21T03:15:00Z" },
     { revisionNo: 1, status: "DRAFT", createdAt: "2026-11-20T03:15:00Z" },
@@ -50,6 +51,7 @@ describe("listingModel (listing-publish E06-S1, spec section 6, UL-3)", () => {
         { revisionNo: 1, statusKey: "revisionStatuses.DRAFT", createdAt: "2026-11-20T03:15:00Z" },
       ],
       olderRevisions: false,
+      revisionPanel: { openRevisionNo: 2, dataVersion: 0, viewerMayDraft: true },
     });
     expect(listingPath(LISTING_ID)).toBe(`/workspace/listings/${LISTING_ID}`);
 

@@ -11,6 +11,8 @@ import { Button } from "@/components/ui/button";
 import { listingModel, type ListingPageModel } from "../lib/listing-model";
 import { getListing } from "../services/listing-api";
 
+import { RevisionPanel } from "./revision-panel";
+
 const LOADING: ListingPageModel = { kind: "loading" };
 
 /** An instant on the staff page, as the agreement page formats its times (the workspace provider sets the zone). */
@@ -20,23 +22,33 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
  * The workspace page of one listing (listing-publish US-1 AC-4, spec section 6, UL-3): its public code, state,
  * transaction type and creation time, a way back to its agreement, and its newest revisions, newest first. Nothing of
  * it is public yet, and the page says so. No unit address, owner or person. It reads on mount and on "Try again".
+ * The "Current revision" panel (E06-S2) sits above the revisions; after each of its commands the page reads the listing
+ * again in place, keeping what it shows until the answer, so the panel and its alert stay (E06S2-P11 (2)): a 404 shows
+ * the not-found state, and a failed re-read keeps the page as it is. Until that answer the panel's commands wait, since
+ * the page still holds the old data version.
  */
 export function ListingDetailView({ listingId }: { listingId: string }) {
   const t = useTranslations("ListingPublish");
   const format = useFormatter();
   const [model, setModel] = useState<ListingPageModel>(LOADING);
   const [attempt, setAttempt] = useState(0);
+  const [refresh, setRefresh] = useState(0);
+  /** The `refresh` of the last read that answered: behind `refresh` while the panel's re-read runs. */
+  const [answered, setAnswered] = useState(0);
   const revisionsId = useId();
 
   useEffect(() => {
     let dropped = false;
     void getListing(listingId).then((result) => {
-      if (!dropped) setModel(listingModel(result));
+      if (dropped) return;
+      const next = listingModel(result);
+      setModel((current) => (current.kind === "ready" && next.kind === "error" ? current : next));
+      setAnswered(refresh);
     });
     return () => {
       dropped = true;
     };
-  }, [listingId, attempt]);
+  }, [listingId, attempt, refresh]);
 
   // Next keeps this route hidden (Activity): nothing of the listing stays in it, and the next read starts as the first.
   useLayoutEffect(
@@ -50,6 +62,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
     setModel(LOADING);
     setAttempt((count) => count + 1);
   };
+  const reread = () => setRefresh((count) => count + 1);
   const time = (instant: string) => format.dateTime(new Date(instant), TIME_FORMAT);
 
   switch (model.kind) {
@@ -105,6 +118,12 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
               {t("page.openAgreement")}
             </Link>
           </div>
+          <RevisionPanel
+            listingId={listingId}
+            panel={model.revisionPanel}
+            listingRereading={answered !== refresh}
+            onListingChanged={reread}
+          />
           <section
             aria-labelledby={revisionsId}
             className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"
