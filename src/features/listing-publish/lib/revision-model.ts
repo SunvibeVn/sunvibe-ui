@@ -5,6 +5,7 @@ import type { ListingDetail, ListingFee, ListingRevisionDetail, ListingTerms, Li
 import { revisionStatusKey, type RevisionStatusKey } from "./listing-text";
 import { formValues, type RevisionFormValues } from "./revision-form";
 import {
+  answerOf,
   assetTypeKey,
   chargeUnitKey,
   FEATURE_NAMES,
@@ -14,9 +15,31 @@ import {
   optionLabelKey,
   type Phrase,
   problemSentence,
+  problemsOf,
+  type RevisionAnswer,
+  type RevisionProblem,
   sourceKey,
   wholeVnd,
 } from "./revision-text";
+
+/**
+ * What a revision command's answer shows (spec section 6, "After every command"): `done`; `refused` with the answer's
+ * sentence and, for the 422, the entries as problems in the server's order; `silent` for a session answer, which shows
+ * nothing and reads nothing again (E06S1-P8).
+ */
+export type RevisionCommandOutcome =
+  | { kind: "done" }
+  | { kind: "refused"; answer: RevisionAnswer; problems: RevisionProblem[] }
+  | { kind: "silent" };
+
+/** The outcome of a command's result; `command` says whether the title and description entries are a save's. */
+export function commandOutcome(result: ApiResult<unknown>, command: "save" | "other"): RevisionCommandOutcome {
+  if (result.ok) return { kind: "done" };
+  const answer = answerOf(result, command);
+  if (answer === null) return { kind: "silent" };
+  const problems = answer === "notSubmittable" && result.kind === "http" ? problemsOf(result.fieldErrors) : [];
+  return { kind: "refused", answer, problems };
+}
 
 /**
  * What the "Current revision" panel takes from the listing read (spec section 6, E06S2-D20): the open revision's
