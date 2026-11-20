@@ -20,6 +20,7 @@ const DETAIL: ListingDetail = {
   createdAt: "2026-11-20T03:15:00Z",
   dataVersion: 0,
   viewerIsAssignedSale: true,
+  openRevisionNo: 2,
   revisions: [
     { revisionNo: 2, status: "PENDING_REVIEW", createdAt: "2026-11-21T03:15:00Z" },
     { revisionNo: 1, status: "DRAFT", createdAt: "2026-11-20T03:15:00Z" },

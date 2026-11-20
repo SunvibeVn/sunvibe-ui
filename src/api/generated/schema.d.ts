@@ -916,6 +916,125 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/listings/{listingId}/revisions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Start a new empty Draft when the listing has no Draft or Pending review revision */
+        post: operations["startListingRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** One revision of a listing, with the problems a Draft's submission would answer now */
+        get: operations["getListingRevision"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Save a Draft's title, description and features; minimum lengths and the machine check are the submission's */
+        put: operations["saveListingRevisionContent"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/submission": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Submit a complete Draft for review with the unit and property fields of this moment */
+        post: operations["submitListingRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/terms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Take a Draft's terms snapshot from the agreement's version in effect or waiting to start */
+        put: operations["captureListingRevisionTerms"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/withdrawal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Withdraw a Pending review revision before a decision; its content is kept */
+        post: operations["withdrawListingRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/terms-sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a terms snapshot can be taken from now: the version in effect and the one waiting to start */
+        get: operations["getListingTermsSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-lead-assignees": {
         parameters: {
             query?: never;
@@ -5883,6 +6002,25 @@ export interface components {
             reasonGroups: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
             viewerMayCreate: boolean;
         };
+        ListingDeposit: {
+            /**
+             * Format: int64
+             * @description Set for AMOUNT, from 0
+             */
+            amount: number | null;
+            /** @enum {string} */
+            basis: "MONTHS" | "AMOUNT";
+            /**
+             * @description VND exactly when an amount is set
+             * @enum {string|null}
+             */
+            currency: "VND" | null;
+            /**
+             * Format: int32
+             * @description Set for MONTHS, 0 to 12
+             */
+            months: number | null;
+        };
         ListingDetail: {
             /** @description The listing's agreement */
             agreementId: string;
@@ -5899,6 +6037,11 @@ export interface components {
             hasOlderRevisions: boolean;
             /** @description The internal id (staff only) */
             listingId: string;
+            /**
+             * Format: int32
+             * @description The number of the listing's Draft or Pending review revision; null when none is open
+             */
+            openRevisionNo: number | null;
             /** @description At most the 20 newest revisions, the newest first */
             revisions: components["schemas"]["ListingRevisionItem"][];
             /**
@@ -5912,6 +6055,91 @@ export interface components {
             /** @description The viewer holds the agreement's basis lead now; a hint, the commands decide */
             viewerIsAssignedSale: boolean;
         };
+        ListingFeatures: {
+            airConditioner: boolean;
+            balcony: boolean;
+            carParking: boolean;
+            elevator: boolean;
+            fridge: boolean;
+            /**
+             * @description Furniture; null when not stated
+             * @enum {string|null}
+             */
+            furnishing: "FULL" | "BASIC" | "NONE" | null;
+            internet: boolean;
+            /**
+             * @description Kitchen; null when not stated
+             * @enum {string|null}
+             */
+            kitchen: "PRIVATE" | "SHARED" | null;
+            motorbikeParking: boolean;
+            /** @description The landlord does not live here */
+            noSharedLandlord: boolean;
+            /**
+             * @description Pets; null when not stated
+             * @enum {string|null}
+             */
+            pets: "ALLOWED" | "NOT_ALLOWED" | null;
+            /**
+             * @description Washing machine; null when not stated
+             * @enum {string|null}
+             */
+            washingMachine: "PRIVATE" | "SHARED" | null;
+            waterHeater: boolean;
+        };
+        ListingFeaturesInput: {
+            airConditioner: boolean;
+            balcony: boolean;
+            carParking: boolean;
+            elevator: boolean;
+            fridge: boolean;
+            /**
+             * @description Furniture; null when not stated
+             * @enum {string|null}
+             */
+            furnishing: "FULL" | "BASIC" | "NONE" | null;
+            internet: boolean;
+            /**
+             * @description Kitchen; null when not stated
+             * @enum {string|null}
+             */
+            kitchen: "PRIVATE" | "SHARED" | null;
+            motorbikeParking: boolean;
+            /** @description The landlord does not live here */
+            noSharedLandlord: boolean;
+            /**
+             * @description Pets; null when not stated
+             * @enum {string|null}
+             */
+            pets: "ALLOWED" | "NOT_ALLOWED" | null;
+            /**
+             * @description Washing machine; null when not stated
+             * @enum {string|null}
+             */
+            washingMachine: "PRIVATE" | "SHARED" | null;
+            waterHeater: boolean;
+        };
+        ListingFee: {
+            /**
+             * Format: int64
+             * @description Set for AMOUNT, at least 1
+             */
+            amount: number | null;
+            /** @enum {string} */
+            basis: "AMOUNT" | "INCLUDED" | "PROVIDER_TARIFF";
+            /**
+             * @description Set for AMOUNT
+             * @enum {string|null}
+             */
+            chargeUnit: "PER_MONTH" | "PER_KWH" | "PER_M3" | "PER_PERSON_PER_MONTH" | "PER_VEHICLE_PER_MONTH" | "ONE_OFF" | null;
+            /**
+             * @description VND exactly when an amount is set
+             * @enum {string|null}
+             */
+            currency: "VND" | null;
+            /** @description 1 to 100 characters, E05's content */
+            name: string;
+        };
         ListingItem: {
             /** @description The public code */
             code: string;
@@ -5924,6 +6152,82 @@ export interface components {
              */
             state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
         };
+        ListingPendingTerms: {
+            /** Format: date */
+            startDate: string;
+            terms: components["schemas"]["ListingTerms"];
+        };
+        ListingRent: {
+            /** Format: int64 */
+            amount: number;
+            /** @enum {string} */
+            currency: "VND";
+            /** @enum {string} */
+            unit: "MONTH";
+        };
+        ListingRevisionChange: {
+            /**
+             * Format: int64
+             * @description The listing's new data version
+             */
+            dataVersion: number;
+            listingId: string;
+            /** Format: int32 */
+            revisionNo: number;
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING_REVIEW" | "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED" | "CANCELLED";
+        };
+        ListingRevisionCommand: {
+            /**
+             * Format: int64
+             * @description The listing's data version the caller read (listing BR-3)
+             */
+            dataVersion: number;
+        };
+        ListingRevisionContent: {
+            /**
+             * Format: int64
+             * @description The listing's data version the caller read (listing BR-3)
+             */
+            dataVersion: number;
+            /** @description At most 3,000 characters (code points after NFC, trimmed), line feeds allowed, no other control or format character; null or blank is empty */
+            description: string | null;
+            features: components["schemas"]["ListingFeaturesInput"];
+            /** @description At most 90 characters (code points after NFC, trimmed) on one line, no control or format character; null or blank is empty */
+            title: string | null;
+        };
+        ListingRevisionDetail: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: int64
+             * @description The listing's data version a later command sends back
+             */
+            dataVersion: number;
+            /** @description Null when empty */
+            description: string | null;
+            features: components["schemas"]["ListingFeatures"];
+            listingId: string;
+            /** @description The rules a submission would refuse now, in order; empty unless the status is DRAFT */
+            problems: components["schemas"]["ListingRevisionProblem"][];
+            /** Format: int32 */
+            revisionNo: number;
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING_REVIEW" | "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED" | "CANCELLED";
+            /**
+             * Format: date-time
+             * @description Null before the submission
+             */
+            submittedAt: string | null;
+            /** @description Null until a snapshot is taken */
+            termsSnapshot: components["schemas"]["ListingTermsSnapshot"] | null;
+            /** @description Null when empty */
+            title: string | null;
+            /** @description Taken at the submission; null before it */
+            unitSnapshot: components["schemas"]["ListingUnitSnapshot"] | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         ListingRevisionItem: {
             /** Format: date-time */
             createdAt: string;
@@ -5934,6 +6238,72 @@ export interface components {
             revisionNo: number;
             /** @enum {string} */
             status: "DRAFT" | "PENDING_REVIEW" | "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED" | "CANCELLED";
+        };
+        ListingRevisionProblem: {
+            /** @enum {string} */
+            part: "TITLE" | "DESCRIPTION" | "TERMS";
+            /** @enum {string} */
+            rule: "REQUIRED" | "TOO_SHORT" | "TOO_LONG" | "PHONE_NUMBER" | "EMAIL" | "LINK" | "SOCIAL_HANDLE" | "FORBIDDEN_WORD";
+        };
+        ListingTerms: {
+            deposit: components["schemas"]["ListingDeposit"];
+            /** @description 0 to 20 fees, E05's order */
+            mandatoryFees: components["schemas"]["ListingFee"][];
+            /** Format: int32 */
+            minimumTermMonths: number;
+            monthlyRent: components["schemas"]["ListingRent"];
+            /** Format: int32 */
+            paymentPeriodMonths: number;
+        };
+        ListingTermsCapture: {
+            /**
+             * Format: int64
+             * @description The listing's data version the caller read (listing BR-3)
+             */
+            dataVersion: number;
+            /**
+             * @description The version in effect, or the activated version waiting for its start date
+             * @enum {string}
+             */
+            source: "IN_EFFECT" | "PENDING_START";
+        };
+        ListingTermsSnapshot: {
+            /** Format: date-time */
+            capturedAt: string;
+            /**
+             * Format: date
+             * @description Set exactly for PENDING_START
+             */
+            pendingStartDate: string | null;
+            /** @enum {string} */
+            source: "IN_EFFECT" | "PENDING_START";
+            terms: components["schemas"]["ListingTerms"];
+        };
+        ListingTermsSources: {
+            /** @description The listing's agreement ended: no source */
+            ended: boolean;
+            /** @description The terms of E05's version in effect; null without one */
+            inEffect: components["schemas"]["ListingTerms"] | null;
+            /** @description E05's activated version waiting to start; null without one */
+            pending: components["schemas"]["ListingPendingTerms"] | null;
+        };
+        ListingUnitSnapshot: {
+            /** Format: double */
+            areaSqm: number;
+            /**
+             * @description Null on a legacy property
+             * @enum {string|null}
+             */
+            assetType: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+            /** Format: int32 */
+            bathrooms: number;
+            /** Format: int32 */
+            bedrooms: number;
+            provinceCode: string | null;
+            provinceName: string | null;
+            wardCode: string | null;
+            /** @description The four place fields are set together from the catalog, or all null */
+            wardName: string | null;
         };
         LoginRequest: {
             email?: string;
@@ -10642,6 +11012,500 @@ export interface operations {
             };
             /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    startListingRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionCommand"];
+            };
+        };
+        responses: {
+            /** @description The new Draft, numbered after the greatest number, and the listing's new data version */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative, or a field of the body) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale) or OPEN_REVISION_EXISTS */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The revision; no user id */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionDetail"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller may not read the listing, or it has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    saveListingRevisionContent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionContent"];
+            };
+        };
+        responses: {
+            /** @description Saved; the listing's new data version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative, or a field of the body) or MALFORMED_REQUEST (the body cannot be read); answered before the role; the entry title, description or features.<name> for a text or code the revision cannot store */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION or REVISION_NOT_DRAFT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    submitListingRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionCommand"];
+            };
+        };
+        responses: {
+            /** @description Pending review; the content is locked */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative, or a field of the body) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION or REVISION_NOT_DRAFT */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description REVISION_NOT_SUBMITTABLE: one entry per violation, in order, its field <part>.<rule> (title.TOO_SHORT, terms.REQUIRED); never the matched text */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: the unit's profile cannot be read; nothing is written */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    captureListingRevisionTerms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingTermsCapture"];
+            };
+        };
+        responses: {
+            /** @description Taken; an earlier snapshot and its fees are replaced */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative, or a field of the body) or MALFORMED_REQUEST (the body cannot be read); answered before the role; the entry source for another value */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION, REVISION_NOT_DRAFT or TERMS_SOURCE_ABSENT (the agreement has no such version now) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: the agreement's terms break the contract; nothing is written */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    withdrawListingRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionCommand"];
+            };
+        };
+        responses: {
+            /** @description Cancelled */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative, or a field of the body) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION or REVISION_NOT_PENDING */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingTermsSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Each source present only when the agreement has it; none once the agreement ended */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingTermsSources"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller does not hold its agreement's basis lead now: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: the agreement's terms break the contract */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };

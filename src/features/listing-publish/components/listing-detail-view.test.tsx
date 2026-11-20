@@ -7,10 +7,14 @@ import en from "@/i18n/messages/en.json";
 
 import type { ListingDetail } from "../types";
 
-// The edge only: the listing read, so no request leaves the test.
+// The edge only: the listing read and the revision read, so no request leaves the test.
 vi.mock("../services/listing-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/listing-api")>()),
   getListing: vi.fn(),
+}));
+vi.mock("../services/revision-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../services/revision-api")>()),
+  getListingRevision: vi.fn(() => new Promise<never>(() => undefined)),
 }));
 
 import { getListing } from "../services/listing-api";
@@ -32,6 +36,7 @@ const DETAIL: ListingDetail = {
   createdAt: "2026-11-20T03:15:00Z",
   dataVersion: 0,
   viewerIsAssignedSale: true,
+  openRevisionNo: 1,
   revisions: [{ revisionNo: 1, status: "DRAFT", createdAt: "2026-11-20T03:15:00Z" }],
   hasOlderRevisions: false,
 };
