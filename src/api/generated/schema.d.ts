@@ -865,6 +865,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a listing under an agreement whose advertising answer allows it, for its assigned Sale */
+        post: operations["createListing"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/by-agreement/{agreementId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The listings of an agreement and whether the caller may create one now */
+        get: operations["getAgreementListings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A listing with its newest revisions; nothing of it is public */
+        get: operations["getListing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/owner-lead-assignees": {
         parameters: {
             query?: never;
@@ -2018,6 +2069,14 @@ export interface components {
              */
             nextActionAt?: string;
             note: string;
+        };
+        AgreementListings: {
+            agreementId: string;
+            creation: components["schemas"]["ListingCreation"];
+            /** @description The agreement has older listings than those answered */
+            hasOlder: boolean;
+            /** @description At most the 20 newest listings of the agreement, the newest first; at most one is not archived */
+            listings: components["schemas"]["ListingItem"][];
         };
         AskingPriceRequest: {
             /**
@@ -5806,6 +5865,75 @@ export interface components {
             expectedVersion: number;
             /** @description Lead id (ULID) */
             leadId: string;
+        };
+        ListingCreateRequest: {
+            /** @description The agreement the listing is bound to for life; its unit and transaction type come from it */
+            agreementId: string;
+        };
+        ListingCreated: {
+            /** @description The public code; it never changes */
+            code: string;
+            /** @description The internal id (staff only) */
+            listingId: string;
+        };
+        ListingCreation: {
+            /** @description E05's reason groups are exactly NOT_STARTED: the listing can be prepared before the start */
+            advertisingNotStarted: boolean;
+            /** @description The groups that stop a create, in this order; empty when E05's answer allows one (NOT_STARTED alone included); ENDED when the agreement has ended; NO_AGREEMENT when E05 gives no answer */
+            reasonGroups: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            viewerMayCreate: boolean;
+        };
+        ListingDetail: {
+            /** @description The listing's agreement */
+            agreementId: string;
+            /** @description The public code */
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: int64
+             * @description The data version a later command sends back
+             */
+            dataVersion: number;
+            /** @description The listing has older revisions than those answered */
+            hasOlderRevisions: boolean;
+            /** @description The internal id (staff only) */
+            listingId: string;
+            /** @description At most the 20 newest revisions, the newest first */
+            revisions: components["schemas"]["ListingRevisionItem"][];
+            /**
+             * @description ARCHIVED also when the listing's agreement has ended
+             * @enum {string}
+             */
+            state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
+            /** @enum {string} */
+            transactionType: "LONG_TERM_RENT";
+            unitId: string;
+            /** @description The viewer holds the agreement's basis lead now; a hint, the commands decide */
+            viewerIsAssignedSale: boolean;
+        };
+        ListingItem: {
+            /** @description The public code */
+            code: string;
+            /** Format: date-time */
+            createdAt: string;
+            listingId: string;
+            /**
+             * @description ARCHIVED also when the agreement has ended
+             * @enum {string}
+             */
+            state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
+        };
+        ListingRevisionItem: {
+            /** Format: date-time */
+            createdAt: string;
+            /**
+             * Format: int32
+             * @description From 1
+             */
+            revisionNo: number;
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING_REVIEW" | "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED" | "CANCELLED";
         };
         LoginRequest: {
             email?: string;
@@ -10329,6 +10457,191 @@ export interface operations {
             };
             /** @description INTAKE_STATE or CONCURRENT_MODIFICATION */
             409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    createListing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description The listing was created, Unpublished with revision 1 Draft; its id and public code are answered */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingCreated"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry, field agreementId) or MALFORMED_REQUEST (the body cannot be read) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every agreement id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, is of another transaction type, or the caller does not hold its basis lead now: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_NOT_ALLOWED (one reasonGroups.<GROUP> entry per group, in the order NO_AGREEMENT, NOT_IN_EFFECT, NOT_STARTED, SUSPENDED, ENDED, BASIS, PROPERTY, UNIT, OWNER), LISTING_EXISTS (the agreement already has a listing; no id is answered) or CONCURRENT_MODIFICATION */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getAgreementListings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                agreementId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description At most the agreement's 20 newest listings and the creation part */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["AgreementListings"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN (LISTING_REVIEWER alone included); the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the agreement does not exist, the id is malformed, or the caller may not read it: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, also for a reason group of the advertising answer this server does not know */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The listing and at most its 20 newest revisions */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingDetail"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

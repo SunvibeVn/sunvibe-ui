@@ -2809,6 +2809,82 @@
       "supportCode": "Support code: {code}"
     }
   },
+  "ListingPublish": {
+    "section": {
+      "title": "Listing",
+      "loading": "Loading the listing…",
+      "loadFailed": "The listing could not be loaded.",
+      "retry": "Try again",
+      "listing": "Listing {code}",
+      "open": "Open",
+      "noListing": "No listing for this agreement yet.",
+      "noOpenListing": "No open listing for this agreement.",
+      "notStarted": "Advertising has not started yet; the listing can be prepared now.",
+      "create": "Create a listing",
+      "creating": "Creating…",
+      "notAllowed": "A listing cannot be created now:",
+      "assignedSaleOnly": "Only the lead's assigned Sale creates a listing.",
+      "older": "Older listings of this agreement are not shown here."
+    },
+    "create": {
+      "exists": "This agreement already has a listing.",
+      "notAllowed": "A listing cannot be created now.",
+      "notFound": "You can no longer create a listing for this agreement.",
+      "concurrent": "Something changed at the same time. Try again.",
+      "failed": "The listing could not be created. Try again."
+    },
+    "page": {
+      "title": "Listing {code}",
+      "state": "State",
+      "transaction": "Transaction",
+      "created": "Created",
+      "openAgreement": "Open the agreement",
+      "revisions": "Revisions",
+      "revision": "Revision {revisionNo}",
+      "revisionCreated": "created {time}",
+      "olderRevisions": "Older revisions are not shown here.",
+      "notPublic": "Nothing of this listing is public.",
+      "loading": "Loading the listing…",
+      "notFound": "This listing does not exist, or you cannot open it.",
+      "loadFailed": "The listing could not be loaded.",
+      "retry": "Try again"
+    },
+    "states": {
+      "UNPUBLISHED": "Unpublished",
+      "PUBLISHED": "Published",
+      "PAUSED": "Paused",
+      "URGENTLY_UNPUBLISHED": "Urgently unpublished",
+      "ARCHIVED": "Archived",
+      "OTHER": "Another state"
+    },
+    "revisionStatuses": {
+      "DRAFT": "Draft",
+      "PENDING_REVIEW": "Pending review",
+      "NEEDS_CHANGES": "Needs changes",
+      "REJECTED": "Rejected",
+      "APPROVED": "Approved",
+      "LIVE": "Live",
+      "REPLACED": "Replaced",
+      "CANCELLED": "Cancelled",
+      "OTHER": "Another state"
+    },
+    "transactionTypes": {
+      "LONG_TERM_RENT": "Long-term rental",
+      "OTHER": "Another transaction type"
+    },
+    "reasons": {
+      "NO_AGREEMENT": "There is no agreement in effect for this unit.",
+      "NOT_IN_EFFECT": "The agreement is not in effect yet.",
+      "NOT_STARTED": "Advertising has not started yet.",
+      "SUSPENDED": "The agreement is suspended.",
+      "ENDED": "The agreement has ended.",
+      "BASIS": "The intake behind the agreement can no longer be used.",
+      "PROPERTY": "Something about the whole property stops it.",
+      "UNIT": "Something about this unit stops it.",
+      "OWNER": "The owner can no longer hold the agreement.",
+      "OTHER": "Another reason stops it."
+    }
+  },
   "TestEnvironment": {
     "notice": "Sunvibe test environment. Use fake data only; data may be deleted at any time."
   },
