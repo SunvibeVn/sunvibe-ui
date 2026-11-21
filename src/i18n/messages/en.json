@@ -3112,6 +3112,78 @@
       "notValid": "The latest contact is not a valid confirmation.",
       "hasMore": "More listings may need reconfirmation than this list shows.",
       "forbidden": "You cannot open this list."
+    },
+    "reviews": {
+      "title": "Listing reviews",
+      "loading": "Loading…",
+      "loadFailed": "The list could not be loaded.",
+      "retry": "Try again",
+      "forbidden": "You cannot open this list.",
+      "empty": "No revision is waiting for review.",
+      "columns": {
+        "code": "Listing code",
+        "revision": "Revision",
+        "submitted": "Submitted",
+        "title": "Title",
+        "unit": "Unit",
+        "review": "Review"
+      },
+      "reviewLink": "Review",
+      "notEligible": "You may not review this:",
+      "hasMore": "More revisions are waiting than are shown here."
+    },
+    "review": {
+      "ineligible": {
+        "NOT_A_REVIEWER": "You do not hold a listing reviewer role.",
+        "AUTHOR": "You created or edited this revision.",
+        "ASSIGNED_SALE": "You are the listing's assigned Sale.",
+        "NOT_PENDING": "This revision is no longer waiting for review.",
+        "LISTING_ARCHIVED": "The listing is archived.",
+        "unknown": "Another reason stops it."
+      },
+      "checks": {
+        "CONTENT_MATCHES_UNIT": "Text, features and terms match the unit (type, rooms, area, features).",
+        "TEXT_FOLLOWS_RULES": "The text follows the listing rules, including what the machine check cannot catch (numbers in words, street names, house numbers, people's names, prices); so do the fee names of the terms.",
+        "TERMS_MATCH_AGREEMENT": "Rent, deposit and every mandatory fee, with its name, equal the agreement version (compared above).",
+        "NO_FRAUD_SIGNS": "No sign of a fake listing or of content taken from elsewhere.",
+        "AGREEMENT_END_AND_RIGHT": "The agreement's end and the current advertising right were checked.",
+        "unknown": "A check this page does not know yet."
+      },
+      "changeReasons": {
+        "CONTENT_MISMATCH": "The content does not match the unit.",
+        "TEXT_RULE_VIOLATION": "The text breaks the listing rules.",
+        "MISSING_INFORMATION": "Information is missing.",
+        "TERMS_MISMATCH": "The rental terms do not match the agreement version.",
+        "OTHER": "Other (say what in the note).",
+        "unknown": "Another reason."
+      },
+      "rejectionGroups": {
+        "SUSPECTED_FRAUD": "Suspected fake listing or fraud.",
+        "WRONG_UNIT": "Wrong unit.",
+        "SERIOUS_VIOLATION": "Serious violation.",
+        "OTHER": "Other (say what in the note).",
+        "unknown": "Another group."
+      },
+      "outcomes": {
+        "APPROVED": "Approve",
+        "NEEDS_CHANGES": "Return for changes",
+        "REJECTED": "Reject",
+        "unknown": "Another decision"
+      },
+      "termsMatch": {
+        "IN_EFFECT": "The revision's terms equal the version in effect.",
+        "PENDING_START": "The revision's terms equal the version waiting to start.",
+        "NONE": "The revision's terms equal no version of the agreement: it cannot be approved.",
+        "NO_SNAPSHOT": "This revision holds no terms snapshot.",
+        "unknown": "The terms check gave an answer this page does not know."
+      },
+      "availabilities": {
+        "AVAILABLE": "Available",
+        "OCCUPIED": "Occupied",
+        "MAINTENANCE": "Maintenance",
+        "BLOCKED": "Blocked",
+        "unknown": "Another state"
+      }
     }
   },
   "TestEnvironment": {
