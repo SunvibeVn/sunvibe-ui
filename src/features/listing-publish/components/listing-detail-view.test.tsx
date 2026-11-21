@@ -190,4 +190,56 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
     expect(within(current).queryByRole("button")).toBeNull();
     expect(startListingRevision).toHaveBeenCalledTimes(1);
   });
+
+  const STARTED = {
+    ok: true,
+    status: 201,
+    replayed: false,
+    data: { listingId: LISTING_ID, revisionNo: 1, status: "DRAFT", dataVersion: 1 },
+  } as const;
+
+  it.each([
+    { row: "500", reread: failed(500, "INTERNAL_ERROR") },
+    { row: "no answer", reread: { ok: false, kind: "network" } as ApiResult<ListingDetail> },
+  ])(
+    "listingDetailView_afterStart_rereadFails_pageStaysAndStartSendsAgain: $row: a failed listing re-read after a command keeps the page and enables the panel's command again (K-11, pin (b))",
+    async ({ reread }) => {
+      const r = en.ListingPublish.revision;
+      vi.mocked(startListingRevision).mockReset();
+      vi.mocked(startListingRevision).mockResolvedValueOnce(STARTED).mockResolvedValueOnce(STARTED);
+      vi.mocked(getListing)
+        .mockResolvedValueOnce(answered({ ...DETAIL, openRevisionNo: null }))
+        .mockResolvedValueOnce(reread)
+        .mockReturnValueOnce(new Promise<never>(() => undefined));
+      renderView();
+
+      const current = await screen.findByRole("region", { name: r.heading });
+      fireEvent.click(within(current).getByRole("button", { name: r.start }));
+      await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect((within(current).queryByRole("button", { name: r.start }) as HTMLButtonElement | null)?.disabled).toBe(false),
+      );
+      expect(screen.queryByRole("heading", { level: 1, name: "Listing TD-7K3M-Q9TX" })).not.toBeNull();
+      expect(screen.queryByText(p.loadFailed)).toBeNull();
+      fireEvent.click(within(current).getByRole("button", { name: r.start }));
+      await waitFor(() => expect(startListingRevision).toHaveBeenCalledTimes(2));
+      expect(startListingRevision).toHaveBeenNthCalledWith(2, LISTING_ID, 0);
+    },
+  );
+
+  it("listingDetailView_afterStart_rereadNotFound_notFoundShown: a listing re-read after a command that answers 404 shows the not-found answer in place of the page (K-12, pin (c))", async () => {
+    const r = en.ListingPublish.revision;
+    vi.mocked(startListingRevision).mockReset();
+    vi.mocked(startListingRevision).mockResolvedValueOnce(STARTED);
+    vi.mocked(getListing)
+      .mockResolvedValueOnce(answered({ ...DETAIL, openRevisionNo: null }))
+      .mockResolvedValueOnce(failed(404, "NOT_FOUND"));
+    renderView();
+
+    const current = await screen.findByRole("region", { name: r.heading });
+    fireEvent.click(within(current).getByRole("button", { name: r.start }));
+    await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByText(p.notFound)).not.toBeNull());
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
 });
