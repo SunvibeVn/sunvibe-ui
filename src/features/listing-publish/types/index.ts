@@ -35,3 +35,17 @@ export type ListingRevisionProblem = Schemas["ListingRevisionProblem"];
 export type ListingUnitSnapshot = Schemas["ListingUnitSnapshot"];
 /** The body of a save: the whole title, description and thirteen features (E06S2-D4). */
 export type ListingRevisionContentBody = Schemas["ListingRevisionContent"];
+
+// Recording the freshness confirmation (listing-publish E06-S3). The three dates and `latest` are null until a valid
+// confirmation or a first record; in `latest` the two answers are set exactly for AVAILABLE and the note is optional.
+
+/** The listing's freshness: the dates, the two flags and the latest record with its private note; no user id. */
+export type ListingFreshness = Schemas["ListingFreshness"];
+export type ListingFreshnessRecord = Schemas["ListingFreshnessRecord"];
+/** The body of a record: no date, the server sets today in Vietnam time (E06S3-D4). */
+export type ListingFreshnessRecordRequest = Schemas["ListingFreshnessRecordRequest"];
+/** The answer of a record: whether it is a valid confirmation and the listing's new data version. */
+export type ListingFreshnessRecorded = Schemas["ListingFreshnessRecorded"];
+/** At most 50 listings to reconfirm, oldest confirmation first, and whether more may need it (E06S3-D7). */
+export type ListingReconfirmations = Schemas["ListingReconfirmations"];
+export type ListingReconfirmationItem = Schemas["ListingReconfirmationItem"];

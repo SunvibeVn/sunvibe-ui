@@ -119,7 +119,7 @@ test.describe("SALE in the workspace", () => {
     await expect(workspaceHeaderLink(page)).toHaveCount(0);
     // C-42: the menu item; a SALE has no territories item.
     const menu = page.getByRole("navigation", { name: T.menuLabel });
-    await expect(menu.getByRole("link")).toHaveText([T.menuOwnerLeads, T.menuSurveys, T.menuAgreements]);
+    await expect(menu.getByRole("link")).toHaveText([T.menuOwnerLeads, T.menuSurveys, T.menuAgreements, T.menuReconfirmations]);
     // W14-23: the workspace subtree is English, the document stays Vietnamese.
     await expect(page.locator('div[lang="en"]').getByRole("heading", { level: 1, name: T.listTitle })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute("lang", "vi");

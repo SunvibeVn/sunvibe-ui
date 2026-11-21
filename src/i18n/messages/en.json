@@ -32,6 +32,7 @@
       "ownerLeads": "SUPPLY LEADS",
       "surveys": "SURVEYS",
       "brokerageAgreements": "AGREEMENTS",
+      "listingReconfirmations": "RECONFIRMATIONS",
       "territories": "TERRITORIES",
       "inventoryCases": "INVENTORY CASES"
     },
@@ -2890,6 +2891,8 @@
       "loading": "Loading the revision…",
       "loadFailed": "The revision could not be loaded.",
       "retry": "Try again",
+      "rereadFailed": "The revision could not be read again.",
+      "changedMeanwhile": "This revision changed meanwhile. It now shows the stored revision; anything typed here and not saved was replaced.",
       "none": "No draft is open.",
       "start": "Start a new draft",
       "starting": "Starting…",
@@ -3028,6 +3031,86 @@
         "notSubmittable": "This revision cannot be submitted yet:",
         "failed": "Something went wrong. Try again."
       }
+    },
+    "freshness": {
+      "heading": "Freshness",
+      "loading": "Loading freshness…",
+      "loadFailed": "Freshness could not be loaded.",
+      "retry": "Try again",
+      "none": "No contact recorded yet. A listing is shown only after a valid confirmation.",
+      "lastValid": "Last valid confirmation: {date}",
+      "noValid": "No valid confirmation yet.",
+      "reconfirmFrom": "Reconfirm from: {date}",
+      "due": "Reconfirmation due",
+      "validThrough": "Valid through: {date}",
+      "expired": "Expired",
+      "latest": "Latest contact: {date}, {channel}: {outcome}",
+      "termsStillApply": "Terms still apply: {answer}",
+      "unitUnchanged": "Unit unchanged: {answer}",
+      "yes": "Yes",
+      "no": "No",
+      "notValid": "This contact is not a valid confirmation.",
+      "privateNote": "Private note:",
+      "prompt": "If the unit has been let, record the termination \"The unit is let\" on the agreement.",
+      "goToAgreement": "Go to the agreement",
+      "record": "Record a contact",
+      "channels": {
+        "CALL": "Phone call",
+        "MESSAGE": "Message",
+        "IN_PERSON": "In person",
+        "OTHER": "Another channel"
+      },
+      "outcomes": {
+        "AVAILABLE": "Still available",
+        "NOT_AVAILABLE": "No longer available",
+        "UNREACHABLE": "Could not reach",
+        "OTHER": "Another result"
+      },
+      "form": {
+        "channel": "Channel",
+        "outcome": "Result",
+        "termsQuestion": "Does the person letting the unit still let it on the agreement's terms in effect (or, before any version is in effect, on the activated version waiting to start)?",
+        "termsYes": "Yes",
+        "termsNo": "No",
+        "unitQuestion": "Did they report no significant change to the unit since the listing's content (furniture, repairs, damage)?",
+        "unitUnchangedYes": "Yes, no change",
+        "unitChanged": "Something changed",
+        "note": "Private note (optional)",
+        "noteCount": "{count} / 500",
+        "hintUnreachable": "Record this only when you conclude the person cannot be reached before the confirmation runs out: it ends the current confirmation at once. Calls that did not get through meanwhile need no record.",
+        "hintNotAvailable": "This ends the current confirmation at once.",
+        "hintNotValid": "With this answer the contact is not a valid confirmation: it ends the current confirmation at once.",
+        "save": "Save contact",
+        "cancel": "Cancel",
+        "errors": {
+          "channel": "Choose how you contacted the person.",
+          "outcome": "Choose the result of the contact.",
+          "answer": "Answer this question.",
+          "noteTooLong": "The note is too long.",
+          "noteCharacters": "The note holds a character that cannot be saved."
+        }
+      },
+      "answers": {
+        "invalid": "Check the contact and try again.",
+        "notFound": "This listing does not exist, or you cannot record on it.",
+        "archived": "The listing is archived.",
+        "concurrent": "The listing changed meanwhile. It was reloaded; record the contact again.",
+        "failed": "Something went wrong. Try again."
+      }
+    },
+    "reconfirmations": {
+      "title": "Listings to reconfirm",
+      "loading": "Loading listings…",
+      "loadFailed": "The listings could not be loaded.",
+      "retry": "Try again",
+      "empty": "No listing needs reconfirmation.",
+      "confirmed": "Confirmed {date}",
+      "reconfirmFrom": "Reconfirm from {date}",
+      "validThrough": "Valid through {date}",
+      "expired": "Expired",
+      "notValid": "The latest contact is not a valid confirmation.",
+      "hasMore": "More listings may need reconfirmation than this list shows.",
+      "forbidden": "You cannot open this list."
     }
   },
   "TestEnvironment": {

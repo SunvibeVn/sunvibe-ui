@@ -8,12 +8,17 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import type { ListingChange } from "../lib/freshness-record-flow";
 import { listingModel, type ListingPageModel } from "../lib/listing-model";
 import { getListing } from "../services/listing-api";
 
+import { FreshnessPanel } from "./freshness-panel";
 import { RevisionPanel } from "./revision-panel";
 
 const LOADING: ListingPageModel = { kind: "loading" };
+
+/** The listing re-reads: how many were asked for, and the last asked for by the revision panel and by a record. */
+type Rereads = { refresh: number; revision: number; record: number };
 
 /** An instant on the staff page, as the agreement page formats its times (the workspace provider sets the zone). */
 const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
@@ -32,9 +37,16 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   const format = useFormatter();
   const [model, setModel] = useState<ListingPageModel>(LOADING);
   const [attempt, setAttempt] = useState(0);
-  const [refresh, setRefresh] = useState(0);
-  /** The `refresh` of the last read that answered: behind `refresh` while the panel's re-read runs. */
+  /**
+   * `refresh` counts the listing re-reads; `revision` and `record` hold the `refresh` the revision panel and a record
+   * last asked for (E06S3-D12), so each panel waits only for the re-read that concerns it.
+   */
+  const [rereads, setRereads] = useState<Rereads>({ refresh: 0, revision: 0, record: 0 });
+  const { refresh } = rereads;
+  /** The `refresh` of the last read that answered: behind `refresh` while a re-read runs. */
   const [answered, setAnswered] = useState(0);
+  /** Moves after each record: the revision panel reads its open revision again (E06S3-D12). */
+  const [outsideChange, setOutsideChange] = useState(0);
   const revisionsId = useId();
 
   useEffect(() => {
@@ -62,7 +74,22 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
     setModel(LOADING);
     setAttempt((count) => count + 1);
   };
-  const reread = () => setRefresh((count) => count + 1);
+  /** Reads the listing again in place, remembering which panel asked for it (none for a plain re-read). */
+  const reread = (asker: "revision" | "record" | null) =>
+    setRereads((current) => {
+      const next = current.refresh + 1;
+      return { refresh: next, revision: asker === "revision" ? next : current.revision, record: asker === "record" ? next : current.record };
+    });
+  // A record moved the data version: a re-read held as a record's, and the revision panel reads its revision again. A
+  // 409 CONCURRENT_MODIFICATION: the page holds an old version, re-read as a record's, no record made. A 404: plain.
+  const freshnessChanged = (change: ListingChange) => {
+    if (change === "gone") {
+      reread(null);
+      return;
+    }
+    reread("record");
+    if (change === "recorded") setOutsideChange((count) => count + 1);
+  };
   const time = (instant: string) => format.dateTime(new Date(instant), TIME_FORMAT);
 
   switch (model.kind) {
@@ -118,11 +145,21 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
               {t("page.openAgreement")}
             </Link>
           </div>
+          <FreshnessPanel
+            listingId={listingId}
+            dataVersion={model.revisionPanel.dataVersion}
+            viewerMayRecord={model.revisionPanel.viewerMayDraft}
+            agreementHref={model.agreementHref}
+            listingRereading={answered !== refresh}
+            onListingChanged={freshnessChanged}
+          />
           <RevisionPanel
             listingId={listingId}
             panel={model.revisionPanel}
-            listingRereading={answered !== refresh}
-            onListingChanged={reread}
+            listingRereading={answered < rereads.revision}
+            onListingChanged={() => reread("revision")}
+            outsideChange={outsideChange}
+            outsideRereading={answered < rereads.record}
           />
           <section
             aria-labelledby={revisionsId}

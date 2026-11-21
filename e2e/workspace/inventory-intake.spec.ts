@@ -1261,6 +1261,124 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(panel.getByLabel("Title", { exact: true })).toHaveValue("", { timeout: 20_000 });
     await expect(panel.getByText("Revision 2: Draft", { exact: true })).toBeVisible();
   });
+
+  // Recording the freshness confirmation (listing-publish E06-S3, US-6 AC-1 to AC-3, AC-6; E06S3-P9, D14), on the listing
+  // E2E-2 created: the assigned Sale records contacts on its page, the Draft typed before a record is saved after it, and
+  // the list of listings to reconfirm opens from the menu. No owner POST and no rate-limited path, so the header's counts
+  // are unchanged. Every recorded date is today in Vietnam, read just before and just after its step, either accepted.
+  const FRESHNESS_NONE = "No contact recorded yet. A listing is shown only after a valid confirmation.";
+  const PROMPT = /^If the unit has been let, record the termination "The unit is let" on the agreement\./;
+  /** Today's Vietnam calendar date (`YYYY-MM-DD`). */
+  const vietnamToday = () => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Ho_Chi_Minh" }).format(new Date());
+  /** A calendar date moved by whole days. */
+  const plusDays = (date: string, days: number) => {
+    const moved = new Date(`${date}T00:00:00Z`);
+    moved.setUTCDate(moved.getUTCDate() + days);
+    return moved.toISOString().slice(0, 10);
+  };
+  /** A calendar date as the page shows it ("Mar 1, 2027"). */
+  const shownDate = (date: string) => new Intl.DateTimeFormat("en", { dateStyle: "medium", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
+  let listingCode = "";
+
+  /** Records one contact in the open "Freshness" region and waits until the form has closed. */
+  async function recordContact(freshness: Locator, channel: string, outcome: string, answers?: { terms: string; unit: string }) {
+    await button(freshness, "Record a contact").click();
+    await freshness.getByRole("group", { name: "Channel", exact: true }).getByRole("radio", { name: channel, exact: true }).check();
+    await freshness.getByRole("group", { name: "Result", exact: true }).getByRole("radio", { name: outcome, exact: true }).check();
+    if (answers !== undefined) {
+      await freshness.getByRole("group", { name: /^Does the person letting the unit still let it/ }).getByRole("radio", { name: answers.terms, exact: true }).check();
+      await freshness.getByRole("group", { name: /^Did they report no significant change/ }).getByRole("radio", { name: answers.unit, exact: true }).check();
+    }
+    await button(freshness, "Save contact").click();
+    await expect(button(freshness, "Save contact")).toHaveCount(0, { timeout: 20_000 });
+  }
+
+  /** Records a valid contact and answers the Vietnam date the page shows for it, read before and after the step. */
+  async function recordValidContact(freshness: Locator): Promise<string> {
+    const before = vietnamToday();
+    await recordContact(freshness, "In person", "Still available", { terms: "Yes", unit: "Yes, no change" });
+    const line = freshness.getByText(/^Last valid confirmation: /);
+    await expect(line).toBeVisible({ timeout: 20_000 });
+    const after = vietnamToday();
+    const text = await line.textContent();
+    const confirmedOn = [before, after].find((date) => text === `Last valid confirmation: ${shownDate(date)}`);
+    expect(confirmedOn, `${text} is today in Vietnam`).toBeDefined();
+    return confirmedOn as string;
+  }
+
+  test("freshnessRecord_contactsDatesAndPrompt (listing-publish US-6 AC-1, AC-2, AC-6, E06S3-D11, FR-6, FR-15)", async () => {
+    await openRevisionPanel(sale);
+    const listing = mainArea(sale);
+    listingCode = ((await listing.getByRole("heading", { level: 1 }).textContent()) ?? "").replace(/^Listing /, "");
+    expect(listingCode).toMatch(/^TD-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/);
+    const freshness = listing.getByRole("region", { name: "Freshness", exact: true });
+    await expect(freshness.getByText(FRESHNESS_NONE, { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // "No longer available": the form shows the prompt before saving; after it the panel says the contact is not valid.
+    await button(freshness, "Record a contact").click();
+    await freshness.getByRole("group", { name: "Channel", exact: true }).getByRole("radio", { name: "Phone call", exact: true }).check();
+    await freshness.getByRole("group", { name: "Result", exact: true }).getByRole("radio", { name: "No longer available", exact: true }).check();
+    await expect(freshness.getByText(PROMPT)).toBeVisible();
+    await button(freshness, "Save contact").click();
+    await expect(button(freshness, "Save contact")).toHaveCount(0, { timeout: 20_000 });
+    await expect(freshness.getByText("This contact is not a valid confirmation.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(freshness.getByText(PROMPT)).toBeVisible();
+    await expect(freshness.getByRole("link", { name: "Go to the agreement", exact: true })).toHaveAttribute("href", listingAgreementPath);
+
+    // "Still available" with both answers yes: a valid confirmation today, reconfirm from +10 days, valid through +14.
+    const confirmedOn = await recordValidContact(freshness);
+    await expect(freshness.getByText(`Reconfirm from: ${shownDate(plusDays(confirmedOn, 10))}`, { exact: true })).toBeVisible();
+    await expect(freshness.getByText(`Valid through: ${shownDate(plusDays(confirmedOn, 14))}`, { exact: true })).toBeVisible();
+    await expect(freshness.getByText("Reconfirmation due", { exact: true })).toHaveCount(0);
+    await expect(freshness.getByText("Expired", { exact: true })).toHaveCount(0);
+  });
+
+  test("freshnessRecord_draftTypedBeforeRecord_savedAfter (listing-publish E06S3-D12, FR-12)", async () => {
+    const panel = await openRevisionPanel(sale);
+    const freshness = mainArea(sale).getByRole("region", { name: "Freshness", exact: true });
+    const titleField = panel.getByLabel("Title", { exact: true });
+    await expect(titleField.or(button(panel, "Start a new draft"))).toBeVisible({ timeout: 20_000 });
+    if (await button(panel, "Start a new draft").isVisible()) {
+      await button(panel, "Start a new draft").click();
+      await expect(titleField).toBeVisible({ timeout: 20_000 });
+    }
+
+    // A title typed in the Draft, then a valid contact recorded: the record moves the listing's data version.
+    const typed = "Phòng trọ yên tĩnh gần chợ";
+    await titleField.fill(typed);
+    await recordValidContact(freshness);
+
+    // The save after the record sends the new data version: 200, the panel unlocked again, no 409 sentence.
+    const save = sale.waitForResponse(
+      (response) =>
+        response.request().method() === "PUT" &&
+        /^\/api\/v1\/staff\/listings\/[0-9A-Z]{26}\/revisions\/\d+\/content$/.test(new URL(response.url()).pathname),
+    );
+    await button(panel, "Save draft").click();
+    expect((await save).status()).toBe(200);
+    await expect(button(panel, "Save draft")).toBeEnabled({ timeout: 20_000 });
+    await expect(panel.getByText("Someone changed this listing. It has been reloaded.", { exact: true })).toHaveCount(0);
+
+    await sale.reload();
+    await expect(panel.getByLabel("Title", { exact: true })).toHaveValue(typed, { timeout: 20_000 });
+  });
+
+  test("reconfirmations_menuAndListPage_withoutThisListing (listing-publish US-6 AC-3, E06S3-D13)", async () => {
+    // The menu item leads to the list; this listing was validly confirmed today, so it is not listed.
+    expect(listingCode).toMatch(/^TD-/);
+    await sale.goto("/workspace/owner-leads");
+    const menu = sale.getByRole("navigation", { name: T.menuLabel });
+    const item = menu.getByRole("link", { name: T.menuReconfirmations, exact: true });
+    await expect(item).toBeVisible({ timeout: 20_000 });
+    await item.click();
+    await expect(sale).toHaveURL(/\/workspace\/listings\/reconfirmations$/, { timeout: 20_000 });
+    const list = mainArea(sale);
+    await expect(list.getByRole("heading", { level: 1, name: "Listings to reconfirm", exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(list.getByText("No listing needs reconfirmation.", { exact: true }).or(list.getByRole("list")).first()).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(list.getByRole("link", { name: listingCode, exact: true })).toHaveCount(0);
+  });
 });
 
 // No fixture reaches a case, so the answers are stubbed: this is about what the pages do with them. Budget: 1 login.

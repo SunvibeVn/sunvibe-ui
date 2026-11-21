@@ -1,13 +1,14 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { ApiResult } from "@/features/auth/client";
 import en from "@/i18n/messages/en.json";
 
-import type { ListingDetail } from "../types";
+import type { ListingDetail, ListingFreshness, ListingFreshnessRecorded, ListingRevisionDetail } from "../types";
 
-// The edge only: the listing read, the revision read and the start, so no request leaves the test.
+// The edge only: the listing read, the revision read, the start and the save, the terms sources, the freshness read
+// and the record, so no request leaves the test. The reads a case does not answer never settle.
 vi.mock("../services/listing-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/listing-api")>()),
   getListing: vi.fn(),
@@ -16,10 +17,18 @@ vi.mock("../services/revision-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/revision-api")>()),
   getListingRevision: vi.fn(() => new Promise<never>(() => undefined)),
   startListingRevision: vi.fn(),
+  saveListingRevisionContent: vi.fn(),
+  getListingTermsSources: vi.fn(() => new Promise<never>(() => undefined)),
+}));
+vi.mock("../services/freshness-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../services/freshness-api")>()),
+  getListingFreshness: vi.fn(() => new Promise<never>(() => undefined)),
+  recordListingFreshness: vi.fn(),
 }));
 
+import { getListingFreshness, recordListingFreshness } from "../services/freshness-api";
 import { getListing } from "../services/listing-api";
-import { getListingRevision, startListingRevision } from "../services/revision-api";
+import { getListingRevision, saveListingRevisionContent, startListingRevision } from "../services/revision-api";
 
 import { ListingDetailView } from "./listing-detail-view";
 
@@ -189,5 +198,376 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
     expect(getListingRevision).toHaveBeenCalledWith(LISTING_ID, 2);
     expect(within(current).queryByRole("button")).toBeNull();
     expect(startListingRevision).toHaveBeenCalledTimes(1);
+  });
+
+  const STARTED = {
+    ok: true,
+    status: 201,
+    replayed: false,
+    data: { listingId: LISTING_ID, revisionNo: 1, status: "DRAFT", dataVersion: 1 },
+  } as const;
+
+  it.each([
+    { row: "500", reread: failed(500, "INTERNAL_ERROR") },
+    { row: "no answer", reread: { ok: false, kind: "network" } as ApiResult<ListingDetail> },
+  ])(
+    "listingDetailView_afterStart_rereadFails_pageStaysAndStartSendsAgain: $row: a failed listing re-read after a command keeps the page and enables the panel's command again (K-11, pin (b))",
+    async ({ reread }) => {
+      const r = en.ListingPublish.revision;
+      vi.mocked(startListingRevision).mockReset();
+      vi.mocked(startListingRevision).mockResolvedValueOnce(STARTED).mockResolvedValueOnce(STARTED);
+      vi.mocked(getListing)
+        .mockResolvedValueOnce(answered({ ...DETAIL, openRevisionNo: null }))
+        .mockResolvedValueOnce(reread)
+        .mockReturnValueOnce(new Promise<never>(() => undefined));
+      renderView();
+
+      const current = await screen.findByRole("region", { name: r.heading });
+      fireEvent.click(within(current).getByRole("button", { name: r.start }));
+      await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+      await waitFor(() =>
+        expect((within(current).queryByRole("button", { name: r.start }) as HTMLButtonElement | null)?.disabled).toBe(false),
+      );
+      expect(screen.queryByRole("heading", { level: 1, name: "Listing TD-7K3M-Q9TX" })).not.toBeNull();
+      expect(screen.queryByText(p.loadFailed)).toBeNull();
+      fireEvent.click(within(current).getByRole("button", { name: r.start }));
+      await waitFor(() => expect(startListingRevision).toHaveBeenCalledTimes(2));
+      expect(startListingRevision).toHaveBeenNthCalledWith(2, LISTING_ID, 0);
+    },
+  );
+
+  it("listingDetailView_afterStart_rereadNotFound_notFoundShown: a listing re-read after a command that answers 404 shows the not-found answer in place of the page (K-12, pin (c))", async () => {
+    const r = en.ListingPublish.revision;
+    vi.mocked(startListingRevision).mockReset();
+    vi.mocked(startListingRevision).mockResolvedValueOnce(STARTED);
+    vi.mocked(getListing)
+      .mockResolvedValueOnce(answered({ ...DETAIL, openRevisionNo: null }))
+      .mockResolvedValueOnce(failed(404, "NOT_FOUND"));
+    renderView();
+
+    const current = await screen.findByRole("region", { name: r.heading });
+    fireEvent.click(within(current).getByRole("button", { name: r.start }));
+    await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(screen.queryByText(p.notFound)).not.toBeNull());
+    expect(screen.queryByRole("heading", { level: 1 })).toBeNull();
+  });
+
+  // E06-S3: the freshness panel on the page, and the listing's data version a record moves (E06S3-D12, P8).
+
+  const r = en.ListingPublish.revision;
+  const f = en.ListingPublish.freshness;
+
+  /** The open Draft of DETAIL, as its read answers it at data version 4. */
+  const DRAFT: ListingRevisionDetail = {
+    listingId: LISTING_ID,
+    revisionNo: 1,
+    status: "DRAFT",
+    createdAt: "2026-11-20T03:15:00Z",
+    updatedAt: "2026-11-21T03:15:00Z",
+    title: "Phòng trọ",
+    description: null,
+    features: {
+      furnishing: null,
+      airConditioner: true,
+      waterHeater: false,
+      fridge: false,
+      washingMachine: null,
+      kitchen: null,
+      balcony: false,
+      elevator: false,
+      motorbikeParking: false,
+      carParking: false,
+      internet: false,
+      pets: null,
+      noSharedLandlord: false,
+    },
+    termsSnapshot: null,
+    unitSnapshot: null,
+    submittedAt: null,
+    dataVersion: 4,
+    problems: [],
+  };
+  const NO_RECORD: ListingFreshness = {
+    listingId: LISTING_ID,
+    confirmedOn: null,
+    reconfirmFrom: null,
+    validThrough: null,
+    reconfirmationDue: false,
+    deadlinePassed: false,
+    latest: null,
+  };
+  const revisionRead = (detail: ListingRevisionDetail): ApiResult<ListingRevisionDetail> => ({ ok: true, status: 200, replayed: false, data: detail });
+  const freshnessRead = (data: ListingFreshness): ApiResult<ListingFreshness> => ({ ok: true, status: 200, replayed: false, data });
+  const recorded = (dataVersion: number): ApiResult<ListingFreshnessRecorded> => ({
+    ok: true,
+    status: 201,
+    replayed: false,
+    data: { listingId: LISTING_ID, dataVersion, valid: true },
+  });
+  const refusedWith = <T,>(status: number, code: string): ApiResult<T> => ({ ok: false, kind: "http", status, code, fieldErrors: [] });
+  const never = <T,>() => new Promise<T>(() => undefined);
+
+  /** Every edge call a new case drives, reset at its start and end: the factory's reads that never settle come back. */
+  const resetEdge = () => {
+    for (const call of [startListingRevision, getListingRevision, saveListingRevisionContent, getListingFreshness, recordListingFreshness]) {
+      vi.mocked(call).mockReset();
+    }
+  };
+  /** Lets every answer already given reach the screen. */
+  const settle = () => act(async () => new Promise<void>((done) => setTimeout(done, 0)));
+
+  const current = () => screen.getByRole("region", { name: r.heading });
+  const freshness = () => screen.getByRole("region", { name: f.heading });
+  const titleValue = () => (within(current()).queryByRole("textbox", { name: r.title }) as HTMLInputElement | null)?.value;
+  /** Whether a button is held: disabled itself or inside a disabled fieldset (`:disabled`). */
+  const held = (region: HTMLElement, name: string) => within(region).queryByRole("button", { name })?.matches(":disabled");
+  /** A choice of the record form, or null when the form or its group is not shown. */
+  const choice = (groupName: string, name: string) => {
+    const group = within(freshness()).queryByRole("group", { name: groupName });
+    return group === null ? null : (within(group).queryByRole("radio", { name }) as HTMLInputElement | null);
+  };
+  /** Opens the record form and chooses a phone call, still available, both answers yes. */
+  async function openCompleteRecord() {
+    fireEvent.click(await within(freshness()).findByRole("button", { name: f.record }));
+    for (const [group, name] of [
+      [f.form.channel, f.channels.CALL],
+      [f.form.outcome, f.outcomes.AVAILABLE],
+      [f.form.termsQuestion, f.form.termsYes],
+      [f.form.unitQuestion, f.form.unitUnchangedYes],
+    ] as const) {
+      fireEvent.click(choice(group, name) as HTMLInputElement);
+    }
+  }
+  const saveContact = () => within(freshness()).queryByRole("button", { name: f.form.save });
+
+  it("listingDetailView_ready_freshnessPanelBetweenHeaderAndRevision: the 'Freshness' region sits between the header and 'Current revision'", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered(DETAIL));
+    renderView();
+
+    const heading = await screen.findByRole("heading", { level: 1, name: "Listing TD-7K3M-Q9TX" });
+    const panel = screen.getByRole("region", { name: f.heading });
+    const revision = screen.getByRole("region", { name: r.heading });
+    expect([
+      Boolean(heading.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING),
+      Boolean(panel.compareDocumentPosition(revision) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ]).toEqual([true, true]);
+  });
+
+  it("listingDetailView_notRecorderOrArchived_noRecordButton: 'Record a contact' only for the assigned Sale of a listing that is not archived (FR-12)", async () => {
+    resetEdge();
+    try {
+      vi.mocked(getListingFreshness)
+        .mockResolvedValueOnce(freshnessRead(NO_RECORD))
+        .mockResolvedValueOnce(freshnessRead(NO_RECORD))
+        .mockResolvedValueOnce(freshnessRead(NO_RECORD));
+      vi.mocked(getListingRevision).mockReturnValueOnce(never()).mockReturnValueOnce(never()).mockReturnValueOnce(never());
+      const shown: boolean[] = [];
+      for (const detail of [DETAIL, { ...DETAIL, viewerIsAssignedSale: false }, { ...DETAIL, state: "ARCHIVED" as const }]) {
+        vi.mocked(getListing).mockResolvedValueOnce(answered(detail));
+        const view = renderView();
+        await within(await screen.findByRole("region", { name: f.heading })).findByText(f.none);
+        shown.push(within(freshness()).queryByRole("button", { name: f.record }) !== null);
+        view.unmount();
+      }
+      expect(shown[0]).toBe(true);
+      expect(shown[1]).toBe(false);
+      expect(shown[2]).toBe(false);
+    } finally {
+      resetEdge();
+    }
+  });
+
+  it("listingDetailView_recordThenSave_saveSendsNewVersionKeepsTitle: a title typed in the Draft stays through a record, and the next save sends the version the record moved (FR-12)", async () => {
+    resetEdge();
+    try {
+      const listingReread = deferred<ApiResult<ListingDetail>>();
+      const outsideRead = deferred<ApiResult<ListingRevisionDetail>>();
+      vi.mocked(getListing)
+        .mockResolvedValueOnce(answered({ ...DETAIL, dataVersion: 4 }))
+        .mockReturnValueOnce(listingReread.promise)
+        .mockReturnValueOnce(never());
+      vi.mocked(getListingRevision).mockResolvedValueOnce(revisionRead(DRAFT)).mockReturnValueOnce(outsideRead.promise).mockReturnValueOnce(never());
+      vi.mocked(getListingFreshness).mockResolvedValueOnce(freshnessRead(NO_RECORD)).mockReturnValueOnce(never());
+      vi.mocked(recordListingFreshness).mockResolvedValueOnce(recorded(5));
+      vi.mocked(saveListingRevisionContent).mockImplementationOnce(async (_id, _number, body) =>
+        body.dataVersion === 5
+          ? { ok: true, status: 200, replayed: false, data: { listingId: LISTING_ID, revisionNo: 1, status: "DRAFT", dataVersion: 6 } }
+          : refusedWith(409, "CONCURRENT_MODIFICATION"),
+      );
+      renderView();
+
+      fireEvent.change(await within(await screen.findByRole("region", { name: r.heading })).findByRole("textbox", { name: r.title }), {
+        target: { value: "Phòng trọ của tôi gần chợ" },
+      });
+      await openCompleteRecord();
+      fireEvent.click(saveContact() as HTMLElement);
+      await settle();
+      expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+
+      outsideRead.resolve(revisionRead({ ...DRAFT, dataVersion: 5 }));
+      await settle();
+      expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+      expect(held(current(), r.saveDraft)).toBe(true);
+
+      listingReread.resolve(answered({ ...DETAIL, dataVersion: 5 }));
+      await settle();
+      expect(held(current(), r.saveDraft)).toBe(false);
+      expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+
+      fireEvent.click(within(current()).getByRole("button", { name: r.saveDraft }));
+      await waitFor(() => expect(saveListingRevisionContent).toHaveBeenCalledTimes(1));
+      const body = vi.mocked(saveListingRevisionContent).mock.calls[0]?.[2];
+      expect(body?.dataVersion).toBe(5);
+      expect(body?.title).toBe("Phòng trọ của tôi gần chợ");
+      await settle();
+      expect(within(current()).queryByText(r.answers.concurrent)).toBeNull();
+    } finally {
+      resetEdge();
+    }
+  });
+
+  it.each([
+    { row: "500", reread: failed(500, "INTERNAL_ERROR") },
+    { row: "no answer", reread: { ok: false, kind: "network" } as ApiResult<ListingDetail> },
+  ])(
+    "listingDetailView_afterRecord_rereadFails_bothPanelsUnlocked: $row: a failed listing re-read after a record keeps the page and unlocks 'Save contact' and the revision panel (FR-12, SV-333 (4))",
+    async ({ reread }) => {
+      resetEdge();
+      try {
+        vi.mocked(getListing).mockResolvedValueOnce(answered({ ...DETAIL, dataVersion: 4 })).mockResolvedValueOnce(reread);
+        vi.mocked(getListingRevision).mockResolvedValueOnce(revisionRead(DRAFT)).mockResolvedValueOnce(revisionRead({ ...DRAFT, dataVersion: 5 }));
+        vi.mocked(getListingFreshness).mockResolvedValueOnce(freshnessRead(NO_RECORD)).mockResolvedValueOnce(freshnessRead(NO_RECORD));
+        vi.mocked(recordListingFreshness).mockResolvedValueOnce(recorded(5));
+        renderView();
+
+        await within(await screen.findByRole("region", { name: r.heading })).findByRole("textbox", { name: r.title });
+        await openCompleteRecord();
+        fireEvent.click(saveContact() as HTMLElement);
+        await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+        await settle();
+        expect([screen.queryByRole("heading", { level: 1, name: "Listing TD-7K3M-Q9TX" }) !== null, screen.queryByText(p.loadFailed) !== null]).toEqual([
+          true,
+          false,
+        ]);
+        await openCompleteRecord();
+        expect(saveContact()?.matches(":disabled")).toBe(false);
+        expect(held(current(), r.saveDraft)).toBe(false);
+      } finally {
+        resetEdge();
+      }
+    },
+  );
+
+  it("listingDetailView_afterRevisionSave_saveContactWaitsForListingReread: after a revision command 'Save contact' waits for the listing re-read, then sends its data version (FR-12)", async () => {
+    resetEdge();
+    try {
+      const listingReread = deferred<ApiResult<ListingDetail>>();
+      vi.mocked(getListing)
+        .mockResolvedValueOnce(answered({ ...DETAIL, dataVersion: 4 }))
+        .mockReturnValueOnce(listingReread.promise)
+        .mockReturnValueOnce(never());
+      vi.mocked(getListingRevision).mockResolvedValueOnce(revisionRead(DRAFT)).mockResolvedValueOnce(revisionRead({ ...DRAFT, dataVersion: 5 })).mockReturnValueOnce(never());
+      vi.mocked(getListingFreshness).mockResolvedValueOnce(freshnessRead(NO_RECORD)).mockReturnValueOnce(never());
+      vi.mocked(saveListingRevisionContent).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        replayed: false,
+        data: { listingId: LISTING_ID, revisionNo: 1, status: "DRAFT", dataVersion: 5 },
+      });
+      vi.mocked(recordListingFreshness).mockResolvedValueOnce(recorded(6));
+      renderView();
+
+      await within(await screen.findByRole("region", { name: r.heading })).findByRole("textbox", { name: r.title });
+      await openCompleteRecord();
+      fireEvent.click(within(current()).getByRole("button", { name: r.saveDraft }));
+      await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+      fireEvent.click(saveContact() as HTMLElement);
+      await settle();
+      expect(recordListingFreshness).not.toHaveBeenCalled();
+      expect(saveContact()?.matches(":disabled")).toBe(true);
+
+      listingReread.resolve(answered({ ...DETAIL, dataVersion: 5 }));
+      await settle();
+      expect(saveContact()?.matches(":disabled")).toBe(false);
+      fireEvent.click(saveContact() as HTMLElement);
+      await waitFor(() => expect(recordListingFreshness).toHaveBeenCalledTimes(1));
+      expect(vi.mocked(recordListingFreshness).mock.calls[0]?.[1]).toMatchObject({ dataVersion: 5 });
+    } finally {
+      resetEdge();
+    }
+  });
+
+  it("listingDetailView_recordConcurrent_rereadKeepsValuesSendsNewVersion: a record's 409 CONCURRENT_MODIFICATION re-reads the listing as a record's, keeps the choices and sends the new version", async () => {
+    resetEdge();
+    try {
+      const listingReread = deferred<ApiResult<ListingDetail>>();
+      vi.mocked(getListing)
+        .mockResolvedValueOnce(answered({ ...DETAIL, dataVersion: 5 }))
+        .mockReturnValueOnce(listingReread.promise)
+        .mockReturnValueOnce(never());
+      vi.mocked(getListingRevision).mockResolvedValueOnce(revisionRead({ ...DRAFT, dataVersion: 5 })).mockReturnValueOnce(never());
+      vi.mocked(getListingFreshness).mockResolvedValueOnce(freshnessRead(NO_RECORD)).mockReturnValueOnce(never());
+      vi.mocked(recordListingFreshness).mockResolvedValueOnce(refusedWith(409, "CONCURRENT_MODIFICATION")).mockResolvedValueOnce(recorded(7));
+      renderView();
+
+      await within(await screen.findByRole("region", { name: r.heading })).findByRole("textbox", { name: r.title });
+      await openCompleteRecord();
+      fireEvent.click(saveContact() as HTMLElement);
+      await settle();
+      expect(getListing).toHaveBeenCalledTimes(2);
+      expect(saveContact()?.matches(":disabled")).toBe(true);
+      expect(held(current(), r.saveDraft)).toBe(true);
+      expect(getListingRevision).toHaveBeenCalledTimes(1);
+
+      listingReread.resolve(answered({ ...DETAIL, dataVersion: 6 }));
+      await settle();
+      expect([
+        choice(f.form.channel, f.channels.CALL)?.checked,
+        choice(f.form.outcome, f.outcomes.AVAILABLE)?.checked,
+        choice(f.form.termsQuestion, f.form.termsYes)?.checked,
+        choice(f.form.unitQuestion, f.form.unitUnchangedYes)?.checked,
+      ]).toEqual([true, true, true, true]);
+      fireEvent.click(saveContact() as HTMLElement);
+      await settle();
+      expect(vi.mocked(recordListingFreshness).mock.calls[1]?.[1]).toMatchObject({ dataVersion: 6 });
+    } finally {
+      resetEdge();
+    }
+  });
+
+  it("listingDetailView_freshnessNotFound_listingReadAgain: a 404 of the freshness read makes the page read the listing again, a plain re-read", async () => {
+    resetEdge();
+    try {
+      vi.mocked(getListing).mockResolvedValueOnce(answered(DETAIL)).mockReturnValueOnce(never());
+      vi.mocked(getListingRevision).mockResolvedValueOnce(revisionRead(DRAFT)).mockReturnValueOnce(never());
+      vi.mocked(getListingFreshness).mockResolvedValueOnce(refusedWith(404, "NOT_FOUND"));
+      renderView();
+
+      await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+      await settle();
+      expect(getListingRevision).toHaveBeenCalledTimes(1);
+    } finally {
+      resetEdge();
+    }
+  });
+
+  it("listingDetailView_recordNotFound_listingReadAgain: a 404 of a record makes the page read the listing again, a plain re-read", async () => {
+    resetEdge();
+    try {
+      vi.mocked(getListing).mockResolvedValueOnce(answered(DETAIL)).mockReturnValueOnce(never());
+      vi.mocked(getListingRevision).mockResolvedValueOnce(revisionRead(DRAFT)).mockReturnValueOnce(never());
+      vi.mocked(getListingFreshness).mockResolvedValueOnce(freshnessRead(NO_RECORD)).mockReturnValueOnce(never());
+      vi.mocked(recordListingFreshness).mockResolvedValueOnce(refusedWith(404, "NOT_FOUND"));
+      renderView();
+
+      await within(await screen.findByRole("region", { name: r.heading })).findByRole("textbox", { name: r.title });
+      await openCompleteRecord();
+      fireEvent.click(saveContact() as HTMLElement);
+      await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+      await settle();
+      expect(getListingRevision).toHaveBeenCalledTimes(1);
+    } finally {
+      resetEdge();
+    }
   });
 });

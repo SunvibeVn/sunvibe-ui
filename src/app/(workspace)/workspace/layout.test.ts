@@ -11,6 +11,7 @@ import * as casePage from "./inventory-cases/[caseId]/page";
 import * as casesPage from "./inventory-cases/page";
 import WorkspaceLayout, { metadata } from "./layout";
 import * as listingPage from "./listings/[listingId]/page";
+import * as reconfirmationsPage from "./listings/reconfirmations/page";
 import * as intakePage from "./owner-leads/[leadId]/inventory-intake/page";
 import * as leadDetailPage from "./owner-leads/[leadId]/page";
 import * as checklistPage from "./owner-leads/[leadId]/survey-checklists/[checklistId]/page";
@@ -61,6 +62,7 @@ describe("workspace pages opt out of instant-navigation validation", () => {
     "inventory-cases/page.tsx": casesPage,
     "inventory-cases/[caseId]/page.tsx": casePage,
     "listings/[listingId]/page.tsx": listingPage,
+    "listings/reconfirmations/page.tsx": reconfirmationsPage,
     "owner-leads/page.tsx": leadListPage,
     "owner-leads/[leadId]/page.tsx": leadDetailPage,
     "owner-leads/[leadId]/inventory-intake/page.tsx": intakePage,
