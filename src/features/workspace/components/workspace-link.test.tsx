@@ -2,7 +2,6 @@ import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { describe, expect, it, vi } from "vitest";
 import type { SessionSnapshot } from "@/features/auth/client";
-import viMessages from "@/i18n/messages/vi.json";
 
 // The edge only: the session of this tab, read where RequireRole and the entry links read it (E06S4-P14).
 const { session } = vi.hoisted(() => ({ session: { current: { status: "signed-out", user: null } as SessionSnapshot } }));
@@ -24,10 +23,18 @@ const signedIn = (roles: string[]): SessionSnapshot => ({
   },
 });
 
+// No message file: the workspace reads no Vietnamese messages (W14-20, messages.test.ts), and what this pin holds is
+// whether the link shows and where it leads, not its words. The link's text is its message key.
 function renderLink(snapshot: SessionSnapshot) {
   session.current = snapshot;
   return render(
-    <NextIntlClientProvider locale="vi" messages={viMessages} timeZone="Asia/Ho_Chi_Minh">
+    <NextIntlClientProvider
+      locale="vi"
+      messages={{}}
+      onError={() => undefined}
+      getMessageFallback={({ key }) => `message:${key}`}
+      timeZone="Asia/Ho_Chi_Minh"
+    >
       <WorkspaceLink />
     </NextIntlClientProvider>,
   );
@@ -37,7 +44,7 @@ describe("WorkspaceLink: the public header's way into the workspace, unchanged b
   it("workspaceLink_saleSignedIn_linkToOwnerLeads: a signed-in SALE sees the link, leading to the lead list", () => {
     renderLink(signedIn(["SALE"]));
 
-    const link = screen.getByRole("link", { name: viMessages.WorkspaceEntry.link });
+    const link = screen.getByRole("link", { name: "message:link" });
     expect(link.getAttribute("href")).toBe("/workspace/owner-leads");
   });
 
@@ -45,7 +52,7 @@ describe("WorkspaceLink: the public header's way into the workspace, unchanged b
     for (const snapshot of [signedIn(["CUSTOMER"]), signedIn(["LISTING_REVIEWER"]), { status: "signed-out", user: null } as SessionSnapshot]) {
       const { unmount } = renderLink(snapshot);
       expect(screen.queryByRole("link")).toBeNull();
-      expect(screen.queryByText(viMessages.WorkspaceEntry.link)).toBeNull();
+      expect(screen.queryByText("message:link")).toBeNull();
       unmount();
     }
   });
