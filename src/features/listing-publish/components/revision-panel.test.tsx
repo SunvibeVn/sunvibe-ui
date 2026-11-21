@@ -647,4 +647,22 @@ describe("RevisionPanel (listing-publish US-2 AC-1 to AC-6, spec section 6, RD-1
     await waitFor(() => expect(saveListingRevisionContent).toHaveBeenCalledTimes(2));
     expect(vi.mocked(saveListingRevisionContent).mock.calls[1]?.[2]).toMatchObject({ dataVersion: 6 });
   });
+
+  it("revisionPanel_outsideChange_pendingBecameNeedsChanges_readOnlyChangedMeanwhile: an outside re-read that finds the shown Pending review revision returned, same values and a moved version, shows it read-only with no Withdraw and the 'changed meanwhile' sentence (E06-S4 pin P-4)", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(PENDING))
+      .mockResolvedValueOnce(answered({ ...PENDING, status: "NEEDS_CHANGES", dataVersion: 7 }));
+    const pending: RevisionPanelInput = { ...DRAFTER, dataVersion: 6 };
+    const { outside } = renderOutside(pending);
+    expect(await within(region()).findByText("Revision 1: Pending review")).toBeTruthy();
+    expect(within(region()).getByRole("button", { name: r.withdraw })).toBeTruthy();
+
+    outside(1);
+    expect(await within(region()).findByText("Revision 1: Needs changes")).toBeTruthy();
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+    expect(within(region()).queryByRole("textbox")).toBeNull();
+    expect(within(region()).queryByRole("button", { name: r.withdraw })).toBeNull();
+    expect(within(region()).getByText("Phòng trọ gần trường đại học")).toBeTruthy();
+    expect(sentenceShown()).toBe(true);
+  });
 });
