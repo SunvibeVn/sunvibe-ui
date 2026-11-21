@@ -85,13 +85,36 @@ function datedPhrase(key: EligibilityKey, date: string | null | undefined): Phra
 }
 
 /**
- * The state phrase of a version. A lapsed version with `activateBy` is one the owner confirmed and Sunvibe did not
- * activate in 14 days (brokerage-agreement S6-D5, S6-D19, S6-D21: the owner page reads `activateBy`, never the
- * activation record); one without it keeps the owner's own "No answer by" text. An activated version names its start
- * date, an effective one its end date. A state whose time or date the answer leaves out reads that Sunvibe is handling
- * the version, never a text with an empty value.
+ * The phrase of a version of a suspended or ended agreement, chosen by the version's state and the item's (brokerage-
+ * agreement E05-S8, S8-D16): an activated or effective version of a SUSPENDED agreement reads that Sunvibe has paused
+ * advertising; an effective version of an EXPIRED one names its end date, the agreement's end; an effective version of a
+ * TERMINATED one, and a version cancelled with a TERMINATED or EXPIRED agreement, read "Ended." (the owner item holds no
+ * end moment). Null for every other pair, which keeps today's phrase: a cancelled version of a CANCELLED agreement still
+ * reads "Withdrawn by Sunvibe". The owner never reads a staff reason (BR-17).
  */
-function statePhrase(version: BrokerageAgreementVersion, answerable: boolean): Phrase {
+function stoppedPhrase(versionStatus: string | undefined, itemStatus: string | undefined, endDate: string | undefined): Phrase | null {
+  if (itemStatus === "SUSPENDED" && (versionStatus === "ACTIVATED" || versionStatus === "EFFECTIVE")) {
+    return { key: "owner.state.suspended" };
+  }
+  if (itemStatus === "EXPIRED" && versionStatus === "EFFECTIVE") {
+    return present(endDate) ? { key: "owner.state.expired", values: { date: calendarDateText(endDate) } } : { key: "owner.state.ended" };
+  }
+  if (itemStatus === "TERMINATED" && versionStatus === "EFFECTIVE") return { key: "owner.state.ended" };
+  if ((itemStatus === "TERMINATED" || itemStatus === "EXPIRED") && versionStatus === "CANCELLED") return { key: "owner.state.ended" };
+  return null;
+}
+
+/**
+ * The state phrase of a version. A version of a suspended or ended agreement reads its phrase by the item's state
+ * (E05-S8, S8-D16). A lapsed version with `activateBy` is one the owner confirmed and Sunvibe did not activate in 14
+ * days (brokerage-agreement S6-D5, S6-D19, S6-D21: the owner page reads `activateBy`, never the activation record); one
+ * without it keeps the owner's own "No answer by" text. An activated version names its start date, an effective one its
+ * end date. A state whose time or date the answer leaves out reads that Sunvibe is handling the version, never a text
+ * with an empty value.
+ */
+function statePhrase(version: BrokerageAgreementVersion, answerable: boolean, itemStatus: string | undefined): Phrase {
+  const stopped = stoppedPhrase(version.status, itemStatus, version.endDate);
+  if (stopped !== null) return stopped;
   if (version.status === "LAPSED" && present(version.activateBy)) return { key: "owner.state.notActivated" };
   const key = ownerStatusText(version.status ?? "", answerable);
   if (key === "owner.state.activated") return datedPhrase(key, version.startDate);
@@ -103,11 +126,15 @@ function statePhrase(version: BrokerageAgreementVersion, answerable: boolean): P
   return present(time) ? { key, values: { time: vietnamTimeText(time) } } : { key: "owner.state.handling" };
 }
 
-function ownerVersion(version: BrokerageAgreementVersion, statement: { version: string; text: string } | null): OwnerVersionModel {
+function ownerVersion(
+  version: BrokerageAgreementVersion,
+  statement: { version: string; text: string } | null,
+  itemStatus: string | undefined,
+): OwnerVersionModel {
   const answerable = statement !== null;
   return {
     versionNo: version.versionNo ?? 0,
-    state: statePhrase(version, answerable),
+    state: statePhrase(version, answerable, itemStatus),
     startText: calendarDateText(version.startDate ?? ""),
     endText: calendarDateText(version.endDate ?? ""),
     // The shared readings, without their "proposed" line on the owner's own screen (S5-D17, S4-D15).
@@ -133,7 +160,7 @@ function ownerAgreement(item: BrokerageAgreementOwnerItem): OwnerAgreementModel 
     locationLines: [item.unitLocation, item.street, item.wardName].filter(present),
     transactionTypeKey: transactionTypeText(item.transactionType ?? ""),
     versions: versions.map((version) =>
-      ownerVersion(version, answerableNo !== undefined && version.versionNo === answerableNo ? statement : null),
+      ownerVersion(version, answerableNo !== undefined && version.versionNo === answerableNo ? statement : null, item.status),
     ),
   };
 }

@@ -115,3 +115,24 @@ export type BrokerageAgreementHistory = Schemas["BrokerageAgreementHistory"];
 export type BrokerageAgreementHistoryEntry = Schemas["BrokerageAgreementHistoryEntry"];
 /** The list's query: the states, the ending filter, the zero-based page and the size. */
 export type AgreementListQuery = NonNullable<operations["listBrokerageAgreements"]["parameters"]["query"]>;
+
+// Stop and suspension (brokerage-agreement E05-S8).
+
+/** What staff recorded when they terminated the agreement (S8-D5): private values, on the staff detail only (BR-17). */
+export type BrokerageAgreementTermination = Schemas["BrokerageAgreementTermination"];
+/** One suspension record (S8-D6): its reason and note, when it was suspended and, once lifted, when and why. Private. */
+export type BrokerageAgreementSuspension = Schemas["BrokerageAgreementSuspension"];
+/** Suspending an agreement in effect: one of four reasons and an optional note; no data version (S8-D8). */
+export type BrokerageAgreementSuspensionRequest = Schemas["BrokerageAgreementSuspensionRequest"];
+/** Lifting the suspension: a required reason and the data version the page read (S8-D6). */
+export type BrokerageAgreementSuspensionReleaseRequest = Schemas["BrokerageAgreementSuspensionReleaseRequest"];
+/** Terminating an agreement: its type and exactly that type's fields (S8-D5); no data version (S8-D8). */
+export type BrokerageAgreementTerminationRequest = Schemas["BrokerageAgreementTerminationRequest"];
+/** Cancelling an agreement that never took effect: only the data version the page read (S8-D7). */
+export type BrokerageAgreementCancellationRequest = Schemas["BrokerageAgreementCancellationRequest"];
+export type TerminationType = NonNullable<BrokerageAgreementTerminationRequest["type"]>;
+export type WithdrawalChannel = NonNullable<BrokerageAgreementTerminationRequest["channel"]>;
+export type IntroducedBySunvibe = NonNullable<BrokerageAgreementTerminationRequest["introducedBySunvibe"]>;
+export type SuspensionReasonType = NonNullable<BrokerageAgreementSuspensionRequest["reasonType"]>;
+/** A stop the viewer may take now (S8-D11): a hint, the server decides. */
+export type StopAction = NonNullable<BrokerageAgreementDetail["viewerStopActions"]>[number];

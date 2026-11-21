@@ -163,7 +163,7 @@ function keyPaths(node: unknown): string[] {
 }
 
 const VIETNAMESE_LETTER = /[ăâđêôơưàáạảãằắặẳẵầấậẩẫèéẹẻẽềếệểễìíịỉĩòóọỏõồốộổỗờớợởỡùúụủũừứựửữỳýỵỷỹ]/i;
-const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys", "InventoryIntake", "BrokerageAgreement"];
+const WORKSPACE_NAMESPACES = ["Workspace", "OwnerLeads", "SaleTerritories", "Surveys", "InventoryIntake", "BrokerageAgreement", "ListingPublish"];
 
 describe("TestEnvironment, the banner of every host but www (W35a Task U1)", () => {
   it("vi.json has the D-10 text verbatim", () => {
@@ -261,7 +261,7 @@ describe("NotFound and SiteError, the error pages (marketing-landing SV-250)", (
 
 describe("no workspace file reads vi.json (W14-20)", () => {
   const root = fileURLToPath(new URL("..", import.meta.url));
-  const dirs = ["features/owner-leads", "features/surveys", "features/lead-shared", "features/workspace", "features/inventory-intake", "features/brokerage-agreement", "app/(workspace)"];
+  const dirs = ["features/owner-leads", "features/surveys", "features/lead-shared", "features/workspace", "features/inventory-intake", "features/brokerage-agreement", "features/listing-publish", "app/(workspace)"];
   const allowed = new Set([path.join("features", "workspace", "components", "workspace-link.tsx")]);
 
   function files(dir: string): string[] {

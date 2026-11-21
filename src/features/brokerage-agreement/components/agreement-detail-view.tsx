@@ -2,17 +2,19 @@
 
 import Link from "next/link";
 import { useFormatter, useTranslations } from "next-intl";
-import { useEffect, useId, useLayoutEffect, useState } from "react";
+import { type ReactNode, useEffect, useId, useLayoutEffect, useState } from "react";
 
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 
 import { agreementAfter, type AgreementModel } from "../lib/agreement-model";
+import { stopErrorKey } from "../lib/stop-text";
 import { getAgreement } from "../services/agreement-api";
 
 import { ActivationForm } from "./activation-form";
 import { AdvertisingPanel } from "./advertising-panel";
 import { AgreementHistorySection } from "./agreement-history-section";
+import { AgreementStopSection } from "./agreement-stop-section";
 import { AgreementVersionList } from "./agreement-version-list";
 import { DraftEditForm } from "./draft-edit-form";
 import { DraftOpenNotice } from "./draft-open-notice";
@@ -34,9 +36,17 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
  * S4-D14) asks for a confirmation and sends the draft with the data version the page read. Once the latest version did
  * not take effect, its line in the list saying why, "Open a new draft" (E05-S5, S5-D10, S6-D24) opens the next one.
  * Every read is one opening that the server logs (S2-D9): one on mount, one per "Try again", one after a save, a send, a
- * new draft, an activation, a refusal or a "Reload".
+ * new draft, an activation, a refusal, a stop of "Agreement state" (a suspension, its release, a termination or a
+ * cancellation, E05-S8) or a "Reload".
  */
-export function AgreementDetailView({ agreementId }: { agreementId: string }) {
+export function AgreementDetailView({
+  agreementId,
+  belowAdvertising,
+}: {
+  agreementId: string;
+  /** Placed by the page below "Advertising" once the agreement is read; every reread unmounts it (E06S1-D12). */
+  belowAdvertising?: ReactNode;
+}) {
   const t = useTranslations("BrokerageAgreement");
   const format = useFormatter();
   const [model, setModel] = useState<AgreementModel>(LOADING);
@@ -49,6 +59,8 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const [stillPending, setStillPending] = useState(false);
   /** "Something changed. The page was reloaded.", after an activation or a refusal met a changed state (E05S6-P14). */
   const [activationChanged, setActivationChanged] = useState(false);
+  /** The code of a refused stop (E05S8-P15): kept across the read it causes, so its sentence shows after it. */
+  const [stopChanged, setStopChanged] = useState<string | null>(null);
   const versionsId = useId();
 
   useEffect(() => {
@@ -71,6 +83,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
       setConfirmingSend(false);
       setStillPending(false);
       setActivationChanged(false);
+      setStopChanged(null);
     },
     [],
   );
@@ -86,6 +99,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
     setConfirmingSend(false);
     setStillPending(false);
     setActivationChanged(false);
+    setStopChanged(null);
     retry();
   };
   // The new draft was refused because a version is still pending: say so and read the agreement again.
@@ -97,6 +111,11 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
   const rereadChanged = () => {
     reread();
     setActivationChanged(true);
+  };
+  // A stop was refused because the state changed (a 403 or a 409 code): read again, then say why (E05S8-P15).
+  const rereadStopChanged = (code: string) => {
+    reread();
+    setStopChanged(code);
   };
 
   switch (model.kind) {
@@ -129,7 +148,7 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
         </div>
       );
     case "ready": {
-      const { agreement, versions, canEditDraft, canOpenDraft, draft, dataVersion, advertising, activation } = model;
+      const { agreement, versions, canEditDraft, canOpenDraft, draft, dataVersion, advertising, activation, stop } = model;
       const draftEditor =
         editing && canEditDraft && draft !== null && dataVersion !== null
           ? {
@@ -183,6 +202,18 @@ export function AgreementDetailView({ agreementId }: { agreementId: string }) {
             )}
           </div>
           {advertising !== undefined && <AdvertisingPanel model={advertising} />}
+          {belowAdvertising}
+          {stopChanged !== null && <Alert tone="info">{t(stopErrorKey(stopChanged))}</Alert>}
+          {stop !== undefined && (
+            <AgreementStopSection
+              agreementId={agreementId}
+              dataVersion={dataVersion}
+              model={stop}
+              onDone={reread}
+              onChanged={rereadStopChanged}
+              onReload={reread}
+            />
+          )}
           {activation?.kind === "decide" && dataVersion !== null && (
             <ActivationForm
               agreementId={agreementId}

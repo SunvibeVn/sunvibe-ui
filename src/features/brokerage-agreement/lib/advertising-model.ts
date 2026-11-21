@@ -28,9 +28,10 @@ function photoLine(answer: BrokerageAgreementAdvertising): Phrase {
 /**
  * Turns the detail's advertising answer into the panel's model (brokerage-agreement S6-D7, S6-D8). Only an answer whose
  * `allowed` is true reads as allowed; an absent `allowed` is false, and an answer that is not allowed and names no group
- * reads "Another reason stops it.", so nothing absent ever reads as allowed. The groups keep the answer's order.
+ * reads "Another reason stops it.", so nothing absent ever reads as allowed. The groups keep the answer's order. The
+ * agreement's `state`, when given, chooses the ENDED line (E05-S8, S8-D16); not given, the line is today's.
  */
-export function advertisingModel(answer: BrokerageAgreementAdvertising): AdvertisingModel {
+export function advertisingModel(answer: BrokerageAgreementAdvertising, state?: string | null): AdvertisingModel {
   if (answer.allowed === true) {
     return {
       allowed: true,
@@ -40,6 +41,6 @@ export function advertisingModel(answer: BrokerageAgreementAdvertising): Adverti
       photos: photoLine(answer),
     };
   }
-  const lines = (answer.reasonGroups ?? []).map((group) => advertisingReasonText(group, answer));
+  const lines = (answer.reasonGroups ?? []).map((group) => advertisingReasonText(group, answer, state));
   return { allowed: false, lines: lines.length === 0 ? [{ key: "eligibility.reasons.OTHER" }] : lines };
 }

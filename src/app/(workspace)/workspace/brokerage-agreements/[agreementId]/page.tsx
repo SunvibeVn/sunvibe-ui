@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AgreementDetailView } from "@/features/brokerage-agreement";
+import { AgreementListingSection } from "@/features/listing-publish";
 
 // The title is generic: never a unit code, an address or a name.
 export const metadata: Metadata = {
@@ -12,7 +13,13 @@ export const instant = false;
 
 async function BrokerageAgreement({ params }: { params: Promise<{ agreementId: string }> }) {
   const { agreementId } = await params;
-  return <AgreementDetailView key={agreementId} agreementId={agreementId} />;
+  return (
+    <AgreementDetailView
+      key={agreementId}
+      agreementId={agreementId}
+      belowAdvertising={<AgreementListingSection agreementId={agreementId} />}
+    />
+  );
 }
 
 export default function BrokerageAgreementPage({ params }: { params: Promise<{ agreementId: string }> }) {
