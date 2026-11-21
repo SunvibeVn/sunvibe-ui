@@ -25,8 +25,14 @@ vi.mock("../services/freshness-api", async (importOriginal) => ({
   getListingFreshness: vi.fn(() => new Promise<never>(() => undefined)),
   recordListingFreshness: vi.fn(),
 }));
+// The decision read of the "Latest review" section (E06-S4), which only a decided revision mounts.
+vi.mock("../services/review-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../services/review-api")>()),
+  getListingRevisionDecision: vi.fn(() => new Promise<never>(() => undefined)),
+}));
 
 import { getListingFreshness, recordListingFreshness } from "../services/freshness-api";
+import { getListingRevisionDecision } from "../services/review-api";
 import { getListing } from "../services/listing-api";
 import { getListingRevision, saveListingRevisionContent, startListingRevision } from "../services/revision-api";
 
@@ -569,5 +575,72 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
     } finally {
       resetEdge();
     }
+  });
+});
+
+describe("ListingDetailView and the latest review (listing-publish E06-S4, spec section 6, E06S4-D17, P12)", () => {
+  const latest = en.ListingPublish.decision.heading;
+  /** A listing whose revision 2 was returned and whose revision 3 is the open Draft copied from it. */
+  const DECIDED: ListingDetail = {
+    ...DETAIL,
+    dataVersion: 8,
+    openRevisionNo: 3,
+    revisions: [
+      { revisionNo: 3, status: "DRAFT", createdAt: "2026-11-22T04:00:00Z" },
+      { revisionNo: 2, status: "NEEDS_CHANGES", createdAt: "2026-11-21T03:15:00Z" },
+      { revisionNo: 1, status: "CANCELLED", createdAt: "2026-11-20T03:15:00Z" },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.mocked(getListing).mockReset();
+    vi.mocked(getListingRevisionDecision).mockReset();
+    vi.mocked(getListingRevisionDecision).mockReturnValue(new Promise(() => undefined));
+  });
+
+  it("listingDetailView_decidedRevision_mountsDecisionSection: a listed Needs changes revision mounts 'Latest review' between 'Current revision' and 'Revisions', reading that revision's decision, also while a Draft is open", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered(DECIDED));
+    vi.mocked(getListingRevisionDecision).mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      replayed: false,
+      data: {
+        outcome: "NEEDS_CHANGES",
+        decidedAt: "2026-11-22T03:00:00Z",
+        checklistVersion: null,
+        changeReasons: ["MISSING_INFORMATION"],
+        rejectionGroup: null,
+        note: "Thiếu diện tích.",
+      },
+    });
+    renderView();
+
+    const section = await screen.findByRole("region", { name: latest });
+    const current = screen.getByRole("region", { name: en.ListingPublish.revision.heading });
+    const revisions = screen.getByRole("region", { name: p.revisions });
+    expect(current.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(section.compareDocumentPosition(revisions) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(getListingRevisionDecision).toHaveBeenCalledWith(LISTING_ID, 2);
+    expect(await within(section).findByText("Thiếu diện tích.")).toBeTruthy();
+    expect(within(section).queryByRole("button", { name: en.ListingPublish.decision.copy })).toBeNull();
+  });
+
+  it("listingDetailView_noDecidedRevision_noDecisionSection: with only Draft, Pending review and Cancelled revisions listed there is no 'Latest review' and no decision read", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(
+      answered({
+        ...DETAIL,
+        openRevisionNo: 3,
+        revisions: [
+          { revisionNo: 3, status: "PENDING_REVIEW", createdAt: "2026-11-22T04:00:00Z" },
+          { revisionNo: 2, status: "CANCELLED", createdAt: "2026-11-21T03:15:00Z" },
+          { revisionNo: 1, status: "DRAFT", createdAt: "2026-11-20T03:15:00Z" },
+        ],
+      }),
+    );
+    renderView();
+
+    expect(await screen.findByRole("region", { name: p.revisions })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: latest })).toBeNull();
+    expect(getListingRevisionDecision).not.toHaveBeenCalled();
   });
 });

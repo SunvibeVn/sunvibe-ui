@@ -3132,6 +3132,29 @@
       "notEligible": "You may not review this:",
       "hasMore": "More revisions are waiting than are shown here."
     },
+    "decision": {
+      "heading": "Latest review",
+      "loading": "Loading the latest review…",
+      "loadFailed": "The decision could not be loaded.",
+      "retry": "Try again",
+      "statusLine": "Revision {revisionNo}: {outcome}",
+      "decidedAt": "Decided {time}",
+      "reasons": "What needs to change:",
+      "groupLine": "Why it was rejected: {group}",
+      "note": "Reviewer's note:",
+      "copy": "Copy into a new draft",
+      "copying": "Copying…",
+      "rejected": "This revision was rejected and cannot be copied. You may start a new draft.",
+      "answers": {
+        "openExists": "A draft is already open.",
+        "notCopyable": "This revision cannot be copied.",
+        "concurrent": "Someone changed this listing. It has been reloaded.",
+        "archived": "This listing is archived.",
+        "forbidden": "Only the Sale in charge of this listing can copy it.",
+        "notFound": "This listing or revision is no longer available to you.",
+        "failed": "Something went wrong. Try again."
+      }
+    },
     "review": {
       "heading": "Review of listing {code}",
       "statusLine": "Revision {revisionNo}: {status}",
