@@ -3133,6 +3133,62 @@
       "hasMore": "More revisions are waiting than are shown here."
     },
     "review": {
+      "heading": "Review of listing {code}",
+      "statusLine": "Revision {revisionNo}: {status}",
+      "backToQueue": "Back to the queue",
+      "loading": "Loading the review…",
+      "forbidden": "You cannot open this review.",
+      "notFound": "This revision is not available.",
+      "loadFailed": "The review could not be loaded.",
+      "retry": "Try again",
+      "notEligible": "You may not decide on this revision:",
+      "content": "Content",
+      "agreement": {
+        "heading": "Agreement",
+        "allowed": "Advertising is allowed.",
+        "notAllowed": "Advertising is not allowed:",
+        "noAnswer": "The agreement gave no answer for this listing.",
+        "endsOn": "Ends on {date}",
+        "noEnd": "No end date.",
+        "interiorPhotos": "Interior photos: {answer}",
+        "exteriorPhotos": "Exterior photos: {answer}",
+        "yes": "Yes",
+        "no": "No",
+        "termsInEffect": "Terms in effect",
+        "noTermsInEffect": "No version is in effect.",
+        "pending": "Terms waiting to start on {date}"
+      },
+      "termsCheck": "Terms check",
+      "unit": {
+        "heading": "Unit",
+        "code": "Unit code",
+        "ward": "Ward",
+        "availability": "Availability",
+        "notKnown": "Not known",
+        "availabilityDiffers": "The intake's availability differs."
+      },
+      "location": {
+        "show": "Show the real location",
+        "opening": "Opening…",
+        "unitCode": "Unit code",
+        "label": "Location in the property",
+        "street": "Street",
+        "ward": "Ward",
+        "notGiven": "Not given",
+        "forbidden": "You may not open the real location of this revision.",
+        "notPending": "This revision is no longer waiting for review.",
+        "archived": "The listing is archived; nothing can be decided on it.",
+        "failed": "Something went wrong. Try again."
+      },
+      "freshness": {
+        "heading": "Freshness",
+        "latestValid": "Latest valid confirmation: {date}",
+        "validThrough": "Valid through: {date}",
+        "expired": "Expired",
+        "notValid": "The latest contact is not a valid confirmation.",
+        "noValid": "No valid confirmation yet."
+      },
+      "checklist": "Checklist",
       "ineligible": {
         "NOT_A_REVIEWER": "You do not hold a listing reviewer role.",
         "AUTHOR": "You created or edited this revision.",
