@@ -3189,6 +3189,31 @@
         "noValid": "No valid confirmation yet."
       },
       "checklist": "Checklist",
+      "recorded": "Decision recorded.",
+      "rereadFailed": "The review could not be read again.",
+      "decision": {
+        "heading": "Your decision",
+        "outcome": "Decision",
+        "checks": "Confirm each check",
+        "changeReasons": "What needs to change",
+        "rejectionGroup": "Why it is rejected",
+        "note": "Note",
+        "noteCount": "{count, number} / 1,000",
+        "submit": "Send decision",
+        "answers": {
+          "decisionIncomplete": "Complete the decision: choose what it needs and write a note.",
+          "noteInvalid": "The note is too long or holds a character that cannot be stored.",
+          "invalid": "This decision could not be sent. Reload the page and try again.",
+          "forbidden": "You cannot decide on this revision.",
+          "notIndependent": "The decision was not recorded:",
+          "notFound": "This revision is not available.",
+          "concurrent": "The listing changed meanwhile. Check the revision again before you decide.",
+          "termsMismatch": "The revision's terms equal no version of the agreement: it cannot be approved.",
+          "notPending": "This revision was decided or withdrawn meanwhile; it can no longer be decided.",
+          "archived": "The listing is archived; nothing can be decided on it.",
+          "failed": "Something went wrong. Try again."
+        }
+      },
       "ineligible": {
         "NOT_A_REVIEWER": "You do not hold a listing reviewer role.",
         "AUTHOR": "You created or edited this revision.",

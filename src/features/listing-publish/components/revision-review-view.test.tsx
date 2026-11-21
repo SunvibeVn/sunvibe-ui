@@ -249,4 +249,148 @@ describe("RevisionReviewView (listing-publish US-4 AC-2, spec section 6, E06S4-D
     expect(within(content).getByText((_, element) => element?.textContent === description && element.tagName === "DD")).toBeTruthy();
     expect(content.querySelector("b, i, img, a")).toBeNull();
   });
+
+  // The decision and the re-read in place after its answer (spec section 6, E06S4-D17; Task B5 mounts the form).
+
+  const d = v.decision;
+  const change = (status: "NEEDS_CHANGES" | "APPROVED", dataVersion: number) =>
+    ok({ listingId: LISTING_ID, revisionNo: 2, status, dataVersion }) as Awaited<ReturnType<typeof decideListingRevision>>;
+  const refusal = (status: number, code: string, fields: string[] = []) =>
+    ({ ok: false, kind: "http", status, code, fieldErrors: fields.map((field) => ({ field, message: "Fixed server message." })) }) as Awaited<
+      ReturnType<typeof decideListingRevision>
+    >;
+  const decided = (status: ListingRevisionReview["status"], reasons: ListingRevisionReview["notEligibleReasons"]) =>
+    ok({ ...REVIEW, status, dataVersion: 10, viewerMayReview: false, notEligibleReasons: reasons });
+  const formShown = () => screen.queryByRole("group", { name: d.outcome }) !== null;
+  const submit = () => screen.getByRole("button", { name: d.submit }) as HTMLButtonElement;
+  const noteValue = () => (screen.queryByRole("textbox", { name: d.note }) as HTMLTextAreaElement | null)?.value;
+
+  /** The page ready for a reviewer who may decide, with a return chosen, one reason ticked and a note typed. */
+  async function readyWithReturn() {
+    vi.mocked(getListingRevisionReview).mockResolvedValueOnce(ok(REVIEW));
+    vi.mocked(getListingRevision).mockResolvedValueOnce(ok(REVISION));
+    const view = renderView();
+    fireEvent.click(await screen.findByRole("radio", { name: v.outcomes.NEEDS_CHANGES }));
+    fireEvent.click(screen.getByRole("checkbox", { name: v.changeReasons.MISSING_INFORMATION }));
+    fireEvent.change(screen.getByRole("textbox", { name: d.note }), { target: { value: "Thiếu diện tích." } });
+    return view;
+  }
+
+  it("revisionReviewView_concurrent_rereadKeepsValuesSendsNewVersion: after 409 CONCURRENT_MODIFICATION both reads run again in place, the form keeps everything chosen and typed, says the listing changed, and sends the re-read's data version", async () => {
+    await readyWithReturn();
+    const review = deferred<ApiResult<ListingRevisionReview>>();
+    const revision = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevisionReview).mockReturnValueOnce(review.promise);
+    vi.mocked(getListingRevision).mockReturnValueOnce(revision.promise);
+    vi.mocked(decideListingRevision).mockResolvedValueOnce(refusal(409, "CONCURRENT_MODIFICATION")).mockResolvedValueOnce(change("NEEDS_CHANGES", 11));
+
+    fireEvent.click(submit());
+    await waitFor(() => expect(getListingRevisionReview).toHaveBeenCalledTimes(2));
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+    expect(vi.mocked(decideListingRevision).mock.calls[0]?.[2]).toMatchObject({ dataVersion: 9 });
+    // No loading state: the page stays with its form while the reads run; the form waits for them.
+    expect(screen.queryByText(v.loading)).toBeNull();
+    expect(screen.getByRole("heading", { level: 1, name: "Review of listing TD-7K3M-Q9TX" })).toBeTruthy();
+    expect(submit().disabled).toBe(true);
+
+    review.resolve(ok({ ...REVIEW, dataVersion: 10 }));
+    revision.resolve(ok({ ...REVISION, dataVersion: 10 }));
+    await waitFor(() => expect(submit().disabled).toBe(false));
+    expect((screen.getByRole("alert") as HTMLElement).textContent).toBe(d.answers.concurrent);
+    expect((screen.getByRole("radio", { name: v.outcomes.NEEDS_CHANGES }) as HTMLInputElement).checked).toBe(true);
+    expect((screen.getByRole("checkbox", { name: v.changeReasons.MISSING_INFORMATION }) as HTMLInputElement).checked).toBe(true);
+    expect(noteValue()).toBe("Thiếu diện tích.");
+
+    vi.mocked(getListingRevisionReview).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(getListingRevision).mockReturnValue(new Promise(() => undefined));
+    fireEvent.click(submit());
+    await waitFor(() => expect(decideListingRevision).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(decideListingRevision).mock.calls[1]?.[2]).toEqual({
+      dataVersion: 10,
+      outcome: "NEEDS_CHANGES",
+      changeReasons: ["MISSING_INFORMATION"],
+      note: "Thiếu diện tích.",
+    });
+  });
+
+  it("revisionReviewView_notPendingOrArchived_formGoneSentenceReasons: after 409 REVISION_NOT_PENDING, 409 LISTING_ARCHIVED or 403 REVIEWER_NOT_INDEPENDENT both reads run again, the form is gone, the answer's sentence stays and the eligibility line shows the re-read's reasons", async () => {
+    const rows: [ReturnType<typeof refusal>, string, ListingRevisionReview["notEligibleReasons"], string][] = [
+      [refusal(409, "REVISION_NOT_PENDING"), d.answers.notPending, ["NOT_PENDING"], v.ineligible.NOT_PENDING],
+      [refusal(409, "LISTING_ARCHIVED"), d.answers.archived, ["LISTING_ARCHIVED"], v.ineligible.LISTING_ARCHIVED],
+      [refusal(403, "REVIEWER_NOT_INDEPENDENT", ["reasons.ASSIGNED_SALE"]), d.answers.notIndependent, ["ASSIGNED_SALE"], v.ineligible.ASSIGNED_SALE],
+    ];
+    for (const [answer, sentence, reasons, reasonText] of rows) {
+      const view = await readyWithReturn();
+      vi.mocked(decideListingRevision).mockResolvedValueOnce(answer);
+      vi.mocked(getListingRevisionReview).mockResolvedValueOnce(decided("PENDING_REVIEW", reasons));
+      vi.mocked(getListingRevision).mockResolvedValueOnce(ok({ ...REVISION, dataVersion: 10 }));
+      fireEvent.click(submit());
+
+      await waitFor(() => expect(formShown()).toBe(false));
+      expect(screen.getByRole("alert").querySelector("p")?.textContent).toBe(sentence);
+      expect(screen.getByText(v.notEligible)).toBeTruthy();
+      expect(within(screen.getByText(v.notEligible).closest("[role=status]") as HTMLElement).getByText(reasonText)).toBeTruthy();
+      expect(screen.queryByRole("button", { name: v.location.show })).toBeNull();
+      expect(screen.getByRole("heading", { level: 1, name: "Review of listing TD-7K3M-Q9TX" })).toBeTruthy();
+      view.unmount();
+      vi.mocked(getListingRevisionReview).mockReset();
+      vi.mocked(getListingRevision).mockReset();
+    }
+  });
+
+  it("revisionReviewView_termsMismatch_keepsFormApproveDisabled: after 409 REVISION_TERMS_MISMATCH the re-read's terms check shows, the form keeps its five ticks and Approve waits on the terms", async () => {
+    vi.mocked(getListingRevisionReview).mockResolvedValueOnce(ok(REVIEW)).mockResolvedValueOnce(ok({ ...REVIEW, dataVersion: 10, termsMatch: "NONE" }));
+    vi.mocked(getListingRevision).mockResolvedValueOnce(ok(REVISION)).mockResolvedValueOnce(ok({ ...REVISION, dataVersion: 10 }));
+    vi.mocked(decideListingRevision).mockResolvedValueOnce(refusal(409, "REVISION_TERMS_MISMATCH"));
+    renderView();
+    fireEvent.click(await screen.findByRole("radio", { name: v.outcomes.APPROVED }));
+    for (const code of REVIEW.checklist) fireEvent.click(screen.getByRole("checkbox", { name: v.checks[code] }));
+    fireEvent.click(submit());
+
+    await waitFor(() => expect(within(region(v.termsCheck)).queryByText(v.termsMatch.NONE)).not.toBeNull());
+    expect(screen.getByRole("alert").textContent).toBe(d.answers.termsMismatch);
+    expect(formShown()).toBe(true);
+    for (const code of REVIEW.checklist) {
+      expect((screen.getByRole("checkbox", { name: v.checks[code] }) as HTMLInputElement).checked).toBe(true);
+    }
+    expect(submit().disabled).toBe(true);
+    fireEvent.click(screen.getByRole("radio", { name: v.outcomes.NEEDS_CHANGES }));
+    expect(submit().disabled).toBe(false);
+  });
+
+  it("revisionReviewView_decided_rereadShowsRecorded: after a 200 both reads run again in place; 'Decision recorded.', the new status and no form", async () => {
+    await readyWithReturn();
+    vi.mocked(decideListingRevision).mockResolvedValueOnce(change("NEEDS_CHANGES", 10));
+    vi.mocked(getListingRevisionReview).mockResolvedValueOnce(decided("NEEDS_CHANGES", ["NOT_PENDING"]));
+    vi.mocked(getListingRevision).mockResolvedValueOnce(ok({ ...REVISION, status: "NEEDS_CHANGES", dataVersion: 10 }));
+    fireEvent.click(submit());
+
+    expect(await screen.findByText(v.recorded)).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText("Revision 2: Needs changes")).not.toBeNull());
+    expect(formShown()).toBe(false);
+    expect(screen.queryByRole("alert")).toBeNull();
+    expect(getListingRevisionReview).toHaveBeenCalledTimes(2);
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+  });
+
+  it("revisionReviewView_rereadFails_keepsShownWithoutFormRetry: a re-read that fails keeps what is shown without the form, with Try again, which reads both again in place", async () => {
+    await readyWithReturn();
+    vi.mocked(decideListingRevision).mockResolvedValueOnce(refusal(409, "CONCURRENT_MODIFICATION"));
+    vi.mocked(getListingRevisionReview).mockResolvedValueOnce(http(500, "INTERNAL_ERROR")).mockResolvedValueOnce(ok({ ...REVIEW, dataVersion: 10 }));
+    vi.mocked(getListingRevision).mockResolvedValueOnce(ok(REVISION)).mockResolvedValueOnce(ok({ ...REVISION, dataVersion: 10 }));
+    fireEvent.click(submit());
+
+    expect(await screen.findByText(v.rereadFailed)).toBeTruthy();
+    expect(formShown()).toBe(false);
+    expect(screen.getByRole("heading", { level: 1, name: "Review of listing TD-7K3M-Q9TX" })).toBeTruthy();
+    expect(within(region(v.content)).getByText("Phòng trọ gần trường đại học")).toBeTruthy();
+    expect(screen.queryByText(v.loading)).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: v.retry }));
+    await waitFor(() => expect(formShown()).toBe(true));
+    expect(getListingRevisionReview).toHaveBeenCalledTimes(3);
+    expect(getListingRevision).toHaveBeenCalledTimes(3);
+    expect(screen.queryByText(v.rereadFailed)).toBeNull();
+    expect(screen.queryByText(v.loading)).toBeNull();
+  });
 });
