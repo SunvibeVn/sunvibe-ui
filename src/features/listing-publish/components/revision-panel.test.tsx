@@ -413,4 +413,35 @@ describe("RevisionPanel (listing-publish US-2 AC-1 to AC-6, spec section 6, RD-1
     renderPanel({ openRevisionNo: null, dataVersion: 0, viewerMayDraft: true });
     expect(region().textContent).not.toContain("Unpublished");
   });
+
+  it("revisionPanel_saveConcurrent_adoptsStoredValues: after the panel's save answers 409 CONCURRENT_MODIFICATION, the re-read's stored values replace what is typed (K-2, pin (a))", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce(answered({ ...DRAFT, title: "Phòng trọ đã sửa ở tab khác", dataVersion: 5 }));
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(refused(409, "CONCURRENT_MODIFICATION"));
+    renderPanel(DRAFTER);
+
+    fireEvent.change(await within(region()).findByRole("textbox", { name: r.title }), { target: { value: "Phòng trọ của tôi gần chợ" } });
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(getListingRevision).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(within(region()).queryByRole("alert")?.textContent).toBe(a.concurrent));
+    await waitFor(() =>
+      expect((within(region()).queryByRole("textbox", { name: r.title }) as HTMLInputElement | null)?.value).toBe("Phòng trọ đã sửa ở tab khác"),
+    );
+  });
+
+  it("revisionPanel_retryAfterFailedRead_showsLoadingLine: 'Try again' after a failed first read empties the panel to its loading line until the read answers (K-7, pin (d))", async () => {
+    const held = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce({ ok: false, kind: "http", status: 500, code: "INTERNAL_ERROR", fieldErrors: [] })
+      .mockReturnValueOnce(held.promise);
+    renderPanel(DRAFTER);
+
+    fireEvent.click(await within(region()).findByRole("button", { name: r.retry }));
+    expect(within(region()).queryByRole("status")?.textContent).toBe(r.loading);
+    expect(within(region()).queryByText(r.loadFailed)).toBeNull();
+    held.resolve(answered(DRAFT));
+    await waitFor(() => expect(within(region()).queryByRole("textbox", { name: r.title })).not.toBeNull());
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+  });
 });
