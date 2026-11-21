@@ -93,3 +93,23 @@ describe("WorkspaceShell: the gate, the frame and the page (acquisition-owner-le
     expect(screen.queryByRole("heading", { name: "Territories stub" })).toBeNull();
   });
 });
+
+describe("WorkspaceShell for a user whose only workspace role is LISTING_REVIEWER (listing-publish E06-S4, E06S4-D16)", () => {
+  it("workspaceShell_reviewerOnlyAtOwnerLeads_frameOneItemForbidden: the frame with LISTING REVIEWS alone and the 403 screen inside main, no page", () => {
+    showAs(["LISTING_REVIEWER"], "/workspace/owner-leads");
+
+    expect(within(screen.getByRole("banner")).getByRole("button", { name: SIGN_OUT })).toBeTruthy();
+    expect(menuLinks()).toEqual(["LISTING REVIEWS"]);
+    expect(within(screen.getByRole("main")).getByText(FORBIDDEN_TITLE)).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: "Stub page" })).toBeNull();
+  });
+
+  it("workspaceShell_reviewerOnlyAtReviewQueue_page: the frame and the page at the review queue", () => {
+    showAs(["LISTING_REVIEWER"], "/workspace/listings/reviews");
+
+    expect(within(screen.getByRole("banner")).getByRole("button", { name: SIGN_OUT })).toBeTruthy();
+    expect(menuLinks()).toEqual(["LISTING REVIEWS"]);
+    expect(within(screen.getByRole("main")).getByRole("heading", { level: 1, name: "Stub page" })).toBeTruthy();
+    expect(screen.queryByText(FORBIDDEN_TITLE)).toBeNull();
+  });
+});

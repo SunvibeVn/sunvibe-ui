@@ -33,6 +33,7 @@
       "surveys": "SURVEYS",
       "brokerageAgreements": "AGREEMENTS",
       "listingReconfirmations": "RECONFIRMATIONS",
+      "listingReviews": "LISTING REVIEWS",
       "territories": "TERRITORIES",
       "inventoryCases": "INVENTORY CASES"
     },
