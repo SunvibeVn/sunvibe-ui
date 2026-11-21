@@ -49,3 +49,19 @@ export type ListingFreshnessRecorded = Schemas["ListingFreshnessRecorded"];
 /** At most 50 listings to reconfirm, oldest confirmation first, and whether more may need it (E06S3-D7). */
 export type ListingReconfirmations = Schemas["ListingReconfirmations"];
 export type ListingReconfirmationItem = Schemas["ListingReconfirmationItem"];
+
+// The independent review of a submitted revision (listing-publish E06-S4). Nullable: E05's answer, its end date and its
+// two terms, the unit's code and availability, the four freshness fields, and the decision's checklist version,
+// rejection group and note; the real location's four fields.
+
+/** At most 50 Pending review revisions, oldest submission first, and whether more are waiting (E06S4-D10). */
+export type ListingReviewQueue = Schemas["ListingReviewQueue"];
+export type ListingReviewQueueItem = Schemas["ListingReviewQueueItem"];
+/** What a reviewer reads beside a revision; never the real location (E06S4-D11). */
+export type ListingRevisionReview = Schemas["ListingRevisionReview"];
+/** The body of a decision: only the chosen outcome's fields (E06S4-D6, E06S4-P10). */
+export type ListingRevisionDecisionRequest = Schemas["ListingRevisionDecisionRequest"];
+/** A revision's decision with its reasons and private note; no reviewer id (E06S4-D15). */
+export type ListingRevisionDecision = Schemas["ListingRevisionDecision"];
+/** The unit's real location, opened by an eligible reviewer and logged by the server (E06S4-D12). */
+export type ListingUnitLocation = Schemas["ListingUnitLocation"];
