@@ -321,8 +321,11 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
   const titleValue = () => (within(current()).queryByRole("textbox", { name: r.title }) as HTMLInputElement | null)?.value;
   /** Whether a button is held: disabled itself or inside a disabled fieldset (`:disabled`). */
   const held = (region: HTMLElement, name: string) => within(region).queryByRole("button", { name })?.matches(":disabled");
-  const choice = (groupName: string, name: string) =>
-    within(within(freshness()).getByRole("group", { name: groupName })).queryByRole("radio", { name }) as HTMLInputElement | null;
+  /** A choice of the record form, or null when the form or its group is not shown. */
+  const choice = (groupName: string, name: string) => {
+    const group = within(freshness()).queryByRole("group", { name: groupName });
+    return group === null ? null : (within(group).queryByRole("radio", { name }) as HTMLInputElement | null);
+  };
   /** Opens the record form and chooses a phone call, still available, both answers yes. */
   async function openCompleteRecord() {
     fireEvent.click(await within(freshness()).findByRole("button", { name: f.record }));
