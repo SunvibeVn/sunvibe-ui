@@ -514,7 +514,10 @@ describe("RevisionPanel (listing-publish US-2 AC-1 to AC-6, spec section 6, RD-1
   });
 
   it("revisionPanel_outsideChange_sameValueGiven_readsNothing: a new outsideChange reads the open revision once; the same value given again reads nothing", async () => {
-    vi.mocked(getListingRevision).mockResolvedValueOnce(answered(DRAFT)).mockResolvedValueOnce(answered({ ...DRAFT, dataVersion: 5 }));
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce(answered({ ...DRAFT, dataVersion: 5 }))
+      .mockReturnValueOnce(new Promise(() => undefined));
     const { outside } = renderOutside(DRAFTER);
     await within(region()).findByRole("textbox", { name: r.title });
 
