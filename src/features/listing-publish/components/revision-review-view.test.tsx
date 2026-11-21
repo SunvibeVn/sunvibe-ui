@@ -348,7 +348,8 @@ describe("RevisionReviewView (listing-publish US-4 AC-2, spec section 6, E06S4-D
     fireEvent.click(submit());
 
     await waitFor(() => expect(within(region(v.termsCheck)).queryByText(v.termsMatch.NONE)).not.toBeNull());
-    expect(screen.getByRole("alert").textContent).toBe(d.answers.termsMismatch);
+    // The form's answer commits when its action ends, which may be just after the re-read's answer.
+    await waitFor(() => expect(screen.queryByRole("alert")?.textContent).toBe(d.answers.termsMismatch));
     expect(formShown()).toBe(true);
     for (const code of REVIEW.checklist) {
       expect((screen.getByRole("checkbox", { name: v.checks[code] }) as HTMLInputElement).checked).toBe(true);
