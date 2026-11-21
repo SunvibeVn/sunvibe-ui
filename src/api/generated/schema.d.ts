@@ -899,6 +899,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/listings/reconfirmations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The listings whose reconfirmation is due, oldest confirmation first */
+        get: operations["getListingReconfirmations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/listings/{listingId}": {
         parameters: {
             query?: never;
@@ -910,6 +927,40 @@ export interface paths {
         get: operations["getListing"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/freshness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A listing's latest valid confirmation, its reconfirmation and last valid days, and its latest contact */
+        get: operations["getListingFreshness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/freshness-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a contact with the person letting the unit; dated today in Vietnam time by the server */
+        post: operations["recordListingFreshness"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6140,6 +6191,78 @@ export interface components {
             /** @description 1 to 100 characters, E05's content */
             name: string;
         };
+        ListingFreshness: {
+            /**
+             * Format: date
+             * @description The Vietnam date of the latest valid confirmation; null until one
+             */
+            confirmedOn: string | null;
+            /** @description The last valid day has passed */
+            deadlinePassed: boolean;
+            /** @description The latest record; null before any */
+            latest: components["schemas"]["ListingFreshnessRecord"] | null;
+            listingId: string;
+            /**
+             * Format: date
+             * @description From this day reconfirmation is due; null until a valid confirmation
+             */
+            reconfirmFrom: string | null;
+            /** @description Reconfirmation is due; stays on until a new valid confirmation */
+            reconfirmationDue: boolean;
+            /**
+             * Format: date
+             * @description The last day the confirmation holds; null until a valid confirmation
+             */
+            validThrough: string | null;
+        };
+        ListingFreshnessRecord: {
+            /** @enum {string} */
+            channel: "CALL" | "MESSAGE" | "IN_PERSON";
+            /**
+             * Format: date
+             * @description The Vietnam date of the contact
+             */
+            contactDate: string;
+            /** @description Private; null for none */
+            note: string | null;
+            /** @enum {string} */
+            outcome: "AVAILABLE" | "NOT_AVAILABLE" | "UNREACHABLE";
+            /** Format: date-time */
+            recordedAt: string;
+            /** @description Set exactly for AVAILABLE */
+            termsStillApply: boolean | null;
+            /** @description Set exactly for AVAILABLE */
+            unitUnchanged: boolean | null;
+            /** @description Still available with both answers yes (listing-publish BR-9) */
+            valid: boolean;
+        };
+        ListingFreshnessRecordRequest: {
+            /** @enum {string} */
+            channel: "CALL" | "MESSAGE" | "IN_PERSON";
+            /**
+             * Format: int64
+             * @description The listing's data version the caller read (listing BR-3)
+             */
+            dataVersion: number;
+            /** @description Private: at most 500 characters (code points after NFC, trimmed), line feeds allowed, no other control or format character; null or blank is none */
+            note: string | null;
+            /** @enum {string} */
+            outcome: "AVAILABLE" | "NOT_AVAILABLE" | "UNREACHABLE";
+            /** @description The person still lets the unit on the agreement's terms; set exactly for AVAILABLE */
+            termsStillApply: boolean | null;
+            /** @description No significant change to the unit since the listing's content; set exactly for AVAILABLE */
+            unitUnchanged: boolean | null;
+        };
+        ListingFreshnessRecorded: {
+            /**
+             * Format: int64
+             * @description The listing's new data version
+             */
+            dataVersion: number;
+            listingId: string;
+            /** @description Still available with both answers yes (listing-publish BR-9) */
+            valid: boolean;
+        };
         ListingItem: {
             /** @description The public code */
             code: string;
@@ -6156,6 +6279,32 @@ export interface components {
             /** Format: date */
             startDate: string;
             terms: components["schemas"]["ListingTerms"];
+        };
+        ListingReconfirmationItem: {
+            /** @description The public code */
+            code: string;
+            /**
+             * Format: date
+             * @description The Vietnam date of the latest valid confirmation
+             */
+            confirmedOn: string;
+            /** @description The last valid day has passed */
+            deadlinePassed: boolean;
+            /** @description The latest record is a valid confirmation */
+            latestRecordValid: boolean;
+            listingId: string;
+            /** Format: date */
+            reconfirmFrom: string;
+            /** @enum {string} */
+            state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED";
+            /** Format: date */
+            validThrough: string;
+        };
+        ListingReconfirmations: {
+            /** @description More listings may need reconfirmation than the list shows */
+            hasMore: boolean;
+            /** @description At most 50, oldest confirmation first, then by listing id */
+            items: components["schemas"]["ListingReconfirmationItem"][];
         };
         ListingRent: {
             /** Format: int64 */
@@ -10972,6 +11121,53 @@ export interface operations {
             };
         };
     };
+    getListingReconfirmations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description At most 50 listings, oldest confirmation first, and whether more may need reconfirmation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingReconfirmations"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN (LISTING_REVIEWER alone included) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getListing: {
         parameters: {
             query?: never;
@@ -11012,6 +11208,144 @@ export interface operations {
             };
             /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingFreshness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The freshness; every date null until a valid confirmation, the latest record null before any */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingFreshness"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordListingFreshness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingFreshnessRecordRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded; the listing's new data version and whether the contact is a valid confirmation */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingFreshnessRecorded"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion, channel, outcome, note, or answersMatchOutcome when the two answers are not set exactly for AVAILABLE) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller does not hold its agreement's basis lead now: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED or CONCURRENT_MODIFICATION (the data version is stale) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
