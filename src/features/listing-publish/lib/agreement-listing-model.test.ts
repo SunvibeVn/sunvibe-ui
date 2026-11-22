@@ -65,6 +65,15 @@ describe("agreementListingModel (listing-publish E06-S1, spec section 6, UL-1)",
     });
   });
 
+  it("agreementListingModel_publishedListing_openLineWithItsState: a Published listing is the open line with its own state, not an archived one (E06-S6 pin P-10, U-7)", () => {
+    const published = item("01JG00000000000000000000L4", "TD-PQRS-TUVW", "PUBLISHED");
+    const model = agreementListingModel(answered([published, ARCHIVED_2], { viewerMayCreate: true }));
+
+    if (model.kind !== "ready") throw new Error(`expected ready, got ${model.kind}`);
+    expect(model.open).toEqual(line(published, "states.PUBLISHED"));
+    expect(model).toMatchObject({ archived: [line(ARCHIVED_2, "states.ARCHIVED")], emptyLine: null, offer: null });
+  });
+
   it("agreementListingModel_noListing_offerWithNotStarted: no listing and the caller may create: the empty line and the offer, with or without the not-started line", () => {
     for (const advertisingNotStarted of [false, true]) {
       expect(agreementListingModel(answered([], { viewerMayCreate: true, advertisingNotStarted }))).toEqual({
