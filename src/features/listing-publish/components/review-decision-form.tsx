@@ -13,6 +13,7 @@ import {
   DECISION_ANSWER_KEYS,
   type DecisionFormState,
   decisionFormStateOf,
+  type ReviewDecisionInput,
   type ReviewDecisionOutcome,
   runReviewDecision,
 } from "../lib/review-decision-flow";
@@ -40,6 +41,9 @@ type ReviewDecisionFormProps = {
   /** Every answer reaches the page, which reads again after a 200, a 403 `REVIEWER_NOT_INDEPENDENT` or a 409. */
   onOutcome: (outcome: ReviewDecisionOutcome) => void;
 };
+
+/** What one press of "Send decision" hands its action: the request's input and where its answer goes. */
+type DecisionPress = { input: ReviewDecisionInput; onOutcome: (outcome: ReviewDecisionOutcome) => void };
 
 const CHOICE_CLASS = "mt-0.5 h-4 w-4 shrink-0 accent-violet-600 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-violet-600";
 
@@ -73,10 +77,11 @@ export function ReviewDecisionForm({
   const sending = useRef(false);
   const messageRef = useRef<HTMLDivElement>(null);
 
-  const [state, dispatch, pending] = useActionState<DecisionFormState>(async () => {
+  // The action reads nothing of a render: what it sends comes with the press (see `submit`).
+  const [state, dispatch, pending] = useActionState<DecisionFormState, DecisionPress>(async (_previous, press) => {
     try {
-      const outcome = await runReviewDecision({ listingId, revisionNo, values, dataVersion }, { decide: decideListingRevision });
-      onOutcome(outcome);
+      const outcome = await runReviewDecision(press.input, { decide: decideListingRevision });
+      press.onOutcome(outcome);
       return decisionFormStateOf(outcome);
     } catch {
       return { status: "error", messageKey: DECISION_ANSWER_KEYS.failed };
@@ -92,10 +97,14 @@ export function ReviewDecisionForm({
     if (state.messageKey !== undefined) messageRef.current?.focus();
   }, [state]);
 
+  // A press sends the values and the data version of the render on screen (listing BR-3). `dispatch` runs the action
+  // React stored in the passive effect of a commit, which runs after the paint: a press just after a re-read enabled the
+  // button would run the render before's action, with the old data version. The form's `action` (this function) is the
+  // committed render's, so the press carries them.
   const submit = () => {
     if (sending.current) return;
     sending.current = true;
-    dispatch();
+    dispatch({ input: { listingId, revisionNo, values, dataVersion }, onOutcome });
   };
   const set = (field: keyof DecisionFormValues, patch: Partial<DecisionFormValues>) => {
     fields.changed(field);

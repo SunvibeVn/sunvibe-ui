@@ -313,6 +313,49 @@ describe("RevisionReviewView (listing-publish US-4 AC-2, spec section 6, E06S4-D
     });
   });
 
+  /**
+   * Presses "Send decision" in the microtask after the commit that enables it. React runs that commit's passive effects
+   * in a later task, after the paint it asks for, so a quick press lands before them; a native click, since the press
+   * happens inside `waitFor`, where Testing Library turns React's act environment off.
+   */
+  function pressWhenEnabled(): Promise<void> {
+    return new Promise((done) => {
+      const observer = new MutationObserver(() => {
+        const button = screen.queryByRole("button", { name: d.submit }) as HTMLButtonElement | null;
+        if (button === null || button.disabled) return;
+        observer.disconnect();
+        button.click();
+        done();
+      });
+      observer.observe(document.body, { attributes: true, childList: true, subtree: true });
+    });
+  }
+
+  it("revisionReviewView_rereadAnswer_pressBeforeEffectsSendsNewVersion: a press in the moment the re-read's answer enables 'Send decision', before React has run that render's effects, sends the re-read's data version, never the one read before", async () => {
+    await readyWithReturn();
+    const review = deferred<ApiResult<ListingRevisionReview>>();
+    const revision = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevisionReview).mockReturnValueOnce(review.promise).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(getListingRevision).mockReturnValueOnce(revision.promise).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(decideListingRevision).mockResolvedValueOnce(refusal(409, "CONCURRENT_MODIFICATION")).mockResolvedValueOnce(change("NEEDS_CHANGES", 11));
+
+    fireEvent.click(submit());
+    await waitFor(() => expect(getListingRevisionReview).toHaveBeenCalledTimes(2));
+    expect(submit().disabled).toBe(true);
+
+    const pressed = pressWhenEnabled();
+    review.resolve(ok({ ...REVIEW, dataVersion: 10 }));
+    revision.resolve(ok({ ...REVISION, dataVersion: 10 }));
+    await waitFor(() => expect(decideListingRevision).toHaveBeenCalledTimes(2));
+    await pressed;
+    expect(vi.mocked(decideListingRevision).mock.calls[1]?.[2]).toEqual({
+      dataVersion: 10,
+      outcome: "NEEDS_CHANGES",
+      changeReasons: ["MISSING_INFORMATION"],
+      note: "Thiếu diện tích.",
+    });
+  });
+
   it("revisionReviewView_notPendingOrArchived_formGoneSentenceReasons: after 409 REVISION_NOT_PENDING, 409 LISTING_ARCHIVED or 403 REVIEWER_NOT_INDEPENDENT both reads run again, the form is gone, the answer's sentence stays and the eligibility line shows the re-read's reasons", async () => {
     const rows: [ReturnType<typeof refusal>, string, ListingRevisionReview["notEligibleReasons"], string][] = [
       [refusal(409, "REVISION_NOT_PENDING"), d.answers.notPending, ["NOT_PENDING"], v.ineligible.NOT_PENDING],
