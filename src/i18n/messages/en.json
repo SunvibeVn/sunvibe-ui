@@ -3155,6 +3155,33 @@
         "failed": "Something went wrong. Try again."
       }
     },
+    "publication": {
+      "title": "Publication",
+      "loading": "Loading the publication…",
+      "loadError": "The publication could not be loaded.",
+      "noLive": "No revision is live.",
+      "liveSince": "Revision {revisionNo} is live since {time}.",
+      "holds": "Its display conditions hold.",
+      "notHolds": "Its display conditions do not hold:",
+      "waiting": "Revision {revisionNo} is approved and waits to go live.",
+      "putLive": "Put live",
+      "liveNow": "Revision {revisionNo} is live.",
+      "refused": "Revision {revisionNo} cannot go live now:",
+      "archived": "This listing is archived. No revision goes live.",
+      "reasons": {
+        "LISTING_STATE": "The listing is paused or urgently unpublished.",
+        "ADVERTISING_RIGHT": "The agreement does not allow advertising now:",
+        "TERMS_NOT_IN_EFFECT": "The revision's terms are not the terms in effect.",
+        "UNIT_NOT_AVAILABLE": "The unit is not available, or its availability needs checking.",
+        "FRESHNESS": "No valid freshness confirmation is in date.",
+        "OTHER": "Another condition does not hold."
+      },
+      "answers": {
+        "notApproved": "This revision is no longer approved. It has been reloaded.",
+        "archived": "The listing is archived.",
+        "forbidden": "Only the lead's assigned Sale puts a revision live."
+      }
+    },
     "review": {
       "heading": "Review of listing {code}",
       "statusLine": "Revision {revisionNo}: {status}",
