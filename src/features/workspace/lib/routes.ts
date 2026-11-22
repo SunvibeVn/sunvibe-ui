@@ -24,3 +24,15 @@ export const INVENTORY_CASES_PATH = "/workspace/inventory-cases";
 
 /** Who may read those cases; the API decides who may read each one (spec 4.3). */
 export const INVENTORY_CASE_ROLES = ["SALE_LEADER", "SALES_MANAGER", "ADMIN"] as const;
+
+/** The Pending review revisions a listing reviewer decides on (listing-publish E06-S4, E06S4-D10); each review is below. */
+export const LISTING_REVIEWS_PATH = "/workspace/listings/reviews";
+
+/** Who may read the review queue and a revision's review; only a listing reviewer or ADMIN decides (E06S4-D2). */
+export const LISTING_REVIEW_ROLES = ["SALE_LEADER", "SALES_MANAGER", "ADMIN", "LISTING_REVIEWER"] as const;
+
+/**
+ * Who may open the workspace shell: the staff roles and the listing reviewer (E06S4-D16). Each page admits its own
+ * roles inside the frame (`pageRolesOf`); a UX gate only, the API decides every call.
+ */
+export const WORKSPACE_ROLES = ["SALE", "SALE_LEADER", "SALES_MANAGER", "ADMIN", "LISTING_REVIEWER"] as const;

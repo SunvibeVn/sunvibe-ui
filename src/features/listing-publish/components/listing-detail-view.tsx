@@ -10,9 +10,11 @@ import { Button } from "@/components/ui/button";
 
 import type { ListingChange } from "../lib/freshness-record-flow";
 import { listingModel, type ListingPageModel } from "../lib/listing-model";
+import { type RevisionDecisionInput, revisionDecisionInput } from "../lib/revision-decision-model";
 import { getListing } from "../services/listing-api";
 
 import { FreshnessPanel } from "./freshness-panel";
+import { RevisionDecisionSection } from "./revision-decision-section";
 import { RevisionPanel } from "./revision-panel";
 
 const LOADING: ListingPageModel = { kind: "loading" };
@@ -36,6 +38,8 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   const t = useTranslations("ListingPublish");
   const format = useFormatter();
   const [model, setModel] = useState<ListingPageModel>(LOADING);
+  /** The newest decided revision of the last listing read that answered, for "Latest review" (E06S4-P12); null: none. */
+  const [decisionInput, setDecisionInput] = useState<RevisionDecisionInput | null>(null);
   const [attempt, setAttempt] = useState(0);
   /**
    * `refresh` counts the listing re-reads; `revision` and `record` hold the `refresh` the revision panel and a record
@@ -55,6 +59,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
       if (dropped) return;
       const next = listingModel(result);
       setModel((current) => (current.kind === "ready" && next.kind === "error" ? current : next));
+      if (result.ok) setDecisionInput(revisionDecisionInput(result.data));
       setAnswered(refresh);
     });
     return () => {
@@ -66,6 +71,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   useLayoutEffect(
     () => () => {
       setModel(LOADING);
+      setDecisionInput(null);
     },
     [],
   );
@@ -161,6 +167,14 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
             outsideChange={outsideChange}
             outsideRereading={answered < rereads.record}
           />
+          {decisionInput !== null && (
+            <RevisionDecisionSection
+              key={decisionInput.revisionNo}
+              listingId={listingId}
+              input={decisionInput}
+              onListingChanged={() => reread("revision")}
+            />
+          )}
           <section
             aria-labelledby={revisionsId}
             className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"

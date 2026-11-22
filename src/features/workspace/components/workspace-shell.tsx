@@ -6,21 +6,25 @@ import { useTranslations } from "next-intl";
 import { type KeyboardEvent as ReactKeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { Logo } from "@/components/brand/logo";
 import { RequireRole, RequireSession, englishSessionTexts, useSession, useSignOutHere } from "@/features/auth/client";
-import { STAFF_WORKSPACE_ROLES, workspaceNav } from "../lib/nav";
+import { pageRolesOf, workspaceNav } from "../lib/nav";
+import { WORKSPACE_ROLES } from "../lib/routes";
 import { WorkspaceDocument } from "./workspace-document";
 import { WorkspaceNav } from "./workspace-nav";
 
 /**
- * Client shell of every workspace page: session → staff role → header, menu and the page. The workspace is English
- * (C-41), so `RequireSession` gets the English session texts. The server layout renders it, and the pages load their data in the
- * browser after hydration (spec 5.2). The drafts follow the session through `DraftSessionSync` in the root layout.
- * `WorkspaceDocument` first loads the page again when the document came from outside the workspace (SM-FE-06).
+ * Client shell of every workspace page: session → workspace role → header, menu and the page's own roles → the page.
+ * The workspace is English (C-41), so `RequireSession` gets the English session texts. The server layout renders it,
+ * and the pages load their data in the browser after hydration (spec 5.2). The drafts follow the session through
+ * `DraftSessionSync` in the root layout. `WorkspaceDocument` first loads the page again when the document came from
+ * outside the workspace (SM-FE-06). Two gates (E06S4-D16): the frame admits the staff roles and the listing reviewer;
+ * inside it each page admits the roles of `pageRolesOf`, so a reviewer-only user meets the 403 screen inside the
+ * frame on every page but the two review pages.
  */
 export function WorkspaceShell({ children }: { children: ReactNode }) {
   return (
     <WorkspaceDocument>
       <RequireSession texts={englishSessionTexts}>
-        <RequireRole anyOf={STAFF_WORKSPACE_ROLES}>
+        <RequireRole anyOf={WORKSPACE_ROLES}>
           <WorkspaceFrame>{children}</WorkspaceFrame>
         </RequireRole>
       </RequireSession>
@@ -149,7 +153,7 @@ function WorkspaceFrame({ children }: { children: ReactNode }) {
           </div>
         )}
         <main id="workspace-main" tabIndex={-1} className="min-w-0 flex-1 px-4 py-6 focus:outline-none sm:px-6">
-          {children}
+          <RequireRole anyOf={pageRolesOf(pathname)}>{children}</RequireRole>
         </main>
       </div>
     </div>

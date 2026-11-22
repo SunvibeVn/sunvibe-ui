@@ -1379,6 +1379,138 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     });
     await expect(list.getByRole("link", { name: listingCode, exact: true })).toHaveCount(0);
   });
+
+  // The independent review of a submitted revision (listing-publish E06-S4, RV-18, E06S4-P15), on the listing E2E-2
+  // created: the SALE completes and submits the open Draft, E2E Admin (neither an author nor the assigned Sale) returns
+  // it from "LISTING REVIEWS" after opening the real location, the SALE copies it into a new Draft and submits the copy,
+  // and the ADMIN approves it with the five checks: nothing goes live. Both are already signed in; no owner POST and no
+  // rate-limited path, so the header's counts are unchanged. The terms snapshot is taken from the version in effect of
+  // E2E-1's agreement, in effect from the run date (SV-326 (2) is the chain's only calendar dependency). The texts hold no
+  // digits and none of listing BR-11's words.
+  const REVIEW_TITLE = "Phòng trọ sáng sủa gần bến xe";
+  const REVIEW_NOTE = "Thêm diện tích phòng và mô tả bếp.";
+
+  /** The ADMIN opens "LISTING REVIEWS" from the menu and the review of this listing's Pending review revision. */
+  async function openReviewFromQueue(page: Page): Promise<Locator> {
+    expect(listingCode).toMatch(/^TD-/);
+    await page.goto("/workspace/owner-leads");
+    const item = page.getByRole("navigation", { name: T.menuLabel }).getByRole("link", { name: T.menuListingReviews, exact: true });
+    await expect(item).toBeVisible({ timeout: 20_000 });
+    await item.click();
+    await expect(page).toHaveURL(/\/workspace\/listings\/reviews$/, { timeout: 20_000 });
+    const queue = mainArea(page);
+    await expect(queue.getByRole("heading", { level: 1, name: "Listing reviews", exact: true })).toBeVisible({ timeout: 20_000 });
+    const row = queue.getByRole("row").filter({ hasText: listingCode });
+    await expect(row).toHaveCount(1, { timeout: 20_000 });
+    await row.getByRole("link", { name: "Review", exact: true }).click();
+    await expect(page).toHaveURL(/\/workspace\/listings\/[0-9A-Z]{26}\/revisions\/\d+\/review$/, { timeout: 20_000 });
+    const review = mainArea(page);
+    await expect(review.getByRole("heading", { level: 1, name: `Review of listing ${listingCode}`, exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    return review;
+  }
+
+  test("listingReview_adminReturnsSubmittedRevision_reasonAndNote (RV-18, listing-publish US-4 AC-1 to AC-3)", async () => {
+    // The SALE completes the Draft the chain left open: its own title, a description, a feature and the terms in effect.
+    const panel = await openRevisionPanel(sale);
+    const titleField = panel.getByLabel("Title", { exact: true });
+    await expect(titleField).toBeVisible({ timeout: 20_000 });
+    await titleField.fill(REVIEW_TITLE);
+    await panel.getByLabel("Description", { exact: true }).fill(REVISION_DESCRIPTION);
+    await panel.getByRole("checkbox", { name: "Air conditioner", exact: true }).check();
+    await button(panel, "Save draft").click();
+    const problems = panel.getByRole("list", { name: PROBLEMS, exact: true });
+    await expect(problems.getByRole("listitem")).toHaveCount(1, { timeout: 20_000 });
+    await expect(problems.getByText("Take a terms snapshot.", { exact: true })).toBeVisible();
+    const terms = panel.getByRole("region", { name: "Terms", exact: true });
+    const inEffect = terms.getByRole("radio", { name: "Terms in effect", exact: true });
+    await expect(inEffect).toBeVisible({ timeout: 20_000 });
+    await inEffect.check();
+    await button(terms, "Take this snapshot").click();
+    await expect(terms.getByRole("list", { name: "Terms in effect", exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(problems).toHaveCount(0, { timeout: 20_000 });
+    await button(panel, "Submit for review").click();
+    await expect(panel.getByText(/^Submitted .+; the content is locked\.$/)).toBeVisible({ timeout: 20_000 });
+
+    // The ADMIN finds it in the queue and reads it beside its context; the terms equal the version in effect.
+    const review = await openReviewFromQueue(admin);
+    await expect(review.getByText(/^Revision \d+: Pending review$/)).toBeVisible();
+    await expect(
+      review.getByRole("region", { name: "Terms check", exact: true }).getByText("The revision's terms equal the version in effect.", { exact: true }),
+    ).toBeVisible();
+    await expect(review.getByRole("region", { name: "Content", exact: true }).getByText(REVIEW_TITLE, { exact: true })).toBeVisible();
+
+    // The real location only after asking for it.
+    const unit = review.getByRole("region", { name: "Unit", exact: true });
+    await expect(unit.getByText("Location in the property", { exact: true })).toHaveCount(0);
+    await button(unit, "Show the real location").click();
+    await expect(unit.getByText("Location in the property", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(unit.getByText("Unit code", { exact: true })).toHaveCount(2);
+    await expect(unit.getByRole("definition").nth(3)).not.toHaveText("");
+
+    // Returned for changes with a reason and a note: recorded, the form gone.
+    const decision = review.getByRole("region", { name: "Your decision", exact: true });
+    await decision.getByRole("group", { name: "Decision", exact: true }).getByRole("radio", { name: "Return for changes", exact: true }).check();
+    await decision.getByRole("checkbox", { name: "Information is missing.", exact: true }).check();
+    await decision.getByLabel("Note", { exact: true }).fill(REVIEW_NOTE);
+    await button(decision, "Send decision").click();
+    await expect(review.getByText("Decision recorded.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(review.getByRole("region", { name: "Your decision", exact: true })).toHaveCount(0);
+    await expect(review.getByText(/^Revision \d+: Needs changes$/)).toBeVisible({ timeout: 20_000 });
+  });
+
+  test("listingReview_saleSeesDecisionAndCopies_newDraftKeepsTitle (RV-18, listing-publish US-4 AC-6, US-2 AC-6)", async () => {
+    // The SALE's listing page shows the decision with its reason and note; no revision is open.
+    const panel = await openRevisionPanel(sale);
+    const latest = mainArea(sale).getByRole("region", { name: "Latest review", exact: true });
+    await expect(latest.getByText(/^Revision \d+: Needs changes$/)).toBeVisible({ timeout: 20_000 });
+    await expect(latest.getByText("Information is missing.", { exact: true })).toBeVisible();
+    await expect(latest.getByText(REVIEW_NOTE, { exact: true })).toBeVisible();
+    await expect(panel.getByText("No draft is open.", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // Copied into a new Draft that keeps the submitted title; the decision stays in sight, without the button.
+    await button(latest, "Copy into a new draft").click();
+    await expect(panel.getByLabel("Title", { exact: true })).toHaveValue(REVIEW_TITLE, { timeout: 20_000 });
+    await expect(panel.getByText(/^Revision \d+: Draft$/)).toBeVisible();
+    await expect(latest.getByText(/^Revision \d+: Needs changes$/)).toBeVisible();
+    await expect(button(latest, "Copy into a new draft")).toHaveCount(0);
+  });
+
+  test("listingReview_adminApprovesResubmitted_listingStaysUnpublished (RV-18, listing-publish US-4 AC-3 to AC-5, BR-6)", async () => {
+    // The SALE submits the copy: its content and terms snapshot came with it, so nothing stops the submission.
+    const panel = await openRevisionPanel(sale);
+    await expect(panel.getByLabel("Title", { exact: true })).toHaveValue(REVIEW_TITLE, { timeout: 20_000 });
+    await expect(panel.getByRole("list", { name: PROBLEMS, exact: true })).toHaveCount(0, { timeout: 20_000 });
+    await button(panel, "Submit for review").click();
+    await expect(panel.getByText(/^Submitted .+; the content is locked\.$/)).toBeVisible({ timeout: 20_000 });
+
+    // The ADMIN approves it: the decision waits until the five checks are ticked.
+    const review = await openReviewFromQueue(admin);
+    const decision = review.getByRole("region", { name: "Your decision", exact: true });
+    await decision.getByRole("group", { name: "Decision", exact: true }).getByRole("radio", { name: "Approve", exact: true }).check();
+    const send = button(decision, "Send decision");
+    await expect(send).toBeDisabled();
+    const checks = decision.getByRole("group", { name: "Confirm each check", exact: true }).getByRole("checkbox");
+    await expect(checks).toHaveCount(5);
+    for (let index = 0; index < 5; index += 1) {
+      await expect(send).toBeDisabled();
+      await checks.nth(index).check();
+    }
+    await expect(send).toBeEnabled();
+    await send.click();
+    await expect(review.getByText("Decision recorded.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(review.getByText(/^Revision \d+: Approved$/)).toBeVisible({ timeout: 20_000 });
+
+    // The SALE's page lists the revision Approved; the listing stays Unpublished and nothing of it is public.
+    await openRevisionPanel(sale);
+    const listing = mainArea(sale);
+    await expect(listing.getByRole("region", { name: "Revisions", exact: true }).getByText("Approved", { exact: true })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(listing.getByText("Unpublished", { exact: true })).toBeVisible();
+    await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
+  });
 });
 
 // No fixture reaches a case, so the answers are stubbed: this is about what the pages do with them. Budget: 1 login.

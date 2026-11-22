@@ -313,3 +313,14 @@ describe("revision panel model (listing-publish E06-S2, spec section 6, E06S2-D1
     ]);
   });
 });
+
+describe("revision panel model of a decided revision (listing-publish E06-S4, pin P-3, U-27)", () => {
+  it("revisionPanelModel_rejected_readOnlyNoWithdraw: a Rejected revision is read-only with no Withdraw, for the assigned Sale and for any other reader", () => {
+    for (const panel of [{ ...DRAFTER, dataVersion: 6 }, READER]) {
+      const model = ready(revisionPanelModel(answered({ ...PENDING, status: "REJECTED" }), panel));
+      expect(model.mode).toBe("read");
+      expect(model.mayWithdraw).toBe(false);
+      expect(model.screen.statusKey).toBe("revisionStatuses.REJECTED");
+    }
+  });
+});
