@@ -1528,6 +1528,110 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(listing.getByText("Unpublished", { exact: true })).toBeVisible();
     await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
   });
+
+  // Putting an approved revision live (listing-publish E06-S6, PL-17, E06S6-D15 point 3, E06S6-P8), on the listing E2E-2
+  // created: the revision the ADMIN approved waits while the latest contact is "No longer available"; the SALE's "Put
+  // live" is refused with the freshness sentence, and a valid contact puts it live. Then the SALE copies the live
+  // revision, changes its title and submits it, and the ADMIN's approval replaces the live revision. Both are already
+  // signed in; no owner POST and no rate-limited path, so the header's counts are unchanged. The texts hold no digits and
+  // none of listing BR-11's words. Nothing of the listing is public in this slice (E06S6-D14).
+  const LIVE_TITLE = "Phòng trọ thoáng mát gần công viên";
+  const FRESHNESS_REASON = "No valid freshness confirmation is in date.";
+
+  /** The revision number a line of the "Publication" region names ("Revision 4 is …"). */
+  async function revisionNoOf(line: Locator): Promise<number> {
+    const number = Number(/^Revision (\d+) /.exec((await line.textContent()) ?? "")?.[1]);
+    expect(Number.isSafeInteger(number) && number >= 1).toBe(true);
+    return number;
+  }
+
+  test("publication_approvedWaitsForFreshness_validContactPutsItLive (PL-17, listing-publish US-5 AC-1, AC-3, AC-4, US-4 AC-6)", async () => {
+    await openRevisionPanel(sale);
+    const listing = mainArea(sale);
+    const publication = listing.getByRole("region", { name: "Publication", exact: true });
+    await expect(publication.getByText("No revision is live.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    const waiting = publication.getByText(/^Revision \d+ is approved and waits to go live\.$/);
+    await expect(waiting).toBeVisible();
+    const approved = await revisionNoOf(waiting);
+
+    // The chain's premise (E06S6-P8): the freshness is the waiting revision's only reason. Another reason shown here is
+    // reported, never worked around.
+    await expect(publication.getByText("Its display conditions do not hold:", { exact: true })).toBeVisible();
+    await expect(publication.getByRole("listitem")).toHaveText([FRESHNESS_REASON]);
+
+    // "Put live" is refused with that reason, and nothing goes live.
+    await button(publication, "Put live").click();
+    const refusal = publication.getByRole("alert");
+    await expect(refusal.getByText(`Revision ${approved} cannot go live now:`, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(refusal.getByRole("listitem")).toHaveText([FRESHNESS_REASON]);
+    await expect(publication.getByText("No revision is live.", { exact: true })).toBeVisible();
+
+    // A valid contact puts it live: the record's own try (US-5 AC-3), seen on the page's re-read.
+    await recordValidContact(listing.getByRole("region", { name: "Freshness", exact: true }));
+    await expect(publication.getByText(new RegExp(`^Revision ${approved} is live since .+\\.$`))).toBeVisible({ timeout: 20_000 });
+    await expect(publication.getByText("Its display conditions hold.", { exact: true })).toBeVisible();
+    await expect(publication.getByRole("alert")).toHaveCount(0);
+    await expect(button(publication, "Put live")).toHaveCount(0);
+    await expect(listing.getByText("Published", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
+
+    // "Latest review" names the live revision's approval and offers no copy (E06S6-D17).
+    const latest = listing.getByRole("region", { name: "Latest review", exact: true });
+    await expect(latest.getByText(`Revision ${approved}: Approved`, { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(button(latest, "Copy into a new draft")).toHaveCount(0);
+  });
+
+  test("publication_liveRevisionCopiedAndApproved_replacesTheFormer (PL-17, listing-publish US-2 AC-6, AC-7, US-4 AC-2, US-5 AC-4)", async () => {
+    // The SALE copies the live revision into a new Draft, which keeps its title.
+    const panel = await openRevisionPanel(sale);
+    const publication = mainArea(sale).getByRole("region", { name: "Publication", exact: true });
+    const liveLine = publication.getByText(/^Revision \d+ is live since .+\.$/);
+    await expect(liveLine).toBeVisible({ timeout: 20_000 });
+    const live = await revisionNoOf(liveLine);
+    await button(publication, "Copy into a new draft").click();
+    const titleField = panel.getByLabel("Title", { exact: true });
+    await expect(titleField).toHaveValue(REVIEW_TITLE, { timeout: 20_000 });
+    await expect(panel.getByText(`Revision ${live + 1}: Draft`, { exact: true })).toBeVisible();
+
+    // A new title, saved, then submitted: the content and terms snapshot came with the copy.
+    await titleField.fill(LIVE_TITLE);
+    const save = sale.waitForResponse(
+      (response) =>
+        response.request().method() === "PUT" &&
+        /^\/api\/v1\/staff\/listings\/[0-9A-Z]{26}\/revisions\/\d+\/content$/.test(new URL(response.url()).pathname),
+    );
+    await button(panel, "Save draft").click();
+    expect((await save).status()).toBe(200);
+    await expect(panel.getByRole("list", { name: PROBLEMS, exact: true })).toHaveCount(0, { timeout: 20_000 });
+    await button(panel, "Submit for review").click();
+    await expect(panel.getByText(/^Submitted .+; the content is locked\.$/)).toBeVisible({ timeout: 20_000 });
+
+    // The ADMIN sees what the revision changes against the live one: the title only.
+    const review = await openReviewFromQueue(admin);
+    const changes = review.getByRole("region", { name: "Changes from the live revision", exact: true });
+    await expect(changes.getByText(new RegExp(`^Live revision ${live}, live since .+\\.$`))).toBeVisible({ timeout: 20_000 });
+    await expect(changes.getByText("Changed: Title", { exact: true })).toBeVisible();
+    await expect(changes.getByText(REVIEW_TITLE, { exact: true })).toBeVisible();
+
+    // The approval tries the put live: the revision becomes the live one, read again in place.
+    const decision = review.getByRole("region", { name: "Your decision", exact: true });
+    await decision.getByRole("group", { name: "Decision", exact: true }).getByRole("radio", { name: "Approve", exact: true }).check();
+    const checks = decision.getByRole("group", { name: "Confirm each check", exact: true }).getByRole("checkbox");
+    await expect(checks).toHaveCount(5);
+    for (let index = 0; index < 5; index += 1) await checks.nth(index).check();
+    await button(decision, "Send decision").click();
+    await expect(review.getByText("Decision recorded.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(changes.getByText("This revision is the live revision.", { exact: true })).toBeVisible({ timeout: 20_000 });
+
+    // The SALE's page: the new revision is live, the former one Replaced.
+    await openRevisionPanel(sale);
+    await expect(publication.getByText(new RegExp(`^Revision ${live + 1} is live since .+\\.$`))).toBeVisible({ timeout: 20_000 });
+    const former = mainArea(sale)
+      .getByRole("region", { name: "Revisions", exact: true })
+      .getByRole("listitem")
+      .filter({ has: sale.getByText(`Revision ${live}`, { exact: true }) });
+    await expect(former.getByText("Replaced", { exact: true })).toBeVisible({ timeout: 20_000 });
+  });
 });
 
 // No fixture reaches a case, so the answers are stubbed: this is about what the pages do with them. Budget: 1 login.
