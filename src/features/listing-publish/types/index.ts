@@ -65,3 +65,17 @@ export type ListingRevisionDecisionRequest = Schemas["ListingRevisionDecisionReq
 export type ListingRevisionDecision = Schemas["ListingRevisionDecision"];
 /** The unit's real location, opened by an eligible reviewer and logged by the server (E06S4-D12). */
 export type ListingUnitLocation = Schemas["ListingUnitLocation"];
+
+// Putting an approved revision live (listing-publish E06-S6). Every property is required; only the publication's `live`
+// and `approved` are nullable (both null for a listing read as archived), and the live difference's `live` (null unless
+// another revision is live). Nothing of these answers is public.
+
+/** The live revision and the Approved revision waiting, each with its display answer, and what the viewer may do. */
+export type ListingPublication = Schemas["ListingPublication"];
+export type ListingPublicationLive = Schemas["ListingPublicationLive"];
+export type ListingPublicationApproved = Schemas["ListingPublicationApproved"];
+/** Whether a revision's display conditions hold now: the reasons in their fixed order and E05's groups. */
+export type ListingDisplayAnswer = Schemas["ListingDisplayAnswer"];
+/** What a revision changes against the live revision, by value (E06S6-D12). */
+export type ListingLiveDifference = Schemas["ListingLiveDifference"];
+export type ListingLiveRevision = Schemas["ListingLiveRevision"];
