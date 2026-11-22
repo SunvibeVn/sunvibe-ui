@@ -6,14 +6,16 @@ import { revisionStatusKey, type RevisionStatusKey } from "./listing-text";
 import { changeReasonKey, rejectionGroupKey } from "./review-text";
 import type { ListingKey } from "./revision-text";
 
-type DecidedStatus = "NEEDS_CHANGES" | "REJECTED" | "APPROVED";
+/** A revision a reviewer decided: Live and Replaced revisions were approved, and their decision answers it (E06S6-D17). */
+type DecidedStatus = "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED";
 
-const DECIDED: readonly string[] = ["NEEDS_CHANGES", "REJECTED", "APPROVED"] satisfies DecidedStatus[];
+const DECIDED: readonly string[] = ["NEEDS_CHANGES", "REJECTED", "APPROVED", "LIVE", "REPLACED"] satisfies DecidedStatus[];
 
 /**
  * What the listing page's "Latest review" section takes from the listing read (spec section 6, E06S4-P12): the newest
  * listed revision that a reviewer decided, the listing's data version a copy sends back, the open revision and whether
- * the viewer is the assigned Sale. Null when no listed revision was decided: the section is not mounted.
+ * the viewer is the assigned Sale. Null when no listed revision was decided: the section is not mounted. `archived` is
+ * set only when the listing reads Archived, and then no copy is offered (E06S6-D17).
  */
 export type RevisionDecisionInput = {
   revisionNo: number;
@@ -21,6 +23,7 @@ export type RevisionDecisionInput = {
   dataVersion: number;
   openRevisionNo: number | null;
   viewerIsAssignedSale: boolean;
+  archived?: true;
 };
 
 /**
@@ -39,7 +42,7 @@ export type RevisionDecisionModel =
       reasonKeys: ListingKey[];
       groupKey: ListingKey | null;
       note: string | null;
-      /** "Copy into a new draft": a return, for the assigned Sale, while no revision is open (E06S4-D14, D17). */
+      /** "Copy into a new draft": a return, for the assigned Sale, while no revision is open, not archived (E06S4-D14, E06S6-D17). */
       mayCopy: boolean;
       /** A rejection cannot be copied: the section says so. */
       rejected: boolean;
@@ -52,13 +55,14 @@ export function revisionDecisionInput(detail: ListingDetail): RevisionDecisionIn
     if (DECIDED.includes(revision.status) && (newest === null || revision.revisionNo > newest.revisionNo)) newest = revision;
   }
   if (newest === null) return null;
-  return {
+  const input: RevisionDecisionInput = {
     revisionNo: newest.revisionNo,
     status: newest.status as DecidedStatus,
     dataVersion: detail.dataVersion,
     openRevisionNo: detail.openRevisionNo,
     viewerIsAssignedSale: detail.viewerIsAssignedSale,
   };
+  return detail.state === "ARCHIVED" ? { ...input, archived: true } : input;
 }
 
 export function revisionDecisionModel(result: ApiResult<ListingRevisionDecision> | null, input: RevisionDecisionInput): RevisionDecisionModel {
@@ -73,7 +77,7 @@ export function revisionDecisionModel(result: ApiResult<ListingRevisionDecision>
       reasonKeys: decision.changeReasons.map(changeReasonKey),
       groupKey: decision.rejectionGroup === null ? null : rejectionGroupKey(decision.rejectionGroup),
       note: decision.note,
-      mayCopy: decision.outcome === "NEEDS_CHANGES" && input.viewerIsAssignedSale && input.openRevisionNo === null,
+      mayCopy: decision.outcome === "NEEDS_CHANGES" && input.viewerIsAssignedSale && input.openRevisionNo === null && input.archived !== true,
       rejected: decision.outcome === "REJECTED",
     };
   }
