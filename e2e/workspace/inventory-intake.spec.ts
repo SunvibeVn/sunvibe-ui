@@ -1477,6 +1477,23 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(button(latest, "Copy into a new draft")).toHaveCount(0);
   });
 
+  test("freshnessRecord_noLongerAvailableBeforeApproval_notAValidConfirmation (listing-publish E06S3-D11, BR-9, BR-11, SV-336)", async () => {
+    // The Draft copy stays open and unsubmitted. The latest contact is the valid one of the earlier step, so no
+    // "not valid" sentence is shown yet; the earlier confirmation's date is.
+    await openRevisionPanel(sale);
+    const freshness = mainArea(sale).getByRole("region", { name: "Freshness", exact: true });
+    const lastValid = freshness.getByText(/^Last valid confirmation: /);
+    await expect(lastValid).toBeVisible({ timeout: 20_000 });
+    await expect(freshness.getByText("This contact is not a valid confirmation.", { exact: true })).toHaveCount(0);
+    const confirmation = await lastValid.textContent();
+
+    // "No longer available": the latest contact is not a valid confirmation; the earlier valid record is still the last valid one.
+    await recordContact(freshness, "Phone call", "No longer available");
+    await expect(freshness.getByText("This contact is not a valid confirmation.", { exact: true })).toBeVisible({ timeout: 20_000 });
+    await expect(freshness.getByText(PROMPT)).toBeVisible();
+    await expect(lastValid).toHaveText(confirmation as string);
+  });
+
   test("listingReview_adminApprovesResubmitted_listingStaysUnpublished (RV-18, listing-publish US-4 AC-3 to AC-5, BR-6)", async () => {
     // The SALE submits the copy: its content and terms snapshot came with it, so nothing stops the submission.
     const panel = await openRevisionPanel(sale);
