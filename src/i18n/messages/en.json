@@ -3182,6 +3182,24 @@
         "forbidden": "Only the lead's assigned Sale puts a revision live."
       }
     },
+    "liveDifference": {
+      "title": "Changes from the live revision",
+      "loading": "Loading the changes…",
+      "loadError": "The changes could not be loaded.",
+      "liveSince": "Live revision {revisionNo}, live since {time}.",
+      "noChange": "No change from the live revision.",
+      "changed": "Changed: {parts}",
+      "liveValues": "In the live revision:",
+      "noLive": "No revision is live.",
+      "isLive": "This revision is the live revision.",
+      "parts": {
+        "TITLE": "Title",
+        "DESCRIPTION": "Description",
+        "FEATURES": "Features",
+        "TERMS": "Terms",
+        "OTHER": "Another part"
+      }
+    },
     "review": {
       "heading": "Review of listing {code}",
       "statusLine": "Revision {revisionNo}: {status}",

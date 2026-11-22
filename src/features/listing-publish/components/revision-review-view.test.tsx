@@ -18,7 +18,13 @@ vi.mock("../services/revision-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/revision-api")>()),
   getListingRevision: vi.fn(),
 }));
+// The live difference read of "Changes from the live revision" (E06-S6), which never settles here: the section stays loading.
+vi.mock("../services/publication-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../services/publication-api")>()),
+  getListingRevisionLiveDifference: vi.fn(() => new Promise<never>(() => undefined)),
+}));
 
+import { getListingRevisionLiveDifference } from "../services/publication-api";
 import { decideListingRevision, getListingRevisionReview, openListingUnitLocation } from "../services/review-api";
 import { getListingRevision } from "../services/revision-api";
 
@@ -311,6 +317,30 @@ describe("RevisionReviewView (listing-publish US-4 AC-2, spec section 6, E06S4-D
       changeReasons: ["MISSING_INFORMATION"],
       note: "Thiếu diện tích.",
     });
+  });
+
+  it("revisionReviewView_ready_liveDifferenceAfterContent: 'Changes from the live revision' sits right after 'Content', reads the asked revision's difference, and reads it again when the page re-reads after a decision (E06-S6)", async () => {
+    vi.mocked(getListingRevisionLiveDifference).mockClear();
+    await readyWithReturn();
+
+    const content = region(v.content);
+    const difference = region(en.ListingPublish.liveDifference.title);
+    const agreement = region(v.agreement.heading);
+    expect([
+      Boolean(content.compareDocumentPosition(difference) & Node.DOCUMENT_POSITION_FOLLOWING),
+      Boolean(difference.compareDocumentPosition(agreement) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ]).toEqual([true, true]);
+    expect(within(difference).getByText(en.ListingPublish.liveDifference.loading)).toBeTruthy();
+    expect(getListingRevisionLiveDifference).toHaveBeenCalledTimes(1);
+    expect(getListingRevisionLiveDifference).toHaveBeenCalledWith(LISTING_ID, 2);
+
+    vi.mocked(getListingRevisionReview).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(getListingRevision).mockReturnValue(new Promise(() => undefined));
+    vi.mocked(decideListingRevision).mockResolvedValueOnce(change("NEEDS_CHANGES", 10));
+    fireEvent.click(submit());
+    await waitFor(() => expect(getListingRevisionReview).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(getListingRevisionLiveDifference).toHaveBeenCalledTimes(2));
+    expect(within(region(en.ListingPublish.liveDifference.title)).getByText(en.ListingPublish.liveDifference.loading)).toBeTruthy();
   });
 
   /**
