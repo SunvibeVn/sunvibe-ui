@@ -18,6 +18,7 @@ import { getListingRevisionReview } from "../services/review-api";
 import { getListingRevision } from "../services/revision-api";
 import type { ListingRevisionDetail, ListingRevisionReview } from "../types";
 
+import { LiveDifferenceSection } from "./live-difference-section";
 import { ReviewAnswerNotice } from "./review-answer-notice";
 import { ReviewDecisionForm } from "./review-decision-form";
 import { RevisionContentSection } from "./revision-content-section";
@@ -94,17 +95,19 @@ function AgreementSection({ agreement }: { agreement: ReviewReady["agreement"] }
 }
 
 /**
- * The page once both reads answered: header, the answers of a decision, eligibility, content, the five sections of
- * context, and `decision` (the form) last.
+ * The page once both reads answered: header, the answers of a decision, eligibility, content, the changes from the live
+ * revision (read again on each `rereadAttempt`, E06-S6), the five sections of context, and `decision` (the form) last.
  */
 function ReviewBody({
   listingId,
   model,
+  rereadAttempt,
   notices,
   decision,
 }: {
   listingId: string;
   model: ReviewReady;
+  rereadAttempt: number;
   notices: ReactNode;
   decision: ReactNode;
 }) {
@@ -135,6 +138,7 @@ function ReviewBody({
       <ReviewSection heading={t("review.content")}>
         <RevisionContentSection screen={model.screen} />
       </ReviewSection>
+      <LiveDifferenceSection listingId={listingId} revisionNo={model.revisionNo} rereadAttempt={rereadAttempt} />
       <ReviewSection heading={t("review.agreement.heading")}>
         <AgreementSection agreement={model.agreement} />
       </ReviewSection>
@@ -340,7 +344,7 @@ export function RevisionReviewView({ listingId, revisionNo }: { listingId: strin
         />
       </ReviewSection>
     );
-    return <ReviewBody listingId={listingId} model={current} notices={notices} decision={decision} />;
+    return <ReviewBody listingId={listingId} model={current} rereadAttempt={rereadAttempt} notices={notices} decision={decision} />;
   }
 
   switch (first.kind) {

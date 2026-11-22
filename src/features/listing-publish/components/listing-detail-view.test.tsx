@@ -30,8 +30,14 @@ vi.mock("../services/review-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/review-api")>()),
   getListingRevisionDecision: vi.fn(() => new Promise<never>(() => undefined)),
 }));
+// The publication read of the "Publication" section (E06-S6), which never settles here: the section stays loading.
+vi.mock("../services/publication-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../services/publication-api")>()),
+  getListingPublication: vi.fn(() => new Promise<never>(() => undefined)),
+}));
 
 import { getListingFreshness, recordListingFreshness } from "../services/freshness-api";
+import { getListingPublication } from "../services/publication-api";
 import { getListingRevisionDecision } from "../services/review-api";
 import { getListing } from "../services/listing-api";
 import { getListingRevision, saveListingRevisionContent, startListingRevision } from "../services/revision-api";
@@ -357,6 +363,35 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
       Boolean(heading.compareDocumentPosition(panel) & Node.DOCUMENT_POSITION_FOLLOWING),
       Boolean(panel.compareDocumentPosition(revision) & Node.DOCUMENT_POSITION_FOLLOWING),
     ]).toEqual([true, true]);
+  });
+
+  it("listingDetailView_ready_publicationBetweenFreshnessAndCurrentRevision: the 'Publication' region sits between 'Freshness' and 'Current revision', reads the listing's publication, and reads it again on a re-read of the page (E06-S6)", async () => {
+    resetEdge();
+    try {
+      vi.mocked(getListingPublication).mockClear();
+      const freshnessAnswer = deferred<ApiResult<ListingFreshness>>();
+      vi.mocked(getListing).mockResolvedValueOnce(answered(DETAIL)).mockReturnValueOnce(never());
+      vi.mocked(getListingRevision).mockReturnValueOnce(never());
+      vi.mocked(getListingFreshness).mockReturnValueOnce(freshnessAnswer.promise);
+      renderView();
+
+      const publication = await screen.findByRole("region", { name: en.ListingPublish.publication.title });
+      const panel = screen.getByRole("region", { name: f.heading });
+      const revision = screen.getByRole("region", { name: r.heading });
+      expect([
+        Boolean(panel.compareDocumentPosition(publication) & Node.DOCUMENT_POSITION_FOLLOWING),
+        Boolean(publication.compareDocumentPosition(revision) & Node.DOCUMENT_POSITION_FOLLOWING),
+      ]).toEqual([true, true]);
+      expect(getListingPublication).toHaveBeenCalledWith(LISTING_ID);
+      expect(getListingPublication).toHaveBeenCalledTimes(1);
+      // The freshness read's 404 reads the listing again: the section reads its publication again, still in place.
+      freshnessAnswer.resolve(refusedWith(404, "NOT_FOUND"));
+      await waitFor(() => expect(getListing).toHaveBeenCalledTimes(2));
+      await waitFor(() => expect(getListingPublication).toHaveBeenCalledTimes(2));
+      expect(within(publication).getByText(en.ListingPublish.publication.loading)).toBeTruthy();
+    } finally {
+      resetEdge();
+    }
   });
 
   it("listingDetailView_notRecorderOrArchived_noRecordButton: 'Record a contact' only for the assigned Sale of a listing that is not archived (FR-12)", async () => {

@@ -61,10 +61,48 @@ describe("revision decision model (listing-publish E06-S4, spec section 6, E06S4
     // The newest by number, whatever the order of the list.
     expect(revisionDecisionInput({ ...DETAIL, revisions: [item(1, "REJECTED"), item(5, "APPROVED"), item(3, "NEEDS_CHANGES")] })?.revisionNo).toBe(5);
     expect(revisionDecisionInput({ ...DETAIL, viewerIsAssignedSale: false, revisions: [item(1, "REJECTED")] })?.viewerIsAssignedSale).toBe(false);
-    for (const status of ["DRAFT", "PENDING_REVIEW", "CANCELLED", "LIVE", "REPLACED"] as const) {
+    for (const status of ["DRAFT", "PENDING_REVIEW", "CANCELLED"] as const) {
       expect(revisionDecisionInput({ ...DETAIL, revisions: [item(1, status)] })).toBeNull();
     }
     expect(revisionDecisionInput(DETAIL)).toBeNull();
+  });
+
+  // E06-S6 (E06S6-D17): a Live or Replaced revision was approved by a reviewer, so it is decided; an archived listing
+  // offers no copy.
+  const APPROVAL: ListingRevisionDecision = { ...RETURNED, outcome: "APPROVED", checklistVersion: 1, changeReasons: [], note: null };
+
+  it("revisionDecisionInput_liveNewest_approvalWithoutCopy: a Live newest revision is the latest review, which names its approval and offers no copy", () => {
+    const input = revisionDecisionInput({ ...DETAIL, state: "PUBLISHED", revisions: [item(3, "LIVE"), item(2, "NEEDS_CHANGES"), item(1, "REPLACED")] });
+    expect(input).toEqual({ revisionNo: 3, status: "LIVE", dataVersion: 7, openRevisionNo: null, viewerIsAssignedSale: true });
+    expect(revisionDecisionModel(ok(APPROVAL), input as RevisionDecisionInput)).toMatchObject({
+      kind: "ready",
+      revisionNo: 3,
+      outcomeKey: "revisionStatuses.APPROVED",
+      mayCopy: false,
+      rejected: false,
+    });
+  });
+
+  it("revisionDecisionInput_replacedNewest_approvalWithoutCopy: a Replaced newest decided revision is the latest review, which names its approval and offers no copy", () => {
+    const input = revisionDecisionInput({ ...DETAIL, openRevisionNo: 3, revisions: [item(3, "DRAFT"), item(2, "REPLACED"), item(1, "NEEDS_CHANGES")] });
+    expect(input).toEqual({ revisionNo: 2, status: "REPLACED", dataVersion: 7, openRevisionNo: 3, viewerIsAssignedSale: true });
+    expect(revisionDecisionModel(ok(APPROVAL), { ...(input as RevisionDecisionInput), openRevisionNo: null })).toMatchObject({
+      kind: "ready",
+      revisionNo: 2,
+      outcomeKey: "revisionStatuses.APPROVED",
+      mayCopy: false,
+    });
+  });
+
+  it("revisionDecisionInput_archivedListing_archivedKeyNoCopy: only a listing read as archived gives the input archived: true, and its Needs changes revision offers no copy", () => {
+    const input = revisionDecisionInput({ ...DETAIL, state: "ARCHIVED", revisions: [item(2, "NEEDS_CHANGES")] });
+    expect(input).toEqual({ revisionNo: 2, status: "NEEDS_CHANGES", dataVersion: 7, openRevisionNo: null, viewerIsAssignedSale: true, archived: true });
+    expect(revisionDecisionModel(ok(RETURNED), input as RevisionDecisionInput)).toMatchObject({ kind: "ready", mayCopy: false, rejected: false });
+    for (const state of ["UNPUBLISHED", "PUBLISHED", "PAUSED", "URGENTLY_UNPUBLISHED"] as const) {
+      const open = revisionDecisionInput({ ...DETAIL, state, revisions: [item(2, "NEEDS_CHANGES")] });
+      expect(open !== null && Object.hasOwn(open, "archived")).toBe(false);
+      expect(revisionDecisionModel(ok(RETURNED), open as RevisionDecisionInput)).toMatchObject({ kind: "ready", mayCopy: true });
+    }
   });
 
   it("revisionDecisionModel_mayCopy_onlyNeedsChangesAssigneeNoOpen: the decision as shown; the copy only for a return, for the assigned Sale, while no revision is open; a rejection says why it cannot be copied", () => {

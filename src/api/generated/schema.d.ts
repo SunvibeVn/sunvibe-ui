@@ -984,6 +984,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/listings/{listingId}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The live revision and the Approved revision waiting, each with whether its display conditions hold now, and what the caller may do */
+        get: operations["getListingPublication"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/listings/{listingId}/revisions": {
         parameters: {
             query?: never;
@@ -1044,7 +1061,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Copy a Needs changes revision into a new Draft with its content and terms snapshot */
+        /** Copy a Live, Approved or Needs changes revision into a new Draft with its content and terms snapshot */
         post: operations["copyListingRevision"];
         delete?: never;
         options?: never;
@@ -1062,8 +1079,42 @@ export interface paths {
         /** The decision of a revision with its reasons and note; no reviewer id */
         get: operations["getListingRevisionDecision"];
         put?: never;
-        /** Approve, return or reject a Pending review revision; nothing goes live */
+        /** Approve, return or reject a Pending review revision; an approval tries to put it live */
         post: operations["decideListingRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/live-difference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a revision changes against the live revision: its title, description, features and terms by value */
+        get: operations["getListingRevisionLiveDifference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put an Approved revision live when every display condition holds now */
+        post: operations["putListingRevisionLive"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6192,6 +6243,14 @@ export interface components {
             /** @description The viewer holds the agreement's basis lead now; a hint, the commands decide */
             viewerIsAssignedSale: boolean;
         };
+        ListingDisplayAnswer: {
+            /** @description True exactly when reasons is empty */
+            holds: boolean;
+            /** @description E05's reason groups, in E05's order; empty unless reasons holds ADVERTISING_RIGHT */
+            reasonGroups: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /** @description What stops it, in this order */
+            reasons: ("LISTING_STATE" | "ADVERTISING_RIGHT" | "TERMS_NOT_IN_EFFECT" | "UNIT_NOT_AVAILABLE" | "FRESHNESS")[];
+        };
         ListingFeatures: {
             airConditioner: boolean;
             balcony: boolean;
@@ -6361,10 +6420,76 @@ export interface components {
              */
             state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
         };
+        ListingLiveDifference: {
+            /** @description The parts of the asked revision that differ from the live one by value, in this order; TERMS when the values of the two snapshots differ, not their source or capture time; empty unless comparison is COMPARED */
+            changedParts: ("TITLE" | "DESCRIPTION" | "FEATURES" | "TERMS")[];
+            /**
+             * @description COMPARED when another revision is live
+             * @enum {string}
+             */
+            comparison: "COMPARED" | "NO_LIVE_REVISION" | "IS_LIVE_REVISION";
+            /** @description The live revision; null unless comparison is COMPARED */
+            live: components["schemas"]["ListingLiveRevision"] | null;
+            /**
+             * Format: int32
+             * @description The revision asked
+             */
+            revisionNo: number;
+        };
+        ListingLiveRevision: {
+            description: string;
+            features: components["schemas"]["ListingFeatures"];
+            /** Format: int32 */
+            revisionNo: number;
+            terms: components["schemas"]["ListingTermsSnapshot"];
+            title: string;
+            /** Format: date-time */
+            wentLiveAt: string;
+        };
         ListingPendingTerms: {
             /** Format: date */
             startDate: string;
             terms: components["schemas"]["ListingTerms"];
+        };
+        ListingPublication: {
+            /** @description The Approved revision waiting; null when none waits or the listing is archived */
+            approved: components["schemas"]["ListingPublicationApproved"] | null;
+            /**
+             * Format: int64
+             * @description The listing's data version a put live sends back
+             */
+            dataVersion: number;
+            listingId: string;
+            /** @description The live revision; null when none is live or the listing is archived */
+            live: components["schemas"]["ListingPublicationLive"] | null;
+            /**
+             * @description ARCHIVED also when the listing's agreement has ended
+             * @enum {string}
+             */
+            state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
+            /** @description The caller is the assigned Sale, no Draft or Pending review revision is open and the listing is not archived */
+            viewerMayCopy: boolean;
+            /** @description The caller is the assigned Sale, a revision is Approved and the listing is Unpublished or Published */
+            viewerMayPutLive: boolean;
+        };
+        ListingPublicationApproved: {
+            /** @description The conditions of a put live: the listing must be Unpublished or Published */
+            display: components["schemas"]["ListingDisplayAnswer"];
+            /** Format: int32 */
+            revisionNo: number;
+            /**
+             * @description Which version of the agreement its terms snapshot copied
+             * @enum {string}
+             */
+            termsSource: "IN_EFFECT" | "PENDING_START";
+        };
+        ListingPublicationLive: {
+            /** @description The conditions of a shown revision: the listing must be Published */
+            display: components["schemas"]["ListingDisplayAnswer"];
+            /** Format: int32 */
+            revisionNo: number;
+            /** Format: date-time */
+            wentLiveAt: string;
         };
         ListingReconfirmationItem: {
             /** @description The public code */
@@ -11608,7 +11733,7 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description LISTING_ARCHIVED or CONCURRENT_MODIFICATION (the data version is stale) */
+            /** @description LISTING_ARCHIVED or CONCURRENT_MODIFICATION (the data version is stale, or another command moved it meanwhile) */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -11617,7 +11742,65 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description INTERNAL_ERROR */
+            /** @description INTERNAL_ERROR (also when the put live a valid confirmation tries meets an E05 group or availability code listing does not know; nothing is written) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The publication; a listing read as archived has neither revision and permits nothing */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingPublication"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, also for a reason group of the advertising answer, an availability of the unit or terms this server does not know; nothing is shown */
             500: {
                 headers: {
                     [name: string]: unknown;
@@ -11882,7 +12065,7 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale), REVISION_NOT_COPYABLE (the revision is not Needs changes) or OPEN_REVISION_EXISTS */
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale), REVISION_NOT_COPYABLE (the revision is not Live, Approved or Needs changes) or OPEN_REVISION_EXISTS */
             409: {
                 headers: {
                     [name: string]: unknown;
@@ -11968,7 +12151,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Decided: the revision's new status and the listing's new data version */
+            /** @description Decided: status is the revision's status after the command (APPROVED, or LIVE when the approval put it live; NEEDS_CHANGES or REJECTED) and dataVersion the listing's new data version */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -12022,7 +12205,147 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description INTERNAL_ERROR: the agreement's terms break the contract; nothing is written */
+            /** @description INTERNAL_ERROR: the agreement's terms break the contract, or the put live meets an E05 group or availability code listing does not know; nothing is written */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingRevisionLiveDifference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description COMPARED with the live revision and the parts that differ, NO_LIVE_REVISION or IS_LIVE_REVISION */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingLiveDifference"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER (SALE alone included); the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR (also for a live revision read without its terms snapshot) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    putListingRevisionLive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionCommand"];
+            };
+        };
+        responses: {
+            /** @description Live: status LIVE and the listing's new data version; the former live revision is Replaced and an Unpublished listing Published */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale, or another command moved it between the command's reads), REVISION_NOT_APPROVED or PUT_LIVE_REFUSED (one entry per reason that stops it, in the order reasons.LISTING_STATE, reasons.ADVERTISING_RIGHT, reasons.TERMS_NOT_IN_EFFECT, reasons.UNIT_NOT_AVAILABLE, reasons.FRESHNESS, each reasonGroups.<GROUP> of E05 right after reasons.ADVERTISING_RIGHT; nothing is written) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR (also for an E05 group, an availability code or terms this server does not know or that break the contract; nothing is written) */
             500: {
                 headers: {
                     [name: string]: unknown;
