@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -412,5 +412,257 @@ describe("RevisionPanel (listing-publish US-2 AC-1 to AC-6, spec section 6, RD-1
     }
     renderPanel({ openRevisionNo: null, dataVersion: 0, viewerMayDraft: true });
     expect(region().textContent).not.toContain("Unpublished");
+  });
+
+  it("revisionPanel_saveConcurrent_adoptsStoredValues: after the panel's save answers 409 CONCURRENT_MODIFICATION, the re-read's stored values replace what is typed (K-2, pin (a))", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce(answered({ ...DRAFT, title: "Phòng trọ đã sửa ở tab khác", dataVersion: 5 }));
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(refused(409, "CONCURRENT_MODIFICATION"));
+    renderPanel(DRAFTER);
+
+    fireEvent.change(await within(region()).findByRole("textbox", { name: r.title }), { target: { value: "Phòng trọ của tôi gần chợ" } });
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(getListingRevision).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(within(region()).queryByRole("alert")?.textContent).toBe(a.concurrent));
+    await waitFor(() =>
+      expect((within(region()).queryByRole("textbox", { name: r.title }) as HTMLInputElement | null)?.value).toBe("Phòng trọ đã sửa ở tab khác"),
+    );
+  });
+
+  it("revisionPanel_retryAfterFailedRead_showsLoadingLine: 'Try again' after a failed first read empties the panel to its loading line until the read answers (K-7, pin (d))", async () => {
+    const held = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce({ ok: false, kind: "http", status: 500, code: "INTERNAL_ERROR", fieldErrors: [] })
+      .mockReturnValueOnce(held.promise);
+    renderPanel(DRAFTER);
+
+    fireEvent.click(await within(region()).findByRole("button", { name: r.retry }));
+    expect(within(region()).queryByRole("status")?.textContent).toBe(r.loading);
+    expect(within(region()).queryByText(r.loadFailed)).toBeNull();
+    held.resolve(answered(DRAFT));
+    await waitFor(() => expect(within(region()).queryByRole("textbox", { name: r.title })).not.toBeNull());
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+  });
+
+  // E06S3-D12: after a record the page moves `outsideChange` and holds the panel with `outsideRereading`.
+
+  /** The panel under the page's two props, which `outside` changes as the page would after a record. */
+  function renderOutside(panel: RevisionPanelInput) {
+    const onListingChanged = vi.fn<() => void>();
+    const element = (outsideChange: number, outsideRereading: boolean, input: RevisionPanelInput) => (
+      <NextIntlClientProvider locale="en" messages={en} timeZone="Asia/Ho_Chi_Minh">
+        <RevisionPanel
+          listingId={LISTING_ID}
+          panel={input}
+          listingRereading={false}
+          onListingChanged={onListingChanged}
+          outsideChange={outsideChange}
+          outsideRereading={outsideRereading}
+        />
+      </NextIntlClientProvider>
+    );
+    const view = render(element(0, false, panel));
+    const outside = (outsideChange: number, outsideRereading = false, input = panel) => view.rerender(element(outsideChange, outsideRereading, input));
+    return { ...view, onListingChanged, outside };
+  }
+
+  const titleValue = () => (within(region()).queryByRole("textbox", { name: r.title }) as HTMLInputElement | null)?.value;
+  const typeTitle = async (title: string) =>
+    fireEvent.change(await within(region()).findByRole("textbox", { name: r.title }), { target: { value: title } });
+  /** Whether the button is held: disabled itself or inside the panel's disabled fieldset. */
+  const buttonHeld = (name: string) => within(region()).queryByRole("button", { name })?.matches(":disabled");
+  const sentenceShown = () => within(region()).queryByText(r.changedMeanwhile) !== null;
+  const settle = () => act(async () => new Promise<void>((done) => setTimeout(done, 0)));
+
+  it("revisionPanel_outsideChange_sameValues_keepsTypedNoSentence: a re-read after a record that finds the same stored values keeps what is typed and takes the new version (E06S3-D12 (i))", async () => {
+    vi.mocked(getListingRevision).mockResolvedValueOnce(answered(DRAFT)).mockResolvedValueOnce(answered({ ...DRAFT, dataVersion: 5 }));
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(change("DRAFT", 6));
+    vi.mocked(getListingRevision).mockReturnValueOnce(new Promise(() => undefined));
+    const { outside } = renderOutside(DRAFTER);
+    await typeTitle("Phòng trọ của tôi gần chợ");
+
+    outside(1);
+    await settle();
+    expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+    expect(sentenceShown()).toBe(false);
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(saveListingRevisionContent).toHaveBeenCalledTimes(1));
+    expect(vi.mocked(saveListingRevisionContent).mock.calls[0]?.[2]).toMatchObject({ dataVersion: 5, title: "Phòng trọ của tôi gần chợ" });
+  });
+
+  it("revisionPanel_outsideChange_heldWhileReading_noPendingLabel: while the re-read after a record or the page's re-read runs, the body is held with what is typed and no pending label, also after an earlier save", async () => {
+    const outsideRead = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce(answered({ ...DRAFT, title: "Phòng trọ gần trường", dataVersion: 5 }))
+      .mockReturnValueOnce(outsideRead.promise);
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(change("DRAFT", 5));
+    const { outside } = renderOutside(DRAFTER);
+    await typeTitle("Phòng trọ gần trường");
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(buttonHeld(r.saveDraft)).toBe(false));
+    await typeTitle("Phòng trọ gần trường đại học");
+
+    outside(1, true);
+    await settle();
+    expect(titleValue()).toBe("Phòng trọ gần trường đại học");
+    // The draft's save button, whatever its label: held while the reads run.
+    const save = within(region()).queryByRole("button", { name: r.saveDraft }) ?? within(region()).queryByRole("button", { name: r.saving });
+    expect(save?.matches(":disabled")).toBe(true);
+    expect(within(region()).queryByRole("button", { name: r.saving })).toBeNull();
+  });
+
+  it("revisionPanel_outsideChange_sameValueGiven_readsNothing: a new outsideChange reads the open revision once; the same value given again reads nothing", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce(answered({ ...DRAFT, dataVersion: 5 }))
+      .mockReturnValueOnce(new Promise(() => undefined));
+    const { outside } = renderOutside(DRAFTER);
+    await within(region()).findByRole("textbox", { name: r.title });
+
+    outside(1);
+    await settle();
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+    outside(1);
+    await settle();
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+  });
+
+  it("revisionPanel_outsideChange_otherValues_adoptsAndChangedMeanwhile: other stored values are adopted with the status sentence, cleared when the next outside re-read or the next command starts (E06S3-D12 (ii))", async () => {
+    const changed = (title: string, dataVersion: number) => answered({ ...DRAFT, title, dataVersion });
+    const second = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce(changed("Phòng trọ đã sửa ở tab khác", 5))
+      .mockReturnValueOnce(second.promise)
+      .mockResolvedValueOnce(changed("Phòng trọ sửa lần nữa ở tab khác", 7))
+      .mockReturnValueOnce(new Promise(() => undefined));
+    vi.mocked(saveListingRevisionContent).mockReturnValueOnce(new Promise(() => undefined));
+    const { outside } = renderOutside(DRAFTER);
+    await typeTitle("Phòng trọ của tôi gần chợ");
+
+    outside(1);
+    await waitFor(() => expect(titleValue()).toBe("Phòng trọ đã sửa ở tab khác"));
+    expect(within(region()).queryAllByRole("status").map((element) => element.textContent)).toContain(r.changedMeanwhile);
+    outside(2);
+    expect(sentenceShown()).toBe(false);
+    second.resolve(changed("Phòng trọ đã sửa ở tab khác", 6));
+    await settle();
+    expect(sentenceShown()).toBe(false);
+    outside(3);
+    await waitFor(() => expect(titleValue()).toBe("Phòng trọ sửa lần nữa ở tab khác"));
+    expect(sentenceShown()).toBe(true);
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    expect(sentenceShown()).toBe(false);
+  });
+
+  it("revisionPanel_outsideChange_readFails_keepsTypedHeldTryAgain: a failed re-read after a record keeps what is typed, holds the body and offers Try again (E06S3-D12 (iii))", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce({ ok: false, kind: "http", status: 500, code: "INTERNAL_ERROR", fieldErrors: [] })
+      .mockResolvedValueOnce(answered({ ...DRAFT, dataVersion: 5 }));
+    const { outside } = renderOutside(DRAFTER);
+    await typeTitle("Phòng trọ của tôi gần chợ");
+
+    outside(1);
+    await settle();
+    expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+    expect(buttonHeld(r.saveDraft)).toBe(true);
+    expect([within(region()).queryByText(r.rereadFailed) !== null, within(region()).queryByRole("button", { name: r.retry }) !== null]).toEqual([
+      true,
+      true,
+    ]);
+    expect(sentenceShown()).toBe(false);
+    fireEvent.click(within(region()).getByRole("button", { name: r.retry }));
+    await waitFor(() => expect(getListingRevision).toHaveBeenCalledTimes(3));
+    await settle();
+    expect(buttonHeld(r.saveDraft)).toBe(false);
+    expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+  });
+
+  it("revisionPanel_outsideChange_notFound_listingReread: a re-read after a record that answers 404 shows the not-found answer and reads the listing again, as today (E06S3-D12 (iv))", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockResolvedValueOnce({ ok: false, kind: "http", status: 404, code: "NOT_FOUND", fieldErrors: [] });
+    const { outside, onListingChanged } = renderOutside(DRAFTER);
+    await within(region()).findByRole("textbox", { name: r.title });
+
+    outside(1);
+    await waitFor(() => expect(within(region()).queryByText(a.notFound)).not.toBeNull());
+    expect(onListingChanged).toHaveBeenCalledTimes(1);
+  });
+
+  it("revisionPanel_outsideChange_noOpenRevision_noReadStartHeldWhileRereading: with no open revision a record reads nothing, and 'Start a new draft' waits only while the page's re-read runs", async () => {
+    vi.mocked(getListingRevision).mockReturnValue(new Promise(() => undefined));
+    const none: RevisionPanelInput = { openRevisionNo: null, dataVersion: 9, viewerMayDraft: true };
+    const { outside } = renderOutside(none);
+
+    outside(1, true);
+    expect(buttonHeld(r.start)).toBe(true);
+    outside(1, false);
+    expect(buttonHeld(r.start)).toBe(false);
+    outside(2, false);
+    await settle();
+    expect(getListingRevision).not.toHaveBeenCalled();
+  });
+
+  it("revisionPanel_ownCommands_noChangedMeanwhileSentence: the panel's own save and its own 409 adopt the stored values with no 'changed meanwhile' sentence", async () => {
+    const saveReread = deferred<ApiResult<ListingRevisionDetail>>();
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockReturnValueOnce(saveReread.promise)
+      .mockResolvedValueOnce(answered({ ...DRAFT, title: "Phòng trọ đã sửa ở tab khác", dataVersion: 7 }));
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(change("DRAFT", 5)).mockResolvedValueOnce(refused(409, "CONCURRENT_MODIFICATION"));
+    renderOutside(DRAFTER);
+    await typeTitle("  Phòng trọ gần trường  ");
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(getListingRevision).toHaveBeenCalledTimes(2));
+    saveReread.resolve(answered({ ...DRAFT, title: "Phòng trọ gần trường", dataVersion: 5 }));
+    await waitFor(() => expect(titleValue()).toBe("Phòng trọ gần trường"));
+    expect(sentenceShown()).toBe(false);
+
+    await typeTitle("Phòng trọ của tôi gần chợ");
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(titleValue()).toBe("Phòng trọ đã sửa ở tab khác"));
+    expect(sentenceShown()).toBe(false);
+  });
+
+  it("revisionPanel_outsideChangeDuringOwnReread_adoptsNoSentence: a record made while the panel's own re-read after its save runs adopts the saved values with no sentence (E06S3-P16)", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(DRAFT))
+      .mockReturnValueOnce(new Promise(() => undefined))
+      .mockResolvedValueOnce(answered({ ...DRAFT, title: "Phòng trọ của tôi gần chợ", dataVersion: 6 }));
+    vi.mocked(saveListingRevisionContent).mockResolvedValueOnce(change("DRAFT", 5)).mockReturnValueOnce(new Promise(() => undefined));
+    const { outside } = renderOutside(DRAFTER);
+    await typeTitle("  Phòng trọ của tôi gần chợ  ");
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(getListingRevision).toHaveBeenCalledTimes(2));
+
+    outside(1);
+    await settle();
+    expect(titleValue()).toBe("Phòng trọ của tôi gần chợ");
+    expect(sentenceShown()).toBe(false);
+    fireEvent.click(within(region()).getByRole("button", { name: r.saveDraft }));
+    await waitFor(() => expect(saveListingRevisionContent).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(saveListingRevisionContent).mock.calls[1]?.[2]).toMatchObject({ dataVersion: 6 });
+  });
+
+  it("revisionPanel_outsideChange_pendingBecameNeedsChanges_readOnlyChangedMeanwhile: an outside re-read that finds the shown Pending review revision returned, same values and a moved version, shows it read-only with no Withdraw and the 'changed meanwhile' sentence (E06-S4 pin P-4)", async () => {
+    vi.mocked(getListingRevision)
+      .mockResolvedValueOnce(answered(PENDING))
+      .mockResolvedValueOnce(answered({ ...PENDING, status: "NEEDS_CHANGES", dataVersion: 7 }));
+    const pending: RevisionPanelInput = { ...DRAFTER, dataVersion: 6 };
+    const { outside } = renderOutside(pending);
+    expect(await within(region()).findByText("Revision 1: Pending review")).toBeTruthy();
+    expect(within(region()).getByRole("button", { name: r.withdraw })).toBeTruthy();
+
+    outside(1);
+    expect(await within(region()).findByText("Revision 1: Needs changes")).toBeTruthy();
+    expect(getListingRevision).toHaveBeenCalledTimes(2);
+    expect(within(region()).queryByRole("textbox")).toBeNull();
+    expect(within(region()).queryByRole("button", { name: r.withdraw })).toBeNull();
+    expect(within(region()).getByText("Phòng trọ gần trường đại học")).toBeTruthy();
+    expect(sentenceShown()).toBe(true);
   });
 });

@@ -1,0 +1,46 @@
+import { callApi, type ApiResult } from "@/features/auth/client";
+
+import type { ListingLiveDifference, ListingPublication, ListingRevisionChange } from "../types";
+
+import type { ListingDeps } from "./listing-api";
+
+const DEFAULT_DEPS: ListingDeps = { callApi };
+
+// The three staff calls of putting a revision live (listing-publish E06-S6, spec sections 4.1 to 4.3). The revision
+// number travels as text, as the revision calls send it; the server answers its one 404 for anything it does not read.
+// The put live carries the listing's data version the publication read answered (listing BR-3); the server decides it.
+
+/** GET the live revision and the Approved one waiting, each with whether its display conditions hold now (E06S6-D11). */
+export function getListingPublication(listingId: string, deps: ListingDeps = DEFAULT_DEPS): Promise<ApiResult<ListingPublication>> {
+  return deps.callApi((client) =>
+    client.GET("/api/v1/staff/listings/{listingId}/publication", { params: { path: { listingId } } }),
+  );
+}
+
+/** POST the Sale's "Put live" of an Approved revision; it goes live only when every display condition holds now. */
+export function putListingRevisionLive(
+  listingId: string,
+  revisionNo: number,
+  dataVersion: number,
+  deps: ListingDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ListingRevisionChange>> {
+  return deps.callApi((client) =>
+    client.POST("/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/publication", {
+      params: { path: { listingId, revisionNo: String(revisionNo) } },
+      body: { dataVersion },
+    }),
+  );
+}
+
+/** GET what a revision changes against the live revision: title, description, features and terms by value (E06S6-D12). */
+export function getListingRevisionLiveDifference(
+  listingId: string,
+  revisionNo: number,
+  deps: ListingDeps = DEFAULT_DEPS,
+): Promise<ApiResult<ListingLiveDifference>> {
+  return deps.callApi((client) =>
+    client.GET("/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/live-difference", {
+      params: { path: { listingId, revisionNo: String(revisionNo) } },
+    }),
+  );
+}

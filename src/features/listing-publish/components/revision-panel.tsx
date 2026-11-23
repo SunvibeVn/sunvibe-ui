@@ -7,8 +7,9 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import type { ApiResult } from "@/features/auth/client";
 
+import { formValues, sameValues } from "../lib/revision-form";
+import { type RevisionPanelInput, revisionPanelModel, type RevisionRun } from "../lib/revision-model";
 import { runRevisionStart } from "../lib/revision-start-flow";
-import { type RevisionPanelInput, revisionPanelModel } from "../lib/revision-model";
 import { answerKey, problemSentence } from "../lib/revision-text";
 import { runRevisionWithdraw } from "../lib/revision-withdraw-flow";
 import { getListingRevision, startListingRevision, withdrawListingRevision } from "../services/revision-api";
@@ -21,6 +22,9 @@ import { type RevisionRefusal, useRevisionCommand } from "./use-revision-command
 
 /** The answer of the revision read, with the number and the attempt it was read for. */
 type RevisionRead = { revisionNo: number; attempt: number; result: ApiResult<ListingRevisionDetail> };
+
+/** The page's `outsideChange` last seen, the read attempt it started (null before any, or with no open revision). */
+type OutsideRead = { seen: number; attempt: number | null; failed: boolean };
 
 /** The last command's refusal: its sentence, or for the 422 its sentence over the entries' list, which takes the focus. */
 function RefusalAlert({ refusal }: { refusal: RevisionRefusal }) {
@@ -50,12 +54,18 @@ export function RevisionPanel({
   panel,
   listingRereading,
   onListingChanged,
+  outsideChange = 0,
+  outsideRereading = false,
 }: {
   listingId: string;
   panel: RevisionPanelInput;
   /** The page's read of the listing asked for by `onListingChanged` has not answered yet. */
   listingRereading: boolean;
   onListingChanged: () => void;
+  /** Moves when a record moved the listing's data version (E06S3-D12): the open revision is read again. */
+  outsideChange?: number;
+  /** The page's read of the listing asked for by a record has not answered yet: the body waits for it. */
+  outsideRereading?: boolean;
 }) {
   const t = useTranslations("ListingPublish");
   const headingId = useId();
@@ -65,10 +75,32 @@ export function RevisionPanel({
   /** Moves when the next read must replace what the form holds: after a save, or after someone else's change. */
   const [valuesToken, setValuesToken] = useState(0);
   const adoptNextRead = useRef(false);
+  /** The last `outsideChange` seen, the read attempt it started (none with no open revision) and whether it failed. */
+  const [outside, setOutside] = useState<OutsideRead>({ seen: outsideChange, attempt: null, failed: false });
+  /** An outside read found the stored revision changed and replaced what was shown (E06S3-D12 (ii)). */
+  const [changedMeanwhile, setChangedMeanwhile] = useState(false);
   const keepId = useId();
   const revisionNo = panel.openRevisionNo;
+
+  // A new `outsideChange` (a record moved the data version) reads the open revision again, in the render-time form the
+  // draft form uses for `valuesToken`. It does not set `adoptNextRead`: its read compares what it finds (E06S3-D12). A
+  // pending adoption of the panel's own command stays set, so that read adopts as the superseded one would (E06S3-P16).
+  if (outside.seen !== outsideChange) {
+    const next = revisionNo === null ? null : attempt + 1;
+    setOutside({ seen: outsideChange, attempt: next ?? outside.attempt, failed: false });
+    if (next !== null) {
+      setAttempt(next);
+      setChangedMeanwhile(false);
+    }
+  }
+  /** The outside read has not answered, or failed: the body is held until it answers (E06S3-D12 (iii)). */
+  const outsidePending = outside.attempt !== null && outside.attempt === attempt && (read === null || read.attempt !== attempt);
+  const held = outsideRereading || outsidePending;
+
   // A read that `reread` asked for has not answered: the listing's, or the shown revision's (read for an older attempt).
-  const rereading = listingRereading || (read !== null && read.revisionNo === revisionNo && read.attempt !== attempt);
+  // An outside read is not one: no command's pending label shows for a record (E06S3-D12 (d)); the body is held instead.
+  const rereading =
+    listingRereading || (read !== null && read.revisionNo === revisionNo && read.attempt !== attempt && attempt !== outside.attempt);
   const { busy, refusal, run } = useRevisionCommand({
     rereading,
     onOutcome: (command, outcome) => {
@@ -78,21 +110,50 @@ export function RevisionPanel({
       if (command === "withdraw") setConfirming(false);
     },
   });
+  /** A command of the panel starts: the "changed meanwhile" sentence is cleared, as the refusal alert is. */
+  const runCommand: RevisionRun = (command, send) => {
+    setChangedMeanwhile(false);
+    return run(command, send);
+  };
 
   const listingGone = useEffectEvent(() => onListingChanged());
+
+  /**
+   * The read's answer. An outside read (no adoption pending) compares the stored values and status with the read shown:
+   * the same keeps what is typed and takes the new version (i); others are adopted and said (ii); a failure other than
+   * 404 keeps what is shown, held, with "Try again" (iii); a 404 is today's (iv). Every other read is today's.
+   */
+  const answered = useEffectEvent((number: number, forAttempt: number, result: ApiResult<ListingRevisionDetail>) => {
+    if (forAttempt === outside.attempt && !adoptNextRead.current && !(!result.ok && result.kind === "http" && result.status === 404)) {
+      if (!result.ok) {
+        setOutside((current) => ({ ...current, failed: true }));
+        return;
+      }
+      const shown = read !== null && read.revisionNo === number && read.result.ok ? read.result.data : null;
+      const same = shown !== null && shown.status === result.data.status && sameValues(formValues(shown), formValues(result.data));
+      if (shown !== null && !same) {
+        setValuesToken((token) => token + 1);
+        setChangedMeanwhile(true);
+      }
+      setOutside((current) => ({ ...current, failed: false }));
+      setRead({ revisionNo: number, attempt: forAttempt, result });
+      return;
+    }
+    if (adoptNextRead.current && result.ok) {
+      adoptNextRead.current = false;
+      setValuesToken((token) => token + 1);
+    }
+    setRead({ revisionNo: number, attempt: forAttempt, result });
+    // The one 404 of an unknown or out-of-scope revision: the page reads the listing again (spec section 6).
+    if (!result.ok && result.kind === "http" && result.status === 404) listingGone();
+  });
 
   useEffect(() => {
     if (revisionNo === null) return;
     let dropped = false;
     void getListingRevision(listingId, revisionNo).then((result) => {
       if (dropped) return;
-      if (adoptNextRead.current && result.ok) {
-        adoptNextRead.current = false;
-        setValuesToken((token) => token + 1);
-      }
-      setRead({ revisionNo, attempt, result });
-      // The one 404 of an unknown or out-of-scope revision: the page reads the listing again (spec section 6).
-      if (!result.ok && result.kind === "http" && result.status === 404) listingGone();
+      answered(revisionNo, attempt, result);
     });
     return () => {
       dropped = true;
@@ -112,8 +173,14 @@ export function RevisionPanel({
     setRead(null);
     setAttempt((count) => count + 1);
   };
+  // "Try again" after a failed outside read: another outside attempt with the same comparison, what is shown kept.
+  const retryOutside = () => {
+    setOutside((current) => ({ ...current, attempt: attempt + 1, failed: false }));
+    setAttempt(attempt + 1);
+    setChangedMeanwhile(false);
+  };
   const start = () =>
-    void run("start", () =>
+    void runCommand("start", () =>
       runRevisionStart(listingId, panel.dataVersion, { start: (id, version) => startListingRevision(id, version), reread }),
     );
 
@@ -158,7 +225,7 @@ export function RevisionPanel({
   } else if (model.kind === "ready") {
     const { screen } = model;
     const withdraw = () =>
-      void run("withdraw", () =>
+      void runCommand("withdraw", () =>
         runRevisionWithdraw(listingId, screen.revisionNo, screen.dataVersion, {
           withdraw: (id, number, version) => withdrawListingRevision(id, number, version),
           reread,
@@ -177,7 +244,7 @@ export function RevisionPanel({
             values={model.values}
             valuesToken={valuesToken}
             busy={busy}
-            run={run}
+            run={runCommand}
             reread={reread}
           />
         ) : (
@@ -211,7 +278,25 @@ export function RevisionPanel({
         {t("revision.heading")}
       </h2>
       {refusal !== null && <RefusalAlert refusal={refusal} />}
-      {body}
+      {changedMeanwhile && (
+        <Alert tone="info">
+          <p>{t("revision.changedMeanwhile")}</p>
+        </Alert>
+      )}
+      {/* Held while the reads after a record run: the fields keep what is typed, no button takes a click. */}
+      <fieldset disabled={held} className="contents">
+        {body}
+      </fieldset>
+      {outside.failed && (
+        <div className="space-y-2">
+          <Alert tone="error">
+            <p>{t("revision.rereadFailed")}</p>
+          </Alert>
+          <Button variant="secondary" className="px-4 py-2" onClick={retryOutside}>
+            {t("revision.retry")}
+          </Button>
+        </div>
+      )}
     </section>
   );
 }

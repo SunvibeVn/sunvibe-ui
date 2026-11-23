@@ -8,12 +8,20 @@ import { Alert } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+import type { ListingChange } from "../lib/freshness-record-flow";
 import { listingModel, type ListingPageModel } from "../lib/listing-model";
+import { type RevisionDecisionInput, revisionDecisionInput } from "../lib/revision-decision-model";
 import { getListing } from "../services/listing-api";
 
+import { FreshnessPanel } from "./freshness-panel";
+import { PublicationSection } from "./publication-section";
+import { RevisionDecisionSection } from "./revision-decision-section";
 import { RevisionPanel } from "./revision-panel";
 
 const LOADING: ListingPageModel = { kind: "loading" };
+
+/** The listing re-reads: how many were asked for, and the last asked for by the revision panel and by a record. */
+type Rereads = { refresh: number; revision: number; record: number };
 
 /** An instant on the staff page, as the agreement page formats its times (the workspace provider sets the zone). */
 const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
@@ -22,6 +30,7 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
  * The workspace page of one listing (listing-publish US-1 AC-4, spec section 6, UL-3): its public code, state,
  * transaction type and creation time, a way back to its agreement, and its newest revisions, newest first. Nothing of
  * it is public yet, and the page says so. No unit address, owner or person. It reads on mount and on "Try again".
+ * "Publication" (E06-S6) sits between "Freshness" and "Current revision" and reads again on each re-read of the page.
  * The "Current revision" panel (E06-S2) sits above the revisions; after each of its commands the page reads the listing
  * again in place, keeping what it shows until the answer, so the panel and its alert stay (E06S2-P11 (2)): a 404 shows
  * the not-found state, and a failed re-read keeps the page as it is. Until that answer the panel's commands wait, since
@@ -31,10 +40,19 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   const t = useTranslations("ListingPublish");
   const format = useFormatter();
   const [model, setModel] = useState<ListingPageModel>(LOADING);
+  /** The newest decided revision of the last listing read that answered, for "Latest review" (E06S4-P12); null: none. */
+  const [decisionInput, setDecisionInput] = useState<RevisionDecisionInput | null>(null);
   const [attempt, setAttempt] = useState(0);
-  const [refresh, setRefresh] = useState(0);
-  /** The `refresh` of the last read that answered: behind `refresh` while the panel's re-read runs. */
+  /**
+   * `refresh` counts the listing re-reads; `revision` and `record` hold the `refresh` the revision panel and a record
+   * last asked for (E06S3-D12), so each panel waits only for the re-read that concerns it.
+   */
+  const [rereads, setRereads] = useState<Rereads>({ refresh: 0, revision: 0, record: 0 });
+  const { refresh } = rereads;
+  /** The `refresh` of the last read that answered: behind `refresh` while a re-read runs. */
   const [answered, setAnswered] = useState(0);
+  /** Moves after each record: the revision panel reads its open revision again (E06S3-D12). */
+  const [outsideChange, setOutsideChange] = useState(0);
   const revisionsId = useId();
 
   useEffect(() => {
@@ -43,6 +61,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
       if (dropped) return;
       const next = listingModel(result);
       setModel((current) => (current.kind === "ready" && next.kind === "error" ? current : next));
+      if (result.ok) setDecisionInput(revisionDecisionInput(result.data));
       setAnswered(refresh);
     });
     return () => {
@@ -54,6 +73,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
   useLayoutEffect(
     () => () => {
       setModel(LOADING);
+      setDecisionInput(null);
     },
     [],
   );
@@ -62,7 +82,22 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
     setModel(LOADING);
     setAttempt((count) => count + 1);
   };
-  const reread = () => setRefresh((count) => count + 1);
+  /** Reads the listing again in place, remembering which panel asked for it (none for a plain re-read). */
+  const reread = (asker: "revision" | "record" | null) =>
+    setRereads((current) => {
+      const next = current.refresh + 1;
+      return { refresh: next, revision: asker === "revision" ? next : current.revision, record: asker === "record" ? next : current.record };
+    });
+  // A record moved the data version: a re-read held as a record's, and the revision panel reads its revision again. A
+  // 409 CONCURRENT_MODIFICATION: the page holds an old version, re-read as a record's, no record made. A 404: plain.
+  const freshnessChanged = (change: ListingChange) => {
+    if (change === "gone") {
+      reread(null);
+      return;
+    }
+    reread("record");
+    if (change === "recorded") setOutsideChange((count) => count + 1);
+  };
   const time = (instant: string) => format.dateTime(new Date(instant), TIME_FORMAT);
 
   switch (model.kind) {
@@ -118,12 +153,31 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
               {t("page.openAgreement")}
             </Link>
           </div>
+          <FreshnessPanel
+            listingId={listingId}
+            dataVersion={model.revisionPanel.dataVersion}
+            viewerMayRecord={model.revisionPanel.viewerMayDraft}
+            agreementHref={model.agreementHref}
+            listingRereading={answered !== refresh}
+            onListingChanged={freshnessChanged}
+          />
+          <PublicationSection listingId={listingId} refresh={refresh} onListingChanged={() => reread("revision")} />
           <RevisionPanel
             listingId={listingId}
             panel={model.revisionPanel}
-            listingRereading={answered !== refresh}
-            onListingChanged={reread}
+            listingRereading={answered < rereads.revision}
+            onListingChanged={() => reread("revision")}
+            outsideChange={outsideChange}
+            outsideRereading={answered < rereads.record}
           />
+          {decisionInput !== null && (
+            <RevisionDecisionSection
+              key={decisionInput.revisionNo}
+              listingId={listingId}
+              input={decisionInput}
+              onListingChanged={() => reread("revision")}
+            />
+          )}
           <section
             aria-labelledby={revisionsId}
             className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"

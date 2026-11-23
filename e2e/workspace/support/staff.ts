@@ -148,6 +148,8 @@ export const T = {
   menuOwnerLeads: "SUPPLY LEADS",
   menuSurveys: "SURVEYS",
   menuAgreements: "AGREEMENTS",
+  menuReconfirmations: "RECONFIRMATIONS",
+  menuListingReviews: "LISTING REVIEWS",
   menuInventoryCases: "INVENTORY CASES",
   menuTerritories: "TERRITORIES",
   signOut: "Sign Out",

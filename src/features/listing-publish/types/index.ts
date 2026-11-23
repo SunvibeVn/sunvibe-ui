@@ -35,3 +35,47 @@ export type ListingRevisionProblem = Schemas["ListingRevisionProblem"];
 export type ListingUnitSnapshot = Schemas["ListingUnitSnapshot"];
 /** The body of a save: the whole title, description and thirteen features (E06S2-D4). */
 export type ListingRevisionContentBody = Schemas["ListingRevisionContent"];
+
+// Recording the freshness confirmation (listing-publish E06-S3). The three dates and `latest` are null until a valid
+// confirmation or a first record; in `latest` the two answers are set exactly for AVAILABLE and the note is optional.
+
+/** The listing's freshness: the dates, the two flags and the latest record with its private note; no user id. */
+export type ListingFreshness = Schemas["ListingFreshness"];
+export type ListingFreshnessRecord = Schemas["ListingFreshnessRecord"];
+/** The body of a record: no date, the server sets today in Vietnam time (E06S3-D4). */
+export type ListingFreshnessRecordRequest = Schemas["ListingFreshnessRecordRequest"];
+/** The answer of a record: whether it is a valid confirmation and the listing's new data version. */
+export type ListingFreshnessRecorded = Schemas["ListingFreshnessRecorded"];
+/** At most 50 listings to reconfirm, oldest confirmation first, and whether more may need it (E06S3-D7). */
+export type ListingReconfirmations = Schemas["ListingReconfirmations"];
+export type ListingReconfirmationItem = Schemas["ListingReconfirmationItem"];
+
+// The independent review of a submitted revision (listing-publish E06-S4). Nullable: E05's answer, its end date and its
+// two terms, the unit's code and availability, the four freshness fields, and the decision's checklist version,
+// rejection group and note; the real location's four fields.
+
+/** At most 50 Pending review revisions, oldest submission first, and whether more are waiting (E06S4-D10). */
+export type ListingReviewQueue = Schemas["ListingReviewQueue"];
+export type ListingReviewQueueItem = Schemas["ListingReviewQueueItem"];
+/** What a reviewer reads beside a revision; never the real location (E06S4-D11). */
+export type ListingRevisionReview = Schemas["ListingRevisionReview"];
+/** The body of a decision: only the chosen outcome's fields (E06S4-D6, E06S4-P10). */
+export type ListingRevisionDecisionRequest = Schemas["ListingRevisionDecisionRequest"];
+/** A revision's decision with its reasons and private note; no reviewer id (E06S4-D15). */
+export type ListingRevisionDecision = Schemas["ListingRevisionDecision"];
+/** The unit's real location, opened by an eligible reviewer and logged by the server (E06S4-D12). */
+export type ListingUnitLocation = Schemas["ListingUnitLocation"];
+
+// Putting an approved revision live (listing-publish E06-S6). Every property is required; only the publication's `live`
+// and `approved` are nullable (both null for a listing read as archived), and the live difference's `live` (null unless
+// another revision is live). Nothing of these answers is public.
+
+/** The live revision and the Approved revision waiting, each with its display answer, and what the viewer may do. */
+export type ListingPublication = Schemas["ListingPublication"];
+export type ListingPublicationLive = Schemas["ListingPublicationLive"];
+export type ListingPublicationApproved = Schemas["ListingPublicationApproved"];
+/** Whether a revision's display conditions hold now: the reasons in their fixed order and E05's groups. */
+export type ListingDisplayAnswer = Schemas["ListingDisplayAnswer"];
+/** What a revision changes against the live revision, by value (E06S6-D12). */
+export type ListingLiveDifference = Schemas["ListingLiveDifference"];
+export type ListingLiveRevision = Schemas["ListingLiveRevision"];

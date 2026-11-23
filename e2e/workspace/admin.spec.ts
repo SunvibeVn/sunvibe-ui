@@ -132,6 +132,8 @@ test.describe("ADMIN in the workspace", () => {
       T.menuOwnerLeads,
       T.menuSurveys,
       T.menuAgreements,
+      T.menuReconfirmations,
+      T.menuListingReviews,
       T.menuInventoryCases,
       T.menuTerritories,
     ]);

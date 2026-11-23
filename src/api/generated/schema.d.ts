@@ -899,6 +899,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/listings/reconfirmations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The listings whose reconfirmation is due, oldest confirmation first */
+        get: operations["getListingReconfirmations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/review-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The revisions waiting for review, oldest submission first, with whether the caller may review each */
+        get: operations["getListingReviewQueue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/listings/{listingId}": {
         parameters: {
             query?: never;
@@ -908,6 +942,57 @@ export interface paths {
         };
         /** A listing with its newest revisions; nothing of it is public */
         get: operations["getListing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/freshness": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A listing's latest valid confirmation, its reconfirmation and last valid days, and its latest contact */
+        get: operations["getListingFreshness"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/freshness-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Record a contact with the person letting the unit; dated today in Vietnam time by the server */
+        post: operations["recordListingFreshness"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The live revision and the Approved revision waiting, each with whether its display conditions hold now, and what the caller may do */
+        get: operations["getListingPublication"];
         put?: never;
         post?: never;
         delete?: never;
@@ -967,6 +1052,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/copies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Copy a Live, Approved or Needs changes revision into a new Draft with its content and terms snapshot */
+        post: operations["copyListingRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The decision of a revision with its reasons and note; no reviewer id */
+        get: operations["getListingRevisionDecision"];
+        put?: never;
+        /** Approve, return or reject a Pending review revision; an approval tries to put it live */
+        post: operations["decideListingRevision"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/live-difference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a revision changes against the live revision: its title, description, features and terms by value */
+        get: operations["getListingRevisionLiveDifference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/publication": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Put an Approved revision live when every display condition holds now */
+        post: operations["putListingRevisionLive"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** What a reviewer reads beside a revision: eligibility, the advertising answer, the terms check, the unit, the freshness and the checklist */
+        get: operations["getListingRevisionReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/submission": {
         parameters: {
             query?: never;
@@ -995,6 +1166,23 @@ export interface paths {
         /** Take a Draft's terms snapshot from the agreement's version in effect or waiting to start */
         put: operations["captureListingRevisionTerms"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/unit-location": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Open the real location of a Pending review revision's unit; the opening is logged */
+        post: operations["openListingUnitLocation"];
         delete?: never;
         options?: never;
         head?: never;
@@ -6055,6 +6243,14 @@ export interface components {
             /** @description The viewer holds the agreement's basis lead now; a hint, the commands decide */
             viewerIsAssignedSale: boolean;
         };
+        ListingDisplayAnswer: {
+            /** @description True exactly when reasons is empty */
+            holds: boolean;
+            /** @description E05's reason groups, in E05's order; empty unless reasons holds ADVERTISING_RIGHT */
+            reasonGroups: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /** @description What stops it, in this order */
+            reasons: ("LISTING_STATE" | "ADVERTISING_RIGHT" | "TERMS_NOT_IN_EFFECT" | "UNIT_NOT_AVAILABLE" | "FRESHNESS")[];
+        };
         ListingFeatures: {
             airConditioner: boolean;
             balcony: boolean;
@@ -6140,6 +6336,78 @@ export interface components {
             /** @description 1 to 100 characters, E05's content */
             name: string;
         };
+        ListingFreshness: {
+            /**
+             * Format: date
+             * @description The Vietnam date of the latest valid confirmation; null until one
+             */
+            confirmedOn: string | null;
+            /** @description The last valid day has passed */
+            deadlinePassed: boolean;
+            /** @description The latest record; null before any */
+            latest: components["schemas"]["ListingFreshnessRecord"] | null;
+            listingId: string;
+            /**
+             * Format: date
+             * @description From this day reconfirmation is due; null until a valid confirmation
+             */
+            reconfirmFrom: string | null;
+            /** @description Reconfirmation is due; stays on until a new valid confirmation */
+            reconfirmationDue: boolean;
+            /**
+             * Format: date
+             * @description The last day the confirmation holds; null until a valid confirmation
+             */
+            validThrough: string | null;
+        };
+        ListingFreshnessRecord: {
+            /** @enum {string} */
+            channel: "CALL" | "MESSAGE" | "IN_PERSON";
+            /**
+             * Format: date
+             * @description The Vietnam date of the contact
+             */
+            contactDate: string;
+            /** @description Private; null for none */
+            note: string | null;
+            /** @enum {string} */
+            outcome: "AVAILABLE" | "NOT_AVAILABLE" | "UNREACHABLE";
+            /** Format: date-time */
+            recordedAt: string;
+            /** @description Set exactly for AVAILABLE */
+            termsStillApply: boolean | null;
+            /** @description Set exactly for AVAILABLE */
+            unitUnchanged: boolean | null;
+            /** @description Still available with both answers yes (listing-publish BR-9) */
+            valid: boolean;
+        };
+        ListingFreshnessRecordRequest: {
+            /** @enum {string} */
+            channel: "CALL" | "MESSAGE" | "IN_PERSON";
+            /**
+             * Format: int64
+             * @description The listing's data version the caller read (listing BR-3)
+             */
+            dataVersion: number;
+            /** @description Private: at most 500 characters (code points after NFC, trimmed), line feeds allowed, no other control or format character; null or blank is none */
+            note: string | null;
+            /** @enum {string} */
+            outcome: "AVAILABLE" | "NOT_AVAILABLE" | "UNREACHABLE";
+            /** @description The person still lets the unit on the agreement's terms; set exactly for AVAILABLE */
+            termsStillApply: boolean | null;
+            /** @description No significant change to the unit since the listing's content; set exactly for AVAILABLE */
+            unitUnchanged: boolean | null;
+        };
+        ListingFreshnessRecorded: {
+            /**
+             * Format: int64
+             * @description The listing's new data version
+             */
+            dataVersion: number;
+            listingId: string;
+            /** @description Still available with both answers yes (listing-publish BR-9) */
+            valid: boolean;
+        };
         ListingItem: {
             /** @description The public code */
             code: string;
@@ -6152,10 +6420,102 @@ export interface components {
              */
             state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
         };
+        ListingLiveDifference: {
+            /** @description The parts of the asked revision that differ from the live one by value, in this order; TERMS when the values of the two snapshots differ, not their source or capture time; empty unless comparison is COMPARED */
+            changedParts: ("TITLE" | "DESCRIPTION" | "FEATURES" | "TERMS")[];
+            /**
+             * @description COMPARED when another revision is live
+             * @enum {string}
+             */
+            comparison: "COMPARED" | "NO_LIVE_REVISION" | "IS_LIVE_REVISION";
+            /** @description The live revision; null unless comparison is COMPARED */
+            live: components["schemas"]["ListingLiveRevision"] | null;
+            /**
+             * Format: int32
+             * @description The revision asked
+             */
+            revisionNo: number;
+        };
+        ListingLiveRevision: {
+            description: string;
+            features: components["schemas"]["ListingFeatures"];
+            /** Format: int32 */
+            revisionNo: number;
+            terms: components["schemas"]["ListingTermsSnapshot"];
+            title: string;
+            /** Format: date-time */
+            wentLiveAt: string;
+        };
         ListingPendingTerms: {
             /** Format: date */
             startDate: string;
             terms: components["schemas"]["ListingTerms"];
+        };
+        ListingPublication: {
+            /** @description The Approved revision waiting; null when none waits or the listing is archived */
+            approved: components["schemas"]["ListingPublicationApproved"] | null;
+            /**
+             * Format: int64
+             * @description The listing's data version a put live sends back
+             */
+            dataVersion: number;
+            listingId: string;
+            /** @description The live revision; null when none is live or the listing is archived */
+            live: components["schemas"]["ListingPublicationLive"] | null;
+            /**
+             * @description ARCHIVED also when the listing's agreement has ended
+             * @enum {string}
+             */
+            state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED" | "ARCHIVED";
+            /** @description The caller is the assigned Sale, no Draft or Pending review revision is open and the listing is not archived */
+            viewerMayCopy: boolean;
+            /** @description The caller is the assigned Sale, a revision is Approved and the listing is Unpublished or Published */
+            viewerMayPutLive: boolean;
+        };
+        ListingPublicationApproved: {
+            /** @description The conditions of a put live: the listing must be Unpublished or Published */
+            display: components["schemas"]["ListingDisplayAnswer"];
+            /** Format: int32 */
+            revisionNo: number;
+            /**
+             * @description Which version of the agreement its terms snapshot copied
+             * @enum {string}
+             */
+            termsSource: "IN_EFFECT" | "PENDING_START";
+        };
+        ListingPublicationLive: {
+            /** @description The conditions of a shown revision: the listing must be Published */
+            display: components["schemas"]["ListingDisplayAnswer"];
+            /** Format: int32 */
+            revisionNo: number;
+            /** Format: date-time */
+            wentLiveAt: string;
+        };
+        ListingReconfirmationItem: {
+            /** @description The public code */
+            code: string;
+            /**
+             * Format: date
+             * @description The Vietnam date of the latest valid confirmation
+             */
+            confirmedOn: string;
+            /** @description The last valid day has passed */
+            deadlinePassed: boolean;
+            /** @description The latest record is a valid confirmation */
+            latestRecordValid: boolean;
+            listingId: string;
+            /** Format: date */
+            reconfirmFrom: string;
+            /** @enum {string} */
+            state: "UNPUBLISHED" | "PUBLISHED" | "PAUSED" | "URGENTLY_UNPUBLISHED";
+            /** Format: date */
+            validThrough: string;
+        };
+        ListingReconfirmations: {
+            /** @description More listings may need reconfirmation than the list shows */
+            hasMore: boolean;
+            /** @description At most 50, oldest confirmation first, then by listing id */
+            items: components["schemas"]["ListingReconfirmationItem"][];
         };
         ListingRent: {
             /** Format: int64 */
@@ -6164,6 +6524,70 @@ export interface components {
             currency: "VND";
             /** @enum {string} */
             unit: "MONTH";
+        };
+        ListingReviewAdvertising: {
+            allowed: boolean;
+            /**
+             * Format: date
+             * @description The agreement's end date; null without one
+             */
+            endDate: string | null;
+            ended: boolean;
+            exteriorPhotos: boolean;
+            interiorPhotos: boolean;
+            /** @description E05's activated version waiting to start; null without one */
+            pending: components["schemas"]["ListingPendingTerms"] | null;
+            /** @description E05's reason groups, in E05's order */
+            reasonGroups: ("NO_AGREEMENT" | "NOT_IN_EFFECT" | "NOT_STARTED" | "SUSPENDED" | "ENDED" | "BASIS" | "PROPERTY" | "UNIT" | "OWNER")[];
+            /** @description The terms of E05's version in effect; null without one */
+            termsInEffect: components["schemas"]["ListingTerms"] | null;
+        };
+        ListingReviewFreshness: {
+            /**
+             * Format: date
+             * @description The Vietnam date of the latest valid confirmation; null until one
+             */
+            confirmedOn: string | null;
+            /** @description The last valid day has passed */
+            deadlinePassed: boolean;
+            /** @description The latest record is a valid confirmation; null before any record */
+            latestValid: boolean | null;
+            /**
+             * Format: date
+             * @description The last day the confirmation holds; null until a valid confirmation
+             */
+            validThrough: string | null;
+        };
+        ListingReviewQueue: {
+            /** @description More pending revisions exist than are answered */
+            hasMore: boolean;
+            /** @description At most 50, oldest submission first, then by revision id */
+            items: components["schemas"]["ListingReviewQueueItem"][];
+        };
+        ListingReviewQueueItem: {
+            /** @description The public code, TD-XXXX-XXXX */
+            code: string;
+            listingId: string;
+            /** @description Why the caller may not review it, in this order; empty exactly when viewerMayReview */
+            notEligibleReasons: ("NOT_A_REVIEWER" | "AUTHOR" | "ASSIGNED_SALE")[];
+            /** Format: int32 */
+            revisionNo: number;
+            /** Format: date-time */
+            submittedAt: string;
+            title: string;
+            /** @description The unit and property fields taken at the submission */
+            unit: components["schemas"]["ListingUnitSnapshot"];
+            viewerMayReview: boolean;
+        };
+        ListingReviewUnit: {
+            /**
+             * @description Null when property answers no unit
+             * @enum {string|null}
+             */
+            availability: "AVAILABLE" | "OCCUPIED" | "MAINTENANCE" | "BLOCKED" | null;
+            /** @description An intake entry of the unit lists AVAILABILITY_DIFFERS */
+            availabilityDiffers: boolean;
+            unitCode: string | null;
         };
         ListingRevisionChange: {
             /**
@@ -6195,6 +6619,46 @@ export interface components {
             features: components["schemas"]["ListingFeaturesInput"];
             /** @description At most 90 characters (code points after NFC, trimmed) on one line, no control or format character; null or blank is empty */
             title: string | null;
+        };
+        ListingRevisionDecision: {
+            /** @description Empty unless NEEDS_CHANGES */
+            changeReasons: ("CONTENT_MISMATCH" | "TEXT_RULE_VIOLATION" | "MISSING_INFORMATION" | "TERMS_MISMATCH" | "OTHER")[];
+            /**
+             * Format: int32
+             * @description The checklist version; set for APPROVED
+             */
+            checklistVersion: number | null;
+            /** Format: date-time */
+            decidedAt: string;
+            /** @description Private; set for NEEDS_CHANGES and REJECTED */
+            note: string | null;
+            /** @enum {string} */
+            outcome: "APPROVED" | "NEEDS_CHANGES" | "REJECTED";
+            /**
+             * @description Set for REJECTED
+             * @enum {string|null}
+             */
+            rejectionGroup: "SUSPECTED_FRAUD" | "WRONG_UNIT" | "SERIOUS_VIOLATION" | "OTHER" | null;
+        };
+        ListingRevisionDecisionRequest: {
+            /** @description NEEDS_CHANGES: 1 to 5 distinct reasons; otherwise absent */
+            changeReasons?: ("CONTENT_MISMATCH" | "TEXT_RULE_VIOLATION" | "MISSING_INFORMATION" | "TERMS_MISMATCH" | "OTHER")[] | null;
+            /** @description APPROVED: each of the five checklist codes once, in any order; otherwise absent */
+            checks?: ("CONTENT_MATCHES_UNIT" | "TEXT_FOLLOWS_RULES" | "TERMS_MATCH_AGREEMENT" | "NO_FRAUD_SIGNS" | "AGREEMENT_END_AND_RIGHT")[] | null;
+            /**
+             * Format: int64
+             * @description The listing's data version the reviewer read (listing BR-3)
+             */
+            dataVersion: number;
+            /** @description Private. NEEDS_CHANGES and REJECTED: 1 to 1,000 characters (code points after NFC, trimmed), line feeds allowed, no other control or format character; APPROVED: absent; blank is none */
+            note?: string | null;
+            /** @enum {string} */
+            outcome: "APPROVED" | "NEEDS_CHANGES" | "REJECTED";
+            /**
+             * @description REJECTED: required; otherwise absent
+             * @enum {string|null}
+             */
+            rejectionGroup?: "SUSPECTED_FRAUD" | "WRONG_UNIT" | "SERIOUS_VIOLATION" | "OTHER" | null;
         };
         ListingRevisionDetail: {
             /** Format: date-time */
@@ -6245,6 +6709,34 @@ export interface components {
             /** @enum {string} */
             rule: "REQUIRED" | "TOO_SHORT" | "TOO_LONG" | "PHONE_NUMBER" | "EMAIL" | "LINK" | "SOCIAL_HANDLE" | "FORBIDDEN_WORD";
         };
+        ListingRevisionReview: {
+            /** @description E05's answer for the listing's unit and agreement; null when E05 answers nothing */
+            advertising: components["schemas"]["ListingReviewAdvertising"] | null;
+            /** @description The checklist, version 1, in this order */
+            checklist: ("CONTENT_MATCHES_UNIT" | "TEXT_FOLLOWS_RULES" | "TERMS_MATCH_AGREEMENT" | "NO_FRAUD_SIGNS" | "AGREEMENT_END_AND_RIGHT")[];
+            /** @description The listing's public code, TD-XXXX-XXXX */
+            code: string;
+            /**
+             * Format: int64
+             * @description The listing's data version a decision sends back
+             */
+            dataVersion: number;
+            freshness: components["schemas"]["ListingReviewFreshness"];
+            listingId: string;
+            /** @description Why the caller may not decide it, in this order; empty exactly when viewerMayReview */
+            notEligibleReasons: ("NOT_A_REVIEWER" | "AUTHOR" | "ASSIGNED_SALE" | "NOT_PENDING" | "LISTING_ARCHIVED")[];
+            /** Format: int32 */
+            revisionNo: number;
+            /** @enum {string} */
+            status: "DRAFT" | "PENDING_REVIEW" | "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED" | "CANCELLED";
+            /**
+             * @description Which version of the agreement the revision's terms equal
+             * @enum {string}
+             */
+            termsMatch: "IN_EFFECT" | "PENDING_START" | "NONE" | "NO_SNAPSHOT";
+            unit: components["schemas"]["ListingReviewUnit"];
+            viewerMayReview: boolean;
+        };
         ListingTerms: {
             deposit: components["schemas"]["ListingDeposit"];
             /** @description 0 to 20 fees, E05's order */
@@ -6286,6 +6778,14 @@ export interface components {
             inEffect: components["schemas"]["ListingTerms"] | null;
             /** @description E05's activated version waiting to start; null without one */
             pending: components["schemas"]["ListingPendingTerms"] | null;
+        };
+        ListingUnitLocation: {
+            /** @description The unit's location inside the property */
+            locationLabel: string | null;
+            /** @description The property's street */
+            street: string | null;
+            unitCode: string | null;
+            wardName: string | null;
         };
         ListingUnitSnapshot: {
             /** Format: double */
@@ -10972,6 +11472,100 @@ export interface operations {
             };
         };
     };
+    getListingReconfirmations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description At most 50 listings, oldest confirmation first, and whether more may need reconfirmation */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingReconfirmations"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN (LISTING_REVIEWER alone included) */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingReviewQueue: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description At most 50 Pending review revisions of listings not archived, oldest submission first, and whether more wait */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingReviewQueue"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER (SALE alone included); the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     getListing: {
         parameters: {
             query?: never;
@@ -11012,6 +11606,202 @@ export interface operations {
             };
             /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
             404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingFreshness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The freshness; every date null until a valid confirmation, the latest record null before any */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingFreshness"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    recordListingFreshness: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingFreshnessRecordRequest"];
+            };
+        };
+        responses: {
+            /** @description Recorded; the listing's new data version and whether the contact is a valid confirmation */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingFreshnessRecorded"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion, channel, outcome, note, or answersMatchOutcome when the two answers are not set exactly for AVAILABLE) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller does not hold its agreement's basis lead now: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED or CONCURRENT_MODIFICATION (the data version is stale, or another command moved it meanwhile) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR (also when the put live a valid confirmation tries meets an E05 group or availability code listing does not know; nothing is written) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingPublication: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The publication; a listing read as archived has neither revision and permits nothing */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingPublication"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, the id is malformed, or the caller may not read it: one answer for all three */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, also for a reason group of the advertising answer, an availability of the unit or terms this server does not know; nothing is shown */
+            500: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -11214,6 +12004,417 @@ export interface operations {
             };
         };
     };
+    copyListingRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionCommand"];
+            };
+        };
+        responses: {
+            /** @description The new Draft, numbered after the greatest number, and the listing's new data version */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative, or a field of the body) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale), REVISION_NOT_COPYABLE (the revision is not Live, Approved or Needs changes) or OPEN_REVISION_EXISTS */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingRevisionDecision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The decision */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionDecision"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller may not read the listing, it has no such revision, or the revision has no decision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    decideListingRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Decided: status is the revision's status after the command (APPROVED, or LIVE when the approval put it live; NEEDS_CHANGES or REJECTED) and dataVersion the listing's new data version */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per broken rule: dataVersion, outcome, checks or changeReasons alone for a list above five elements, checks[i], changeReasons[i], rejectionGroup, note, or decisionMatchesOutcome when the fields are not exactly those of the outcome) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither LISTING_REVIEWER nor ADMIN; the same for every id. REVIEWER_NOT_INDEPENDENT: the caller is an author of the revision or its agreement's assigned Sale now, whatever roles they hold; one entry per reason, reasons.AUTHOR then reasons.ASSIGNED_SALE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale, or another command moved it meanwhile), REVISION_NOT_PENDING or REVISION_TERMS_MISMATCH (an approval of terms equal to no version of the agreement) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: the agreement's terms break the contract, or the put live meets an E05 group or availability code listing does not know; nothing is written */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingRevisionLiveDifference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description COMPARED with the live revision and the parts that differ, NO_LIVE_REVISION or IS_LIVE_REVISION */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingLiveDifference"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER (SALE alone included); the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR (also for a live revision read without its terms snapshot) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    putListingRevisionLive: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ListingRevisionCommand"];
+            };
+        };
+        responses: {
+            /** @description Live: status LIVE and the listing's new data version; the former live revision is Replaced and an Unpublished listing Published */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionChange"];
+                };
+            };
+            /** @description VALIDATION_FAILED (one entry per field: dataVersion missing or negative) or MALFORMED_REQUEST (the body cannot be read); answered before the role */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither SALE nor SALE_LEADER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller does not hold the agreement's basis lead now, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED, CONCURRENT_MODIFICATION (the data version is stale, or another command moved it between the command's reads), REVISION_NOT_APPROVED or PUT_LIVE_REFUSED (one entry per reason that stops it, in the order reasons.LISTING_STATE, reasons.ADVERTISING_RIGHT, reasons.TERMS_NOT_IN_EFFECT, reasons.UNIT_NOT_AVAILABLE, reasons.FRESHNESS, each reasonGroups.<GROUP> of E05 right after reasons.ADVERTISING_RIGHT; nothing is written) */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR (also for an E05 group, an availability code or terms this server does not know or that break the contract; nothing is written) */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    getListingRevisionReview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The review context; never the real location */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingRevisionReview"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER (SALE alone included); the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR, also for a reason group of the advertising answer, an availability of the unit or terms this server does not know; nothing is shown */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     submitListingRevision: {
         parameters: {
             query?: never;
@@ -11375,6 +12576,74 @@ export interface operations {
                 };
             };
             /** @description INTERNAL_ERROR: the agreement's terms break the contract; nothing is written */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
+    openListingUnitLocation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The unit's code, its location label, the street and the ward; one access log row is written */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingUnitLocation"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds neither LISTING_REVIEWER nor ADMIN; the same for every id. REVIEWER_NOT_INDEPENDENT: the caller is an author of the revision or its agreement's assigned Sale now, whatever roles they hold; one entry per reason, reasons.AUTHOR then reasons.ASSIGNED_SALE */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, or the listing has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description LISTING_ARCHIVED or REVISION_NOT_PENDING */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: the unit's location cannot be read; nothing is logged */
             500: {
                 headers: {
                     [name: string]: unknown;
