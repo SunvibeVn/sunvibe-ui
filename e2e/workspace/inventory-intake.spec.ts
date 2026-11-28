@@ -1,5 +1,6 @@
-import { type BrowserContext, expect, type Locator, type Page, test } from "@playwright/test";
+import { type BrowserContext, expect, type Locator, type Page, request, test } from "@playwright/test";
 
+import { API_URL } from "../support/api";
 import { CUSTOMER, expectSignedInAccount } from "../support/auth";
 import {
   DESKTOP,
@@ -1132,7 +1133,7 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     const revisions = listing.getByRole("region", { name: "Revisions", exact: true });
     await expect(revisions.getByText("Revision 1", { exact: true })).toBeVisible();
     await expect(revisions.getByText("Draft", { exact: true })).toBeVisible();
-    await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
+    await expect(listing.getByText("Only the live revision can be public, and only while every display condition holds.", { exact: true })).toBeVisible();
 
     // Back on the agreement, the section lists the listing and offers no create.
     await listing.getByRole("link", { name: "Open the agreement", exact: true }).click();
@@ -1526,7 +1527,7 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
       timeout: 20_000,
     });
     await expect(listing.getByText("Unpublished", { exact: true })).toBeVisible();
-    await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
+    await expect(listing.getByText("Only the live revision can be public, and only while every display condition holds.", { exact: true })).toBeVisible();
   });
 
   // Putting an approved revision live (listing-publish E06-S6, PL-17, E06S6-D15 point 3, E06S6-P8), on the listing E2E-2
@@ -1573,7 +1574,7 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
     await expect(publication.getByRole("alert")).toHaveCount(0);
     await expect(button(publication, "Put live")).toHaveCount(0);
     await expect(listing.getByText("Published", { exact: true })).toBeVisible({ timeout: 20_000 });
-    await expect(listing.getByText("Nothing of this listing is public.", { exact: true })).toBeVisible();
+    await expect(listing.getByText("Only the live revision can be public, and only while every display condition holds.", { exact: true })).toBeVisible();
 
     // "Latest review" names the live revision's approval and offers no copy (E06S6-D17).
     const latest = listing.getByRole("region", { name: "Latest review", exact: true });
@@ -1631,6 +1632,72 @@ test.describe("Inventory intake from a surveyed lead (property-create intake W21
       .getByRole("listitem")
       .filter({ has: sale.getByText(`Revision ${live}`, { exact: true }) });
     await expect(former.getByText("Replaced", { exact: true })).toBeVisible({ timeout: 20_000 });
+  });
+
+  // The anonymous answer about the listing (listing-publish E06-S7, PB-25, LP-11, E06S7-D18): read without a token, in a
+  // request context of its own (no cookie, no header), at the API, as anyone would. The live revision of the test above
+  // is public; a new Draft with another title, previewed on the listing page, changes nothing of the answer (US-2 AC-7);
+  // "No longer available" hides the listing (US-6 AC-5, US-7 AC-1) and a valid contact shows it again (US-6 AC-4). The dev
+  // profile has the public read switched on. Four public reads, far under the limit of 60 a minute; no owner POST.
+  const PREVIEW_TITLE = "Phòng trọ yên tĩnh gần hồ nước";
+
+  test("publicAnswer_liveListing_previewHiddenAndBack (PB-25, LP-11, listing-publish US-2 AC-3, AC-7, US-5 AC-5, US-6 AC-4, AC-5, US-7 AC-1)", async () => {
+    const panel = await openRevisionPanel(sale);
+    const listing = mainArea(sale);
+    const code = ((await listing.getByRole("heading", { level: 1 }).textContent()) ?? "").replace(/^Listing /, "");
+    expect(code).toMatch(/^TD-[2-9A-HJ-NP-Z]{4}-[2-9A-HJ-NP-Z]{4}$/);
+
+    const anonymous = await request.newContext();
+    try {
+      const read = () => anonymous.get(`${API_URL}/api/v1/public/listings/${code}`);
+      const expectShown = async () => {
+        const answer = await read();
+        expect(answer.status()).toBe(200);
+        expect(answer.headers()["cache-control"]).toBe("no-store");
+        const body = (await answer.json()) as { code: string; title: string };
+        expect(body.code).toBe(code);
+        expect(body.title).toBe(LIVE_TITLE);
+      };
+
+      // The live revision is public.
+      await expectShown();
+
+      // The SALE starts a new Draft with another title and previews it on the listing page.
+      await expect(button(panel, "Start a new draft")).toBeVisible({ timeout: 20_000 });
+      await button(panel, "Start a new draft").click();
+      const titleField = panel.getByLabel("Title", { exact: true });
+      await expect(titleField).toHaveValue("", { timeout: 20_000 });
+      await titleField.fill(PREVIEW_TITLE);
+      const save = sale.waitForResponse(
+        (response) =>
+          response.request().method() === "PUT" &&
+          /^\/api\/v1\/staff\/listings\/[0-9A-Z]{26}\/revisions\/\d+\/content$/.test(new URL(response.url()).pathname),
+      );
+      await button(panel, "Save draft").click();
+      expect((await save).status()).toBe(200);
+      const preview = listing.getByRole("region", { name: "Public preview", exact: true });
+      await button(preview, "Show the public preview").click();
+      await expect(preview.getByText(PREVIEW_TITLE, { exact: true })).toBeVisible({ timeout: 20_000 });
+      await expect(preview.getByText(code, { exact: true })).toBeVisible();
+
+      // The Draft is not public: the answer keeps the live title.
+      await expectShown();
+
+      // "No longer available" hides the listing: the one 404, naming nothing.
+      const freshness = listing.getByRole("region", { name: "Freshness", exact: true });
+      await recordContact(freshness, "Phone call", "No longer available");
+      await expect(freshness.getByText("This contact is not a valid confirmation.", { exact: true })).toBeVisible({ timeout: 20_000 });
+      const hidden = await read();
+      expect(hidden.status()).toBe(404);
+      expect(hidden.headers()["cache-control"]).toBe("no-store");
+      expect(((await hidden.json()) as { code: string }).code).toBe("NOT_FOUND");
+
+      // A valid contact shows it again.
+      await recordValidContact(freshness);
+      await expectShown();
+    } finally {
+      await anonymous.dispose();
+    }
   });
 });
 
