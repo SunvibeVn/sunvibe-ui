@@ -3207,6 +3207,36 @@
         "OTHER": "Another part"
       }
     },
+    "preview": {
+      "title": "Public preview",
+      "show": "Show the public preview",
+      "loading": "Reading the preview…",
+      "loadError": "The preview could not be read.",
+      "readAgain": "Read again",
+      "labels": {
+        "code": "Code",
+        "rental": "Rental",
+        "type": "Type",
+        "place": "Place",
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Bathrooms",
+        "area": "Area (m²)",
+        "unit": "Unit at submission",
+        "terms": "Terms",
+        "title": "Title",
+        "description": "Description",
+        "features": "Features",
+        "liveOn": "Live on",
+        "lastConfirmed": "Last confirmed"
+      },
+      "place": "{ward} ({wardCode}), {province} ({provinceCode})",
+      "number": "{value, number}",
+      "noUnit": "Type, place, rooms and area are taken from the unit when the revision is submitted.",
+      "noPlace": "No ward or province is recorded for the unit.",
+      "noType": "No property type is recorded for the unit.",
+      "notLive": "Not live",
+      "noConfirmation": "No valid freshness confirmation yet."
+    },
     "review": {
       "heading": "Review of listing {code}",
       "statusLine": "Revision {revisionNo}: {status}",
