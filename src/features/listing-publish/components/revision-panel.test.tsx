@@ -65,9 +65,9 @@ const DRAFT: ListingRevisionDetail = {
   submittedAt: null,
   dataVersion: 4,
   problems: [
-    { part: "TITLE", rule: "TOO_SHORT" },
-    { part: "DESCRIPTION", rule: "REQUIRED" },
-    { part: "TERMS", rule: "REQUIRED" },
+    { part: "TITLE", rule: "TOO_SHORT", position: null },
+    { part: "DESCRIPTION", rule: "REQUIRED", position: null },
+    { part: "TERMS", rule: "REQUIRED", position: null },
   ],
 };
 
@@ -406,7 +406,7 @@ describe("RevisionPanel (listing-publish US-2 AC-1 to AC-6, spec section 6, RD-1
       const { unmount } = renderPanel(panel);
       await within(region()).findByText(/^Revision 1: /);
       const text = region().textContent ?? "";
-      for (const outer of ["Unpublished", en.ListingPublish.page.notPublic, "Listing TD-"]) expect(text).not.toContain(outer);
+      for (const outer of ["Unpublished", en.ListingPublish.page.publicRule, "Listing TD-"]) expect(text).not.toContain(outer);
       expect(within(region()).queryByRole("heading", { level: 1 })).toBeNull();
       unmount();
     }

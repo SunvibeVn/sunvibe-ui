@@ -201,7 +201,7 @@ describe("FreshnessPanel (listing-publish US-6 AC-1, AC-2, AC-6, spec section 6,
     await settle();
 
     const text = region().textContent ?? "";
-    expect(["Unpublished", "Draft", "Open the agreement", en.ListingPublish.page.notPublic].filter((outer) => text.includes(outer))).toEqual([]);
+    expect(["Unpublished", "Draft", "Open the agreement", en.ListingPublish.page.publicRule].filter((outer) => text.includes(outer))).toEqual([]);
   });
 
   it("freshnessRecordForm_cancel_closesSendsNothing: 'Cancel' closes the form and sends nothing; 'Record a contact' shows again", async () => {

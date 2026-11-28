@@ -2845,7 +2845,7 @@
       "revision": "Revision {revisionNo}",
       "revisionCreated": "created {time}",
       "olderRevisions": "Older revisions are not shown here.",
-      "notPublic": "Nothing of this listing is public.",
+      "publicRule": "Only the live revision can be public, and only while every display condition holds.",
       "loading": "Loading the listing…",
       "notFound": "This listing does not exist, or you cannot open it.",
       "loadFailed": "The listing could not be loaded.",
@@ -2991,6 +2991,13 @@
         "LINK": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a link or a web address.",
         "SOCIAL_HANDLE": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a social network or chat account.",
         "FORBIDDEN_WORD": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a claim a listing may not make.",
+        "FEE_NAME": {
+          "PHONE_NUMBER": "Fee {position} of the terms snapshot holds what reads as a phone number. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "EMAIL": "Fee {position} of the terms snapshot holds an e-mail address. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "LINK": "Fee {position} of the terms snapshot holds a link or a web address. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "SOCIAL_HANDLE": "Fee {position} of the terms snapshot holds a social network or chat account. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "FORBIDDEN_WORD": "Fee {position} of the terms snapshot holds a claim a listing may not make. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again."
+        },
         "unknown": "This revision breaks a rule this page does not know yet."
       },
       "unsaved": "Save the draft before you submit it.",
@@ -3199,6 +3206,36 @@
         "TERMS": "Terms",
         "OTHER": "Another part"
       }
+    },
+    "preview": {
+      "title": "Public preview",
+      "show": "Show the public preview",
+      "loading": "Reading the preview…",
+      "loadError": "The preview could not be read.",
+      "readAgain": "Read again",
+      "labels": {
+        "code": "Code",
+        "rental": "Rental",
+        "type": "Type",
+        "place": "Place",
+        "bedrooms": "Bedrooms",
+        "bathrooms": "Bathrooms",
+        "area": "Area (m²)",
+        "unit": "Unit at submission",
+        "terms": "Terms",
+        "title": "Title",
+        "description": "Description",
+        "features": "Features",
+        "liveOn": "Live on",
+        "lastConfirmed": "Last confirmed"
+      },
+      "place": "{ward} ({wardCode}), {province} ({provinceCode})",
+      "number": "{value, number}",
+      "noUnit": "Type, place, rooms and area are taken from the unit when the revision is submitted.",
+      "noPlace": "No ward or province is recorded for the unit.",
+      "noType": "No property type is recorded for the unit.",
+      "notLive": "Not live",
+      "noConfirmation": "No valid freshness confirmation yet."
     },
     "review": {
       "heading": "Review of listing {code}",

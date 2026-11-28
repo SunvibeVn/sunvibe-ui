@@ -79,3 +79,10 @@ export type ListingDisplayAnswer = Schemas["ListingDisplayAnswer"];
 /** What a revision changes against the live revision, by value (E06S6-D12). */
 export type ListingLiveDifference = Schemas["ListingLiveDifference"];
 export type ListingLiveRevision = Schemas["ListingLiveRevision"];
+
+// The public data of a revision as it would be published (listing-publish E06-S7, E06S7-D9). Every property is required;
+// the unit fields and place names are null before the revision's submission, the terms before a snapshot, the two dates
+// without a put live or a valid confirmation. A 200 does not mean the data is or will be public.
+
+/** One revision's public data, the groups of listing-publish BR-14, with the place's names for the staff reader. */
+export type ListingPublicPreview = Schemas["ListingPublicPreview"];

@@ -57,9 +57,9 @@ const EMPTY: ListingRevisionDetail = {
   submittedAt: null,
   dataVersion: 4,
   problems: [
-    { part: "TITLE", rule: "REQUIRED" },
-    { part: "DESCRIPTION", rule: "REQUIRED" },
-    { part: "TERMS", rule: "REQUIRED" },
+    { part: "TITLE", rule: "REQUIRED", position: null },
+    { part: "DESCRIPTION", rule: "REQUIRED", position: null },
+    { part: "TERMS", rule: "REQUIRED", position: null },
   ],
 };
 

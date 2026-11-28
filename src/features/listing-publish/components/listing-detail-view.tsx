@@ -15,6 +15,7 @@ import { getListing } from "../services/listing-api";
 
 import { FreshnessPanel } from "./freshness-panel";
 import { PublicationSection } from "./publication-section";
+import { PublicPreviewSection } from "./public-preview-section";
 import { RevisionDecisionSection } from "./revision-decision-section";
 import { RevisionPanel } from "./revision-panel";
 
@@ -28,9 +29,11 @@ const TIME_FORMAT = { dateStyle: "medium", timeStyle: "short" } as const;
 
 /**
  * The workspace page of one listing (listing-publish US-1 AC-4, spec section 6, UL-3): its public code, state,
- * transaction type and creation time, a way back to its agreement, and its newest revisions, newest first. Nothing of
- * it is public yet, and the page says so. No unit address, owner or person. It reads on mount and on "Try again".
+ * transaction type and creation time, a way back to its agreement, and its newest revisions, newest first. It says
+ * that only the live revision can be public, and only while every display condition holds (E06S7-D16 (c)). No unit
+ * address, owner or person. It reads on mount and on "Try again".
  * "Publication" (E06-S6) sits between "Freshness" and "Current revision" and reads again on each re-read of the page.
+ * "Public preview" (E06-S7) follows "Current revision" for the open revision only, and reads on its own buttons.
  * The "Current revision" panel (E06-S2) sits above the revisions; after each of its commands the page reads the listing
  * again in place, keeping what it shows until the answer, so the panel and its alert stay (E06S2-P11 (2)): a 404 shows
  * the not-found state, and a failed re-read keeps the page as it is. Until that answer the panel's commands wait, since
@@ -170,6 +173,13 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
             outsideChange={outsideChange}
             outsideRereading={answered < rereads.record}
           />
+          {model.revisionPanel.openRevisionNo !== null && (
+            <PublicPreviewSection
+              key={model.revisionPanel.openRevisionNo}
+              listingId={listingId}
+              revisionNo={model.revisionPanel.openRevisionNo}
+            />
+          )}
           {decisionInput !== null && (
             <RevisionDecisionSection
               key={decisionInput.revisionNo}
@@ -198,7 +208,7 @@ export function ListingDetailView({ listingId }: { listingId: string }) {
             </ol>
             {model.olderRevisions && <p className="text-sm text-slate-500">{t("page.olderRevisions")}</p>}
           </section>
-          <p className="text-sm text-slate-700">{t("page.notPublic")}</p>
+          <p className="text-sm text-slate-700">{t("page.publicRule")}</p>
         </div>
       );
   }

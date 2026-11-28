@@ -206,6 +206,71 @@ describe("revision texts (listing-publish E06-S2, spec section 6)", () => {
     }
   });
 
+  it("problemsOf_feeNameEntry_partRuleAndPosition: 'feeName.<n>.<RULE>' reads as FEE_NAME with the fee's position; every other entry keeps exactly its part and rule (PB-23, E-20)", () => {
+    const fieldErrors = ["title.PHONE_NUMBER", "feeName.2.PHONE_NUMBER", "feeName.20.FORBIDDEN_WORD", "terms.REQUIRED"].map((field) => ({
+      field,
+      message: "Fixed server message.",
+    }));
+
+    const problems = problemsOf(fieldErrors);
+    expect(problems).toEqual([
+      { part: "TITLE", rule: "PHONE_NUMBER" },
+      { part: "FEE_NAME", rule: "PHONE_NUMBER", position: 2 },
+      { part: "FEE_NAME", rule: "FORBIDDEN_WORD", position: 20 },
+      { part: "TERMS", rule: "REQUIRED" },
+    ]);
+    expect(problems[0]).not.toHaveProperty("position");
+    expect(problems[3]).not.toHaveProperty("position");
+    expect(phraseText(t, problemSentence(problems[1] as (typeof problems)[number]))).toBe(
+      "Fee 2 of the terms snapshot holds what reads as a phone number. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+    );
+  });
+
+  it("problemsOf_feeNameMalformed_keptAsItCame: a fee entry without a canonical position is kept as it came and reads the unknown sentence", () => {
+    const unknown = "This revision breaks a rule this page does not know yet.";
+    for (const field of ["feeName.0.EMAIL", "feeName.02.EMAIL", "feeName.x.EMAIL", "feeName.2", "feeName..EMAIL"]) {
+      const problems = problemsOf([{ field }]);
+      expect(problems).toHaveLength(1);
+      expect(problems[0]?.part).not.toBe("FEE_NAME");
+      expect(phraseText(t, problemSentence(problems[0] as (typeof problems)[number]))).toBe(unknown);
+    }
+  });
+
+  it("problemSentence_feeName_eachMachineRuleWithPosition: each machine rule of a fee name has its sentence with the fee's position, the rule and the remedy, word for word", () => {
+    const remedy = "Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.";
+    const sentences: [string, string][] = [
+      ["PHONE_NUMBER", "what reads as a phone number"],
+      ["EMAIL", "an e-mail address"],
+      ["LINK", "a link or a web address"],
+      ["SOCIAL_HANDLE", "a social network or chat account"],
+      ["FORBIDDEN_WORD", "a claim a listing may not make"],
+    ];
+    for (const [rule, phrase] of sentences) {
+      const sentence = problemSentence({ part: "FEE_NAME", rule, position: 7 });
+      expect(sentence).toEqual({ key: `revision.problems.FEE_NAME.${rule}`, values: { position: 7 } });
+      expect(typeof textAt(sentence.key)).toBe("string");
+      expect(phraseText(t, sentence)).toBe(`Fee 7 of the terms snapshot holds ${phrase}. ${remedy}`);
+    }
+  });
+
+  it("problemSentence_feeNameWithoutPositionOrLengthRule_unknownSentence: a FEE_NAME problem without a position, or with a rule that is not a machine rule, reads the unknown sentence", () => {
+    const unknown = "This revision breaks a rule this page does not know yet.";
+    for (const problem of [
+      { part: "FEE_NAME", rule: "PHONE_NUMBER" },
+      { part: "FEE_NAME", rule: "EMAIL", position: null },
+      { part: "FEE_NAME", rule: "REQUIRED", position: 2 },
+      { part: "FEE_NAME", rule: "TOO_LONG", position: 2 },
+      { part: "FEE_NAME", rule: "NEW_RULE", position: 2 },
+      { part: "FEE_NAME", rule: "toString", position: 2 },
+    ]) {
+      expect(phraseText(t, problemSentence(problem))).toBe(unknown);
+    }
+    // A position on another part changes nothing.
+    expect(phraseText(t, problemSentence({ part: "TITLE", rule: "PHONE_NUMBER", position: 2 }))).toBe(
+      "The title holds what reads as a phone number.",
+    );
+  });
+
   it("wholeVnd_amount_groupedWithoutDecimals: a whole amount of VND reads with comma groups and no decimals", () => {
     expect(wholeVnd(0)).toBe("0");
     expect(wholeVnd(3500)).toBe("3,500");

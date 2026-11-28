@@ -34,10 +34,12 @@ vi.mock("../services/review-api", async (importOriginal) => ({
 vi.mock("../services/publication-api", async (importOriginal) => ({
   ...(await importOriginal<typeof import("../services/publication-api")>()),
   getListingPublication: vi.fn(() => new Promise<never>(() => undefined)),
+  // The read of the "Public preview" section (E06-S7), only on its button.
+  getListingRevisionPublicPreview: vi.fn(() => new Promise<never>(() => undefined)),
 }));
 
 import { getListingFreshness, recordListingFreshness } from "../services/freshness-api";
-import { getListingPublication } from "../services/publication-api";
+import { getListingPublication, getListingRevisionPublicPreview } from "../services/publication-api";
 import { getListingRevisionDecision } from "../services/review-api";
 import { getListing } from "../services/listing-api";
 import { getListingRevision, saveListingRevisionContent, startListingRevision } from "../services/revision-api";
@@ -116,7 +118,7 @@ describe("ListingDetailView (listing-publish E06-S1, spec section 6, UL-3)", () 
     expect(within(first as HTMLElement).getByText("Revision 1")).toBeTruthy();
     expect(within(first as HTMLElement).getByText("Draft")).toBeTruthy();
     expect(within(first as HTMLElement).getByText(/^created Nov 20, 2026/).textContent).toMatch(/10:15/);
-    expect(screen.getByText(p.notPublic)).toBeTruthy();
+    expect(screen.getByText(p.publicRule)).toBeTruthy();
     expect(screen.queryByText(p.olderRevisions)).toBeNull();
     // No unit, owner or person: the internal ids are not shown.
     for (const id of [DETAIL.unitId, AGREEMENT_ID, LISTING_ID]) expect(screen.queryByText(new RegExp(id))).toBeNull();
@@ -677,5 +679,61 @@ describe("ListingDetailView and the latest review (listing-publish E06-S4, spec 
     expect(await screen.findByRole("region", { name: p.revisions })).toBeTruthy();
     expect(screen.queryByRole("region", { name: latest })).toBeNull();
     expect(getListingRevisionDecision).not.toHaveBeenCalled();
+  });
+});
+
+describe("ListingDetailView and the public preview (listing-publish US-2 AC-3, spec section 6, E06S7-D16 (a), (c), PB-22)", () => {
+  const preview = en.ListingPublish.preview;
+  /** A listing whose revision 2 was returned and whose revision 3 is the open Draft: every section of the page mounts. */
+  const OPEN: ListingDetail = {
+    ...DETAIL,
+    openRevisionNo: 3,
+    revisions: [
+      { revisionNo: 3, status: "DRAFT", createdAt: "2026-11-22T04:00:00Z" },
+      { revisionNo: 2, status: "NEEDS_CHANGES", createdAt: "2026-11-21T03:15:00Z" },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.mocked(getListing).mockReset();
+    vi.mocked(getListingRevisionPublicPreview).mockClear();
+  });
+
+  it("listingDetailView_openRevision_publicPreviewAfterCurrentRevision: the open revision's 'Public preview' sits after 'Current revision' and before 'Latest review' and 'Revisions', and reads that revision only on its button", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered(OPEN));
+    renderView();
+
+    const section = await screen.findByRole("region", { name: preview.title });
+    const current = screen.getByRole("region", { name: en.ListingPublish.revision.heading });
+    const latest = screen.getByRole("region", { name: en.ListingPublish.decision.heading });
+    const revisions = screen.getByRole("region", { name: p.revisions });
+    expect([
+      Boolean(current.compareDocumentPosition(section) & Node.DOCUMENT_POSITION_FOLLOWING),
+      Boolean(section.compareDocumentPosition(latest) & Node.DOCUMENT_POSITION_FOLLOWING),
+      Boolean(section.compareDocumentPosition(revisions) & Node.DOCUMENT_POSITION_FOLLOWING),
+    ]).toEqual([true, true, true]);
+    expect(getListingRevisionPublicPreview).not.toHaveBeenCalled();
+
+    fireEvent.click(within(section).getByRole("button", { name: preview.show }));
+    expect(getListingRevisionPublicPreview).toHaveBeenCalledTimes(1);
+    expect(getListingRevisionPublicPreview).toHaveBeenCalledWith(LISTING_ID, 3);
+  });
+
+  it("listingDetailView_noOpenRevision_noPublicPreview: without an open revision the page has no 'Public preview' and reads none", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered({ ...OPEN, openRevisionNo: null }));
+    renderView();
+
+    expect(await screen.findByRole("region", { name: p.revisions })).toBeTruthy();
+    expect(screen.queryByRole("region", { name: preview.title })).toBeNull();
+    expect(screen.queryByRole("button", { name: preview.show })).toBeNull();
+    expect(getListingRevisionPublicPreview).not.toHaveBeenCalled();
+  });
+
+  it("listingDetailView_ready_publicRuleSentence: the page says which revision can be public and when, word for word, and no longer that nothing is public", async () => {
+    vi.mocked(getListing).mockResolvedValueOnce(answered(OPEN));
+    renderView();
+
+    expect(await screen.findByText("Only the live revision can be public, and only while every display condition holds.")).toBeTruthy();
+    expect(screen.queryByText("Nothing of this listing is public.")).toBeNull();
   });
 });

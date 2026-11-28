@@ -2,9 +2,14 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { ApiResult } from "@/features/auth/client";
 
-import type { ListingLiveDifference, ListingPublication, ListingRevisionChange } from "../types";
+import type { ListingLiveDifference, ListingPublication, ListingPublicPreview, ListingRevisionChange } from "../types";
 
-import { getListingPublication, getListingRevisionLiveDifference, putListingRevisionLive } from "./publication-api";
+import {
+  getListingPublication,
+  getListingRevisionLiveDifference,
+  getListingRevisionPublicPreview,
+  putListingRevisionLive,
+} from "./publication-api";
 
 /** A fake `callApi` that runs the request against a client recording each call, and answers `answer` as it is. */
 function recording<T>(answer: ApiResult<T>) {
@@ -98,5 +103,19 @@ describe("publication calls (listing-publish E06-S6, spec sections 4.1 to 4.3, U
     const network: ApiResult<ListingPublication> = { ok: false, kind: "network" };
     const read = recording(network);
     expect(await getListingPublication(LISTING_ID, { callApi: read.callApi as never })).toBe(network);
+  });
+
+  it("publicationApi_publicPreview_pathMethodAndNumberAsText: the preview read sends GET on its schema path once, the revision number as text, no body, and answers as it came (E06S7-D9, PB-22)", async () => {
+    const answer: ApiResult<ListingPublicPreview> = { ok: false, kind: "http", status: 404, code: "NOT_FOUND", fieldErrors: [] };
+    const preview = recording(answer);
+    expect(await getListingRevisionPublicPreview(LISTING_ID, 12, { callApi: preview.callApi as never })).toBe(answer);
+    expect(preview.callApi).toHaveBeenCalledTimes(1);
+    expect(preview.calls).toStrictEqual([
+      {
+        method: "GET",
+        path: "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/public-preview",
+        options: { params: { path: { listingId: LISTING_ID, revisionNo: "12" } } },
+      },
+    ]);
   });
 });

@@ -554,6 +554,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/public/listings/{code}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The public data of a shown listing, by its public code */
+        get: operations["getPublicListing"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/public/owner-intake-requests": {
         parameters: {
             query?: never;
@@ -1096,6 +1113,23 @@ export interface paths {
         };
         /** What a revision changes against the live revision: its title, description, features and terms by value */
         get: operations["getListingRevisionLiveDifference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/staff/listings/{listingId}/revisions/{revisionNo}/public-preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** A revision's public data as it would be published: the groups of the public answer from the revision itself, with its unit snapshot's place names */
+        get: operations["getListingRevisionPublicPreview"];
         put?: never;
         post?: never;
         delete?: never;
@@ -6451,6 +6485,92 @@ export interface components {
             startDate: string;
             terms: components["schemas"]["ListingTerms"];
         };
+        ListingPublic: {
+            /** Format: double */
+            areaSqm: number;
+            /** Format: int32 */
+            bathrooms: number;
+            /** Format: int32 */
+            bedrooms: number;
+            /** @description The public code, TD- and two groups of four */
+            code: string;
+            description: string;
+            features: components["schemas"]["ListingFeatures"];
+            /**
+             * Format: date
+             * @description The Vietnam-time date of the latest valid confirmation of the information
+             */
+            lastConfirmedOn: string;
+            /**
+             * Format: date
+             * @description The Vietnam-time date the shown version was put live (listing BR-6 group 9)
+             */
+            liveOn: string;
+            /**
+             * @description Null on a legacy property
+             * @enum {string|null}
+             */
+            propertyType: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+            provinceCode: string | null;
+            terms: components["schemas"]["ListingTerms"];
+            title: string;
+            /** @enum {string} */
+            transactionType: "LONG_TERM_RENT";
+            /** @description The province and ward codes are set together from the catalog, or both null */
+            wardCode: string | null;
+        };
+        ListingPublicPreview: {
+            /**
+             * Format: double
+             * @description Null before the submission
+             */
+            areaSqm: number | null;
+            /**
+             * Format: int32
+             * @description Null before the submission
+             */
+            bathrooms: number | null;
+            /**
+             * Format: int32
+             * @description Null before the submission
+             */
+            bedrooms: number | null;
+            /** @description The listing's public code */
+            code: string;
+            description: string | null;
+            features: components["schemas"]["ListingFeatures"];
+            /**
+             * Format: date
+             * @description The Vietnam-time date of the listing's latest valid confirmation; null without one
+             */
+            lastConfirmedOn: string | null;
+            /**
+             * Format: date
+             * @description The Vietnam-time date the revision was put live; null unless it went live
+             */
+            liveOn: string | null;
+            /**
+             * @description Null before the submission and on a legacy property
+             * @enum {string|null}
+             */
+            propertyType: "HOUSE" | "WHOLE_BUILDING" | "VILLA" | "HOMESTAY" | "CONDOTEL" | "APARTMENT" | null;
+            provinceCode: string | null;
+            /** @description The province name of the revision's unit snapshot; null before its submission */
+            provinceName: string | null;
+            /** Format: int32 */
+            revisionNo: number;
+            /** @enum {string} */
+            revisionStatus: "DRAFT" | "PENDING_REVIEW" | "NEEDS_CHANGES" | "REJECTED" | "APPROVED" | "LIVE" | "REPLACED" | "CANCELLED";
+            /** @description Null until a terms snapshot is taken */
+            terms: components["schemas"]["ListingTerms"] | null;
+            title: string | null;
+            /** @enum {string} */
+            transactionType: "LONG_TERM_RENT";
+            /** @description The place codes and names are set together, or all null */
+            wardCode: string | null;
+            /** @description The ward name of the revision's unit snapshot; null before its submission */
+            wardName: string | null;
+        };
         ListingPublication: {
             /** @description The Approved revision waiting; null when none waits or the listing is archived */
             approved: components["schemas"]["ListingPublicationApproved"] | null;
@@ -6705,7 +6825,12 @@ export interface components {
         };
         ListingRevisionProblem: {
             /** @enum {string} */
-            part: "TITLE" | "DESCRIPTION" | "TERMS";
+            part: "TITLE" | "DESCRIPTION" | "TERMS" | "FEE_NAME";
+            /**
+             * Format: int32
+             * @description The fee's position in the terms snapshot, 1 to 20, for FEE_NAME; null otherwise
+             */
+            position: number | null;
             /** @enum {string} */
             rule: "REQUIRED" | "TOO_SHORT" | "TOO_LONG" | "PHONE_NUMBER" | "EMAIL" | "LINK" | "SOCIAL_HANDLE" | "FORBIDDEN_WORD";
         };
@@ -9998,6 +10123,61 @@ export interface operations {
             };
         };
     };
+    getPublicListing: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                code: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The listing is shown now: its public data and the date of its latest valid confirmation */
+            200: {
+                headers: {
+                    /** @description no-store on every answer of the path */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingPublic"];
+                };
+            };
+            /** @description NOT_FOUND: the public read is switched off, the code is not of the code's form, or no listing with that code is shown now: one answer for all */
+            404: {
+                headers: {
+                    /** @description no-store on every answer of the path */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description RATE_LIMITED: too many reads from this address; the Retry-After header gives the seconds to wait */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR: a read failed, or a condition answered a value this server does not know; nothing is shown */
+            500: {
+                headers: {
+                    /** @description no-store on every answer of the path */
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     submit: {
         parameters: {
             query?: never;
@@ -12275,6 +12455,65 @@ export interface operations {
             };
         };
     };
+    getListingRevisionPublicPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                listingId: string;
+                revisionNo: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The preview; the unit fields and names are null before the submission, the terms before a snapshot, liveOn unless the revision went live */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ListingPublicPreview"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description FORBIDDEN: the caller holds none of SALE, SALE_LEADER, SALES_MANAGER, ADMIN, LISTING_REVIEWER; the same for every id */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description NOT_FOUND: the listing does not exist, an id or the revision number is malformed, the caller may not read the listing, or it has no such revision: one answer for all */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+            /** @description INTERNAL_ERROR */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ErrorResponse"];
+                };
+            };
+        };
+    };
     putListingRevisionLive: {
         parameters: {
             query?: never;
@@ -12485,7 +12724,7 @@ export interface operations {
                     "*/*": components["schemas"]["ErrorResponse"];
                 };
             };
-            /** @description REVISION_NOT_SUBMITTABLE: one entry per violation, in order, its field <part>.<rule> (title.TOO_SHORT, terms.REQUIRED); never the matched text */
+            /** @description REVISION_NOT_SUBMITTABLE: one entry per violation, in order, its field <part>.<rule> (title.TOO_SHORT, terms.REQUIRED), a fee name's feeName.<position>.<rule> (feeName.2.PHONE_NUMBER, the fee's position in the terms snapshot); never the matched text */
             422: {
                 headers: {
                     [name: string]: unknown;
