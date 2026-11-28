@@ -2845,7 +2845,7 @@
       "revision": "Revision {revisionNo}",
       "revisionCreated": "created {time}",
       "olderRevisions": "Older revisions are not shown here.",
-      "notPublic": "Nothing of this listing is public.",
+      "publicRule": "Only the live revision can be public, and only while every display condition holds.",
       "loading": "Loading the listing…",
       "notFound": "This listing does not exist, or you cannot open it.",
       "loadFailed": "The listing could not be loaded.",
