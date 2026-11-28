@@ -117,6 +117,14 @@ describe("PublicationSection (listing-publish US-2 AC-7, US-5 AC-1, AC-3, spec s
     }
   });
 
+  it("publicationSection_approvedViewerMayNotPutLive_noPutLive: an approved revision waits, and the read says the viewer may not put it live: no 'Put live' (PB-24, SV-337 (3))", async () => {
+    vi.mocked(getListingPublication).mockResolvedValueOnce(ok({ ...PUBLICATION, viewerMayPutLive: false }));
+    renderSection();
+
+    expect(await within(region()).findByText("Revision 3 is approved and waits to go live.")).toBeTruthy();
+    expect(putLiveButton()).toBeNull();
+  });
+
   it("publicationSection_putLive_sendsOnceDisabledWhileRunning: 'Put live' sends one request with the read's data version, is held while it runs, and the section reads again once on the page's re-read", async () => {
     vi.mocked(getListingPublication).mockResolvedValueOnce(ok(WAITING)).mockReturnValueOnce(new Promise(() => undefined));
     const answer = deferred<ApiResult<ListingRevisionChange>>();
