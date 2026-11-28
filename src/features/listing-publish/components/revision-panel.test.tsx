@@ -65,9 +65,9 @@ const DRAFT: ListingRevisionDetail = {
   submittedAt: null,
   dataVersion: 4,
   problems: [
-    { part: "TITLE", rule: "TOO_SHORT" },
-    { part: "DESCRIPTION", rule: "REQUIRED" },
-    { part: "TERMS", rule: "REQUIRED" },
+    { part: "TITLE", rule: "TOO_SHORT", position: null },
+    { part: "DESCRIPTION", rule: "REQUIRED", position: null },
+    { part: "TERMS", rule: "REQUIRED", position: null },
   ],
 };
 

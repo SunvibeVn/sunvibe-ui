@@ -2991,6 +2991,13 @@
         "LINK": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a link or a web address.",
         "SOCIAL_HANDLE": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a social network or chat account.",
         "FORBIDDEN_WORD": "The {part, select, TITLE {title} DESCRIPTION {description} other {text}} holds a claim a listing may not make.",
+        "FEE_NAME": {
+          "PHONE_NUMBER": "Fee {position} of the terms snapshot holds what reads as a phone number. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "EMAIL": "Fee {position} of the terms snapshot holds an e-mail address. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "LINK": "Fee {position} of the terms snapshot holds a link or a web address. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "SOCIAL_HANDLE": "Fee {position} of the terms snapshot holds a social network or chat account. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again.",
+          "FORBIDDEN_WORD": "Fee {position} of the terms snapshot holds a claim a listing may not make. Fee names come from the agreement version: correct the name there in a new version, then take the snapshot again."
+        },
         "unknown": "This revision breaks a rule this page does not know yet."
       },
       "unsaved": "Save the draft before you submit it.",

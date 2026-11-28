@@ -233,16 +233,25 @@ export function answerOf(result: ApiResult<unknown>, command: "save" | "other"):
 }
 
 /**
- * A problem of the revision read or a 422 entry: its part and rule as the server names them. A form this UI does not
- * know is kept as it came, so it reads the unknown sentence and is never dropped.
+ * A problem of the revision read or a 422 entry: its part and rule as the server names them, and for a fee name the
+ * fee's 1-based position in the terms snapshot (E06S7-D16 (b); null or absent otherwise). A form this UI does not know
+ * is kept as it came, so it reads the unknown sentence and is never dropped.
  */
-export type RevisionProblem = { part: string; rule: string };
+export type RevisionProblem = { part: string; rule: string; position?: number | null };
 
 const PART_CODES: Readonly<Record<string, string>> = { title: "TITLE", description: "DESCRIPTION", terms: "TERMS" };
 
-/** The 422 entries' fields, `<part in lower camel>.<rule>` (`title.PHONE_NUMBER`), as problems in their order. */
+/** A fee name's entry, `feeName.<position>.<RULE>` (`feeName.2.PHONE_NUMBER`), its position in canonical decimal form. */
+const FEE_NAME_FIELD = /^feeName\.([1-9][0-9]{0,8})\.(.+)$/;
+
+/**
+ * The 422 entries' fields, `<part in lower camel>.<rule>` (`title.PHONE_NUMBER`) or a fee name's
+ * `feeName.<position>.<RULE>`, as problems in their order.
+ */
 export function problemsOf(fieldErrors: readonly { field: string }[]): RevisionProblem[] {
   return fieldErrors.map(({ field }) => {
+    const fee = FEE_NAME_FIELD.exec(field);
+    if (fee !== null) return { part: "FEE_NAME", rule: fee[2] as string, position: Number(fee[1]) };
     const dot = field.indexOf(".");
     const part = dot < 0 ? field : field.slice(0, dot);
     const rule = dot < 0 ? "" : field.slice(dot + 1);
@@ -277,15 +286,31 @@ const MACHINE_RULES: Readonly<Record<string, ListingKey>> = {
 const MACHINE_PARTS = new Set(["TITLE", "DESCRIPTION"]);
 
 /**
+ * The machine check of a fee name (listing-publish BR-2 with LP-15, E-20, E06S7-D16 (b)): one sentence per rule, with
+ * the fee's position and the remedy. Only the machine rules apply to a fee name; its length is E05's.
+ */
+const FEE_NAME_RULES: Readonly<Record<string, ListingKey>> = {
+  PHONE_NUMBER: "revision.problems.FEE_NAME.PHONE_NUMBER",
+  EMAIL: "revision.problems.FEE_NAME.EMAIL",
+  LINK: "revision.problems.FEE_NAME.LINK",
+  SOCIAL_HANDLE: "revision.problems.FEE_NAME.SOCIAL_HANDLE",
+  FORBIDDEN_WORD: "revision.problems.FEE_NAME.FORBIDDEN_WORD",
+};
+
+/**
  * The sentence of a problem (spec section 6); it never quotes the text that matched, which the server does not
- * answer. An unknown part or rule, or a rule its part does not have, reads "This revision breaks a rule this page does
- * not know yet."
+ * answer. An unknown part or rule, a rule its part does not have, or a fee name without its position, reads "This
+ * revision breaks a rule this page does not know yet."
  */
 export function problemSentence(problem: RevisionProblem): Phrase {
   const rules = Object.hasOwn(PART_RULES, problem.part) ? PART_RULES[problem.part] : undefined;
   if (rules !== undefined && Object.hasOwn(rules, problem.rule)) return { key: rules[problem.rule] as ListingKey };
   if (MACHINE_PARTS.has(problem.part) && Object.hasOwn(MACHINE_RULES, problem.rule)) {
     return { key: MACHINE_RULES[problem.rule] as ListingKey, values: { part: problem.part } };
+  }
+  const position = problem.position;
+  if (problem.part === "FEE_NAME" && typeof position === "number" && Object.hasOwn(FEE_NAME_RULES, problem.rule)) {
+    return { key: FEE_NAME_RULES[problem.rule] as ListingKey, values: { position } };
   }
   return { key: "revision.problems.unknown" };
 }
